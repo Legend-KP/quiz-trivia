@@ -2,8 +2,6 @@
 
 import { useEffect } from "react";
 import { useMiniApp } from "@neynar/react";
-import { Header } from "~/components/ui/Header";
-import { Footer } from "~/components/ui/Footer";
 import { HomeTab, ActionsTab, ContextTab, WalletTab } from "~/components/ui/tabs";
 import { USE_WALLET } from "~/lib/constants";
 import { useNeynarUser } from "../hooks/useNeynarUser";
@@ -100,11 +98,26 @@ export default function App(
         paddingRight: context?.client.safeAreaInsets?.right ?? 0,
       }}
     >
-      {/* Header should be full width */}
-      <Header neynarUser={neynarUser} />
+      {/* User Profile in Top Right Corner */}
+      {context?.user && (
+        <div className="absolute top-4 right-4 z-50">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {context.user.displayName || context.user.username}
+            </span>
+            {context.user.pfpUrl && (
+              <img 
+                src={context.user.pfpUrl} 
+                alt="Profile" 
+                className="w-8 h-8 rounded-full border-2 border-primary"
+              />
+            )}
+          </div>
+        </div>
+      )}
 
-      {/* Main content and footer should be centered */}
-      <div className="container py-2 pb-20">
+      {/* Main content */}
+      <div className="container py-2">
         {/* Main title */}
         <h1 className="text-2xl font-bold text-center mb-4">{title}</h1>
 
@@ -113,9 +126,6 @@ export default function App(
         {currentTab === Tab.Actions && <ActionsTab />}
         {currentTab === Tab.Context && <ContextTab />}
         {currentTab === Tab.Wallet && <WalletTab />}
-
-        {/* Footer with navigation */}
-        <Footer activeTab={currentTab as Tab} setActiveTab={setActiveTab} showWallet={USE_WALLET} />
       </div>
     </div>
   );
