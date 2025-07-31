@@ -27,21 +27,21 @@ export function HomeTab() {
       {/* Content Container */}
       <div className="relative z-10 flex flex-col items-center justify-center h-full px-6 text-center">
         
-        {/* CENTRAL DAO Logo */}
+        {/* CENTRAL DAO Logo - Same size as QUIZ TRIVIA */}
         <div className="mb-6">
           <img 
-            src="/founder/CentralDAO.png" 
+            src="/CentralDAO.png" 
             alt="CENTRAL DAO" 
-            className="w-64 h-auto max-w-full"
+            className="w-auto h-24 md:h-32 max-w-full"
             style={{
               filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))'
             }}
           />
         </div>
 
-        {/* PRESENTS - New Font */}
+        {/* PRESENTS - Reduced size */}
         <div className="mb-8">
-          <h2 className="text-xl md:text-2xl font-light text-white uppercase tracking-widest" style={{
+          <h2 className="text-sm md:text-base font-light text-white uppercase tracking-widest" style={{
             fontFamily: 'Arial, sans-serif',
             letterSpacing: '0.2em'
           }}>
