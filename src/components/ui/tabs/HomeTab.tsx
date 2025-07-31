@@ -27,43 +27,16 @@ export function HomeTab() {
       {/* Content Container */}
       <div className="relative z-10 flex flex-col items-center justify-center h-full px-6 text-center">
         
-        {/* CENTRAL DAO - New Logo Design */}
+        {/* CENTRAL DAO Logo */}
         <div className="mb-6">
-          <div className="flex flex-col items-center">
-            {/* CENTRAL */}
-            <h1 className="text-4xl md:text-6xl font-bold text-white uppercase tracking-wider mb-2">
-              <span className="inline-block">
-                C
-                <span className="inline-block transform -translate-y-1">
-                  <span className="block h-1 w-4 bg-white mb-1"></span>
-                  <span className="block h-1 w-4 bg-white mb-1"></span>
-                  <span className="block h-1 w-4 bg-white"></span>
-                </span>
-                NTRAL
-              </span>
-            </h1>
-            
-            {/* DA with Globe */}
-            <div className="flex items-center">
-              <span className="text-4xl md:text-6xl font-bold text-white uppercase tracking-wider">DA</span>
-              {/* Enhanced Globe Icon */}
-              <div className="ml-2 relative">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 via-pink-500 to-blue-600 border-2 border-white/30 relative overflow-hidden">
-                  {/* Landmasses */}
-                  <div className="absolute inset-2 bg-gradient-to-br from-purple-300 to-blue-400 rounded-full opacity-60"></div>
-                  {/* Grid lines */}
-                  <div className="absolute inset-1 border border-white/20 rounded-full"></div>
-                  <div className="absolute inset-3 border border-white/10 rounded-full"></div>
-                  <div className="absolute top-1/2 left-0 right-0 h-px bg-white/30 transform -translate-y-1/2"></div>
-                  <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/30 transform -translate-x-1/2"></div>
-                  {/* Glow effect */}
-                  <div className="absolute inset-0 rounded-full shadow-lg" style={{
-                    boxShadow: '0 0 20px rgba(147, 51, 234, 0.5)'
-                  }}></div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <img 
+            src="/founder/CentralDAO.png" 
+            alt="CENTRAL DAO" 
+            className="w-64 h-auto max-w-full"
+            style={{
+              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))'
+            }}
+          />
         </div>
 
         {/* PRESENTS - New Font */}
