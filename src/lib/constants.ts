@@ -1,4 +1,15 @@
-import { type AccountAssociation } from '@farcaster/miniapp-core';
+// Define AccountAssociation type locally since it's not exported from the package
+type AccountAssociation = {
+  header: {
+    t: string;
+    fid: number;
+    [key: string]: any;
+  };
+  payload: {
+    [key: string]: any;
+  };
+  signature: string;
+};
 
 /**
  * Application constants and configuration values.
