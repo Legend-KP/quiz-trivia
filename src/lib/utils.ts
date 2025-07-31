@@ -1,6 +1,33 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { Manifest } from '@farcaster/miniapp-core';
+
+// Define types locally since they're not properly exported from the package
+type AccountAssociation = {
+  header: {
+    t: string;
+    fid: number;
+    [key: string]: any;
+  };
+  payload: {
+    [key: string]: any;
+  };
+  signature: string;
+};
+
+type Manifest = {
+  accountAssociation: AccountAssociation;
+  miniapp: {
+    version: string;
+    name: string;
+    homeUrl: string;
+    iconUrl: string;
+    imageUrl: string;
+    buttonTitle: string;
+    splashImageUrl: string;
+    splashBackgroundColor: string;
+    webhookUrl: string;
+  };
+};
 import {
   APP_BUTTON_TEXT,
   APP_DESCRIPTION,
