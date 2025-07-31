@@ -51,9 +51,11 @@
     "viem": "^2.23.6",
     "wagmi": "^2.14.12",
     "zod": "^3.24.2",
-    "@neynar/nodejs-sdk": "^2.19.0"
+    "@neynar/nodejs-sdk": "^2.19.0",
+    "inquirer": "^9.2.15"
   },
   "devDependencies": {
+    "@types/inquirer": "^9.0.7",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

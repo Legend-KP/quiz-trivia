@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { Manifest } from '@farcaster/miniapp-core/src/manifest';
+import { Manifest } from '@farcaster/miniapp-core';
 import {
   APP_BUTTON_TEXT,
   APP_DESCRIPTION,
