@@ -122,7 +122,7 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
           onClick={onClose}
           className="w-full mt-8 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-6 rounded-xl hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
         >
-          Let's Go! 🚀
+          Let&apos;s Go! 🚀
         </button>
       </div>
     </div>
