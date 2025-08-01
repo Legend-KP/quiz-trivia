@@ -99,7 +99,7 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
           
           <div className="flex items-start space-x-3">
             <span className="text-blue-500 font-bold">2️⃣</span>
-            <p>You'll get 5 minutes per question – so think fast! ⏳</p>
+            <p>You&apos;ll get 5 minutes per question – so think fast! ⏳</p>
           </div>
           
           <div className="flex items-start space-x-3">
@@ -216,20 +216,6 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
   const [showResult, setShowResult] = useState(false);
   const [answers, setAnswers] = useState<Answer[]>([]);
 
-  useEffect(() => {
-    if (timeLeft > 0 && !showResult) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (timeLeft === 0) {
-      handleTimeUp();
-    }
-  }, [timeLeft, showResult]);
-
-  const handleTimeUp = () => {
-    // Auto-submit with no answer (penalty)
-    handleAnswerSubmit(null);
-  };
-
   const handleAnswerSubmit = (answerIndex: number | null) => {
     const question = quizData[currentQuestion];
     const isCorrect = answerIndex === question.correct;
@@ -258,6 +244,41 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
       }
     }, 2000);
   };
+
+  useEffect(() => {
+    if (timeLeft > 0 && !showResult) {
+      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (timeLeft === 0 && !showResult) {
+      // Auto-submit with no answer (penalty)
+      const question = quizData[currentQuestion];
+      const isCorrect = null === question.correct;
+      const newScore = isCorrect ? score + 1 : score - 1;
+      
+      setAnswers([...answers, {
+        questionId: question.id,
+        selectedAnswer: null,
+        correct: question.correct,
+        isCorrect
+      }]);
+      
+      setScore(newScore);
+      setSelectedAnswer(null);
+      setShowResult(true);
+
+      // Move to next question after 2 seconds
+      setTimeout(() => {
+        if (currentQuestion < quizData.length - 1) {
+          setCurrentQuestion(currentQuestion + 1);
+          setTimeLeft(quizData[currentQuestion + 1].timeLimit);
+          setSelectedAnswer(null);
+          setShowResult(false);
+        } else {
+          onComplete(newScore, answers);
+        }
+      }, 2000);
+    }
+  }, [timeLeft, showResult, currentQuestion, score, answers, onComplete]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -387,9 +408,9 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart }) 
 
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Performance:</h3>
-            {score >= 3 && <p className="text-green-600 font-semibold">🎉 Excellent! You're a trivia master!</p>}
+            {score >= 3 && <p className="text-green-600 font-semibold">🎉 Excellent! You&apos;re a trivia master!</p>}
             {score >= 1 && score < 3 && <p className="text-yellow-600 font-semibold">👍 Good job! Keep practicing!</p>}
-            {score < 1 && <p className="text-red-600 font-semibold">💪 Don't give up! Try again!</p>}
+            {score < 1 && <p className="text-red-600 font-semibold">💪 Don&apos;t give up! Try again!</p>}
           </div>
 
           <button
