@@ -35,6 +35,37 @@ For projects that have made minimal changes to the quickstart template, deploy t
 npm run deploy:vercel
 ```
 
+## Setting up Vercel KV for Leaderboard
+
+This project includes a leaderboard feature that requires Vercel KV storage. To set it up:
+
+1. **Install Vercel CLI** (if not already installed):
+   ```bash
+   npm i -g vercel
+   ```
+
+2. **Link your project to Vercel**:
+   ```bash
+   vercel link
+   ```
+
+3. **Add KV storage to your project**:
+   ```bash
+   vercel kv create
+   ```
+
+4. **Set up environment variables**:
+   - Go to your Vercel dashboard
+   - Navigate to your project settings
+   - Add the KV environment variables that Vercel provides
+
+5. **Deploy with KV**:
+   ```bash
+   vercel --prod
+   ```
+
+The leaderboard will work without KV storage (it will show empty), but for full functionality, KV storage is recommended.
+
 ## Building for Production
 
 To create a production build, run:

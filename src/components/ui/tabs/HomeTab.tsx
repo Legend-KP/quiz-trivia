@@ -446,6 +446,8 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
       }
     } catch (error) {
       console.error('Failed to fetch leaderboard:', error);
+      // Set empty leaderboard on error to prevent crashes
+      setLeaderboard([]);
     } finally {
       setLoading(false);
     }
@@ -471,13 +473,20 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
         }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setLeaderboard(data.leaderboard);
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        setLeaderboard(data.leaderboard || []);
+        setSubmitted(true);
+      } else {
+        console.warn('Score submission failed:', data.error);
+        // Still mark as submitted to prevent retries
         setSubmitted(true);
       }
     } catch (error) {
       console.error('Failed to submit score:', error);
+      // Mark as submitted even on error to prevent infinite retries
+      setSubmitted(true);
     } finally {
       setSubmitting(false);
     }

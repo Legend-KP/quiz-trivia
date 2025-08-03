@@ -13,6 +13,12 @@ export interface LeaderboardEntry {
 
 export async function GET() {
   try {
+    // Check if KV is available
+    if (!kv) {
+      console.warn('KV not available, returning empty leaderboard');
+      return NextResponse.json({ leaderboard: [] });
+    }
+
     // Get leaderboard from KV store
     const leaderboard = await kv.get<LeaderboardEntry[]>('quiz_leaderboard') || [];
     
@@ -27,10 +33,8 @@ export async function GET() {
     return NextResponse.json({ leaderboard: sortedLeaderboard.slice(0, 10) });
   } catch (error) {
     console.error('Failed to fetch leaderboard:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch leaderboard' },
-      { status: 500 }
-    );
+    // Return empty leaderboard instead of error to prevent app crashes
+    return NextResponse.json({ leaderboard: [] });
   }
 }
 
@@ -44,6 +48,16 @@ export async function POST(request: Request) {
         { error: 'Missing required fields: fid, username, score' },
         { status: 400 }
       );
+    }
+
+    // Check if KV is available
+    if (!kv) {
+      console.warn('KV not available, score submission skipped');
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Storage not available',
+        leaderboard: [] 
+      });
     }
 
     const newEntry: LeaderboardEntry = {
@@ -90,7 +104,11 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Failed to update leaderboard:', error);
     return NextResponse.json(
-      { error: 'Failed to update leaderboard' },
+      { 
+        success: false,
+        error: 'Failed to update leaderboard',
+        leaderboard: [] 
+      },
       { status: 500 }
     );
   }
