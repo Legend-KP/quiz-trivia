@@ -230,8 +230,9 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
       const timer = setTimeout(() => setNextQuestionTime(nextQuestionTime - 1), 1000);
       return () => clearTimeout(timer);
     } else if (nextQuestionTime === 0) {
-      // Move to next question
+      // Move to next question or complete quiz
       if (currentQuestion < quizData.length - 1) {
+        // Move to next question
         setCurrentQuestion(currentQuestion + 1);
         setTimeLeft(quizData[currentQuestion + 1].timeLimit);
         setSelectedAnswer(null);
@@ -239,6 +240,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
         setWaitingForNext(false);
         setNextQuestionTime(null);
       } else {
+        // Quiz is complete - calculate total time and show results
         const totalTime = Math.floor((Date.now() - startTime) / 1000);
         const timeString = `${Math.floor(totalTime / 60)}:${(totalTime % 60).toString().padStart(2, '0')}`;
         onComplete(score, answers, timeString);
