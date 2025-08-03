@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Clock, Trophy, Star, X } from 'lucide-react';
 import { useMiniApp } from '@neynar/react';
 
@@ -79,7 +79,7 @@ const quizData: QuizQuestion[] = [
   },
   {
     id: 4,
-    question: "What is a blob in the context of Ethereum's Proto-Danksharding?",
+    question: "What is a blob in the context of Ethereum&apos;s Proto-Danksharding?",
     options: ["A fungible token format", "A zero-knowledge proof", "A temporary data package stored off-chain", "A type of validator node"],
     correct: 1,
     timeLimit: 60,
@@ -111,7 +111,7 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
           
           <div className="flex items-start space-x-3">
             <span className="text-blue-500 font-bold">2️⃣</span>
-            <p>You'll get 5 minutes per question – so think fast! ⏳</p>
+            <p>You&apos;ll get 5 minutes per question – so think fast! ⏳</p>
           </div>
           
           <div className="flex items-start space-x-3">
@@ -134,7 +134,7 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
           onClick={onClose}
           className="w-full mt-8 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-6 rounded-xl hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
         >
-          Let's Go! 🚀
+          Let&apos;s Go! 🚀
         </button>
       </div>
     </div>
@@ -221,7 +221,7 @@ const HomePage: React.FC<HomePageProps> = ({ onStartQuiz, onShowRules }) => {
 };
 
 // Quiz Component
-const QuizPage: React.FC<QuizPageProps> = ({ onComplete, context }) => {
+const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(quizData[0].timeLimit);
@@ -230,7 +230,12 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete, context }) => {
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [waitingForNext, setWaitingForNext] = useState(false);
   const [nextQuestionTime, setNextQuestionTime] = useState<number | null>(null);
-  const [startTime, setStartTime] = useState<number>(Date.now());
+  const [startTime] = useState<number>(Date.now());
+
+  const handleTimeUp = useCallback(() => {
+    // Auto-submit with no answer (penalty)
+    handleAnswerSubmit(null);
+  }, []);
 
   useEffect(() => {
     if (timeLeft > 0 && !showResult && !waitingForNext) {
@@ -239,7 +244,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete, context }) => {
     } else if (timeLeft === 0 && !waitingForNext) {
       handleTimeUp();
     }
-  }, [timeLeft, showResult, waitingForNext]);
+  }, [timeLeft, showResult, waitingForNext, handleTimeUp]);
 
   useEffect(() => {
     if (nextQuestionTime && nextQuestionTime > 0) {
@@ -261,11 +266,6 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete, context }) => {
       }
     }
   }, [nextQuestionTime, currentQuestion, score, answers, onComplete, startTime]);
-
-  const handleTimeUp = () => {
-    // Auto-submit with no answer (penalty)
-    handleAnswerSubmit(null);
-  };
 
   const handleAnswerSubmit = (answerIndex: number | null) => {
     const question = quizData[currentQuestion];
@@ -403,7 +403,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete, context }) => {
                   selectedAnswer === question.correct ? 'text-green-600' : 'text-red-600'
                 }`}>
                   {selectedAnswer === question.correct ? '✅ Correct!' : '❌ Wrong!'}
-                  {selectedAnswer === null && ' ⏰ Time\'s up!'}
+                  {selectedAnswer === null && ' ⏰ Time&apos;s up!'}
                 </p>
               </div>
               
@@ -433,11 +433,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
   // Calculate total time (simplified for demo)
   const totalTime = "2:30"; // This would be calculated from actual start/end times
 
-  useEffect(() => {
-    fetchLeaderboard();
-  }, []);
-
-  const fetchLeaderboard = async () => {
+  const fetchLeaderboard = useCallback(async () => {
     try {
       const response = await fetch('/api/leaderboard');
       const data = await response.json();
@@ -451,9 +447,9 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const submitScore = async () => {
+  const submitScore = useCallback(async () => {
     if (!context?.user?.fid || submitted) return;
 
     setSubmitting(true);
@@ -490,14 +486,18 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [context?.user?.fid, submitted, score, totalTime]);
+
+  useEffect(() => {
+    fetchLeaderboard();
+  }, [fetchLeaderboard]);
 
   // Auto-submit score when component mounts if user is authenticated
   useEffect(() => {
     if (context?.user?.fid && !submitted) {
       submitScore();
     }
-  }, [context?.user?.fid]);
+  }, [context?.user?.fid, submitted, submitScore]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4">
@@ -526,9 +526,9 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
 
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Performance:</h3>
-            {score >= 3 && <p className="text-green-600 font-semibold">🎉 Excellent! You're a trivia master!</p>}
+            {score >= 3 && <p className="text-green-600 font-semibold">🎉 Excellent! You&apos;re a trivia master!</p>}
             {score >= 1 && score < 3 && <p className="text-yellow-600 font-semibold">👍 Good job! Keep practicing!</p>}
-            {score < 1 && <p className="text-red-600 font-semibold">💪 Don't give up! Try again!</p>}
+            {score < 1 && <p className="text-red-600 font-semibold">💪 Don&apos;t give up! Try again!</p>}
           </div>
 
           <button
@@ -638,7 +638,6 @@ export default function QuizTriviaApp() {
   const [showRules, setShowRules] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
   const [finalAnswers, setFinalAnswers] = useState<Answer[]>([]);
-  const [finalTime, setFinalTime] = useState('');
 
   // Get Farcaster context
   const { context } = useMiniApp();
@@ -658,7 +657,6 @@ export default function QuizTriviaApp() {
   const handleQuizComplete = (score: number, answers: Answer[], time: string) => {
     setFinalScore(score);
     setFinalAnswers(answers);
-    setFinalTime(time);
     setCurrentScreen('results');
   };
 
@@ -666,7 +664,6 @@ export default function QuizTriviaApp() {
     setCurrentScreen('home');
     setFinalScore(0);
     setFinalAnswers([]);
-    setFinalTime('');
   };
 
   return (
@@ -700,3 +697,6 @@ export default function QuizTriviaApp() {
     </div>
   );
 }
+
+// Export HomeTab as a named export for compatibility
+export { QuizTriviaApp as HomeTab };

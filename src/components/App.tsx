@@ -3,8 +3,6 @@
 import { useEffect } from "react";
 import { useMiniApp } from "@neynar/react";
 import { HomeTab, ActionsTab, ContextTab, WalletTab } from "~/components/ui/tabs";
-import { USE_WALLET } from "~/lib/constants";
-import { useNeynarUser } from "../hooks/useNeynarUser";
 
 // --- Types ---
 export enum Tab {
@@ -55,12 +53,7 @@ export default function App(
     isSDKLoaded,
     context,
     setInitialTab,
-    setActiveTab,
-    currentTab,
   } = useMiniApp();
-
-  // --- Neynar user hook ---
-  const { user: neynarUser } = useNeynarUser(context || undefined);
 
   // --- Effects ---
   /**
@@ -122,10 +115,7 @@ export default function App(
         <h1 className="text-2xl font-bold text-center mb-4">{title}</h1>
 
         {/* Tab content rendering */}
-        {currentTab === Tab.Home && <HomeTab />}
-        {currentTab === Tab.Actions && <ActionsTab />}
-        {currentTab === Tab.Context && <ContextTab />}
-        {currentTab === Tab.Wallet && <WalletTab />}
+        <HomeTab />
       </div>
     </div>
   );
