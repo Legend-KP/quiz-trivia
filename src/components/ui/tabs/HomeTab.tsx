@@ -1,16 +1,15 @@
-"use client";
-
 import React, { useState, useEffect } from 'react';
 import { Clock, Trophy, Star, X } from 'lucide-react';
+import { useMiniApp } from '@neynar/react';
 
 // Type definitions
 interface QuizQuestion {
   id: number;
-  difficulty: string;
   question: string;
   options: string[];
   correct: number;
   timeLimit: number;
+  explanation: string;
 }
 
 interface Answer {
@@ -18,6 +17,17 @@ interface Answer {
   selectedAnswer: number | null;
   correct: number;
   isCorrect: boolean;
+}
+
+interface LeaderboardEntry {
+  fid: number;
+  username: string;
+  displayName?: string;
+  pfpUrl?: string;
+  score: number;
+  time: string;
+  completedAt: number;
+  rank?: number;
 }
 
 interface RulesPopupProps {
@@ -30,48 +40,50 @@ interface HomePageProps {
 }
 
 interface QuizPageProps {
-  onComplete: (score: number, answers: Answer[]) => void;
+  onComplete: (score: number, answers: Answer[], time: string) => void;
+  context?: any;
 }
 
 interface ResultsPageProps {
   score: number;
   answers: Answer[];
   onRestart: () => void;
+  context?: any;
 }
 
-// Sample quiz data with progressive difficulty
+// Sample quiz data with explanations
 const quizData: QuizQuestion[] = [
   {
     id: 1,
-    difficulty: "Easy",
-    question: "What is the capital of France?",
-    options: ["London", "Berlin", "Paris", "Madrid"],
+    question: "What is the smallest unit of Ether called?",
+    options: ["Gwei", "Satoshi", "Finney", "Wei"],
     correct: 2,
-    timeLimit: 300 // 5 minutes in seconds
+    timeLimit: 60, // 5 minutes in seconds
+    explanation: "Wei is the smallest denomination of Ether, just like a cent is to a dollar."
   },
   {
     id: 2,
-    difficulty: "Medium",
-    question: "Which planet is known as the Red Planet?",
-    options: ["Venus", "Mars", "Jupiter", "Saturn"],
+    question: "What does MEV stand for in Ethereum context?",
+    options: ["Most Efficient Validator", "Maximum Extractable Value", "Modular Execution Vault", "Minimal Ethereum Value"],
     correct: 1,
-    timeLimit: 300
+    timeLimit: 60,
+    explanation: "MEV refers to profits miners or validators can extract by reordering or censoring transactions."
   },
   {
     id: 3,
-    difficulty: "Hard",
-    question: "What is the smallest unit of matter?",
-    options: ["Molecule", "Atom", "Electron", "Proton"],
+    question: "Which Ethereum standard enables tokens to hold other tokens (like NFTs owning NFTs)?",
+    options: ["ERC-721", "ERC-20", "ERC-4626", "ERC-998"],
     correct: 1,
-    timeLimit: 300
+    timeLimit: 60,
+    explanation: "ERC-998 is a composable NFT standard allowing NFTs to own both ERC-721 and ERC-20 tokens."
   },
   {
     id: 4,
-    difficulty: "Expert",
-    question: "In which year was the first computer bug actually found?",
-    options: ["1945", "1947", "1950", "1952"],
+    question: "What is a blob in the context of Ethereum's Proto-Danksharding?",
+    options: ["A fungible token format", "A zero-knowledge proof", "A temporary data package stored off-chain", "A type of validator node"],
     correct: 1,
-    timeLimit: 300
+    timeLimit: 60,
+    explanation: "Blobs are large chunks of data stored off-chain to improve scalability, introduced in EIP-4844 as part of Proto-Danksharding."
   }
 ];
 
@@ -94,12 +106,12 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
         <div className="space-y-4 text-gray-700">
           <div className="flex items-start space-x-3">
             <span className="text-blue-500 font-bold">1️⃣</span>
-            <p>The quiz has 4 multiple-choice questions, each getting progressively harder. Questions will be posted at 30-minute intervals.</p>
+            <p>The quiz has 4 multiple-choice questions with 30-minute intervals between each question.</p>
           </div>
           
           <div className="flex items-start space-x-3">
             <span className="text-blue-500 font-bold">2️⃣</span>
-            <p>You&apos;ll get 5 minutes per question – so think fast! ⏳</p>
+            <p>You'll get 5 minutes per question – so think fast! ⏳</p>
           </div>
           
           <div className="flex items-start space-x-3">
@@ -122,7 +134,7 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
           onClick={onClose}
           className="w-full mt-8 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-6 rounded-xl hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
         >
-          Let&apos;s Go! 🚀
+          Let's Go! 🚀
         </button>
       </div>
     </div>
@@ -146,16 +158,17 @@ const HomePage: React.FC<HomePageProps> = ({ onStartQuiz, onShowRules }) => {
       {/* Content Container */}
       <div className="relative z-10 flex flex-col items-center justify-center h-full px-6 text-center">
         
-        {/* CENTRAL DAO Logo - Same size as QUIZ TRIVIA */}
+        {/* CENTRAL DAO Text (since we can't load external images) */}
         <div className="mb-6">
-          <img 
-            src="/CentralDAO.png" 
-            alt="CENTRAL DAO" 
-            className="w-auto h-24 md:h-32 max-w-full"
-            style={{
-              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))'
-            }}
-          />
+          <h1 className="text-4xl md:text-6xl font-bold text-white uppercase tracking-wider" style={{
+            fontFamily: 'Arial, sans-serif',
+            textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
+          }}>
+            CENTRAL DAO
+          </h1>
+          <div className="w-12 h-12 mx-auto mt-2 bg-gradient-to-br from-purple-400 to-blue-500 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-blue-700 rounded-full"></div>
+          </div>
         </div>
 
         {/* PRESENTS - Reduced size */}
@@ -208,13 +221,51 @@ const HomePage: React.FC<HomePageProps> = ({ onStartQuiz, onShowRules }) => {
 };
 
 // Quiz Component
-const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
+const QuizPage: React.FC<QuizPageProps> = ({ onComplete, context }) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(quizData[0].timeLimit);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [answers, setAnswers] = useState<Answer[]>([]);
+  const [waitingForNext, setWaitingForNext] = useState(false);
+  const [nextQuestionTime, setNextQuestionTime] = useState<number | null>(null);
+  const [startTime, setStartTime] = useState<number>(Date.now());
+
+  useEffect(() => {
+    if (timeLeft > 0 && !showResult && !waitingForNext) {
+      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (timeLeft === 0 && !waitingForNext) {
+      handleTimeUp();
+    }
+  }, [timeLeft, showResult, waitingForNext]);
+
+  useEffect(() => {
+    if (nextQuestionTime && nextQuestionTime > 0) {
+      const timer = setTimeout(() => setNextQuestionTime(nextQuestionTime - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (nextQuestionTime === 0) {
+      // Move to next question
+      if (currentQuestion < quizData.length - 1) {
+        setCurrentQuestion(currentQuestion + 1);
+        setTimeLeft(quizData[currentQuestion + 1].timeLimit);
+        setSelectedAnswer(null);
+        setShowResult(false);
+        setWaitingForNext(false);
+        setNextQuestionTime(null);
+      } else {
+        const totalTime = Math.floor((Date.now() - startTime) / 1000);
+        const timeString = `${Math.floor(totalTime / 60)}:${(totalTime % 60).toString().padStart(2, '0')}`;
+        onComplete(score, answers, timeString);
+      }
+    }
+  }, [nextQuestionTime, currentQuestion, score, answers, onComplete, startTime]);
+
+  const handleTimeUp = () => {
+    // Auto-submit with no answer (penalty)
+    handleAnswerSubmit(null);
+  };
 
   const handleAnswerSubmit = (answerIndex: number | null) => {
     const question = quizData[currentQuestion];
@@ -232,61 +283,50 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
     setSelectedAnswer(answerIndex);
     setShowResult(true);
 
-    // Move to next question after 2 seconds
+    // Start 30-minute countdown for next question (using 10 seconds for demo)
     setTimeout(() => {
-      if (currentQuestion < quizData.length - 1) {
-        setCurrentQuestion(currentQuestion + 1);
-        setTimeLeft(quizData[currentQuestion + 1].timeLimit);
-        setSelectedAnswer(null);
-        setShowResult(false);
-      } else {
-        onComplete(newScore, answers);
-      }
-    }, 2000);
+      setWaitingForNext(true);
+      setNextQuestionTime(10); // 1800 seconds = 30 minutes (using 10 for demo)
+    }, 3000);
   };
 
-  useEffect(() => {
-    if (timeLeft > 0 && !showResult) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (timeLeft === 0 && !showResult) {
-      // Auto-submit with no answer (penalty)
-      const question = quizData[currentQuestion];
-      const isCorrect = null === question.correct;
-      const newScore = isCorrect ? score + 1 : score - 1;
-      
-      setAnswers([...answers, {
-        questionId: question.id,
-        selectedAnswer: null,
-        correct: question.correct,
-        isCorrect
-      }]);
-      
-      setScore(newScore);
-      setSelectedAnswer(null);
-      setShowResult(true);
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
-      // Move to next question after 2 seconds
-      setTimeout(() => {
-        if (currentQuestion < quizData.length - 1) {
-          setCurrentQuestion(currentQuestion + 1);
-          setTimeLeft(quizData[currentQuestion + 1].timeLimit);
-          setSelectedAnswer(null);
-          setShowResult(false);
-        } else {
-          onComplete(newScore, answers);
-        }
-      }, 2000);
-    }
-  }, [timeLeft, showResult, currentQuestion, score, answers, onComplete]);
-
-  const formatTime = (seconds: number) => {
+  const formatWaitTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const question = quizData[currentQuestion];
+
+  if (waitingForNext && nextQuestionTime !== null) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4 flex items-center justify-center">
+        <div className="max-w-md mx-auto text-center">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl">
+            <Clock className="mx-auto mb-4 text-blue-500" size={48} />
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              Next Question In:
+            </h2>
+            <div className="text-4xl font-bold text-blue-600 mb-4">
+              {formatWaitTime(nextQuestionTime)}
+            </div>
+            <p className="text-gray-600">
+              Question {currentQuestion + 2} of {quizData.length}
+            </p>
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+              <p className="text-blue-800 font-semibold">Current Score: {score}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4">
@@ -312,7 +352,6 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
         <div className="mb-6">
           <div className="flex justify-between text-white mb-2">
             <span>Question {currentQuestion + 1} of {quizData.length}</span>
-            <span className="text-yellow-400">{question.difficulty}</span>
           </div>
           <div className="w-full bg-gray-700 rounded-full h-2">
             <div 
@@ -358,16 +397,21 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
           </div>
 
           {showResult && (
-            <div className="mt-6 p-4 rounded-lg bg-gray-100">
-              <p className={`font-semibold ${
-                selectedAnswer === question.correct ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {selectedAnswer === question.correct ? '✅ Correct!' : '❌ Wrong!'}
-                {selectedAnswer === null && ' ⏰ Time\'s up!'}
-              </p>
-              <p className="text-gray-600 mt-2">
-                Moving to next question...
-              </p>
+            <div className="mt-6 space-y-4">
+              <div className="p-4 rounded-lg bg-gray-100">
+                <p className={`font-semibold ${
+                  selectedAnswer === question.correct ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {selectedAnswer === question.correct ? '✅ Correct!' : '❌ Wrong!'}
+                  {selectedAnswer === null && ' ⏰ Time\'s up!'}
+                </p>
+              </div>
+              
+              {/* Explanation */}
+              <div className="p-4 rounded-lg bg-blue-50 border-l-4 border-blue-500">
+                <h4 className="font-semibold text-blue-800 mb-2">💡 Explanation:</h4>
+                <p className="text-blue-700">{question.explanation}</p>
+              </div>
             </div>
           )}
         </div>
@@ -377,15 +421,80 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
 };
 
 // Results Component
-const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart }) => {
+const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, context }) => {
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const totalQuestions = quizData.length;
   const correctAnswers = answers.filter((a: Answer) => a.isCorrect).length;
   const accuracy = Math.round((correctAnswers / totalQuestions) * 100);
 
+  // Calculate total time (simplified for demo)
+  const totalTime = "2:30"; // This would be calculated from actual start/end times
+
+  useEffect(() => {
+    fetchLeaderboard();
+  }, []);
+
+  const fetchLeaderboard = async () => {
+    try {
+      const response = await fetch('/api/leaderboard');
+      const data = await response.json();
+      if (data.leaderboard) {
+        setLeaderboard(data.leaderboard);
+      }
+    } catch (error) {
+      console.error('Failed to fetch leaderboard:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitScore = async () => {
+    if (!context?.user?.fid || submitted) return;
+
+    setSubmitting(true);
+    try {
+      const response = await fetch('/api/leaderboard', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fid: context.user.fid,
+          username: context.user.username,
+          displayName: context.user.displayName,
+          pfpUrl: context.user.pfpUrl,
+          score: score,
+          time: totalTime,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setLeaderboard(data.leaderboard);
+        setSubmitted(true);
+      }
+    } catch (error) {
+      console.error('Failed to submit score:', error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Auto-submit score when component mounts if user is authenticated
+  useEffect(() => {
+    if (context?.user?.fid && !submitted) {
+      submitScore();
+    }
+  }, [context?.user?.fid]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4">
-      <div className="max-w-2xl mx-auto pt-8">
-        <div className="bg-white rounded-2xl p-8 shadow-2xl text-center">
+      <div className="max-w-4xl mx-auto pt-8">
+        {/* Results Summary */}
+        <div className="bg-white rounded-2xl p-8 shadow-2xl text-center mb-8">
           <div className="mb-6">
             <Trophy className="mx-auto text-yellow-500 mb-4" size={64} />
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Quiz Complete!</h1>
@@ -408,9 +517,9 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart }) 
 
           <div className="mb-8">
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Performance:</h3>
-            {score >= 3 && <p className="text-green-600 font-semibold">🎉 Excellent! You&apos;re a trivia master!</p>}
+            {score >= 3 && <p className="text-green-600 font-semibold">🎉 Excellent! You're a trivia master!</p>}
             {score >= 1 && score < 3 && <p className="text-yellow-600 font-semibold">👍 Good job! Keep practicing!</p>}
-            {score < 1 && <p className="text-red-600 font-semibold">💪 Don&apos;t give up! Try again!</p>}
+            {score < 1 && <p className="text-red-600 font-semibold">💪 Don't give up! Try again!</p>}
           </div>
 
           <button
@@ -420,17 +529,110 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart }) 
             Play Again 🔄
           </button>
         </div>
+
+        {/* Leaderboard */}
+        <div className="bg-white rounded-2xl p-8 shadow-2xl">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">🏆 Leaderboard</h2>
+            <p className="text-gray-600">Top Quiz Trivia Players</p>
+          </div>
+
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="spinner h-8 w-8 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading leaderboard...</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {leaderboard.map((player, index) => (
+                <div
+                  key={player.fid}
+                  className={`flex items-center justify-between p-4 rounded-lg border-2 ${
+                    index < 3
+                      ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-300'
+                      : 'bg-gray-50 border-gray-200'
+                  }`}
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                      index === 0 ? 'bg-yellow-500 text-yellow-900' :
+                      index === 1 ? 'bg-gray-400 text-gray-900' :
+                      index === 2 ? 'bg-orange-500 text-orange-900' :
+                      'bg-blue-500 text-blue-900'
+                    }`}>
+                      {index === 0 ? '🥇' : 
+                       index === 1 ? '🥈' : 
+                       index === 2 ? '🥉' : index + 1}
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      {player.pfpUrl && (
+                        <img 
+                          src={player.pfpUrl} 
+                          alt="Profile" 
+                          className="w-8 h-8 rounded-full"
+                        />
+                      )}
+                      <div>
+                        <div className="font-semibold text-gray-800">
+                          {player.displayName || player.username}
+                        </div>
+                        <div className="text-sm text-gray-500">@{player.username}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xl font-bold text-blue-600">{player.score}</div>
+                    <div className="text-xs text-gray-500">points</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Current Player Position */}
+          {context?.user?.fid && (
+            <div className="mt-6 p-4 bg-blue-50 border-2 border-blue-300 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  {context.user.pfpUrl && (
+                    <img 
+                      src={context.user.pfpUrl} 
+                      alt="Your Profile" 
+                      className="w-8 h-8 rounded-full"
+                    />
+                  )}
+                  <div>
+                    <div className="font-semibold text-blue-800">
+                      {context.user.displayName || context.user.username}
+                    </div>
+                    <div className="text-sm text-blue-600">Your Score</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xl font-bold text-blue-600">{score}</div>
+                  <div className="text-xs text-blue-500">points</div>
+                  {submitting && <div className="text-xs text-blue-500">Submitting...</div>}
+                  {submitted && <div className="text-xs text-green-500">✓ Submitted</div>}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
-// Main HomeTab Component
-export function HomeTab() {
+// Main App Component
+export default function QuizTriviaApp() {
   const [currentScreen, setCurrentScreen] = useState<'home' | 'quiz' | 'results'>('home');
   const [showRules, setShowRules] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
   const [finalAnswers, setFinalAnswers] = useState<Answer[]>([]);
+  const [finalTime, setFinalTime] = useState('');
+
+  // Get Farcaster context
+  const { context } = useMiniApp();
 
   const handleStartQuiz = () => {
     setCurrentScreen('quiz');
@@ -444,9 +646,10 @@ export function HomeTab() {
     setShowRules(false);
   };
 
-  const handleQuizComplete = (score: number, answers: Answer[]) => {
+  const handleQuizComplete = (score: number, answers: Answer[], time: string) => {
     setFinalScore(score);
     setFinalAnswers(answers);
+    setFinalTime(time);
     setCurrentScreen('results');
   };
 
@@ -454,6 +657,7 @@ export function HomeTab() {
     setCurrentScreen('home');
     setFinalScore(0);
     setFinalAnswers([]);
+    setFinalTime('');
   };
 
   return (
@@ -466,7 +670,10 @@ export function HomeTab() {
       )}
       
       {currentScreen === 'quiz' && (
-        <QuizPage onComplete={handleQuizComplete} />
+        <QuizPage 
+          onComplete={handleQuizComplete}
+          context={context}
+        />
       )}
       
       {currentScreen === 'results' && (
@@ -474,6 +681,7 @@ export function HomeTab() {
           score={finalScore}
           answers={finalAnswers}
           onRestart={handleRestart}
+          context={context}
         />
       )}
       
@@ -482,4 +690,4 @@ export function HomeTab() {
       )}
     </div>
   );
-} 
+}
