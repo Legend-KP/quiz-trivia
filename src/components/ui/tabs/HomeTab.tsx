@@ -57,7 +57,7 @@ const quizData: QuizQuestion[] = [
     id: 1,
     question: "What is the smallest unit of Ether called?",
     options: ["Gwei", "Satoshi", "Finney", "Wei"],
-    correct: 4,
+    correct: 3, // 0-based index for "Wei" (4th option)
     timeLimit: 60, // 5 minutes in seconds
     explanation: "Wei is the smallest denomination of Ether, just like a cent is to a dollar."
   },
@@ -65,7 +65,7 @@ const quizData: QuizQuestion[] = [
     id: 2,
     question: "What does MEV stand for in Ethereum context?",
     options: ["Most Efficient Validator", "Maximum Extractable Value", "Modular Execution Vault", "Minimal Ethereum Value"],
-    correct: 2,
+    correct: 1, // 0-based index for "Maximum Extractable Value" (2nd option)
     timeLimit: 60,
     explanation: "MEV refers to profits miners or validators can extract by reordering or censoring transactions."
   },
@@ -73,7 +73,7 @@ const quizData: QuizQuestion[] = [
     id: 3,
     question: "Which Ethereum standard enables tokens to hold other tokens (like NFTs owning NFTs)?",
     options: ["ERC-721", "ERC-20", "ERC-4626", "ERC-998"],
-    correct: 4,
+    correct: 3, // 0-based index for "ERC-998" (4th option)
     timeLimit: 60,
     explanation: "ERC-998 is a composable NFT standard allowing NFTs to own both ERC-721 and ERC-20 tokens."
   },
@@ -81,7 +81,7 @@ const quizData: QuizQuestion[] = [
     id: 4,
     question: "What is a blob in the context of Ethereum&apos;s Proto-Danksharding?",
     options: ["A fungible token format", "A zero-knowledge proof", "A temporary data package stored off-chain", "A type of validator node"],
-    correct: 3,
+    correct: 2, // 0-based index for "A temporary data package stored off-chain" (3rd option)
     timeLimit: 60,
     explanation: "Blobs are large chunks of data stored off-chain to improve scalability, introduced in EIP-4844 as part of Proto-Danksharding."
   }
