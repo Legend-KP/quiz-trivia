@@ -57,7 +57,7 @@ const quizData: QuizQuestion[] = [
     id: 1,
     question: "What is the smallest unit of Ether called?",
     options: ["Gwei", "Satoshi", "Finney", "Wei"],
-    correct: 2,
+    correct: 4,
     timeLimit: 60, // 5 minutes in seconds
     explanation: "Wei is the smallest denomination of Ether, just like a cent is to a dollar."
   },
@@ -65,7 +65,7 @@ const quizData: QuizQuestion[] = [
     id: 2,
     question: "What does MEV stand for in Ethereum context?",
     options: ["Most Efficient Validator", "Maximum Extractable Value", "Modular Execution Vault", "Minimal Ethereum Value"],
-    correct: 1,
+    correct: 2,
     timeLimit: 60,
     explanation: "MEV refers to profits miners or validators can extract by reordering or censoring transactions."
   },
@@ -73,7 +73,7 @@ const quizData: QuizQuestion[] = [
     id: 3,
     question: "Which Ethereum standard enables tokens to hold other tokens (like NFTs owning NFTs)?",
     options: ["ERC-721", "ERC-20", "ERC-4626", "ERC-998"],
-    correct: 1,
+    correct: 4,
     timeLimit: 60,
     explanation: "ERC-998 is a composable NFT standard allowing NFTs to own both ERC-721 and ERC-20 tokens."
   },
@@ -81,7 +81,7 @@ const quizData: QuizQuestion[] = [
     id: 4,
     question: "What is a blob in the context of Ethereum&apos;s Proto-Danksharding?",
     options: ["A fungible token format", "A zero-knowledge proof", "A temporary data package stored off-chain", "A type of validator node"],
-    correct: 1,
+    correct: 3,
     timeLimit: 60,
     explanation: "Blobs are large chunks of data stored off-chain to improve scalability, introduced in EIP-4844 as part of Proto-Danksharding."
   }
@@ -158,28 +158,7 @@ const HomePage: React.FC<HomePageProps> = ({ onStartQuiz, onShowRules }) => {
       {/* Content Container */}
       <div className="relative z-10 flex flex-col items-center justify-center h-full px-6 text-center">
         
-        {/* CENTRAL DAO Text (since we can't load external images) */}
-        <div className="mb-6">
-          <h1 className="text-4xl md:text-6xl font-bold text-white uppercase tracking-wider" style={{
-            fontFamily: 'Arial, sans-serif',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
-          }}>
-            CENTRAL DAO
-          </h1>
-          <div className="w-12 h-12 mx-auto mt-2 bg-gradient-to-br from-purple-400 to-blue-500 rounded-full flex items-center justify-center">
-            <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-blue-700 rounded-full"></div>
-          </div>
-        </div>
 
-        {/* PRESENTS - Reduced size */}
-        <div className="mb-8">
-          <h2 className="text-sm md:text-base font-light text-white uppercase tracking-widest" style={{
-            fontFamily: 'Arial, sans-serif',
-            letterSpacing: '0.2em'
-          }}>
-            PRESENTS
-          </h2>
-        </div>
 
         {/* QUIZ TRIVIA - New Font and Enhanced 3D Effect */}
         <div className="relative mb-12">
