@@ -13,7 +13,7 @@ export interface LeaderboardEntry {
 }
 
 // Fallback in-memory storage for development/testing
-let fallbackStorage: LeaderboardEntry[] = [];
+const fallbackStorage: LeaderboardEntry[] = [];
 
 export async function GET() {
   try {
@@ -98,7 +98,7 @@ export async function POST(request: Request) {
     if (!kv) {
       console.warn('⚠️ KV not available, using fallback storage');
       
-      // Use fallback storage
+      // Use fallback storage - we need to modify the array
       const existingIndex = fallbackStorage.findIndex(entry => entry.fid === fid);
       
       if (existingIndex !== -1) {
