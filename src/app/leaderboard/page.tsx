@@ -189,22 +189,68 @@ export default function PublicLeaderboard() {
               <div>Total Participants: {stats.totalParticipants}</div>
               <div>Last Updated: {stats.lastUpdated ? new Date(stats.lastUpdated).toLocaleString() : 'N/A'}</div>
               <div>Leaderboard Entries: {leaderboard.length}</div>
-              <button
-                onClick={async () => {
-                  try {
-                    const response = await fetch('/api/leaderboard');
-                    const data = await response.json();
-                    console.log('Debug API Response:', data);
-                    alert(`API Response: ${JSON.stringify(data, null, 2)}`);
-                  } catch (error) {
-                    console.error('Debug API Error:', error);
-                    alert(`API Error: ${error}`);
-                  }
-                }}
-                className="mt-2 bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600"
-              >
-                Test API
-              </button>
+              <div className="mt-4 space-x-2">
+                <button
+                  onClick={async () => {
+                    try {
+                      const response = await fetch('/api/leaderboard');
+                      const data = await response.json();
+                      console.log('Debug API Response:', data);
+                      alert(`API Response: ${JSON.stringify(data, null, 2)}`);
+                    } catch (error) {
+                      console.error('Debug API Error:', error);
+                      alert(`API Error: ${error}`);
+                    }
+                  }}
+                  className="bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600"
+                >
+                  Test API
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      const response = await fetch('/api/leaderboard', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'addTestData' })
+                      });
+                      const data = await response.json();
+                      console.log('Add Test Data Response:', data);
+                      alert(`Test Data Added: ${JSON.stringify(data, null, 2)}`);
+                      // Refresh the page to show new data
+                      window.location.reload();
+                    } catch (error) {
+                      console.error('Add Test Data Error:', error);
+                      alert(`Error: ${error}`);
+                    }
+                  }}
+                  className="bg-green-500 text-white px-3 py-1 rounded text-xs hover:bg-green-600"
+                >
+                  Add Test Data
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      const response = await fetch('/api/leaderboard', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'clearData' })
+                      });
+                      const data = await response.json();
+                      console.log('Clear Data Response:', data);
+                      alert(`Data Cleared: ${JSON.stringify(data, null, 2)}`);
+                      // Refresh the page to show cleared data
+                      window.location.reload();
+                    } catch (error) {
+                      console.error('Clear Data Error:', error);
+                      alert(`Error: ${error}`);
+                    }
+                  }}
+                  className="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600"
+                >
+                  Clear Data
+                </button>
+              </div>
             </div>
           </div>
         </div>

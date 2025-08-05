@@ -12,19 +12,20 @@ export interface LeaderboardEntry {
   rank?: number;
 }
 
-// Fallback in-memory storage for development/testing
-const fallbackStorage: LeaderboardEntry[] = [];
+// Global fallback storage that persists across requests
+let globalFallbackStorage: LeaderboardEntry[] = [];
 
 export async function GET() {
   try {
     console.log('🔍 Fetching leaderboard...');
+    console.log('📊 Global fallback storage has', globalFallbackStorage.length, 'entries');
     
     // Check if KV is available
     if (!kv) {
       console.warn('⚠️ KV not available, using fallback storage');
       return NextResponse.json({ 
-        leaderboard: fallbackStorage,
-        totalParticipants: fallbackStorage.length,
+        leaderboard: globalFallbackStorage,
+        totalParticipants: globalFallbackStorage.length,
         lastUpdated: new Date().toISOString(),
         storage: 'fallback'
       });
@@ -61,8 +62,8 @@ export async function GET() {
     console.error('❌ Failed to fetch leaderboard:', error);
     // Return fallback data instead of empty array
     return NextResponse.json({ 
-      leaderboard: fallbackStorage,
-      totalParticipants: fallbackStorage.length,
+      leaderboard: globalFallbackStorage,
+      totalParticipants: globalFallbackStorage.length,
       lastUpdated: new Date().toISOString(),
       storage: 'fallback-error'
     });
@@ -75,6 +76,7 @@ export async function POST(request: Request) {
     const { fid, username, displayName, pfpUrl, score, time } = body;
 
     console.log('📝 Submitting score:', { fid, username, score, time });
+    console.log('📊 Current global fallback storage has', globalFallbackStorage.length, 'entries');
 
     if (!fid || !username || score === undefined) {
       console.error('❌ Missing required fields:', { fid, username, score });
@@ -99,30 +101,34 @@ export async function POST(request: Request) {
       console.warn('⚠️ KV not available, using fallback storage');
       
       // Use fallback storage - we need to modify the array
-      const existingIndex = fallbackStorage.findIndex(entry => entry.fid === fid);
+      const existingIndex = globalFallbackStorage.findIndex(entry => entry.fid === fid);
       
       if (existingIndex !== -1) {
-        if (score > fallbackStorage[existingIndex].score) {
-          fallbackStorage[existingIndex] = newEntry;
+        if (score > globalFallbackStorage[existingIndex].score) {
+          globalFallbackStorage[existingIndex] = newEntry;
           console.log('🔄 Updated existing entry in fallback storage');
+        } else {
+          console.log('⏭️ New score not higher, keeping existing entry');
         }
       } else {
-        fallbackStorage.push(newEntry);
+        globalFallbackStorage.push(newEntry);
         console.log('➕ Added new entry to fallback storage');
       }
 
       // Sort fallback storage
-      fallbackStorage.sort((a, b) => {
+      globalFallbackStorage.sort((a, b) => {
         if (a.score !== b.score) {
           return b.score - a.score;
         }
         return a.completedAt - b.completedAt;
       });
 
-      const rankedFallback = fallbackStorage.map((entry, index) => ({
+      const rankedFallback = globalFallbackStorage.map((entry, index) => ({
         ...entry,
         rank: index + 1
       }));
+
+      console.log('📊 Fallback storage now has', globalFallbackStorage.length, 'entries');
 
       return NextResponse.json({ 
         success: true, 
@@ -195,24 +201,24 @@ export async function POST(request: Request) {
         completedAt: Date.now()
       };
 
-      const existingIndex = fallbackStorage.findIndex(entry => entry.fid === fid);
+      const existingIndex = globalFallbackStorage.findIndex(entry => entry.fid === fid);
       
       if (existingIndex !== -1) {
-        if (score > fallbackStorage[existingIndex].score) {
-          fallbackStorage[existingIndex] = newEntry;
+        if (score > globalFallbackStorage[existingIndex].score) {
+          globalFallbackStorage[existingIndex] = newEntry;
         }
       } else {
-        fallbackStorage.push(newEntry);
+        globalFallbackStorage.push(newEntry);
       }
 
-      fallbackStorage.sort((a, b) => {
+      globalFallbackStorage.sort((a, b) => {
         if (a.score !== b.score) {
           return b.score - a.score;
         }
         return a.completedAt - b.completedAt;
       });
 
-      const rankedFallback = fallbackStorage.map((entry, index) => ({
+      const rankedFallback = globalFallbackStorage.map((entry, index) => ({
         ...entry,
         rank: index + 1
       }));
@@ -235,5 +241,81 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
+  }
+} 
+
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json();
+    const { action, testData } = body;
+
+    if (action === 'addTestData') {
+      const testEntries: LeaderboardEntry[] = [
+        {
+          fid: 12345,
+          username: 'testuser1',
+          displayName: 'Test User 1',
+          pfpUrl: 'https://picsum.photos/32/32?random=1',
+          score: 4,
+          time: '2:15',
+          completedAt: Date.now() - 3600000 // 1 hour ago
+        },
+        {
+          fid: 67890,
+          username: 'testuser2',
+          displayName: 'Test User 2',
+          pfpUrl: 'https://picsum.photos/32/32?random=2',
+          score: 3,
+          time: '3:45',
+          completedAt: Date.now() - 7200000 // 2 hours ago
+        },
+        {
+          fid: 11111,
+          username: 'testuser3',
+          displayName: 'Test User 3',
+          pfpUrl: 'https://picsum.photos/32/32?random=3',
+          score: 2,
+          time: '4:20',
+          completedAt: Date.now() - 10800000 // 3 hours ago
+        }
+      ];
+
+      if (kv) {
+        // Add to KV
+        await kv.set('quiz_leaderboard', testEntries);
+        console.log('✅ Added test data to KV');
+      } else {
+        // Add to fallback storage
+        globalFallbackStorage.push(...testEntries);
+        console.log('✅ Added test data to fallback storage');
+      }
+
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Test data added successfully',
+        storage: kv ? 'kv' : 'fallback'
+      });
+    }
+
+    if (action === 'clearData') {
+      if (kv) {
+        await kv.del('quiz_leaderboard');
+        console.log('✅ Cleared KV data');
+      } else {
+        globalFallbackStorage.length = 0;
+        console.log('✅ Cleared fallback storage');
+      }
+
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Data cleared successfully',
+        storage: kv ? 'kv' : 'fallback'
+      });
+    }
+
+    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+  } catch (error) {
+    console.error('❌ Failed to handle test action:', error);
+    return NextResponse.json({ error: 'Failed to handle test action' }, { status: 500 });
   }
 } 
