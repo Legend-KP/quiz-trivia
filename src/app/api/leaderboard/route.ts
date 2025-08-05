@@ -9,6 +9,7 @@ export interface LeaderboardEntry {
   score: number;
   time: string;
   completedAt: number;
+  rank?: number;
 }
 
 export async function GET() {
@@ -30,11 +31,26 @@ export async function GET() {
       return a.completedAt - b.completedAt;
     });
 
-    return NextResponse.json({ leaderboard: sortedLeaderboard.slice(0, 10) });
+    // Add rank to each entry
+    const rankedLeaderboard = sortedLeaderboard.map((entry, index) => ({
+      ...entry,
+      rank: index + 1
+    }));
+
+    // Return all entries (not just top 10) for public viewing
+    return NextResponse.json({ 
+      leaderboard: rankedLeaderboard,
+      totalParticipants: rankedLeaderboard.length,
+      lastUpdated: new Date().toISOString()
+    });
   } catch (error) {
     console.error('Failed to fetch leaderboard:', error);
     // Return empty leaderboard instead of error to prevent app crashes
-    return NextResponse.json({ leaderboard: [] });
+    return NextResponse.json({ 
+      leaderboard: [],
+      totalParticipants: 0,
+      lastUpdated: new Date().toISOString()
+    });
   }
 }
 
@@ -94,12 +110,20 @@ export async function POST(request: Request) {
       return a.completedAt - b.completedAt;
     });
 
+    // Add rank to each entry
+    const rankedLeaderboard = sortedLeaderboard.map((entry, index) => ({
+      ...entry,
+      rank: index + 1
+    }));
+
     // Store updated leaderboard
-    await kv.set('quiz_leaderboard', sortedLeaderboard);
+    await kv.set('quiz_leaderboard', rankedLeaderboard);
 
     return NextResponse.json({ 
       success: true, 
-      leaderboard: sortedLeaderboard.slice(0, 10) 
+      leaderboard: rankedLeaderboard,
+      totalParticipants: rankedLeaderboard.length,
+      lastUpdated: new Date().toISOString()
     });
   } catch (error) {
     console.error('Failed to update leaderboard:', error);

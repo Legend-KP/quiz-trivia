@@ -523,8 +523,13 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
         {/* Leaderboard */}
         <div className="bg-white rounded-2xl p-8 shadow-2xl">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">🏆 Leaderboard</h2>
-            <p className="text-gray-600">Top Quiz Trivia Players</p>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">🏆 Public Leaderboard</h2>
+            <p className="text-gray-600">All Quiz Trivia Participants</p>
+            {!loading && (
+              <div className="mt-2 text-sm text-gray-500">
+                {leaderboard.length} participants • Last updated: {new Date().toLocaleString()}
+              </div>
+            )}
           </div>
 
           {loading ? (
@@ -532,8 +537,12 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
               <div className="spinner h-8 w-8 mx-auto mb-4"></div>
               <p className="text-gray-600">Loading leaderboard...</p>
             </div>
+          ) : leaderboard.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No participants yet. Be the first to complete the quiz!</p>
+            </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-96 overflow-y-auto">
               {leaderboard.map((player, index) => (
                 <div
                   key={player.fid}
@@ -545,14 +554,14 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
                 >
                   <div className="flex items-center space-x-4">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                      index === 0 ? 'bg-yellow-500 text-yellow-900' :
-                      index === 1 ? 'bg-gray-400 text-gray-900' :
-                      index === 2 ? 'bg-orange-500 text-orange-900' :
+                      player.rank === 1 ? 'bg-yellow-500 text-yellow-900' :
+                      player.rank === 2 ? 'bg-gray-400 text-gray-900' :
+                      player.rank === 3 ? 'bg-orange-500 text-orange-900' :
                       'bg-blue-500 text-blue-900'
                     }`}>
-                      {index === 0 ? '🥇' : 
-                       index === 1 ? '🥈' : 
-                       index === 2 ? '🥉' : index + 1}
+                      {player.rank === 1 ? '🥇' : 
+                       player.rank === 2 ? '🥈' : 
+                       player.rank === 3 ? '🥉' : player.rank}
                     </div>
                     <div className="flex items-center space-x-3">
                       {player.pfpUrl && (
@@ -567,12 +576,18 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
                           {player.displayName || player.username}
                         </div>
                         <div className="text-sm text-gray-500">@{player.username}</div>
+                        <div className="text-xs text-gray-400">
+                          Completed in {player.time}
+                        </div>
                       </div>
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="text-xl font-bold text-blue-600">{player.score}</div>
                     <div className="text-xs text-gray-500">points</div>
+                    <div className="text-xs text-gray-400">
+                      {new Date(player.completedAt).toLocaleDateString()}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -607,6 +622,20 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
               </div>
             </div>
           )}
+
+          {/* Share Leaderboard Button */}
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => {
+                const url = window.location.href;
+                navigator.clipboard.writeText(url);
+                alert('Leaderboard URL copied to clipboard!');
+              }}
+              className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200"
+            >
+              📋 Share Leaderboard
+            </button>
+          </div>
         </div>
       </div>
     </div>
