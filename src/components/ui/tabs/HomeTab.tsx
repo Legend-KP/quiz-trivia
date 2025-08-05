@@ -415,14 +415,21 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
   const totalTime = "2:30"; // This would be calculated from actual start/end times
 
   const fetchLeaderboard = useCallback(async () => {
+    console.log('🔍 Fetching leaderboard...');
     try {
       const response = await fetch('/api/leaderboard');
       const data = await response.json();
+      console.log('📥 Leaderboard response:', data);
+      
       if (data.leaderboard) {
+        console.log(`📊 Setting leaderboard with ${data.leaderboard.length} entries`);
         setLeaderboard(data.leaderboard);
+      } else {
+        console.warn('⚠️ No leaderboard data in response');
+        setLeaderboard([]);
       }
     } catch (error) {
-      console.error('Failed to fetch leaderboard:', error);
+      console.error('❌ Failed to fetch leaderboard:', error);
       // Set empty leaderboard on error to prevent crashes
       setLeaderboard([]);
     } finally {
@@ -431,37 +438,58 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
   }, []);
 
   const submitScore = useCallback(async () => {
-    if (!context?.user?.fid || submitted) return;
+    if (!context?.user?.fid || submitted) {
+      console.log('🚫 Skipping score submission:', { 
+        hasFid: !!context?.user?.fid, 
+        submitted, 
+        user: context?.user 
+      });
+      return;
+    }
+
+    console.log('📝 Starting score submission:', {
+      fid: context.user.fid,
+      username: context.user.username,
+      displayName: context.user.displayName,
+      score,
+      totalTime
+    });
 
     setSubmitting(true);
     try {
+      const payload = {
+        fid: context.user.fid,
+        username: context.user.username,
+        displayName: context.user.displayName,
+        pfpUrl: context.user.pfpUrl,
+        score: score,
+        time: totalTime,
+      };
+
+      console.log('📤 Sending payload:', payload);
+
       const response = await fetch('/api/leaderboard', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          fid: context.user.fid,
-          username: context.user.username,
-          displayName: context.user.displayName,
-          pfpUrl: context.user.pfpUrl,
-          score: score,
-          time: totalTime,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
+      console.log('📥 Response received:', data);
       
       if (response.ok && data.success) {
+        console.log('✅ Score submitted successfully');
         setLeaderboard(data.leaderboard || []);
         setSubmitted(true);
       } else {
-        console.warn('Score submission failed:', data.error);
+        console.warn('❌ Score submission failed:', data.error);
         // Still mark as submitted to prevent retries
         setSubmitted(true);
       }
     } catch (error) {
-      console.error('Failed to submit score:', error);
+      console.error('❌ Failed to submit score:', error);
       // Mark as submitted even on error to prevent infinite retries
       setSubmitted(true);
     } finally {

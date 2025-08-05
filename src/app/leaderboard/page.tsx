@@ -181,6 +181,32 @@ export default function PublicLeaderboard() {
               🚀 Take the Quiz
             </Link>
           </div>
+
+          {/* Debug Section */}
+          <div className="mt-8 p-4 bg-gray-100 rounded-lg">
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">🔧 Debug Info</h3>
+            <div className="text-sm text-gray-600 space-y-1">
+              <div>Total Participants: {stats.totalParticipants}</div>
+              <div>Last Updated: {stats.lastUpdated ? new Date(stats.lastUpdated).toLocaleString() : 'N/A'}</div>
+              <div>Leaderboard Entries: {leaderboard.length}</div>
+              <button
+                onClick={async () => {
+                  try {
+                    const response = await fetch('/api/leaderboard');
+                    const data = await response.json();
+                    console.log('Debug API Response:', data);
+                    alert(`API Response: ${JSON.stringify(data, null, 2)}`);
+                  } catch (error) {
+                    console.error('Debug API Error:', error);
+                    alert(`API Error: ${error}`);
+                  }
+                }}
+                className="mt-2 bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600"
+              >
+                Test API
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
