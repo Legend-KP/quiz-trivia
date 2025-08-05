@@ -13,7 +13,7 @@ export interface LeaderboardEntry {
 }
 
 // Global fallback storage that persists across requests
-let globalFallbackStorage: LeaderboardEntry[] = [];
+const globalFallbackStorage: LeaderboardEntry[] = [];
 
 export async function GET() {
   try {
@@ -247,7 +247,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { action, testData } = body;
+    const { action } = body;
 
     if (action === 'addTestData') {
       const testEntries: LeaderboardEntry[] = [
