@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Trophy, Users, Calendar, Clock } from 'lucide-react';
+import Link from 'next/link';
 
 interface LeaderboardEntry {
   fid: number;
@@ -100,12 +101,12 @@ export default function PublicLeaderboard() {
           ) : leaderboard.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-gray-500">No participants yet. Be the first to complete the quiz!</p>
-              <a 
+              <Link 
                 href="/" 
                 className="mt-4 inline-block bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-2 px-6 rounded-lg hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200"
               >
                 Take the Quiz
-              </a>
+              </Link>
             </div>
           ) : (
             <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -173,12 +174,12 @@ export default function PublicLeaderboard() {
             >
               📋 Share Leaderboard
             </button>
-            <a 
+            <Link 
               href="/" 
               className="inline-block bg-gradient-to-r from-green-500 to-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200"
             >
               🚀 Take the Quiz
-            </a>
+            </Link>
           </div>
         </div>
       </div>

@@ -664,7 +664,7 @@ export default function QuizTriviaApp() {
     setShowRules(false);
   };
 
-  const handleQuizComplete = (score: number, answers: Answer[], time: string) => {
+  const handleQuizComplete = (score: number, answers: Answer[], _time: string) => {
     setFinalScore(score);
     setFinalAnswers(answers);
     setCurrentScreen('results');

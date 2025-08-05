@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useMiniApp } from "@neynar/react";
-import { HomeTab, ActionsTab, ContextTab, WalletTab } from "~/components/ui/tabs";
+import { HomeTab } from "~/components/ui/tabs";
 
 // --- Types ---
 export enum Tab {
