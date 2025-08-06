@@ -36,7 +36,7 @@ export async function GET() {
     console.log(`📊 Retrieved ${leaderboard.length} entries from KV`);
     
     // Sort by score (descending) and then by completion time (ascending)
-    const sortedLeaderboard = leaderboard.sort((a, b) => {
+    const sortedLeaderboard = leaderboard.sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
       if (a.score !== b.score) {
         return b.score - a.score;
       }
@@ -44,7 +44,7 @@ export async function GET() {
     });
 
     // Add rank to each entry
-    const rankedLeaderboard = sortedLeaderboard.map((entry, index) => ({
+    const rankedLeaderboard = sortedLeaderboard.map((entry: LeaderboardEntry, index: number) => ({
       ...entry,
       rank: index + 1
     }));
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
       console.warn('⚠️ KV not available, using fallback storage');
       
       // Use fallback storage - we need to modify the array
-      const existingIndex = globalFallbackStorage.findIndex(entry => entry.fid === fid);
+      const existingIndex = globalFallbackStorage.findIndex((entry: LeaderboardEntry) => entry.fid === fid);
       
       if (existingIndex !== -1) {
         if (score > globalFallbackStorage[existingIndex].score) {
@@ -116,14 +116,14 @@ export async function POST(request: Request) {
       }
 
       // Sort fallback storage
-      globalFallbackStorage.sort((a, b) => {
+      globalFallbackStorage.sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
         if (a.score !== b.score) {
           return b.score - a.score;
         }
         return a.completedAt - b.completedAt;
       });
 
-      const rankedFallback = globalFallbackStorage.map((entry, index) => ({
+      const rankedFallback = globalFallbackStorage.map((entry: LeaderboardEntry, index: number) => ({
         ...entry,
         rank: index + 1
       }));
@@ -144,7 +144,7 @@ export async function POST(request: Request) {
     console.log(`📊 Current KV leaderboard has ${leaderboard.length} entries`);
     
     // Check if user already has an entry
-    const existingIndex = leaderboard.findIndex(entry => entry.fid === fid);
+    const existingIndex = leaderboard.findIndex((entry: LeaderboardEntry) => entry.fid === fid);
     
     if (existingIndex !== -1) {
       // Update existing entry if new score is higher
@@ -161,7 +161,7 @@ export async function POST(request: Request) {
     }
 
     // Sort by score (descending) and then by completion time (ascending)
-    const sortedLeaderboard = leaderboard.sort((a, b) => {
+    const sortedLeaderboard = leaderboard.sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
       if (a.score !== b.score) {
         return b.score - a.score;
       }
@@ -169,7 +169,7 @@ export async function POST(request: Request) {
     });
 
     // Add rank to each entry
-    const rankedLeaderboard = sortedLeaderboard.map((entry, index) => ({
+    const rankedLeaderboard = sortedLeaderboard.map((entry: LeaderboardEntry, index: number) => ({
       ...entry,
       rank: index + 1
     }));
@@ -201,7 +201,7 @@ export async function POST(request: Request) {
         completedAt: Date.now()
       };
 
-      const existingIndex = globalFallbackStorage.findIndex(entry => entry.fid === fid);
+      const existingIndex = globalFallbackStorage.findIndex((entry: LeaderboardEntry) => entry.fid === fid);
       
       if (existingIndex !== -1) {
         if (score > globalFallbackStorage[existingIndex].score) {
@@ -211,14 +211,14 @@ export async function POST(request: Request) {
         globalFallbackStorage.push(newEntry);
       }
 
-      globalFallbackStorage.sort((a, b) => {
+      globalFallbackStorage.sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
         if (a.score !== b.score) {
           return b.score - a.score;
         }
         return a.completedAt - b.completedAt;
       });
 
-      const rankedFallback = globalFallbackStorage.map((entry, index) => ({
+      const rankedFallback = globalFallbackStorage.map((entry: LeaderboardEntry, index: number) => ({
         ...entry,
         rank: index + 1
       }));
