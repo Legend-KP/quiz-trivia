@@ -1,6 +1,19 @@
 import { NextResponse } from 'next/server';
 import { kv } from '@vercel/kv';
-import { getLeaderboardCollection, LeaderboardEntry } from '../../../lib/mongodb';
+import { MongoClient } from 'mongodb';
+
+export interface LeaderboardEntry {
+  fid: number;
+  username: string;
+  displayName?: string;
+  pfpUrl?: string;
+  score: number;
+  time: string;
+  completedAt: number;
+  rank?: number;
+}
+
+const uri = 'mongodb+srv://kushal5paliwal:YctdHl3XZoCEMLwg@cluster0.alffzye.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 
 // Global fallback storage that persists across requests
 const globalFallbackStorage: LeaderboardEntry[] = [];
@@ -11,7 +24,14 @@ export async function GET() {
     
     // Try MongoDB first
     try {
-      const collection = await getLeaderboardCollection();
+      console.log('🔌 Connecting to MongoDB...');
+      const client = new MongoClient(uri);
+      await client.connect();
+      console.log('✅ MongoDB connected successfully');
+      
+      const db = client.db('quiz_trivia');
+      const collection = db.collection<LeaderboardEntry>('leaderboard');
+      
       const leaderboard = await collection.find({}).toArray();
       console.log(`📊 Retrieved ${leaderboard.length} entries from MongoDB`);
 
@@ -30,6 +50,8 @@ export async function GET() {
       }));
 
       console.log(`🏆 Returning ${rankedLeaderboard.length} ranked entries from MongoDB`);
+      
+      await client.close();
 
       return NextResponse.json({ 
         leaderboard: rankedLeaderboard,
@@ -116,7 +138,13 @@ export async function POST(request: Request) {
 
     // Try MongoDB first
     try {
-      const collection = await getLeaderboardCollection();
+      console.log('🔌 Connecting to MongoDB...');
+      const client = new MongoClient(uri);
+      await client.connect();
+      console.log('✅ MongoDB connected successfully');
+      
+      const db = client.db('quiz_trivia');
+      const collection = db.collection<LeaderboardEntry>('leaderboard');
       // Upsert: update if fid exists, otherwise insert
       await collection.updateOne(
         { fid },
@@ -138,6 +166,8 @@ export async function POST(request: Request) {
         rank: index + 1
       }));
       
+      await client.close();
+
       return NextResponse.json({
         success: true,
         leaderboard: rankedLeaderboard,
@@ -240,9 +270,14 @@ export async function PUT(request: Request) {
 
     if (action === 'testMongoDB') {
       try {
-        const collection = await getLeaderboardCollection();
-        console.log('✅ MongoDB connection successful');
+        console.log('🔌 Connecting to MongoDB...');
+        const client = new MongoClient(uri);
+        await client.connect();
+        console.log('✅ MongoDB connected successfully');
         
+        const db = client.db('quiz_trivia');
+        const collection = db.collection<LeaderboardEntry>('leaderboard');
+
         // Test inserting a document
         const testEntry: LeaderboardEntry = {
           fid: 99999,
@@ -263,6 +298,8 @@ export async function PUT(request: Request) {
         const count = await collection.countDocuments();
         console.log(`✅ MongoDB test successful. Collection has ${count} documents`);
         
+        await client.close();
+
         return NextResponse.json({ 
           success: true, 
           message: 'MongoDB connection and write test successful',
@@ -311,7 +348,13 @@ export async function PUT(request: Request) {
 
       // Try MongoDB first
       try {
-        const collection = await getLeaderboardCollection();
+        console.log('🔌 Connecting to MongoDB...');
+        const client = new MongoClient(uri);
+        await client.connect();
+        console.log('✅ MongoDB connected successfully');
+        
+        const db = client.db('quiz_trivia');
+        const collection = db.collection<LeaderboardEntry>('leaderboard');
         for (const entry of testEntries) {
           await collection.updateOne(
             { fid: entry.fid },
@@ -320,6 +363,7 @@ export async function PUT(request: Request) {
           );
         }
         console.log('✅ Added test data to MongoDB');
+        await client.close();
         return NextResponse.json({ 
           success: true, 
           message: 'Test data added successfully to MongoDB',
@@ -357,9 +401,16 @@ export async function PUT(request: Request) {
     if (action === 'clearData') {
       // Try MongoDB first
       try {
-        const collection = await getLeaderboardCollection();
+        console.log('🔌 Connecting to MongoDB...');
+        const client = new MongoClient(uri);
+        await client.connect();
+        console.log('✅ MongoDB connected successfully');
+        
+        const db = client.db('quiz_trivia');
+        const collection = db.collection<LeaderboardEntry>('leaderboard');
         await collection.deleteMany({});
         console.log('✅ Cleared MongoDB data');
+        await client.close();
         return NextResponse.json({ 
           success: true, 
           message: 'Data cleared successfully from MongoDB',
