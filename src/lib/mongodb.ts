@@ -19,10 +19,30 @@ let client: MongoClient | null = null;
 let db: Db | null = null;
 
 export async function getLeaderboardCollection(): Promise<Collection<LeaderboardEntry>> {
-  if (!client) {
-    client = new MongoClient(uri);
-    await client.connect();
-    db = client.db(dbName);
+  try {
+    console.log('🔌 Attempting MongoDB connection...');
+    
+    if (!client) {
+      console.log('📡 Creating new MongoDB client...');
+      client = new MongoClient(uri);
+      await client.connect();
+      console.log('✅ MongoDB client connected successfully');
+      db = client.db(dbName);
+      console.log(`📊 Connected to database: ${dbName}`);
+    } else {
+      console.log('♻️ Reusing existing MongoDB client');
+    }
+    
+    const collection = db!.collection<LeaderboardEntry>(collectionName);
+    console.log(`📋 Using collection: ${collectionName}`);
+    
+    // Test the connection by counting documents
+    const count = await collection.countDocuments();
+    console.log(`📊 Collection has ${count} documents`);
+    
+    return collection;
+  } catch (error) {
+    console.error('❌ MongoDB connection failed:', error);
+    throw error;
   }
-  return db!.collection<LeaderboardEntry>(collectionName);
 }
