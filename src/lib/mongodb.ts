@@ -33,7 +33,11 @@ export async function getLeaderboardCollection(): Promise<Collection<Leaderboard
       console.log('♻️ Reusing existing MongoDB client');
     }
     
-    const collection = db!.collection<LeaderboardEntry>(collectionName);
+    if (!db) {
+      throw new Error('Database connection failed - db is null');
+    }
+    
+    const collection = db.collection<LeaderboardEntry>(collectionName);
     console.log(`📋 Using collection: ${collectionName}`);
     
     // Test the connection by counting documents
@@ -43,6 +47,9 @@ export async function getLeaderboardCollection(): Promise<Collection<Leaderboard
     return collection;
   } catch (error) {
     console.error('❌ MongoDB connection failed:', error);
+    // Reset the connection state so we can try again
+    client = null;
+    db = null;
     throw error;
   }
 }
