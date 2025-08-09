@@ -108,7 +108,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Failed to update leaderboard', leaderboard: [] }, { status: 500 });
     }
   }
-} 
+}
 
 export async function PUT(request: Request) {
   try {
@@ -117,15 +117,7 @@ export async function PUT(request: Request) {
 
     if (action === 'testMongoDB') {
       try {
-        console.log('🔌 Connecting to MongoDB...');
-        const client = new MongoClient(uri);
-        await client.connect();
-        console.log('✅ MongoDB connected successfully');
-        
-        const db = client.db('quiz_trivia');
-        const collection = db.collection<LeaderboardEntry>('leaderboard');
-
-        // Test inserting a document
+        const collection = await getLeaderboardCollection();
         const testEntry: LeaderboardEntry = {
           fid: 99999,
           username: 'testuser',
@@ -133,166 +125,46 @@ export async function PUT(request: Request) {
           pfpUrl: 'https://picsum.photos/32/32?random=999',
           score: 5,
           time: '1:30',
-          completedAt: Date.now()
+          completedAt: Date.now(),
         };
-        
-        await collection.updateOne(
-          { fid: testEntry.fid },
-          { $set: testEntry },
-          { upsert: true }
-        );
-        
+        await collection.updateOne({ fid: testEntry.fid }, { $set: testEntry }, { upsert: true });
         const count = await collection.countDocuments();
-        console.log(`✅ MongoDB test successful. Collection has ${count} documents`);
-        
-        await client.close();
-
-        return NextResponse.json({ 
-          success: true, 
-          message: 'MongoDB connection and write test successful',
-          documentCount: count
-        });
+        return NextResponse.json({ success: true, message: 'MongoDB test OK', documentCount: count });
       } catch (error) {
-        console.error('❌ MongoDB test failed:', error);
-        return NextResponse.json({ 
-          success: false, 
-          error: 'MongoDB test failed',
-          details: error instanceof Error ? error.message : 'Unknown error'
-        }, { status: 500 });
+        return NextResponse.json({ success: false, error: 'MongoDB test failed' }, { status: 500 });
       }
     }
 
     if (action === 'addTestData') {
       const testEntries: LeaderboardEntry[] = [
-        {
-          fid: 12345,
-          username: 'testuser1',
-          displayName: 'Test User 1',
-          pfpUrl: 'https://picsum.photos/32/32?random=1',
-          score: 4,
-          time: '2:15',
-          completedAt: Date.now() - 3600000 // 1 hour ago
-        },
-        {
-          fid: 67890,
-          username: 'testuser2',
-          displayName: 'Test User 2',
-          pfpUrl: 'https://picsum.photos/32/32?random=2',
-          score: 3,
-          time: '3:45',
-          completedAt: Date.now() - 7200000 // 2 hours ago
-        },
-        {
-          fid: 11111,
-          username: 'testuser3',
-          displayName: 'Test User 3',
-          pfpUrl: 'https://picsum.photos/32/32?random=3',
-          score: 2,
-          time: '4:20',
-          completedAt: Date.now() - 10800000 // 3 hours ago
-        }
+        { fid: 12345, username: 'testuser1', displayName: 'Test User 1', pfpUrl: 'https://picsum.photos/32/32?random=1', score: 4, time: '2:15', completedAt: Date.now() - 3600000 },
+        { fid: 67890, username: 'testuser2', displayName: 'Test User 2', pfpUrl: 'https://picsum.photos/32/32?random=2', score: 3, time: '3:45', completedAt: Date.now() - 7200000 },
+        { fid: 11111, username: 'testuser3', displayName: 'Test User 3', pfpUrl: 'https://picsum.photos/32/32?random=3', score: 2, time: '4:20', completedAt: Date.now() - 10800000 },
       ];
-
-      // Try MongoDB first
       try {
-        console.log('🔌 Connecting to MongoDB...');
-        const client = new MongoClient(uri);
-        await client.connect();
-        console.log('✅ MongoDB connected successfully');
-        
-        const db = client.db('quiz_trivia');
-        const collection = db.collection<LeaderboardEntry>('leaderboard');
+        const collection = await getLeaderboardCollection();
         for (const entry of testEntries) {
-          await collection.updateOne(
-            { fid: entry.fid },
-            { $set: entry },
-            { upsert: true }
-          );
+          await collection.updateOne({ fid: entry.fid }, { $set: entry }, { upsert: true });
         }
-        console.log('✅ Added test data to MongoDB');
-        await client.close();
-        return NextResponse.json({ 
-          success: true, 
-          message: 'Test data added successfully to MongoDB',
-          storage: 'mongodb'
-        });
+        return NextResponse.json({ success: true, message: 'Test data added to MongoDB', storage: 'mongodb' });
       } catch (error) {
-        console.error('❌ Failed to add test data to MongoDB:', error);
-        
-        // Fallback to KV
-        if (kv) {
-          try {
-            await kv.set('quiz_leaderboard', testEntries);
-            console.log('✅ Added test data to KV');
-            return NextResponse.json({ 
-              success: true, 
-              message: 'Test data added successfully to KV',
-              storage: 'kv'
-            });
-          } catch (kvError) {
-            console.error('❌ KV also failed:', kvError);
-          }
-        }
-        
-        // Final fallback
-        globalFallbackStorage.push(...testEntries);
-        console.log('✅ Added test data to fallback storage');
-        return NextResponse.json({ 
-          success: true, 
-          message: 'Test data added successfully to fallback storage',
-          storage: 'fallback'
-        });
+        return NextResponse.json({ success: false, error: 'Failed to add test data' }, { status: 500 });
       }
     }
 
     if (action === 'clearData') {
-      // Try MongoDB first
       try {
-        console.log('🔌 Connecting to MongoDB...');
-        const client = new MongoClient(uri);
-        await client.connect();
-        console.log('✅ MongoDB connected successfully');
-        
-        const db = client.db('quiz_trivia');
-        const collection = db.collection<LeaderboardEntry>('leaderboard');
+        const collection = await getLeaderboardCollection();
         await collection.deleteMany({});
-        console.log('✅ Cleared MongoDB data');
-        await client.close();
-        return NextResponse.json({ 
-          success: true, 
-          message: 'Data cleared successfully from MongoDB',
-          storage: 'mongodb'
-        });
+        return NextResponse.json({ success: true, message: 'Data cleared from MongoDB', storage: 'mongodb' });
       } catch (error) {
-        console.error('❌ Failed to clear MongoDB data:', error);
-        
-        if (kv) {
-          try {
-            await kv.del('quiz_leaderboard');
-            console.log('✅ Cleared KV data');
-            return NextResponse.json({ 
-              success: true, 
-              message: 'Data cleared successfully from KV',
-              storage: 'kv'
-            });
-          } catch (kvError) {
-            console.error('❌ KV also failed:', kvError);
-          }
-        }
-        
         globalFallbackStorage.length = 0;
-        console.log('✅ Cleared fallback storage');
-        return NextResponse.json({ 
-          success: true, 
-          message: 'Data cleared successfully from fallback storage',
-          storage: 'fallback'
-        });
+        return NextResponse.json({ success: true, message: 'Data cleared from fallback', storage: 'fallback' });
       }
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
-    console.error('❌ Failed to handle test action:', error);
-    return NextResponse.json({ error: 'Failed to handle test action' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to handle action' }, { status: 500 });
   }
 } 
