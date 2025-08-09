@@ -1,113 +1,42 @@
 import { NextResponse } from 'next/server';
-import { kv } from '@vercel/kv';
-import { MongoClient } from 'mongodb';
+import { getLeaderboardCollection, LeaderboardEntry } from '../../../lib/mongodb';
 
-export interface LeaderboardEntry {
-  fid: number;
-  username: string;
-  displayName?: string;
-  pfpUrl?: string;
-  score: number;
-  time: string;
-  completedAt: number;
-  rank?: number;
-}
+export const runtime = 'nodejs';
 
-const uri = 'mongodb+srv://kushal5paliwal:YctdHl3XZoCEMLwg@cluster0.alffzye.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
-
-// Global fallback storage that persists across requests
+// Global fallback storage that persists across requests (only for local/dev emergency)
 const globalFallbackStorage: LeaderboardEntry[] = [];
 
 export async function GET() {
   try {
-    console.log('🔍 Fetching leaderboard...');
-    
     // Try MongoDB first
-    try {
-      console.log('🔌 Connecting to MongoDB...');
-      const client = new MongoClient(uri);
-      await client.connect();
-      console.log('✅ MongoDB connected successfully');
-      
-      const db = client.db('quiz_trivia');
-      const collection = db.collection<LeaderboardEntry>('leaderboard');
-      
-      const leaderboard = await collection.find({}).toArray();
-      console.log(`📊 Retrieved ${leaderboard.length} entries from MongoDB`);
+    const collection = await getLeaderboardCollection();
+    const leaderboard = await collection.find({}).toArray();
 
-      // Sort by score (descending) and then by completion time (ascending)
-      const sortedLeaderboard = leaderboard.sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
-        if (a.score !== b.score) {
-          return b.score - a.score;
-        }
-        return a.completedAt - b.completedAt;
-      });
-
-      // Add rank to each entry
-      const rankedLeaderboard = sortedLeaderboard.map((entry: LeaderboardEntry, index: number) => ({
-        ...entry,
-        rank: index + 1
-      }));
-
-      console.log(`🏆 Returning ${rankedLeaderboard.length} ranked entries from MongoDB`);
-      
-      await client.close();
-
-      return NextResponse.json({ 
-        leaderboard: rankedLeaderboard,
-        totalParticipants: rankedLeaderboard.length,
-        lastUpdated: new Date().toISOString(),
-        storage: 'mongodb'
-      });
-    } catch (mongodbError) {
-      console.error('❌ MongoDB failed, trying fallback:', mongodbError);
-      
-      // Fallback to KV
-      if (kv) {
-        try {
-          const leaderboard = await kv.get<LeaderboardEntry[]>('quiz_leaderboard') || [];
-          console.log(`📊 Retrieved ${leaderboard.length} entries from KV`);
-          
-          const sortedLeaderboard = leaderboard.sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
-            if (a.score !== b.score) {
-              return b.score - a.score;
-            }
-            return a.completedAt - b.completedAt;
-          });
-          
-          const rankedLeaderboard = sortedLeaderboard.map((entry: LeaderboardEntry, index: number) => ({
-            ...entry,
-            rank: index + 1
-          }));
-          
-          return NextResponse.json({ 
-            leaderboard: rankedLeaderboard,
-            totalParticipants: rankedLeaderboard.length,
-            lastUpdated: new Date().toISOString(),
-            storage: 'kv'
-          });
-        } catch (kvError) {
-          console.error('❌ KV also failed:', kvError);
-        }
-      }
-      
-      // Final fallback to global storage
-      console.warn('⚠️ Using fallback storage');
-      return NextResponse.json({ 
-        leaderboard: globalFallbackStorage,
-        totalParticipants: globalFallbackStorage.length,
-        lastUpdated: new Date().toISOString(),
-        storage: 'fallback'
-      });
-    }
-  } catch (error) {
-    console.error('❌ Complete failure in GET:', error);
-    return NextResponse.json({ 
-      leaderboard: [],
-      totalParticipants: 0,
-      lastUpdated: new Date().toISOString(),
-      storage: 'error'
+    const sortedLeaderboard = leaderboard.sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
+      if (a.score !== b.score) return b.score - a.score;
+      return a.completedAt - b.completedAt;
     });
+
+    const rankedLeaderboard = sortedLeaderboard.map((entry: LeaderboardEntry, index: number) => ({
+      ...entry,
+      rank: index + 1,
+    }));
+
+    return NextResponse.json({
+      leaderboard: rankedLeaderboard,
+      totalParticipants: rankedLeaderboard.length,
+      lastUpdated: new Date().toISOString(),
+      storage: 'mongodb',
+    });
+  } catch (mongodbError) {
+    console.error('MongoDB GET failed:', mongodbError);
+    return NextResponse.json({
+      leaderboard: globalFallbackStorage,
+      totalParticipants: globalFallbackStorage.length,
+      lastUpdated: new Date().toISOString(),
+      storage: 'fallback',
+      error: 'MongoDB GET failed',
+    }, { status: 200 });
   }
 }
 
@@ -116,14 +45,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { fid, username, displayName, pfpUrl, score, time } = body;
 
-    console.log('📝 Submitting score:', { fid, username, score, time });
-
     if (!fid || !username || score === undefined) {
-      console.error('❌ Missing required fields:', { fid, username, score });
-      return NextResponse.json(
-        { error: 'Missing required fields: fid, username, score' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing required fields: fid, username, score' }, { status: 400 });
     }
 
     const newEntry: LeaderboardEntry = {
@@ -133,133 +56,57 @@ export async function POST(request: Request) {
       pfpUrl,
       score,
       time,
-      completedAt: Date.now()
+      completedAt: Date.now(),
     };
 
-    // Try MongoDB first
-    try {
-      console.log('🔌 Connecting to MongoDB...');
-      const client = new MongoClient(uri);
-      await client.connect();
-      console.log('✅ MongoDB connected successfully');
-      
-      const db = client.db('quiz_trivia');
-      const collection = db.collection<LeaderboardEntry>('leaderboard');
-      // Upsert: update if fid exists, otherwise insert
-      await collection.updateOne(
-        { fid },
-        { $set: newEntry },
-        { upsert: true }
-      );
-      console.log('✅ Successfully saved to MongoDB');
-      
-      // Fetch updated leaderboard
-      const leaderboard = await collection.find({}).toArray();
-      const sortedLeaderboard = leaderboard.sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
-        if (a.score !== b.score) {
-          return b.score - a.score;
-        }
-        return a.completedAt - b.completedAt;
-      });
-      const rankedLeaderboard = sortedLeaderboard.map((entry: LeaderboardEntry, index: number) => ({
-        ...entry,
-        rank: index + 1
-      }));
-      
-      await client.close();
+    const collection = await getLeaderboardCollection();
+    await collection.updateOne({ fid }, { $set: newEntry }, { upsert: true });
 
-      return NextResponse.json({
-        success: true,
-        leaderboard: rankedLeaderboard,
-        totalParticipants: rankedLeaderboard.length,
-        lastUpdated: new Date().toISOString(),
-        storage: 'mongodb'
-      });
-    } catch (mongodbError) {
-      console.error('❌ MongoDB failed, trying fallback:', mongodbError);
-      
-      // Fallback to KV
-      if (kv) {
-        try {
-          const leaderboard = await kv.get<LeaderboardEntry[]>('quiz_leaderboard') || [];
-          const existingIndex = leaderboard.findIndex(entry => entry.fid === fid);
-          
-          if (existingIndex !== -1) {
-            if (score > leaderboard[existingIndex].score) {
-              leaderboard[existingIndex] = newEntry;
-            }
-          } else {
-            leaderboard.push(newEntry);
-          }
-          
-          await kv.set('quiz_leaderboard', leaderboard);
-          console.log('✅ Successfully saved to KV');
-          
-          const sortedLeaderboard = leaderboard.sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
-            if (a.score !== b.score) {
-              return b.score - a.score;
-            }
-            return a.completedAt - b.completedAt;
-          });
-          
-          const rankedLeaderboard = sortedLeaderboard.map((entry: LeaderboardEntry, index: number) => ({
-            ...entry,
-            rank: index + 1
-          }));
-          
-          return NextResponse.json({
-            success: true,
-            leaderboard: rankedLeaderboard,
-            totalParticipants: rankedLeaderboard.length,
-            lastUpdated: new Date().toISOString(),
-            storage: 'kv'
-          });
-        } catch (kvError) {
-          console.error('❌ KV also failed:', kvError);
-        }
-      }
-      
-      // Final fallback to global storage
-      const existingIndex = globalFallbackStorage.findIndex(entry => entry.fid === fid);
-      
+    const leaderboard = await collection.find({}).toArray();
+    const sortedLeaderboard = leaderboard.sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
+      if (a.score !== b.score) return b.score - a.score;
+      return a.completedAt - b.completedAt;
+    });
+    const rankedLeaderboard = sortedLeaderboard.map((entry: LeaderboardEntry, index: number) => ({
+      ...entry,
+      rank: index + 1,
+    }));
+
+    return NextResponse.json({
+      success: true,
+      leaderboard: rankedLeaderboard,
+      totalParticipants: rankedLeaderboard.length,
+      lastUpdated: new Date().toISOString(),
+      storage: 'mongodb',
+    });
+  } catch (mongodbError) {
+    console.error('MongoDB POST failed:', mongodbError);
+
+    // Fallback to in-memory only as a last resort (non-persistent)
+    try {
+      const { fid, username, displayName, pfpUrl, score, time } = await request.json();
+      const newEntry: LeaderboardEntry = { fid, username, displayName, pfpUrl, score, time, completedAt: Date.now() };
+
+      const existingIndex = globalFallbackStorage.findIndex((entry) => entry.fid === fid);
       if (existingIndex !== -1) {
-        if (score > globalFallbackStorage[existingIndex].score) {
-          globalFallbackStorage[existingIndex] = newEntry;
-        }
+        if (score > globalFallbackStorage[existingIndex].score) globalFallbackStorage[existingIndex] = newEntry;
       } else {
         globalFallbackStorage.push(newEntry);
       }
 
-      globalFallbackStorage.sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
-        if (a.score !== b.score) {
-          return b.score - a.score;
-        }
-        return a.completedAt - b.completedAt;
-      });
+      globalFallbackStorage.sort((a, b) => (a.score !== b.score ? b.score - a.score : a.completedAt - b.completedAt));
+      const rankedFallback = globalFallbackStorage.map((entry, index) => ({ ...entry, rank: index + 1 }));
 
-      const rankedFallback = globalFallbackStorage.map((entry: LeaderboardEntry, index: number) => ({
-        ...entry,
-        rank: index + 1
-      }));
-
-      return NextResponse.json({ 
-        success: true, 
+      return NextResponse.json({
+        success: true,
         leaderboard: rankedFallback,
         totalParticipants: rankedFallback.length,
         lastUpdated: new Date().toISOString(),
-        storage: 'fallback'
+        storage: 'fallback',
       });
+    } catch (fallbackError) {
+      return NextResponse.json({ success: false, error: 'Failed to update leaderboard', leaderboard: [] }, { status: 500 });
     }
-  } catch (error) {
-    console.error('❌ Complete failure in POST:', error);
-    return NextResponse.json(
-      { 
-        success: false,
-        error: 'Failed to update leaderboard',
-        leaderboard: [] 
-      },
-      { status: 500 }
-    );
   }
 } 
 
