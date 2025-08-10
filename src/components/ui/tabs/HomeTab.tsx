@@ -290,11 +290,15 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
       <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4 flex items-center justify-center">
         <div className="max-w-md mx-auto text-center">
           <div className="bg-white rounded-2xl p-8 shadow-2xl">
+            <Clock className="mx-auto mb-4 text-blue-500" size={48} />
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              Next Question In:
+            </h2>
             <div className="text-4xl font-bold text-blue-600 mb-4">
-              Loading...
+              {formatWaitTime(nextQuestionTime)}
             </div>
             <p className="text-gray-600">
-              Preparing next question
+              Question {currentQuestion + 2} of {quizData.length}
             </p>
             <div className="mt-6 p-4 bg-blue-50 rounded-lg">
               <p className="text-blue-800 font-semibold">Current Score: {score}</p>
