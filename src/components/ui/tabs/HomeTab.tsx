@@ -60,7 +60,7 @@ const quizData: QuizQuestion[] = [
     question: "What is the smallest unit of Ether called?",
     options: ["Gwei", "Satoshi", "Finney", "Wei"],
     correct: 3, // 0-based index for "Wei" (4th option)
-    timeLimit: 60, // 5 minutes in seconds
+    timeLimit: 60, // 1 minute in seconds
     explanation: "Wei is the smallest denomination of Ether, just like a cent is to a dollar."
   },
   {
@@ -113,7 +113,7 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
           
           <div className="flex items-start space-x-3">
             <span className="text-blue-500 font-bold">2️⃣</span>
-            <p>You&apos;ll get 5 minutes per question – so think fast! ⏳</p>
+            <p>You&apos;ll get 1 minute per question – so think fast! ⏳</p>
           </div>
           
           <div className="flex items-start space-x-3">
@@ -232,23 +232,15 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
       const timer = setTimeout(() => setNextQuestionTime(nextQuestionTime - 1), 1000);
       return () => clearTimeout(timer);
     } else if (nextQuestionTime === 0) {
-      // Move to next question or complete quiz
-      if (currentQuestion < quizData.length - 1) {
-        // Move to next question
-        setCurrentQuestion(currentQuestion + 1);
-        setTimeLeft(quizData[currentQuestion + 1].timeLimit);
-        setSelectedAnswer(null);
-        setShowResult(false);
-        setWaitingForNext(false);
-        setNextQuestionTime(null);
-      } else {
-        // Quiz is complete - calculate total time and show results
-        const totalTime = Math.floor((Date.now() - startTime) / 1000);
-        const timeString = `${Math.floor(totalTime / 60)}:${(totalTime % 60).toString().padStart(2, '0')}`;
-        onComplete(score, answers, timeString);
-      }
+      // Move to next question (this will only happen for non-last questions)
+      setCurrentQuestion(currentQuestion + 1);
+      setTimeLeft(quizData[currentQuestion + 1].timeLimit);
+      setSelectedAnswer(null);
+      setShowResult(false);
+      setWaitingForNext(false);
+      setNextQuestionTime(null);
     }
-  }, [nextQuestionTime, currentQuestion, score, answers, onComplete, startTime]);
+  }, [nextQuestionTime, currentQuestion, startTime]);
 
   const handleAnswerSubmit = (answerIndex: number | null) => {
     const question = quizData[currentQuestion];
@@ -266,11 +258,26 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
     setSelectedAnswer(answerIndex);
     setShowResult(true);
 
-    // Start 30-minute countdown for next question (using 30 seconds for demo)
-    setTimeout(() => {
-      setWaitingForNext(true);
-      setNextQuestionTime(30); // 1800 seconds = 30 minutes (using 30 for demo)
-    }, 3000);
+    // Check if this is the last question
+    if (currentQuestion === quizData.length - 1) {
+      // This is the last question, complete the quiz after showing result
+      setTimeout(() => {
+        const totalTime = Math.floor((Date.now() - startTime) / 1000);
+        const timeString = `${Math.floor(totalTime / 60)}:${(totalTime % 60).toString().padStart(2, '0')}`;
+        onComplete(newScore, [...answers, {
+          questionId: question.id,
+          selectedAnswer: answerIndex,
+          correct: question.correct,
+          isCorrect
+        }], timeString);
+      }, 3000);
+    } else {
+      // Start countdown for next question (using 10 seconds for demo)
+      setTimeout(() => {
+        setWaitingForNext(true);
+        setNextQuestionTime(10); // 1800 seconds = 30 minutes (using 10 for demo)
+      }, 3000);
+    }
   };
 
   const formatTime = (seconds: number): string => {
