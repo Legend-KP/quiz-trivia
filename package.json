@@ -19,7 +19,8 @@
     "lint": "next lint",
     "deploy:vercel": "node --loader ts-node/esm scripts/deploy.ts",
     "deploy:raw": "vercel --prod",
-    "cleanup": "node scripts/cleanup.js"
+    "cleanup": "node scripts/cleanup.js",
+    "migrate:leaderboard": "node scripts/migrate-leaderboard.js"
   },
   "dependencies": {
     "@farcaster/auth-client": ">=0.3.0 <1.0.0",

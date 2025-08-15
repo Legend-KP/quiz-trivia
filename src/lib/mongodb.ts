@@ -11,6 +11,7 @@ export interface LeaderboardEntry {
   pfpUrl?: string;
   score: number;
   time: string;
+  timeInSeconds: number;
   completedAt: number;
   rank?: number;
 }

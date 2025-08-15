@@ -3,6 +3,17 @@ import { getLeaderboardCollection, LeaderboardEntry } from '../../../lib/mongodb
 
 export const runtime = 'nodejs';
 
+// Helper function to convert time string (MM:SS) to seconds
+function timeStringToSeconds(timeString: string): number {
+  const parts = timeString.split(':');
+  if (parts.length === 2) {
+    const minutes = parseInt(parts[0], 10);
+    const seconds = parseInt(parts[1], 10);
+    return minutes * 60 + seconds;
+  }
+  return 0;
+}
+
 // Global fallback storage that persists across requests (only for local/dev emergency)
 const globalFallbackStorage: LeaderboardEntry[] = [];
 
@@ -14,7 +25,7 @@ export async function GET() {
 
     const sortedLeaderboard = leaderboard.sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
       if (a.score !== b.score) return b.score - a.score;
-      return a.completedAt - b.completedAt;
+      return (a.timeInSeconds || 0) - (b.timeInSeconds || 0);
     });
 
     const rankedLeaderboard = sortedLeaderboard.map((entry: LeaderboardEntry, index: number) => ({
@@ -56,6 +67,7 @@ export async function POST(request: Request) {
       pfpUrl,
       score,
       time,
+      timeInSeconds: timeStringToSeconds(time),
       completedAt: Date.now(),
     };
 
@@ -65,7 +77,7 @@ export async function POST(request: Request) {
     const leaderboard = await collection.find({}).toArray();
     const sortedLeaderboard = leaderboard.sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
       if (a.score !== b.score) return b.score - a.score;
-      return a.completedAt - b.completedAt;
+      return (a.timeInSeconds || 0) - (b.timeInSeconds || 0);
     });
     const rankedLeaderboard = sortedLeaderboard.map((entry: LeaderboardEntry, index: number) => ({
       ...entry,
@@ -85,7 +97,7 @@ export async function POST(request: Request) {
     // Fallback to in-memory only as a last resort (non-persistent)
     try {
       const { fid, username, displayName, pfpUrl, score, time } = await request.json();
-      const newEntry: LeaderboardEntry = { fid, username, displayName, pfpUrl, score, time, completedAt: Date.now() };
+      const newEntry: LeaderboardEntry = { fid, username, displayName, pfpUrl, score, time, timeInSeconds: timeStringToSeconds(time), completedAt: Date.now() };
 
       const existingIndex = globalFallbackStorage.findIndex((entry) => entry.fid === fid);
       if (existingIndex !== -1) {
@@ -94,7 +106,7 @@ export async function POST(request: Request) {
         globalFallbackStorage.push(newEntry);
       }
 
-      globalFallbackStorage.sort((a, b) => (a.score !== b.score ? b.score - a.score : a.completedAt - b.completedAt));
+      globalFallbackStorage.sort((a, b) => (a.score !== b.score ? b.score - a.score : (a.timeInSeconds || 0) - (b.timeInSeconds || 0)));
       const rankedFallback = globalFallbackStorage.map((entry, index) => ({ ...entry, rank: index + 1 }));
 
       return NextResponse.json({
@@ -125,6 +137,7 @@ export async function PUT(request: Request) {
           pfpUrl: 'https://picsum.photos/32/32?random=999',
           score: 5,
           time: '1:30',
+          timeInSeconds: timeStringToSeconds('1:30'),
           completedAt: Date.now(),
         };
         await collection.updateOne({ fid: testEntry.fid }, { $set: testEntry }, { upsert: true });
@@ -137,9 +150,9 @@ export async function PUT(request: Request) {
 
     if (action === 'addTestData') {
       const testEntries: LeaderboardEntry[] = [
-        { fid: 12345, username: 'testuser1', displayName: 'Test User 1', pfpUrl: 'https://picsum.photos/32/32?random=1', score: 4, time: '2:15', completedAt: Date.now() - 3600000 },
-        { fid: 67890, username: 'testuser2', displayName: 'Test User 2', pfpUrl: 'https://picsum.photos/32/32?random=2', score: 3, time: '3:45', completedAt: Date.now() - 7200000 },
-        { fid: 11111, username: 'testuser3', displayName: 'Test User 3', pfpUrl: 'https://picsum.photos/32/32?random=3', score: 2, time: '4:20', completedAt: Date.now() - 10800000 },
+        { fid: 12345, username: 'testuser1', displayName: 'Test User 1', pfpUrl: 'https://picsum.photos/32/32?random=1', score: 4, time: '2:15', timeInSeconds: timeStringToSeconds('2:15'), completedAt: Date.now() - 3600000 },
+        { fid: 67890, username: 'testuser2', displayName: 'Test User 2', pfpUrl: 'https://picsum.photos/32/32?random=2', score: 3, time: '3:45', timeInSeconds: timeStringToSeconds('3:45'), completedAt: Date.now() - 7200000 },
+        { fid: 11111, username: 'testuser3', displayName: 'Test User 3', pfpUrl: 'https://picsum.photos/32/32?random=3', score: 2, time: '4:20', timeInSeconds: timeStringToSeconds('4:20'), completedAt: Date.now() - 10800000 },
       ];
       try {
         const collection = await getLeaderboardCollection();

@@ -26,6 +26,7 @@ interface LeaderboardEntry {
   pfpUrl?: string;
   score: number;
   time: string;
+  timeInSeconds?: number;
   completedAt: number;
   rank?: number;
 }
@@ -47,6 +48,7 @@ interface QuizPageProps {
 interface ResultsPageProps {
   score: number;
   answers: Answer[];
+  time: string;
   onRestart: () => void;
   context?: any;
 }
@@ -264,10 +266,10 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
     setSelectedAnswer(answerIndex);
     setShowResult(true);
 
-    // Start 30-minute countdown for next question (using 10 seconds for demo)
+    // Start 30-minute countdown for next question (using 30 seconds for demo)
     setTimeout(() => {
       setWaitingForNext(true);
-      setNextQuestionTime(10); // 1800 seconds = 30 minutes (using 10 for demo)
+      setNextQuestionTime(30); // 1800 seconds = 30 minutes (using 30 for demo)
     }, 3000);
   };
 
@@ -402,7 +404,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
 };
 
 // Results Component
-const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, context }) => {
+const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, context, time }) => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -411,8 +413,8 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
   const correctAnswers = answers.filter((a: Answer) => a.isCorrect).length;
   const accuracy = Math.round((correctAnswers / totalQuestions) * 100);
 
-  // Calculate total time (simplified for demo)
-  const totalTime = "2:30"; // This would be calculated from actual start/end times
+  // Use the actual completion time passed from the quiz
+  const totalTime = time || "0:00";
 
   const fetchLeaderboard = useCallback(async () => {
     console.log('🔍 Fetching leaderboard...');
@@ -676,6 +678,7 @@ export default function QuizTriviaApp() {
   const [showRules, setShowRules] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
   const [finalAnswers, setFinalAnswers] = useState<Answer[]>([]);
+  const [finalTime, setFinalTime] = useState<string>('0:00');
 
   // Get Farcaster context
   const { context } = useMiniApp();
@@ -692,9 +695,10 @@ export default function QuizTriviaApp() {
     setShowRules(false);
   };
 
-  const handleQuizComplete = (score: number, answers: Answer[], _time: string) => {
+  const handleQuizComplete = (score: number, answers: Answer[], time: string) => {
     setFinalScore(score);
     setFinalAnswers(answers);
+    setFinalTime(time);
     setCurrentScreen('results');
   };
 
@@ -702,6 +706,7 @@ export default function QuizTriviaApp() {
     setCurrentScreen('home');
     setFinalScore(0);
     setFinalAnswers([]);
+    setFinalTime('0:00');
   };
 
   return (
@@ -724,6 +729,7 @@ export default function QuizTriviaApp() {
         <ResultsPage 
           score={finalScore}
           answers={finalAnswers}
+          time={finalTime}
           onRestart={handleRestart}
           context={context}
         />
