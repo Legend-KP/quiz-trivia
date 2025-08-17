@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getFarcasterDomainManifest } from '~/lib/utils';
+import { getNeynarFrameManifest } from '~/lib/utils';
 
 export async function GET() {
   try {
-    const config = await getFarcasterDomainManifest();
+    const config = await getNeynarFrameManifest();
     return NextResponse.json(config);
   } catch (error) {
     console.error('Error generating metadata:', error);

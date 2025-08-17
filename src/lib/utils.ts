@@ -93,3 +93,19 @@ export async function getFarcasterDomainManifest(): Promise<Manifest> {
 
   return manifest;
 }
+
+// New function for frame manifest (Neynar format)
+export async function getNeynarFrameManifest() {
+  return {
+    accountAssociation: APP_ACCOUNT_ASSOCIATION,
+    frame: {
+      version: '1',
+      name: APP_NAME ?? 'Quiz Trivia',
+      iconUrl: APP_ICON_URL,
+      splashBackgroundColor: APP_SPLASH_BACKGROUND_COLOR,
+      homeUrl: APP_URL,
+      // Critical: Neynar webhook URL for notification events
+      webhookUrl: `https://api.neynar.com/f/app/${process.env.NEYNAR_CLIENT_ID}/event`
+    }
+  };
+}
