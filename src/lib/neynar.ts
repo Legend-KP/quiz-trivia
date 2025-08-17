@@ -1,4 +1,4 @@
-import { NeynarAPIClient, Configuration } from '@neynar/nodejs-sdk';
+import { NeynarAPIClient, Configuration, WebhookUserCreated } from '@neynar/nodejs-sdk';
 import { APP_URL } from './constants';
 
 let neynarClient: NeynarAPIClient | null = null;
@@ -13,6 +13,18 @@ export function getNeynarClient() {
     neynarClient = new NeynarAPIClient(config);
   }
   return neynarClient;
+}
+
+// Get user information from Neynar (needed for opengraph-image)
+export async function getNeynarUser(fid: number) {
+  try {
+    const client = getNeynarClient();
+    const usersResponse = await client.fetchBulkUsers({ fids: [fid] });
+    return usersResponse.users[0] || null;
+  } catch (error) {
+    console.error('Error getting Neynar user:', error);
+    return null;
+  }
 }
 
 // Simple function to send manual notifications

@@ -39,7 +39,7 @@ export function SimpleNotificationTest() {
       } else {
         setResult(`❌ Error: ${data.error}`);
       }
-    } catch (error) {
+    } catch (_error) {
       setResult('❌ Failed to send notification');
     } finally {
       setLoading(false);
