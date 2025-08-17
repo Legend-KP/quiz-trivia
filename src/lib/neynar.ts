@@ -1,11 +1,8 @@
-import { NeynarAPIClient, Configuration, WebhookUserCreated } from '@neynar/nodejs-sdk';
+import { NeynarAPIClient, Configuration } from '@neynar/nodejs-sdk';
 import { APP_URL } from './constants';
 
 let neynarClient: NeynarAPIClient | null = null;
 
-// Example usage:
-// const client = getNeynarClient();
-// const user = await client.lookupUserByFid(fid); 
 export function getNeynarClient() {
   if (!neynarClient) {
     const apiKey = process.env.NEYNAR_API_KEY;
@@ -18,59 +15,31 @@ export function getNeynarClient() {
   return neynarClient;
 }
 
-type User = WebhookUserCreated['data'];
-
-export async function getNeynarUser(fid: number): Promise<User | null> {
+// Simple function to send manual notifications
+export async function sendManualNotification(fid: number, title: string, body: string) {
   try {
     const client = getNeynarClient();
-    const usersResponse = await client.fetchBulkUsers({ fids: [fid] });
-    return usersResponse.users[0];
+    const result = await client.publishFrameNotifications({ 
+      targetFids: [fid], 
+      notification: {
+        title,
+        body,
+        target_url: APP_URL,
+      }
+    });
+    
+    console.log('Notification sent:', result);
+    return { success: true };
   } catch (error) {
-    console.error('Error getting Neynar user:', error);
-    return null;
+    console.error('Error sending notification:', error);
+    return { success: false, error };
   }
 }
 
-type SendMiniAppNotificationResult =
-  | {
-      state: "error";
-      error: unknown;
-    }
-  | { state: "no_token" }
-  | { state: "rate_limit" }
-  | { state: "success" };
-
-export async function sendNeynarMiniAppNotification({
-  fid,
-  title,
-  body,
-}: {
-  fid: number;
-  title: string;
-  body: string;
-}): Promise<SendMiniAppNotificationResult> {
-  try {
-    const client = getNeynarClient();
-    const targetFids = [fid];
-    const notification = {
-      title,
-      body,
-      target_url: APP_URL,
-    };
-
-    const result = await client.publishFrameNotifications({ 
-      targetFids, 
-      notification 
-    });
-
-    if (result.notification_deliveries.length > 0) {
-      return { state: "success" };
-    } else if (result.notification_deliveries.length === 0) {
-      return { state: "no_token" };
-    } else {
-      return { state: "error", error: result || "Unknown error" };
-    }
-  } catch (error) {
-    return { state: "error", error };
-  }
+// Automated welcome notification when user adds your frame
+export async function sendWelcomeNotification(fid: number) {
+  const title = "🎉 Welcome to Quiz Trivia!";
+  const body = "Your mini app is now ready! Start testing your knowledge with our fun quizzes. 🧠✨";
+  
+  return sendManualNotification(fid, title, body);
 } 
