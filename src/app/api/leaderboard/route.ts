@@ -39,16 +39,16 @@ export async function GET() {
       lastUpdated: new Date().toISOString(),
       storage: 'mongodb',
     });
-  } catch (mongodbError) {
-    console.error('MongoDB GET failed:', mongodbError);
-    return NextResponse.json({
-      leaderboard: globalFallbackStorage,
-      totalParticipants: globalFallbackStorage.length,
-      lastUpdated: new Date().toISOString(),
-      storage: 'fallback',
-      error: 'MongoDB GET failed',
-    }, { status: 200 });
-  }
+      } catch (_mongodbError) {
+      console.error('MongoDB GET failed:', _mongodbError);
+      return NextResponse.json({
+        leaderboard: globalFallbackStorage,
+        totalParticipants: globalFallbackStorage.length,
+        lastUpdated: new Date().toISOString(),
+        storage: 'fallback',
+        error: 'MongoDB GET failed',
+      }, { status: 200 });
+    }
 }
 
 export async function POST(request: Request) {
@@ -91,35 +91,35 @@ export async function POST(request: Request) {
       lastUpdated: new Date().toISOString(),
       storage: 'mongodb',
     });
-  } catch (mongodbError) {
-    console.error('MongoDB POST failed:', mongodbError);
+      } catch (_mongodbError) {
+      console.error('MongoDB POST failed:', _mongodbError);
 
-    // Fallback to in-memory only as a last resort (non-persistent)
-    try {
-      const { fid, username, displayName, pfpUrl, score, time } = await request.json();
-      const newEntry: LeaderboardEntry = { fid, username, displayName, pfpUrl, score, time, timeInSeconds: timeStringToSeconds(time), completedAt: Date.now() };
+      // Fallback to in-memory only as a last resort (non-persistent)
+      try {
+        const { fid, username, displayName, pfpUrl, score, time } = await request.json();
+        const newEntry: LeaderboardEntry = { fid, username, displayName, pfpUrl, score, time, timeInSeconds: timeStringToSeconds(time), completedAt: Date.now() };
 
-      const existingIndex = globalFallbackStorage.findIndex((entry) => entry.fid === fid);
-      if (existingIndex !== -1) {
-        if (score > globalFallbackStorage[existingIndex].score) globalFallbackStorage[existingIndex] = newEntry;
-      } else {
-        globalFallbackStorage.push(newEntry);
+        const existingIndex = globalFallbackStorage.findIndex((entry) => entry.fid === fid);
+        if (existingIndex !== -1) {
+          if (score > globalFallbackStorage[existingIndex].score) globalFallbackStorage[existingIndex] = newEntry;
+        } else {
+          globalFallbackStorage.push(newEntry);
+        }
+
+        globalFallbackStorage.sort((a, b) => (a.score !== b.score ? b.score - a.score : (a.timeInSeconds || 0) - (b.timeInSeconds || 0)));
+        const rankedFallback = globalFallbackStorage.map((entry, index) => ({ ...entry, rank: index + 1 }));
+
+        return NextResponse.json({
+          success: true,
+          leaderboard: rankedFallback,
+          totalParticipants: rankedFallback.length,
+          lastUpdated: new Date().toISOString(),
+          storage: 'fallback',
+        });
+      } catch (_fallbackError) {
+        return NextResponse.json({ success: false, error: 'Failed to update leaderboard', leaderboard: [] }, { status: 500 });
       }
-
-      globalFallbackStorage.sort((a, b) => (a.score !== b.score ? b.score - a.score : (a.timeInSeconds || 0) - (b.timeInSeconds || 0)));
-      const rankedFallback = globalFallbackStorage.map((entry, index) => ({ ...entry, rank: index + 1 }));
-
-      return NextResponse.json({
-        success: true,
-        leaderboard: rankedFallback,
-        totalParticipants: rankedFallback.length,
-        lastUpdated: new Date().toISOString(),
-        storage: 'fallback',
-      });
-    } catch (fallbackError) {
-      return NextResponse.json({ success: false, error: 'Failed to update leaderboard', leaderboard: [] }, { status: 500 });
     }
-  }
 }
 
 export async function PUT(request: Request) {
@@ -143,7 +143,7 @@ export async function PUT(request: Request) {
         await collection.updateOne({ fid: testEntry.fid }, { $set: testEntry }, { upsert: true });
         const count = await collection.countDocuments();
         return NextResponse.json({ success: true, message: 'MongoDB test OK', documentCount: count });
-      } catch (error) {
+      } catch (_error) {
         return NextResponse.json({ success: false, error: 'MongoDB test failed' }, { status: 500 });
       }
     }
@@ -160,7 +160,7 @@ export async function PUT(request: Request) {
           await collection.updateOne({ fid: entry.fid }, { $set: entry }, { upsert: true });
         }
         return NextResponse.json({ success: true, message: 'Test data added to MongoDB', storage: 'mongodb' });
-      } catch (error) {
+      } catch (_error) {
         return NextResponse.json({ success: false, error: 'Failed to add test data' }, { status: 500 });
       }
     }
@@ -170,14 +170,14 @@ export async function PUT(request: Request) {
         const collection = await getLeaderboardCollection();
         await collection.deleteMany({});
         return NextResponse.json({ success: true, message: 'Data cleared from MongoDB', storage: 'mongodb' });
-      } catch (error) {
+      } catch (_error) {
         globalFallbackStorage.length = 0;
         return NextResponse.json({ success: true, message: 'Data cleared from fallback', storage: 'fallback' });
       }
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Failed to handle action' }, { status: 500 });
   }
 } 

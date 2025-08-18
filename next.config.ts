@@ -14,9 +14,7 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
-  experimental: {
-    esmExternals: 'loose',
-  },
+
 };
 
 export default nextConfig;

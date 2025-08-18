@@ -216,7 +216,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
   const handleTimeUp = useCallback(() => {
     // Auto-submit with no answer (penalty)
     handleAnswerSubmit(null);
-  }, []);
+  }, [handleAnswerSubmit]);
 
   useEffect(() => {
     if (timeLeft > 0 && !showResult && !waitingForNext) {
@@ -504,7 +504,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
     } finally {
       setSubmitting(false);
     }
-  }, [context?.user?.fid, submitted, score, totalTime]);
+  }, [context?.user, submitted, score, totalTime]);
 
   useEffect(() => {
     fetchLeaderboard();
