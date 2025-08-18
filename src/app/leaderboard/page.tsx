@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Trophy, Users, Calendar, Clock } from 'lucide-react';
+import { Trophy, Users, Calendar, Clock, Share2 } from 'lucide-react';
 import Link from 'next/link';
+import { useMiniApp } from '@neynar/react';
 
 interface LeaderboardEntry {
   fid: number;
@@ -22,6 +23,7 @@ export default function PublicLeaderboard() {
     totalParticipants: 0,
     lastUpdated: ''
   });
+  const { context } = useMiniApp();
 
   useEffect(() => {
     fetchLeaderboard();
@@ -164,16 +166,59 @@ export default function PublicLeaderboard() {
 
           {/* Action Buttons */}
           <div className="mt-6 text-center space-x-4">
-            <button
-              onClick={() => {
-                const url = window.location.href;
-                navigator.clipboard.writeText(url);
-                alert('Leaderboard URL copied to clipboard!');
-              }}
-              className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200"
-            >
-              📋 Share Leaderboard
-            </button>
+            {context?.user?.fid ? (
+              <>
+                <button
+                  onClick={() => {
+                    const ogImageUrl = `${window.location.origin}/api/opengraph-image?fid=${context.user.fid}`;
+                    const shareUrl = `${window.location.origin}/share/${context.user.fid}`;
+                    const shareText = `I just played Quiz Trivia! Check out my score and join the challenge! 🎯\n\n${shareUrl}`;
+                    
+                    // Try to use native sharing if available
+                    if (navigator.share) {
+                      navigator.share({
+                        title: 'Quiz Trivia Score',
+                        text: shareText,
+                        url: shareUrl,
+                      }).catch(() => {
+                        // Fallback to clipboard
+                        navigator.clipboard.writeText(shareText);
+                        alert('Share text copied to clipboard!');
+                      });
+                    } else {
+                      // Fallback to clipboard
+                      navigator.clipboard.writeText(shareText);
+                      alert('Share text copied to clipboard!');
+                    }
+                  }}
+                  className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 flex items-center mx-auto"
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share My Score
+                </button>
+                <button
+                  onClick={() => {
+                    const url = window.location.href;
+                    navigator.clipboard.writeText(url);
+                    alert('Leaderboard URL copied to clipboard!');
+                  }}
+                  className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-blue-600 hover:to-cyan-700 transform hover:scale-105 transition-all duration-200"
+                >
+                  📋 Share Leaderboard
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => {
+                  const url = window.location.href;
+                  navigator.clipboard.writeText(url);
+                  alert('Leaderboard URL copied to clipboard!');
+                }}
+                className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200"
+              >
+                📋 Share Leaderboard
+              </button>
+            )}
             <Link 
               href="/" 
               className="inline-block bg-gradient-to-r from-green-500 to-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200"

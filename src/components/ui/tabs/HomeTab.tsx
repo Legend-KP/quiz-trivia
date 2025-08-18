@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Clock, Trophy, Star, X } from 'lucide-react';
+import { Clock, Trophy, Star, X, Share2 } from 'lucide-react';
 import { useMiniApp } from '@neynar/react';
 
 // Type definitions
@@ -549,12 +549,45 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
             {score < 1 && <p className="text-red-600 font-semibold">💪 Don&apos;t give up! Try again!</p>}
           </div>
 
-          <button
-            onClick={onRestart}
-            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-8 rounded-xl hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
-          >
-            Play Again 🔄
-          </button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              onClick={onRestart}
+              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-8 rounded-xl hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
+            >
+              Play Again 🔄
+            </button>
+            
+            {context?.user?.fid && (
+              <button
+                onClick={() => {
+                  const ogImageUrl = `${window.location.origin}/api/opengraph-image?fid=${context.user.fid}`;
+                  const shareUrl = `${window.location.origin}/share/${context.user.fid}`;
+                  const shareText = `I just played Quiz Trivia and scored ${score}/10! Check out my score and join the challenge! 🎯\n\n${shareUrl}`;
+                  
+                  // Try to use native sharing if available
+                  if (navigator.share) {
+                    navigator.share({
+                      title: 'Quiz Trivia Score',
+                      text: shareText,
+                      url: shareUrl,
+                    }).catch(() => {
+                      // Fallback to clipboard
+                      navigator.clipboard.writeText(shareText);
+                      alert('Share text copied to clipboard!');
+                    });
+                  } else {
+                    // Fallback to clipboard
+                    navigator.clipboard.writeText(shareText);
+                    alert('Share text copied to clipboard!');
+                  }
+                }}
+                className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold py-3 px-8 rounded-xl hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 shadow-lg flex items-center justify-center"
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                Share My Score
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Leaderboard */}
