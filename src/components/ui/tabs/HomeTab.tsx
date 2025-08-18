@@ -522,44 +522,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4">
       <div className="max-w-4xl mx-auto pt-8">
-        {/* Results Summary */}
-        <div className="bg-white rounded-2xl p-8 shadow-2xl text-center mb-8">
-          <div className="mb-6">
-            <Trophy className="mx-auto text-yellow-500 mb-4" size={64} />
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Quiz Complete!</h1>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4 mb-8">
-            <div className="p-4 bg-blue-100 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{score}</div>
-              <div className="text-sm text-blue-800">Final Score</div>
-            </div>
-            <div className="p-4 bg-green-100 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{correctAnswers}/{totalQuestions}</div>
-              <div className="text-sm text-green-800">Correct</div>
-            </div>
-            <div className="p-4 bg-purple-100 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">{accuracy}%</div>
-              <div className="text-sm text-purple-800">Accuracy</div>
-            </div>
-          </div>
-
-          <div className="mb-8">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Performance:</h3>
-            {score >= 3 && <p className="text-green-600 font-semibold">🎉 Excellent! You&apos;re a trivia master!</p>}
-            {score >= 1 && score < 3 && <p className="text-yellow-600 font-semibold">👍 Good job! Keep practicing!</p>}
-            {score < 1 && <p className="text-red-600 font-semibold">💪 Don&apos;t give up! Try again!</p>}
-          </div>
-
-                     <div className="flex justify-center">
-             <button
-               onClick={onRestart}
-               className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-8 rounded-xl hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
-             >
-               Play Again 🔄
-             </button>
-           </div>
-        </div>
+        
 
         {/* Leaderboard */}
         <div className="bg-white rounded-2xl p-8 shadow-2xl">
