@@ -213,36 +213,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
   const [nextQuestionTime, setNextQuestionTime] = useState<number | null>(null);
   const [startTime] = useState<number>(Date.now());
 
-  const handleTimeUp = useCallback(() => {
-    // Auto-submit with no answer (penalty)
-    handleAnswerSubmit(null);
-  }, [handleAnswerSubmit]);
-
-  useEffect(() => {
-    if (timeLeft > 0 && !showResult && !waitingForNext) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (timeLeft === 0 && !waitingForNext) {
-      handleTimeUp();
-    }
-  }, [timeLeft, showResult, waitingForNext, handleTimeUp]);
-
-  useEffect(() => {
-    if (nextQuestionTime && nextQuestionTime > 0) {
-      const timer = setTimeout(() => setNextQuestionTime(nextQuestionTime - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (nextQuestionTime === 0) {
-      // Move to next question (this will only happen for non-last questions)
-      setCurrentQuestion(currentQuestion + 1);
-      setTimeLeft(quizData[currentQuestion + 1].timeLimit);
-      setSelectedAnswer(null);
-      setShowResult(false);
-      setWaitingForNext(false);
-      setNextQuestionTime(null);
-    }
-  }, [nextQuestionTime, currentQuestion, startTime]);
-
-  const handleAnswerSubmit = (answerIndex: number | null) => {
+  const handleAnswerSubmit = useCallback((answerIndex: number | null) => {
     const question = quizData[currentQuestion];
     const isCorrect = answerIndex === question.correct;
     const newScore = isCorrect ? score + 1 : score - 1;
@@ -278,7 +249,38 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
         setNextQuestionTime(10); // 1800 seconds = 30 minutes (using 10 for demo)
       }, 3000);
     }
-  };
+  }, [currentQuestion, score, answers, startTime, onComplete]);
+
+  const handleTimeUp = useCallback(() => {
+    // Auto-submit with no answer (penalty)
+    handleAnswerSubmit(null);
+  }, [handleAnswerSubmit]);
+
+  useEffect(() => {
+    if (timeLeft > 0 && !showResult && !waitingForNext) {
+      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (timeLeft === 0 && !waitingForNext) {
+      handleTimeUp();
+    }
+  }, [timeLeft, showResult, waitingForNext, handleTimeUp]);
+
+  useEffect(() => {
+    if (nextQuestionTime && nextQuestionTime > 0) {
+      const timer = setTimeout(() => setNextQuestionTime(nextQuestionTime - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (nextQuestionTime === 0) {
+      // Move to next question (this will only happen for non-last questions)
+      setCurrentQuestion(currentQuestion + 1);
+      setTimeLeft(quizData[currentQuestion + 1].timeLimit);
+      setSelectedAnswer(null);
+      setShowResult(false);
+      setWaitingForNext(false);
+      setNextQuestionTime(null);
+    }
+  }, [nextQuestionTime, currentQuestion, startTime]);
+
+
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
