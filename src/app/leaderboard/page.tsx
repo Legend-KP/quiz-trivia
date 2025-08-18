@@ -169,24 +169,28 @@ export default function PublicLeaderboard() {
             {context?.user?.fid ? (
               <>
                 <button
-                  onClick={() => {
-                    const ogImageUrl = `${window.location.origin}/api/opengraph-image?fid=${context.user.fid}`;
-                    const shareUrl = `${window.location.origin}/share/${context.user.fid}`;
-                    const shareText = `I just played Quiz Trivia! Check out my score and join the challenge! 🎯\n\n${shareUrl}`;
-                    
-                    // Try to use native sharing if available
-                    if (navigator.share) {
-                      navigator.share({
-                        title: 'Quiz Trivia Score',
-                        text: shareText,
-                        url: shareUrl,
-                      }).catch(() => {
+                  onClick={async () => {
+                    try {
+                      const shareUrl = `${window.location.origin}/share/${context.user.fid}`;
+                      const shareText = `I just played Quiz Trivia! Check out my score and join the challenge! 🎯\n\n${shareUrl}`;
+                      
+                      // Try to use native sharing if available
+                      if (navigator.share) {
+                        await navigator.share({
+                          title: 'Quiz Trivia Score',
+                          text: shareText,
+                          url: shareUrl,
+                        });
+                      } else {
                         // Fallback to clipboard
-                        navigator.clipboard.writeText(shareText);
+                        await navigator.clipboard.writeText(shareText);
                         alert('Share text copied to clipboard!');
-                      });
-                    } else {
-                      // Fallback to clipboard
+                      }
+                    } catch (error) {
+                      console.error('Share failed:', error);
+                      // Final fallback
+                      const shareUrl = `${window.location.origin}/share/${context.user.fid}`;
+                      const shareText = `I just played Quiz Trivia! Check out my score and join the challenge! 🎯\n\n${shareUrl}`;
                       navigator.clipboard.writeText(shareText);
                       alert('Share text copied to clipboard!');
                     }
@@ -227,77 +231,7 @@ export default function PublicLeaderboard() {
             </Link>
           </div>
 
-          {/* Debug Section */}
-          <div className="mt-8 p-4 bg-gray-100 rounded-lg">
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">🔧 Debug Info</h3>
-            <div className="text-sm text-gray-600 space-y-1">
-              <div>Total Participants: {stats.totalParticipants}</div>
-              <div>Last Updated: {stats.lastUpdated ? new Date(stats.lastUpdated).toLocaleString() : 'N/A'}</div>
-              <div>Leaderboard Entries: {leaderboard.length}</div>
-              <div className="mt-4 space-x-2">
-                <button
-                  onClick={async () => {
-                    try {
-                      const response = await fetch('/api/leaderboard');
-                      const data = await response.json();
-                      console.log('Debug API Response:', data);
-                      alert(`API Response: ${JSON.stringify(data, null, 2)}`);
-                    } catch (error) {
-                      console.error('Debug API Error:', error);
-                      alert(`API Error: ${error}`);
-                    }
-                  }}
-                  className="bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600"
-                >
-                  Test API
-                </button>
-                <button
-                  onClick={async () => {
-                    try {
-                      const response = await fetch('/api/leaderboard', {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'addTestData' })
-                      });
-                      const data = await response.json();
-                      console.log('Add Test Data Response:', data);
-                      alert(`Test Data Added: ${JSON.stringify(data, null, 2)}`);
-                      // Refresh the page to show new data
-                      window.location.reload();
-                    } catch (error) {
-                      console.error('Add Test Data Error:', error);
-                      alert(`Error: ${error}`);
-                    }
-                  }}
-                  className="bg-green-500 text-white px-3 py-1 rounded text-xs hover:bg-green-600"
-                >
-                  Add Test Data
-                </button>
-                <button
-                  onClick={async () => {
-                    try {
-                      const response = await fetch('/api/leaderboard', {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'clearData' })
-                      });
-                      const data = await response.json();
-                      console.log('Clear Data Response:', data);
-                      alert(`Data Cleared: ${JSON.stringify(data, null, 2)}`);
-                      // Refresh the page to show cleared data
-                      window.location.reload();
-                    } catch (error) {
-                      console.error('Clear Data Error:', error);
-                      alert(`Error: ${error}`);
-                    }
-                  }}
-                  className="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600"
-                >
-                  Clear Data
-                </button>
-              </div>
-            </div>
-          </div>
+
         </div>
       </div>
     </div>

@@ -550,43 +550,47 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button
-              onClick={onRestart}
-              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-8 rounded-xl hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
-            >
-              Play Again 🔄
-            </button>
+          <button
+            onClick={onRestart}
+            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-8 rounded-xl hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
+          >
+            Play Again 🔄
+          </button>
             
-            {context?.user?.fid && (
-              <button
-                onClick={() => {
-                  const ogImageUrl = `${window.location.origin}/api/opengraph-image?fid=${context.user.fid}`;
-                  const shareUrl = `${window.location.origin}/share/${context.user.fid}`;
-                  const shareText = `I just played Quiz Trivia and scored ${score}/10! Check out my score and join the challenge! 🎯\n\n${shareUrl}`;
-                  
-                  // Try to use native sharing if available
-                  if (navigator.share) {
-                    navigator.share({
-                      title: 'Quiz Trivia Score',
-                      text: shareText,
-                      url: shareUrl,
-                    }).catch(() => {
-                      // Fallback to clipboard
-                      navigator.clipboard.writeText(shareText);
-                      alert('Share text copied to clipboard!');
-                    });
-                  } else {
-                    // Fallback to clipboard
-                    navigator.clipboard.writeText(shareText);
-                    alert('Share text copied to clipboard!');
-                  }
-                }}
-                className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold py-3 px-8 rounded-xl hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 shadow-lg flex items-center justify-center"
-              >
-                <Share2 className="w-4 h-4 mr-2" />
-                Share My Score
-              </button>
-            )}
+                         {context?.user?.fid && (
+               <button
+                 onClick={async () => {
+                   try {
+                     const shareUrl = `${window.location.origin}/share/${context.user.fid}`;
+                     const shareText = `I just played Quiz Trivia and scored ${score}/10! Check out my score and join the challenge! 🎯\n\n${shareUrl}`;
+                     
+                     // Try to use native sharing if available
+                     if (navigator.share) {
+                       await navigator.share({
+                         title: 'Quiz Trivia Score',
+                         text: shareText,
+                         url: shareUrl,
+                       });
+                     } else {
+                       // Fallback to clipboard
+                       await navigator.clipboard.writeText(shareText);
+                       alert('Share text copied to clipboard!');
+                     }
+                   } catch (error) {
+                     console.error('Share failed:', error);
+                     // Final fallback
+                     const shareUrl = `${window.location.origin}/share/${context.user.fid}`;
+                     const shareText = `I just played Quiz Trivia and scored ${score}/10! Check out my score and join the challenge! 🎯\n\n${shareUrl}`;
+                     navigator.clipboard.writeText(shareText);
+                     alert('Share text copied to clipboard!');
+                   }
+                 }}
+                 className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold py-3 px-8 rounded-xl hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 shadow-lg flex items-center justify-center"
+               >
+                 <Share2 className="w-4 h-4 mr-2" />
+                 Share My Score
+               </button>
+             )}
           </div>
         </div>
 

@@ -9,7 +9,10 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const fid = searchParams.get('fid');
 
+  console.log('🔍 OG Image Request - FID:', fid);
+
   if (!fid) {
+    console.log('❌ No FID provided, showing fallback image');
     return new ImageResponse(
       (
         <div tw="flex h-full w-full flex-col justify-center items-center bg-gray-900">
@@ -25,21 +28,27 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    console.log('📥 Fetching user data for FID:', fid);
     // Get user info from Neynar
     const user = await getNeynarUser(Number(fid));
+    console.log('👤 User data:', user ? { fid: user.fid, username: user.username, display_name: user.display_name } : 'null');
     
+    console.log('📊 Fetching leaderboard data...');
     // Get leaderboard data
     const collection = await getLeaderboardCollection();
     const leaderboard = await collection.find({}).toArray();
+    console.log('📈 Leaderboard entries:', leaderboard.length);
     
     // Find the specific user's entry
     const userEntry = leaderboard.find(entry => entry.fid === Number(fid));
+    console.log('🎯 User entry found:', userEntry ? { score: userEntry.score, time: userEntry.time } : 'null');
     
     // Get top participants for avatars (excluding the current user)
     const topParticipants = leaderboard
       .filter(entry => entry.fid !== Number(fid))
       .sort((a, b) => b.score - a.score)
       .slice(0, 4);
+    console.log('👥 Top participants:', topParticipants.length);
 
     // Format date
     const formatDate = (timestamp: number) => {
@@ -55,6 +64,7 @@ export async function GET(request: NextRequest) {
     // Calculate total participants (excluding current user)
     const totalParticipants = leaderboard.length - 1;
 
+    console.log('🎨 Generating OG image...');
     return new ImageResponse(
       (
         <div tw="flex h-full w-full flex-col bg-gray-900 p-16">
@@ -130,7 +140,7 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error) {
-    console.error('Error generating OG image:', error);
+    console.error('❌ Error generating OG image:', error);
     
     // Fallback image
     return new ImageResponse(
