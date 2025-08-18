@@ -1,0 +1,20 @@
+{
+    "frame": {
+      "name": "Quiz Trivia",
+      "version": "1",
+      "iconUrl": "https://ik.imagekit.io/qghszeudr/Quiz%20Trivia%20FC.jpg?updatedAt=1755423796866",
+      "homeUrl": "https://quiz-trivia-mu.vercel.app/",
+      "splashImageUrl": "https://quiz-trivia-mu.vercel.app/splash.png",
+      "splashBackgroundColor": "#6B21A8",
+      "webhookUrl": "https://api.neynar.com/f/app/29cd0d6a-bbee-4892-a3fe-ae49634c7397/event",
+      "subtitle": "Your Weekly Farcaster Trivia",
+      "description": "Quiz Trivia is a fast-paced quiz game where players answer progressively harder questions, earn points for correct answers, and compete for the top spot on the leaderboard.",
+      "primaryCategory": "education",
+      "castShareUrl": "https://quiz-trivia-mu.vercel.app/"
+    },
+    "accountAssociation": {
+      "header": "eyJmaWQiOjQzODYzMSwidHlwZSI6ImF1dGgiLCJrZXkiOiIweDQyMTVDNThmYzlDNjcwMDM0NDdDMTBiNEE3MjhjZEJmODYwNjU3MGIifQ",
+      "payload": "eyJkb21haW4iOiJodHRwczovL3F1aXotdHJpdmlhLW11LnZlcmNlbC5hcHAvIn0",
+      "signature": "PtYpLXIGjJxU3SIbA6dJ4ZepT/uLct6DZmEKN3lxYuEuDWC0tJfalaW3DZuBhzfh9k00gYJWBfZlJrXTPMqi+Rs="
+    }
+  }
