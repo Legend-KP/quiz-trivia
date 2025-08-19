@@ -23,6 +23,7 @@ export default function PublicLeaderboard() {
     totalParticipants: 0,
     lastUpdated: ''
   });
+  const [copied, setCopied] = useState(false);
   const { context } = useMiniApp();
 
   useEffect(() => {
@@ -45,6 +46,34 @@ export default function PublicLeaderboard() {
       setLeaderboard([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleShare = async () => {
+    const shareUrl = "https://quiz-trivia-mu.vercel.app/";
+    const shareText = `I just played Quiz Trivia! 🎉 Join me here: ${shareUrl}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Quiz Trivia",
+          text: shareText,
+          url: shareUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(shareText);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch (err) {
+      console.error("Share failed:", err);
+      try {
+        await navigator.clipboard.writeText(shareText);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (clipboardErr) {
+        console.error("Clipboard fallback failed:", clipboardErr);
+      }
     }
   };
 
@@ -167,40 +196,17 @@ export default function PublicLeaderboard() {
           {/* Action Buttons */}
           <div className="mt-6 text-center space-x-4">
             <button
-              onClick={async () => {
-                const shareUrl = 'https://quiz-trivia-mu.vercel.app/';
-                const shareText = `I just played Quiz Trivia! Join me here: ${shareUrl}`;
-                try {
-                  if (navigator.share) {
-                    await navigator.share({
-                      title: 'Quiz Trivia',
-                      text: shareText,
-                      url: shareUrl,
-                    });
-                  } else {
-                    await navigator.clipboard.writeText(shareText);
-                    alert('Share text copied to clipboard!');
-                  }
-                } catch (_error) {
-                  try {
-                    await navigator.clipboard.writeText(shareText);
-                    alert('Share text copied to clipboard!');
-                  } catch {
-                    const textArea = document.createElement('textarea');
-                    textArea.value = shareText;
-                    document.body.appendChild(textArea);
-                    textArea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textArea);
-                    alert('Share text copied to clipboard!');
-                  }
-                }
-              }}
+              onClick={handleShare}
               className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 flex items-center mx-auto"
             >
               <Share2 className="w-4 h-4 mr-2" />
               Share
             </button>
+            {copied && (
+              <div className="mt-2 text-sm text-green-200">
+                ✅ Share link copied to clipboard!
+              </div>
+            )}
             <Link 
               href="/" 
               className="inline-block bg-gradient-to-r from-green-500 to-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200"
@@ -209,9 +215,8 @@ export default function PublicLeaderboard() {
             </Link>
           </div>
 
-
         </div>
       </div>
     </div>
   );
-} 
+}
