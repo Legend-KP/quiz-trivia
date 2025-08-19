@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /api/opengraph-image*
+
+

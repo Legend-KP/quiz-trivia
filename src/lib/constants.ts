@@ -26,8 +26,22 @@ type AccountAssociation = {
 /**
  * The base URL of the application.
  * Used for generating absolute URLs for assets and API endpoints.
+ *
+ * Priority:
+ * - NEXT_PUBLIC_URL (manual override)
+ * - VERCEL_URL (in Vercel env; prepend https://)
+ * - http://localhost:3000 (fallback for local)
  */
-export const APP_URL: string = process.env.NEXT_PUBLIC_URL!;
+export const APP_URL: string = ((): string => {
+  if (process.env.NEXT_PUBLIC_URL && process.env.NEXT_PUBLIC_URL.trim().length > 0) {
+    return process.env.NEXT_PUBLIC_URL;
+  }
+  if (process.env.VERCEL_URL && process.env.VERCEL_URL.trim().length > 0) {
+    const url = process.env.VERCEL_URL;
+    return url.startsWith('http') ? url : `https://${url}`;
+  }
+  return `http://localhost:${process.env.PORT ?? 3000}`;
+})();
 
 /**
  * The name of the mini app as displayed to users.
