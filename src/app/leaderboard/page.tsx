@@ -170,52 +170,25 @@ export default function PublicLeaderboard() {
               <>
                 <button
                   onClick={async () => {
+                    const shareUrl = 'https://quiz-trivia-mu.vercel.app/';
+                    const shareText = 'I just played Quiz Trivia! Try it here: https://quiz-trivia-mu.vercel.app/';
                     try {
-                      const shareUrl = `${window.location.origin}/share/${context.user.fid}`;
-                      const shareText = `I just played Quiz Trivia! Check out my score and join the challenge! 🎯\n\n${shareUrl}`;
-                      
-                      // Try to use native sharing if available
                       if (navigator.share) {
-                        await navigator.share({
-                          title: 'Quiz Trivia Score',
-                          text: shareText,
-                          url: shareUrl,
-                        });
-                      } else {
-                        // Fallback to clipboard
-                        try {
-                          await navigator.clipboard.writeText(shareText);
-                          alert('Share text copied to clipboard!');
-                        } catch (clipboardError) {
-                          console.error('Clipboard failed:', clipboardError);
-                          // Manual fallback - create temporary textarea
-                          const textArea = document.createElement('textarea');
-                          textArea.value = shareText;
-                          document.body.appendChild(textArea);
-                          textArea.select();
-                          document.execCommand('copy');
-                          document.body.removeChild(textArea);
-                          alert('Share text copied to clipboard!');
-                        }
+                        await navigator.share({ title: 'Quiz Trivia', text: shareText, url: shareUrl });
+                        return;
                       }
-                    } catch (error) {
-                      console.error('Share failed:', error);
-                      // Final fallback
-                      const shareUrl = `${window.location.origin}/share/${context.user.fid}`;
-                      const shareText = `I just played Quiz Trivia! Check out my score and join the challenge! 🎯\n\n${shareUrl}`;
-                      try {
-                        await navigator.clipboard.writeText(shareText);
-                        alert('Share text copied to clipboard!');
-                      } catch (clipboardError) {
-                        // Manual fallback
-                        const textArea = document.createElement('textarea');
-                        textArea.value = shareText;
-                        document.body.appendChild(textArea);
-                        textArea.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(textArea);
-                        alert('Share text copied to clipboard!');
-                      }
+                    } catch (_) {}
+                    try {
+                      await navigator.clipboard.writeText(shareText);
+                      alert('Share text copied to clipboard!');
+                    } catch (_) {
+                      const textArea = document.createElement('textarea');
+                      textArea.value = shareText;
+                      document.body.appendChild(textArea);
+                      textArea.select();
+                      document.execCommand('copy');
+                      document.body.removeChild(textArea);
+                      alert('Share text copied to clipboard!');
                     }
                   }}
                   className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 flex items-center mx-auto"
@@ -225,20 +198,18 @@ export default function PublicLeaderboard() {
                 </button>
                 <button
                   onClick={async () => {
+                    const shareUrl = 'https://quiz-trivia-mu.vercel.app/';
                     try {
-                      const url = window.location.href;
-                      await navigator.clipboard.writeText(url);
-                      alert('Leaderboard URL copied to clipboard!');
-                    } catch (error) {
-                      console.error('Clipboard failed:', error);
-                      // Manual fallback
+                      await navigator.clipboard.writeText(shareUrl);
+                      alert('App URL copied to clipboard!');
+                    } catch (_) {
                       const textArea = document.createElement('textarea');
-                      textArea.value = window.location.href;
+                      textArea.value = shareUrl;
                       document.body.appendChild(textArea);
                       textArea.select();
                       document.execCommand('copy');
                       document.body.removeChild(textArea);
-                      alert('Leaderboard URL copied to clipboard!');
+                      alert('App URL copied to clipboard!');
                     }
                   }}
                   className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-blue-600 hover:to-cyan-700 transform hover:scale-105 transition-all duration-200"
