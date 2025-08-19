@@ -49,32 +49,14 @@ export default function PublicLeaderboard() {
     }
   };
 
-  const handleShare = async () => {
-    const shareUrl = "https://quiz-trivia-mu.vercel.app/";
-    const shareText = `I just played Quiz Trivia! 🎉 Join me here: ${shareUrl}`;
+  const handleShare = () => {
+    const appUrl = 'https://quiz-trivia-mu.vercel.app/';
+    const text = encodeURIComponent('I just played Quiz Trivia! 🎉 Join me here:');
+    const url = encodeURIComponent(appUrl);
 
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: "Quiz Trivia",
-          text: shareText,
-          url: shareUrl,
-        });
-      } else {
-        await navigator.clipboard.writeText(shareText);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      }
-    } catch (err) {
-      console.error("Share failed:", err);
-      try {
-        await navigator.clipboard.writeText(shareText);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      } catch (clipboardErr) {
-        console.error("Clipboard fallback failed:", clipboardErr);
-      }
-    }
+    // Warpcast compose intent with prefilled text and URL
+    const warpcastUrl = `https://warpcast.com/~/compose?text=${text}%20${url}`;
+    window.open(warpcastUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
