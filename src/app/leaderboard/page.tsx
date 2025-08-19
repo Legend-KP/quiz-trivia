@@ -166,81 +166,41 @@ export default function PublicLeaderboard() {
 
           {/* Action Buttons */}
           <div className="mt-6 text-center space-x-4">
-            {context?.user?.fid ? (
-              <>
-                <button
-                  onClick={async () => {
-                    const shareUrl = 'https://quiz-trivia-mu.vercel.app/';
-                    const shareText = 'I just played Quiz Trivia! Try it here: https://quiz-trivia-mu.vercel.app/';
-                    try {
-                      if (navigator.share) {
-                        await navigator.share({ title: 'Quiz Trivia', text: shareText, url: shareUrl });
-                        return;
-                      }
-                    } catch (_) {}
-                    try {
-                      await navigator.clipboard.writeText(shareText);
-                      alert('Share text copied to clipboard!');
-                    } catch (_) {
-                      const textArea = document.createElement('textarea');
-                      textArea.value = shareText;
-                      document.body.appendChild(textArea);
-                      textArea.select();
-                      document.execCommand('copy');
-                      document.body.removeChild(textArea);
-                      alert('Share text copied to clipboard!');
-                    }
-                  }}
-                  className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 flex items-center mx-auto"
-                >
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Share My Score
-                </button>
-                <button
-                  onClick={async () => {
-                    const shareUrl = 'https://quiz-trivia-mu.vercel.app/';
-                    try {
-                      await navigator.clipboard.writeText(shareUrl);
-                      alert('App URL copied to clipboard!');
-                    } catch (_) {
-                      const textArea = document.createElement('textarea');
-                      textArea.value = shareUrl;
-                      document.body.appendChild(textArea);
-                      textArea.select();
-                      document.execCommand('copy');
-                      document.body.removeChild(textArea);
-                      alert('App URL copied to clipboard!');
-                    }
-                  }}
-                  className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-blue-600 hover:to-cyan-700 transform hover:scale-105 transition-all duration-200"
-                >
-                  📋 Share Leaderboard
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={async () => {
+            <button
+              onClick={async () => {
+                const shareUrl = 'https://quiz-trivia-mu.vercel.app/';
+                const shareText = `I just played Quiz Trivia! Join me here: ${shareUrl}`;
+                try {
+                  if (navigator.share) {
+                    await navigator.share({
+                      title: 'Quiz Trivia',
+                      text: shareText,
+                      url: shareUrl,
+                    });
+                  } else {
+                    await navigator.clipboard.writeText(shareText);
+                    alert('Share text copied to clipboard!');
+                  }
+                } catch (_error) {
                   try {
-                    const url = window.location.href;
-                    await navigator.clipboard.writeText(url);
-                    alert('Leaderboard URL copied to clipboard!');
-                  } catch (error) {
-                    console.error('Clipboard failed:', error);
-                    // Manual fallback
+                    await navigator.clipboard.writeText(shareText);
+                    alert('Share text copied to clipboard!');
+                  } catch {
                     const textArea = document.createElement('textarea');
-                    textArea.value = window.location.href;
+                    textArea.value = shareText;
                     document.body.appendChild(textArea);
                     textArea.select();
                     document.execCommand('copy');
                     document.body.removeChild(textArea);
-                    alert('Leaderboard URL copied to clipboard!');
+                    alert('Share text copied to clipboard!');
                   }
-                }}
-                className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200"
-              >
-                📋 Share Leaderboard
-              </button>
-            )}
+                }
+              }}
+              className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 flex items-center mx-auto"
+            >
+              <Share2 className="w-4 h-4 mr-2" />
+              Share
+            </button>
             <Link 
               href="/" 
               className="inline-block bg-gradient-to-r from-green-500 to-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200"
