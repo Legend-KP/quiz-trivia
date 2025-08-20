@@ -23,8 +23,7 @@ export default function PublicLeaderboard() {
     totalParticipants: 0,
     lastUpdated: ''
   });
-  const [copied, setCopied] = useState(false);
-  const { context } = useMiniApp();
+  const { context, actions } = useMiniApp();
 
   useEffect(() => {
     fetchLeaderboard();
@@ -50,48 +49,17 @@ export default function PublicLeaderboard() {
   };
 
   const handleShare = async () => {
-    const shareUrl = typeof window !== 'undefined'
-      ? `${window.location.origin}/leaderboard`
-      : 'https://quiz-trivia-mu.vercel.app/leaderboard';
-    const title = 'Quiz Trivia Leaderboard';
-    const text = 'Check out the Quiz Trivia leaderboard!';
-
     try {
-      if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({ title, text, url: shareUrl });
-        return;
-      }
-
-      if (typeof navigator !== 'undefined' && navigator.clipboard && typeof window !== 'undefined' && window.isSecureContext) {
-        await navigator.clipboard.writeText(shareUrl);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-        return;
-      }
-
-      // Final fallback: try legacy copy method
-      if (typeof document !== 'undefined') {
-        const textarea = document.createElement('textarea');
-        textarea.value = shareUrl;
-        textarea.setAttribute('readonly', '');
-        textarea.style.position = 'absolute';
-        textarea.style.left = '-9999px';
-        document.body.appendChild(textarea);
-        textarea.select();
-        try {
-          document.execCommand('copy');
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2000);
-        } finally {
-          document.body.removeChild(textarea);
-        }
-      }
+      await actions.composeCast({
+        text: 'I just played Quiz Trivia! 🎉 Come try it:',
+        embeds: ['https://quiz-trivia-mu.vercel.app/'],
+      });
     } catch (err) {
-      console.error('Share failed:', err);
-      // As a last resort, open Warpcast compose if available in a new tab
-      const wcText = encodeURIComponent('I just played Quiz Trivia! 🎉 Join me here:');
-      const wcUrl = encodeURIComponent(shareUrl);
-      const warpcastUrl = `https://warpcast.com/~/compose?text=${wcText}%20${wcUrl}`;
+      console.error('Failed to open Farcaster composer:', err);
+      // Fallback to Warpcast compose URL
+      const text = encodeURIComponent('I just played Quiz Trivia! 🎉 Come try it:');
+      const url = encodeURIComponent('https://quiz-trivia-mu.vercel.app/');
+      const warpcastUrl = `https://warpcast.com/~/compose?text=${text}%20${url}`;
       if (typeof window !== 'undefined') {
         window.open(warpcastUrl, '_blank', 'noopener,noreferrer');
       }
@@ -223,11 +191,6 @@ export default function PublicLeaderboard() {
               <Share2 className="w-4 h-4 mr-2" />
               Share
             </button>
-            {copied && (
-              <div className="mt-2 text-sm text-green-200">
-                ✅ Share link copied to clipboard!
-              </div>
-            )}
             <Link 
               href="/" 
               className="inline-block bg-gradient-to-r from-green-500 to-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200"

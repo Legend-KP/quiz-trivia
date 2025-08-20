@@ -414,6 +414,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
 
 // Results Component
 const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, context, time }) => {
+  const { actions } = useMiniApp();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -631,42 +632,24 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
           <div className="mt-6 text-center">
             <button
               onClick={async () => {
-                const url = typeof window !== 'undefined' ? window.location.href : 'https://quiz-trivia-mu.vercel.app/leaderboard';
-                const title = 'Quiz Trivia Leaderboard';
-                const text = 'Check out the Quiz Trivia leaderboard!';
-
                 try {
-                  if (typeof navigator !== 'undefined' && navigator.share) {
-                    await navigator.share({ title, text, url });
-                    return;
-                  }
-                  if (typeof navigator !== 'undefined' && navigator.clipboard && typeof window !== 'undefined' && window.isSecureContext) {
-                    await navigator.clipboard.writeText(url);
-                    // Optional: show a lightweight toast by toggling an element if available
-                    console.log('Share URL copied to clipboard');
-                    return;
-                  }
-                  if (typeof document !== 'undefined') {
-                    const textarea = document.createElement('textarea');
-                    textarea.value = url;
-                    textarea.setAttribute('readonly', '');
-                    textarea.style.position = 'absolute';
-                    textarea.style.left = '-9999px';
-                    document.body.appendChild(textarea);
-                    textarea.select();
-                    try {
-                      document.execCommand('copy');
-                    } finally {
-                      document.body.removeChild(textarea);
-                    }
-                  }
+                  await actions.composeCast({
+                    text: 'I just played Quiz Trivia! 🎉 Come try it:',
+                    embeds: ['https://quiz-trivia-mu.vercel.app/'],
+                  });
                 } catch (err) {
-                  console.error('Share failed:', err);
+                  console.error('Failed to open Farcaster composer:', err);
+                  const text = encodeURIComponent('I just played Quiz Trivia! 🎉 Come try it:');
+                  const url = encodeURIComponent('https://quiz-trivia-mu.vercel.app/');
+                  const warpcastUrl = `https://warpcast.com/~/compose?text=${text}%20${url}`;
+                  if (typeof window !== 'undefined') {
+                    window.open(warpcastUrl, '_blank', 'noopener,noreferrer');
+                  }
                 }
               }}
               className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200"
             >
-              📋 Share Leaderboard
+              📣 Share on Farcaster
             </button>
           </div>
         </div>
@@ -677,6 +660,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
 
 // Main App Component
 export default function QuizTriviaApp() {
+  const { actions } = useMiniApp();
   const [currentScreen, setCurrentScreen] = useState<'home' | 'quiz' | 'results'>('home');
   const [showRules, setShowRules] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
