@@ -630,10 +630,39 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
           {/* Share Leaderboard Button */}
           <div className="mt-6 text-center">
             <button
-              onClick={() => {
-                const url = window.location.href;
-                navigator.clipboard.writeText(url);
-                alert('Leaderboard URL copied to clipboard!');
+              onClick={async () => {
+                const url = typeof window !== 'undefined' ? window.location.href : 'https://quiz-trivia-mu.vercel.app/leaderboard';
+                const title = 'Quiz Trivia Leaderboard';
+                const text = 'Check out the Quiz Trivia leaderboard!';
+
+                try {
+                  if (typeof navigator !== 'undefined' && navigator.share) {
+                    await navigator.share({ title, text, url });
+                    return;
+                  }
+                  if (typeof navigator !== 'undefined' && navigator.clipboard && typeof window !== 'undefined' && window.isSecureContext) {
+                    await navigator.clipboard.writeText(url);
+                    // Optional: show a lightweight toast by toggling an element if available
+                    console.log('Share URL copied to clipboard');
+                    return;
+                  }
+                  if (typeof document !== 'undefined') {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = url;
+                    textarea.setAttribute('readonly', '');
+                    textarea.style.position = 'absolute';
+                    textarea.style.left = '-9999px';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    try {
+                      document.execCommand('copy');
+                    } finally {
+                      document.body.removeChild(textarea);
+                    }
+                  }
+                } catch (err) {
+                  console.error('Share failed:', err);
+                }
               }}
               className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200"
             >

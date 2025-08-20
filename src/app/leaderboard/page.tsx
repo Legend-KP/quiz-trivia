@@ -49,14 +49,53 @@ export default function PublicLeaderboard() {
     }
   };
 
-  const handleShare = () => {
-    const appUrl = 'https://quiz-trivia-mu.vercel.app/';
-    const text = encodeURIComponent('I just played Quiz Trivia! 🎉 Join me here:');
-    const url = encodeURIComponent(appUrl);
+  const handleShare = async () => {
+    const shareUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/leaderboard`
+      : 'https://quiz-trivia-mu.vercel.app/leaderboard';
+    const title = 'Quiz Trivia Leaderboard';
+    const text = 'Check out the Quiz Trivia leaderboard!';
 
-    // Warpcast compose intent with prefilled text and URL
-    const warpcastUrl = `https://warpcast.com/~/compose?text=${text}%20${url}`;
-    window.open(warpcastUrl, '_blank', 'noopener,noreferrer');
+    try {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share({ title, text, url: shareUrl });
+        return;
+      }
+
+      if (typeof navigator !== 'undefined' && navigator.clipboard && typeof window !== 'undefined' && window.isSecureContext) {
+        await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        return;
+      }
+
+      // Final fallback: try legacy copy method
+      if (typeof document !== 'undefined') {
+        const textarea = document.createElement('textarea');
+        textarea.value = shareUrl;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'absolute';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          document.execCommand('copy');
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        } finally {
+          document.body.removeChild(textarea);
+        }
+      }
+    } catch (err) {
+      console.error('Share failed:', err);
+      // As a last resort, open Warpcast compose if available in a new tab
+      const wcText = encodeURIComponent('I just played Quiz Trivia! 🎉 Join me here:');
+      const wcUrl = encodeURIComponent(shareUrl);
+      const warpcastUrl = `https://warpcast.com/~/compose?text=${wcText}%20${wcUrl}`;
+      if (typeof window !== 'undefined') {
+        window.open(warpcastUrl, '_blank', 'noopener,noreferrer');
+      }
+    }
   };
 
   return (
