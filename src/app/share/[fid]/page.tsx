@@ -10,9 +10,9 @@ export const revalidate = 300;
 export async function generateMetadata({
   params,
 }: {
-  params: { fid: string };
+  params: Promise<{ fid: string }>;
 }): Promise<Metadata> {
-  const { fid } = params;
+  const { fid } = await params;
   const imageUrl = `${APP_URL}/api/opengraph-image?fid=${fid}`;
 
   return {
