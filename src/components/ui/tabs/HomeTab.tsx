@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Clock, Trophy, Star, X, Share2 } from 'lucide-react';
 import { useMiniApp } from '@neynar/react';
+import { APP_URL } from '~/lib/constants';
 
 // Type definitions
 interface QuizQuestion {
@@ -634,13 +635,19 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
               onClick={async () => {
                 try {
                   await actions.composeCast({
-                    text: 'I just played Quiz Trivia! 🎉 Come try it:',
-                    embeds: ['https://quiz-trivia-mu.vercel.app/'],
+                    text: `I just played Quiz Trivia! 🎉 I scored ${score}. Come try it:`,
+                    embeds: [
+                      context?.user?.fid
+                        ? `${APP_URL}/share/${context.user.fid}`
+                        : `${APP_URL}`,
+                    ],
                   });
                 } catch (err) {
                   console.error('Failed to open Farcaster composer:', err);
-                  const text = encodeURIComponent('I just played Quiz Trivia! 🎉 Come try it:');
-                  const url = encodeURIComponent('https://quiz-trivia-mu.vercel.app/');
+                  const text = encodeURIComponent(`I just played Quiz Trivia! 🎉 I scored ${score}. Come try it:`);
+                  const url = encodeURIComponent(
+                    context?.user?.fid ? `${APP_URL}/share/${context.user.fid}` : `${APP_URL}`
+                  );
                   const warpcastUrl = `https://warpcast.com/~/compose?text=${text}%20${url}`;
                   if (typeof window !== 'undefined') {
                     window.open(warpcastUrl, '_blank', 'noopener,noreferrer');
