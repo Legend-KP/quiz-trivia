@@ -32,20 +32,22 @@ export async function POST(request: Request) {
     const reward = REWARDS[nextDay - 1];
 
     // Upsert account and record txn
-    const updated = await accounts.findOneAndUpdate(
+    await accounts.updateOne(
       { fid: Number(fid) },
       {
         $setOnInsert: { createdAt: now, balance: 50, dailyStreakDay: 0 },
-        $set: { updatedAt: now, lastClaimAt: now },
+        $set: { updatedAt: now, lastClaimAt: now, dailyStreakDay: nextDay },
         $inc: { balance: reward },
-        $max: { dailyStreakDay: nextDay },
       },
-      { upsert: true, returnDocument: 'after' as any }
+      { upsert: true }
     );
 
     await txns.insertOne({ fid: Number(fid), amount: reward, reason: 'daily_claim', createdAt: now });
 
-    return NextResponse.json({ success: true, reward, balance: updated?.value?.balance ?? 50 + reward, dailyStreakDay: nextDay });
+    const fresh = await accounts.findOne({ fid: Number(fid) });
+    const balance = fresh?.balance ?? 50 + reward;
+
+    return NextResponse.json({ success: true, reward, balance, dailyStreakDay: nextDay });
   } catch (_error) {
     return NextResponse.json({ error: 'Failed to claim daily' }, { status: 500 });
   }
