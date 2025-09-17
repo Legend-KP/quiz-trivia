@@ -27,7 +27,10 @@ export async function GET(request: Request) {
       acct = await accounts.findOne({ fid });
     }
 
-    return NextResponse.json({ balance: acct.balance, dailyStreakDay: acct.dailyStreakDay, lastClaimAt: acct.lastClaimAt });
+    const balance = acct?.balance ?? 50;
+    const dailyStreakDay = acct?.dailyStreakDay ?? 0;
+    const lastClaimAt = acct?.lastClaimAt;
+    return NextResponse.json({ balance, dailyStreakDay, lastClaimAt });
   } catch (_error) {
     return NextResponse.json({ error: 'Failed to fetch balance' }, { status: 500 });
   }
