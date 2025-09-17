@@ -37,8 +37,12 @@ interface RulesPopupProps {
 }
 
 interface HomePageProps {
-  onStartQuiz: () => void;
+  balance: number | null;
+  onStartClassic: () => void;
+  onStartTimeMode: () => void;
+  onStartChallenge: () => void;
   onShowRules: () => void;
+  onClaimDaily: () => void;
 }
 
 interface QuizPageProps {
@@ -145,7 +149,7 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
 };
 
 // Home Page Component
-const HomePage: React.FC<HomePageProps> = ({ onStartQuiz, onShowRules }) => {
+const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTimeMode, onStartChallenge, onShowRules, onClaimDaily }) => {
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {/* Gradient Background - Full Frame */}
@@ -176,18 +180,38 @@ const HomePage: React.FC<HomePageProps> = ({ onStartQuiz, onShowRules }) => {
           </h3>
         </div>
 
-        {/* Action Buttons */}
-        <div className="space-y-4">
+        {/* Balance + Claim Daily */}
+        <div className="mb-6 text-white text-sm flex items-center gap-3">
+          <span className="px-3 py-1 rounded-full bg-black/30 border border-white/20">Coins: {balance ?? '—'}</span>
+          <button onClick={onClaimDaily} className="px-3 py-1 rounded-full bg-yellow-500 text-yellow-900 font-semibold hover:bg-yellow-400 transition">Claim daily ✨</button>
+        </div>
+
+        {/* Mode Buttons */}
+        <div className="space-y-4 w-full max-w-xs">
           <button
-            onClick={onStartQuiz}
-            className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-4 px-8 rounded-xl text-xl hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-2xl"
+            onClick={onStartTimeMode}
+            className="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-4 px-8 rounded-xl text-xl hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-2xl"
           >
-            Start Now 🚀
+            Time Mode • 45s ⏱️
           </button>
-          
+
+          <button
+            onClick={onStartClassic}
+            className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold py-4 px-8 rounded-xl text-xl hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 shadow-2xl"
+          >
+            Classic Quiz 🧠
+          </button>
+
+          <button
+            onClick={onStartChallenge}
+            className="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold py-4 px-8 rounded-xl text-xl hover:from-orange-600 hover:to-red-700 transform hover:scale-105 transition-all duration-200 shadow-2xl"
+          >
+            Challenge (Beta) ⚔️
+          </button>
+
           <button
             onClick={onShowRules}
-            className="block mx-auto bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
+            className="block mx-auto bg-white/15 backdrop-blur text-white font-semibold py-3 px-6 rounded-lg hover:bg-white/25 transform hover:scale-105 transition-all duration-200 shadow-lg"
           >
             View Rules 📋
           </button>
@@ -668,17 +692,22 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
 // Main App Component
 export default function QuizTriviaApp() {
   const { actions } = useMiniApp();
-  const [currentScreen, setCurrentScreen] = useState<'home' | 'quiz' | 'results'>('home');
+  const [currentScreen, setCurrentScreen] = useState<'home' | 'quiz' | 'results' | 'time'>('home');
   const [showRules, setShowRules] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
   const [finalAnswers, setFinalAnswers] = useState<Answer[]>([]);
   const [finalTime, setFinalTime] = useState<string>('0:00');
+  const [balance, setBalance] = useState<number | null>(null);
 
   // Get Farcaster context
   const { context } = useMiniApp();
 
   const handleStartQuiz = () => {
     setCurrentScreen('quiz');
+  };
+
+  const handleStartTime = () => {
+    setCurrentScreen('time');
   };
 
   const handleShowRules = () => {
@@ -703,12 +732,34 @@ export default function QuizTriviaApp() {
     setFinalTime('0:00');
   };
 
+  // Fetch balance
+  useEffect(() => {
+    const fid = context?.user?.fid;
+    if (!fid) return;
+    fetch(`/api/currency/balance?fid=${fid}`)
+      .then(r => r.json())
+      .then(d => setBalance(typeof d.balance === 'number' ? d.balance : null))
+      .catch(() => {});
+  }, [context?.user?.fid]);
+
+  const handleClaimDaily = async () => {
+    const fid = context?.user?.fid;
+    if (!fid) return;
+    const res = await fetch('/api/currency/claim-daily', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fid }) });
+    const d = await res.json();
+    if (d?.balance !== undefined) setBalance(d.balance);
+  };
+
   return (
     <div className="w-full h-screen">
       {currentScreen === 'home' && (
         <HomePage 
-          onStartQuiz={handleStartQuiz}
+          balance={balance}
+          onStartClassic={handleStartQuiz}
+          onStartTimeMode={handleStartTime}
+          onStartChallenge={() => alert('Challenge mode coming soon')}
           onShowRules={handleShowRules}
+          onClaimDaily={handleClaimDaily}
         />
       )}
       
