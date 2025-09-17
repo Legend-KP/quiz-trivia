@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Clock, Trophy, Star, X, Share2 } from 'lucide-react';
+import { Clock, Trophy, Star, X } from 'lucide-react';
 import { useMiniApp } from '@neynar/react';
 import { APP_URL } from '~/lib/constants';
 
@@ -448,7 +448,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
 };
 
 // Results Component
-const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, context, time }) => {
+const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart: _onRestart, context, time }) => {
   const { actions } = useMiniApp();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -456,7 +456,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
   const [submitted, setSubmitted] = useState(false);
   const totalQuestions = quizData.length;
   const correctAnswers = answers.filter((a: Answer) => a.isCorrect).length;
-  const accuracy = Math.round((correctAnswers / totalQuestions) * 100);
+  // const accuracy = Math.round((correctAnswers / totalQuestions) * 100);
 
   // Use the actual completion time passed from the quiz
   const totalTime = time || "0:00";
@@ -811,7 +811,7 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
           </div>
         ) : timeLeft <= 0 ? (
           <div className="bg-white rounded-2xl p-8 shadow-2xl text-center">
-            <h3 className="text-2xl font-bold text-gray-800 mb-3">Time's up! ⏱️</h3>
+            <h3 className="text-2xl font-bold text-gray-800 mb-3">Time&apos;s up! ⏱️</h3>
             <p className="text-gray-700 mb-6">You answered {correctCount} correct out of {totalAnswered}.</p>
             <button onClick={onExit} className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold py-3 px-6 rounded-xl">Back to Home</button>
           </div>
