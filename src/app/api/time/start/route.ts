@@ -22,20 +22,20 @@ export async function POST(request: Request) {
       await accounts.insertOne({ fid: nfid, balance: 50, dailyStreakDay: 0, createdAt: now, updatedAt: now });
     }
 
-    const updated = await accounts.findOneAndUpdate(
+    const updateResult = await accounts.updateOne(
       { fid: nfid, balance: { $gte: ENTRY_COST } },
-      { $inc: { balance: -ENTRY_COST }, $set: { updatedAt: now } },
-      { returnDocument: 'after' as any }
+      { $inc: { balance: -ENTRY_COST }, $set: { updatedAt: now } }
     );
 
-    if (!updated.value) {
+    if (!updateResult.matchedCount) {
       return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
     }
 
     const sessionId = `time_${nfid}_${now}`;
     await txns.insertOne({ fid: nfid, amount: -ENTRY_COST, reason: 'time_entry', refId: sessionId, createdAt: now });
 
-    return NextResponse.json({ success: true, sessionId, balance: updated.value.balance, durationSec: 45 });
+    const fresh = await accounts.findOne({ fid: nfid });
+    return NextResponse.json({ success: true, sessionId, balance: fresh?.balance ?? 0, durationSec: 45 });
   } catch (_error) {
     return NextResponse.json({ error: 'Failed to start time mode' }, { status: 500 });
   }
