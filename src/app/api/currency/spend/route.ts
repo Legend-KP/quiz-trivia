@@ -22,19 +22,19 @@ export async function POST(request: Request) {
       await accounts.insertOne({ fid: nfid, balance: 50, dailyStreakDay: 0, createdAt: now, updatedAt: now });
     }
 
-    const updated = await accounts.findOneAndUpdate(
+    const updateResult = await accounts.updateOne(
       { fid: nfid, balance: { $gte: namount } },
-      { $inc: { balance: -namount }, $set: { updatedAt: now } },
-      { returnDocument: 'after' as any }
+      { $inc: { balance: -namount }, $set: { updatedAt: now } }
     );
 
-    if (!updated.value) {
+    if (!updateResult.matchedCount) {
       return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
     }
 
     await txns.insertOne({ fid: nfid, amount: -namount, reason: reason || 'other', refId, createdAt: now });
 
-    return NextResponse.json({ success: true, balance: updated.value.balance });
+    const fresh = await accounts.findOne({ fid: nfid });
+    return NextResponse.json({ success: true, balance: fresh?.balance ?? 0 });
   } catch (_error) {
     return NextResponse.json({ error: 'Failed to spend' }, { status: 500 });
   }
