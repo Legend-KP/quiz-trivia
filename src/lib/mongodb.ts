@@ -94,6 +94,24 @@ export interface CurrencyTxnDocument {
   createdAt: number;
 }
 
+export type ChallengeStatus = 'pending' | 'accepted' | 'expired' | 'completed' | 'tied';
+
+export interface ChallengeDocument {
+  _id?: any;
+  id: string; // public id
+  challengerFid: number;
+  opponentFid?: number;
+  status: ChallengeStatus;
+  topicKey?: string; // currently random
+  createdAt: number;
+  expiresAt: number;
+  durationSec: number; // 120
+  questions: QuestionDocument[]; // fixed at create
+  // results
+  challenger?: { correct: number; total: number; durationSec: number; accuracy: number };
+  opponent?: { correct: number; total: number; durationSec: number; accuracy: number };
+}
+
 async function getDb(): Promise<Db> {
   if (!uri) {
     throw new Error('MONGODB_URI environment variable is not set');
@@ -127,4 +145,9 @@ export async function getCurrencyAccountsCollection(): Promise<Collection<Curren
 export async function getCurrencyTxnsCollection(): Promise<Collection<CurrencyTxnDocument>> {
   const database = await getDb();
   return database.collection<CurrencyTxnDocument>('currency_txns');
+}
+
+export async function getChallengesCollection(): Promise<Collection<ChallengeDocument>> {
+  const database = await getDb();
+  return database.collection<ChallengeDocument>('challenges');
 }

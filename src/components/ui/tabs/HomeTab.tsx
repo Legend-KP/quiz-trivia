@@ -58,6 +58,16 @@ interface ResultsPageProps {
   context?: any;
 }
 
+interface TimeModePageProps {
+  onExit: () => void;
+  context?: any;
+}
+
+interface ChallengeModePageProps {
+  onExit: () => void;
+  context?: any;
+}
+
 // Sample quiz data with explanations
 const quizData: QuizQuestion[] = [
   {
@@ -689,10 +699,271 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart, co
   );
 };
 
+// Time Mode (45s) Component
+const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState<number>(45);
+  const [started, setStarted] = useState(false);
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [qIndex, setQIndex] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [totalAnswered, setTotalAnswered] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchMoreQuestions = useCallback(async () => {
+    try {
+      const res = await fetch('/api/questions/random?limit=25');
+      const d = await res.json();
+      if (Array.isArray(d.questions)) {
+        setQuestions((prev) => [...prev, ...d.questions]);
+      }
+    } catch (_e) {}
+  }, []);
+
+  const startRun = useCallback(async () => {
+    try {
+      setError(null);
+      const res = await fetch('/api/time/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fid: context?.user?.fid }) });
+      const d = await res.json();
+      if (!res.ok || !d?.success) {
+        setError(d?.error || 'Unable to start Time Mode');
+        return;
+      }
+      setSessionId(d.sessionId);
+      setTimeLeft(d.durationSec || 45);
+      setStarted(true);
+      if (questions.length < 5) fetchMoreQuestions();
+    } catch (_e) {
+      setError('Network error');
+    }
+  }, [context?.user?.fid, fetchMoreQuestions, questions.length]);
+
+  // countdown
+  useEffect(() => {
+    if (!started) return;
+    if (timeLeft <= 0) return;
+    const t = setTimeout(() => setTimeLeft((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [started, timeLeft]);
+
+  // auto submit on end
+  useEffect(() => {
+    if (!started) return;
+    if (timeLeft > 0) return;
+    if (submitting) return;
+    setSubmitting(true);
+    const run = async () => {
+      try {
+        const payload = {
+          fid: context?.user?.fid,
+          correctCount,
+          totalAnswered,
+          durationSec: 45,
+          avgAnswerTimeSec: totalAnswered > 0 ? 45 / totalAnswered : 0,
+          username: context?.user?.username,
+          displayName: context?.user?.displayName,
+          pfpUrl: context?.user?.pfpUrl,
+        };
+        await fetch('/api/time/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      } catch (_e) {}
+      setSubmitting(false);
+    };
+    run();
+  }, [started, timeLeft, submitting, correctCount, totalAnswered, context?.user]);
+
+  const handleAnswer = useCallback((idx: number) => {
+    const q = questions[qIndex];
+    if (!q) return;
+    setTotalAnswered((n) => n + 1);
+    if (idx === q.correct) setCorrectCount((n) => n + 1);
+    const next = qIndex + 1;
+    if (next >= questions.length - 3) fetchMoreQuestions();
+    setQIndex(next);
+  }, [questions, qIndex, fetchMoreQuestions]);
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const q = questions[qIndex];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4">
+      <div className="max-w-2xl mx-auto pt-6">
+        {/* Top bar with back */}
+        <div className="flex items-center justify-between mb-4 text-white">
+          <button onClick={onExit} className="px-3 py-1 rounded bg-white/10 hover:bg-white/20">← Back</button>
+          <div className="flex items-center gap-4">
+            <div className="font-bold">Time: {formatTime(timeLeft)}</div>
+            <div className="font-bold">Score: {correctCount}</div>
+          </div>
+        </div>
+
+        {!started ? (
+          <div className="bg-white rounded-2xl p-8 shadow-2xl text-center">
+            <h2 className="text-2xl font-bold mb-2 text-gray-800">Time Mode • 45s</h2>
+            <p className="text-gray-600 mb-6">Answer as many as you can. Costs 10 coins to start.</p>
+            {error && <div className="mb-4 text-red-600 font-semibold">{error}</div>}
+            <button onClick={startRun} className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700">Start</button>
+          </div>
+        ) : timeLeft <= 0 ? (
+          <div className="bg-white rounded-2xl p-8 shadow-2xl text-center">
+            <h3 className="text-2xl font-bold text-gray-800 mb-3">Time's up! ⏱️</h3>
+            <p className="text-gray-700 mb-6">You answered {correctCount} correct out of {totalAnswered}.</p>
+            <button onClick={onExit} className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold py-3 px-6 rounded-xl">Back to Home</button>
+          </div>
+        ) : !q ? (
+          <div className="text-center text-white">Loading questions…</div>
+        ) : (
+          <div className="bg-white rounded-2xl p-8 shadow-2xl">
+            <div className="text-gray-500 mb-2">Question {qIndex + 1}</div>
+            <h2 className="text-xl font-bold text-gray-800 mb-6">{q.question}</h2>
+            <div className="space-y-3">
+              {q.options.map((opt, i) => (
+                <button key={i} onClick={() => handleAnswer(i)} className="w-full p-4 text-left rounded-lg border-2 bg-gray-50 border-gray-300 hover:border-blue-500 hover:bg-blue-50 transition-all">
+                  <span className="font-semibold mr-3">{String.fromCharCode(65 + i)}.</span>
+                  <span>{opt}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+interface ChallengeModePageProps {
+  onExit: () => void;
+  context?: any;
+}
+
+const ChallengeModePage: React.FC<ChallengeModePageProps> = ({ onExit, context }) => {
+  const [challengeId, setChallengeId] = React.useState<string>('');
+  const [activeId, setActiveId] = React.useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = React.useState<number>(120);
+  const [started, setStarted] = React.useState(false);
+  const [questions, setQuestions] = React.useState<QuizQuestion[]>([]);
+  const [qIndex, setQIndex] = React.useState(0);
+  const [correct, setCorrect] = React.useState(0);
+  const [total, setTotal] = React.useState(0);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const createChallenge = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch('/api/challenge/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fid: context?.user?.fid }) });
+      const d = await res.json();
+      if (!res.ok || !d?.success) { setError(d?.error || 'Failed to create'); return; }
+      setActiveId(d.id);
+      // fetch challenge details (has questions)
+      const chRes = await fetch(`/api/challenge/${d.id}`);
+      const ch = await chRes.json();
+      setQuestions(ch?.challenge?.questions || []);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const acceptChallenge = async () => {
+    if (!challengeId) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch('/api/challenge/accept', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fid: context?.user?.fid, id: challengeId }) });
+      const d = await res.json();
+      if (!res.ok || !d?.success) { setError(d?.error || 'Failed to accept'); return; }
+      setActiveId(challengeId);
+      const chRes = await fetch(`/api/challenge/${challengeId}`);
+      const ch = await chRes.json();
+      setQuestions(ch?.challenge?.questions || []);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const startRound = () => {
+    setStarted(true);
+    setTimeLeft(120);
+  };
+
+  React.useEffect(() => {
+    if (!started) return;
+    if (timeLeft <= 0) return;
+    const t = setTimeout(() => setTimeLeft((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [started, timeLeft]);
+
+  React.useEffect(() => {
+    if (!started || timeLeft > 0 || !activeId) return;
+    // submit
+    fetch('/api/challenge/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: activeId, fid: context?.user?.fid, correct, total, durationSec: 120 }) }).catch(() => {});
+  }, [started, timeLeft, activeId, correct, total, context?.user?.fid]);
+
+  const q = questions[qIndex];
+  const onAnswer = (i: number) => {
+    if (!q) return;
+    setTotal((n) => n + 1);
+    if (i === q.correct) setCorrect((n) => n + 1);
+    setQIndex((n) => n + 1);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4">
+      <div className="max-w-2xl mx-auto pt-6">
+        <div className="flex items-center justify-between mb-4 text-white">
+          <button onClick={onExit} className="px-3 py-1 rounded bg-white/10 hover:bg-white/20">← Back</button>
+          <div className="font-bold">{started ? `Time: ${Math.floor(timeLeft/60)}:${(timeLeft%60).toString().padStart(2,'0')}` : 'Challenge Mode'}</div>
+        </div>
+
+        {!activeId ? (
+          <div className="bg-white rounded-2xl p-8 shadow-2xl">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Create or Join</h2>
+            {error && <div className="mb-4 text-red-600 font-semibold">{error}</div>}
+            <div className="flex flex-col gap-3">
+              <button disabled={loading} onClick={createChallenge} className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl disabled:opacity-60">Create Challenge (10 coins)</button>
+              <div className="flex items-center gap-2">
+                <input value={challengeId} onChange={(e)=>setChallengeId(e.target.value)} placeholder="Enter Challenge ID" className="flex-1 px-3 py-2 border rounded" />
+                <button disabled={loading || !challengeId} onClick={acceptChallenge} className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold py-2 px-4 rounded-xl disabled:opacity-60">Accept</button>
+              </div>
+            </div>
+          </div>
+        ) : !started ? (
+          <div className="bg-white rounded-2xl p-8 shadow-2xl text-center">
+            <h3 className="text-xl font-bold text-gray-800 mb-2">Challenge Ready</h3>
+            <p className="text-gray-600 mb-6">ID: {activeId}. 10 questions • 120s.</p>
+            <button onClick={startRound} className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl">Start</button>
+          </div>
+        ) : !q ? (
+          <div className="text-center text-white">Loading…</div>
+        ) : (
+          <div className="bg-white rounded-2xl p-8 shadow-2xl">
+            <div className="text-gray-500 mb-2">Question {qIndex + 1} of 10</div>
+            <h2 className="text-xl font-bold text-gray-800 mb-6">{q.question}</h2>
+            <div className="space-y-3">
+              {q.options.map((opt, i) => (
+                <button key={i} onClick={() => onAnswer(i)} className="w-full p-4 text-left rounded-lg border-2 bg-gray-50 border-gray-300 hover:border-blue-500 hover:bg-blue-50 transition-all">
+                  <span className="font-semibold mr-3">{String.fromCharCode(65 + i)}.</span>
+                  <span>{opt}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // Main App Component
 export default function QuizTriviaApp() {
   const { actions } = useMiniApp();
-  const [currentScreen, setCurrentScreen] = useState<'home' | 'quiz' | 'results' | 'time'>('home');
+  const [currentScreen, setCurrentScreen] = useState<'home' | 'quiz' | 'results' | 'time' | 'challenge'>('home');
   const [showRules, setShowRules] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
   const [finalAnswers, setFinalAnswers] = useState<Answer[]>([]);
@@ -757,7 +1028,7 @@ export default function QuizTriviaApp() {
           balance={balance}
           onStartClassic={handleStartQuiz}
           onStartTimeMode={handleStartTime}
-          onStartChallenge={() => alert('Challenge mode coming soon')}
+          onStartChallenge={() => setCurrentScreen('challenge')}
           onShowRules={handleShowRules}
           onClaimDaily={handleClaimDaily}
         />
@@ -770,6 +1041,20 @@ export default function QuizTriviaApp() {
         />
       )}
       
+      {currentScreen === 'time' && (
+        <TimeModePage 
+          onExit={() => setCurrentScreen('home')}
+          context={context}
+        />
+      )}
+
+      {currentScreen === 'challenge' && (
+        <ChallengeModePage 
+          onExit={() => setCurrentScreen('home')}
+          context={context}
+        />
+      )}
+
       {currentScreen === 'results' && (
         <ResultsPage 
           score={finalScore}
