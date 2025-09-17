@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     await txns.insertOne({ fid: nfid, amount: -namount, reason: reason || 'other', refId, createdAt: now });
 
     return NextResponse.json({ success: true, balance: updated.value.balance });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Failed to spend' }, { status: 500 });
   }
 }

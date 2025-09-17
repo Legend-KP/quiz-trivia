@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     await leaderboard.updateOne({ fid: nfid }, { $set: entry }, { upsert: true });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Failed to submit time mode result' }, { status: 500 });
   }
 }

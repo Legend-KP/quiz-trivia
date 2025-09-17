@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     const questions = await cursor.toArray();
 
     return NextResponse.json({ questions });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Failed to fetch questions' }, { status: 500 });
   }
 }

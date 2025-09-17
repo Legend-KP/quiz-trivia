@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     await txns.insertOne({ fid: nfid, amount: -ENTRY_COST, reason: 'time_entry', refId: sessionId, createdAt: now });
 
     return NextResponse.json({ success: true, sessionId, balance: updated.value.balance, durationSec: 45 });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Failed to start time mode' }, { status: 500 });
   }
 }

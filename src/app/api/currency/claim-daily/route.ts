@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     await txns.insertOne({ fid: Number(fid), amount: reward, reason: 'daily_claim', createdAt: now });
 
     return NextResponse.json({ success: true, reward, balance: updated?.value?.balance ?? 50 + reward, dailyStreakDay: nextDay });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Failed to claim daily' }, { status: 500 });
   }
 }

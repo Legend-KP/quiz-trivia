@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     const result = await collection.insertMany(docs);
 
     return NextResponse.json({ success: true, insertedCount: result.insertedCount });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ success: false, error: 'Failed to insert questions' }, { status: 500 });
   }
 }

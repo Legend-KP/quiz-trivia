@@ -16,18 +16,19 @@ export async function GET(request: Request) {
     let acct = await accounts.findOne({ fid });
     if (!acct) {
       // initialize with 50 coins
-      acct = {
+      const now = Date.now();
+      await accounts.insertOne({
         fid,
         balance: 50,
         dailyStreakDay: 0,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      };
-      await accounts.insertOne(acct as any);
+        createdAt: now,
+        updatedAt: now,
+      } as any);
+      acct = await accounts.findOne({ fid });
     }
 
     return NextResponse.json({ balance: acct.balance, dailyStreakDay: acct.dailyStreakDay, lastClaimAt: acct.lastClaimAt });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Failed to fetch balance' }, { status: 500 });
   }
 }
