@@ -81,6 +81,7 @@ export interface CurrencyAccountDocument {
   balance: number;
   dailyStreakDay: number; // 0..7, resets after claim beyond 7
   lastClaimAt?: number; // ms epoch
+  lastDailyBaseAt?: number; // ms epoch, last time the daily base grant was applied
   createdAt: number;
   updatedAt: number;
 }
