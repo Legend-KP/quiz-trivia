@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
       { fid },
       {
         $inc: { balance: amount },
-        $setOnInsert: { createdAt: now, dailyStreakDay: 0 },
+        $setOnInsert: { createdAt: now, dailyStreakDay: 500 },
         $set: { updatedAt: now },
       },
       { upsert: true }
