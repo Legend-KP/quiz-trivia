@@ -76,14 +76,14 @@ export async function POST(req: NextRequest) {
     const txns = await getCurrencyTxnsCollection();
 
     // Upsert account and increment balance atomically
-    const updateResult = await accounts.findOneAndUpdate(
+    await accounts.updateOne(
       { fid },
       {
         $inc: { balance: amount },
         $setOnInsert: { createdAt: now, dailyStreakDay: 0 },
         $set: { updatedAt: now },
       },
-      { upsert: true, returnDocument: 'after' }
+      { upsert: true }
     );
 
     // Record transaction (best-effort; do not fail the whole call if this fails)
@@ -91,9 +91,8 @@ export async function POST(req: NextRequest) {
       await txns.insertOne({ fid, amount, reason, createdAt: now });
     } catch {}
 
-    const updatedBalance = (
-      updateResult?.value as { balance?: number } | null
-    )?.balance;
+    const accountAfter = await accounts.findOne({ fid });
+    const updatedBalance = accountAfter?.balance;
     return new Response(
       JSON.stringify({ fid, balance: updatedBalance ?? amount }),
       { headers: { 'content-type': 'application/json' } }
