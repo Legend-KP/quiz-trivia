@@ -91,9 +91,11 @@ export async function POST(req: NextRequest) {
       await txns.insertOne({ fid, amount, reason, createdAt: now });
     } catch {}
 
-    const updated = updateResult.value as { balance: number } | null;
+    const updatedBalance = (
+      updateResult?.value as { balance?: number } | null
+    )?.balance;
     return new Response(
-      JSON.stringify({ fid, balance: updated?.balance ?? amount }),
+      JSON.stringify({ fid, balance: updatedBalance ?? amount }),
       { headers: { 'content-type': 'application/json' } }
     );
   } catch (err: any) {
