@@ -3,6 +3,7 @@ import {
   getCurrencyAccountsCollection,
   getCurrencyTxnsCollection,
 } from '~/lib/mongodb';
+import type { CurrencyTxnDocument } from '~/lib/mongodb';
 
 export const runtime = 'nodejs';
 
@@ -43,7 +44,20 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const fid = Number(body.fid);
     const amount = Number(body.amount ?? 500);
-    const reason = String(body.reason ?? 'admin_adjust');
+    const allowedReasons: CurrencyTxnDocument['reason'][] = [
+      'time_entry',
+      'challenge_entry',
+      'win_reward',
+      'daily_claim',
+      'admin_adjust',
+      'other',
+    ];
+    const requestedReason = typeof body.reason === 'string' ? body.reason : undefined;
+    const reason: CurrencyTxnDocument['reason'] = allowedReasons.includes(
+      requestedReason as CurrencyTxnDocument['reason']
+    )
+      ? (requestedReason as CurrencyTxnDocument['reason'])
+      : 'admin_adjust';
     if (!Number.isFinite(fid)) {
       return new Response(JSON.stringify({ error: 'Invalid fid' }), {
         status: 400,
