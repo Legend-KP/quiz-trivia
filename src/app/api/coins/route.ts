@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
     }
     if (!Number.isFinite(amount)) {
       return new Response(JSON.stringify({ error: 'Invalid amount' }), {
-        status: 400,
+        status: 500,
         headers: { 'content-type': 'application/json' },
       });
     }
