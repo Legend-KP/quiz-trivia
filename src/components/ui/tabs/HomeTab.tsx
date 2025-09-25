@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Clock, Trophy, Star, X } from 'lucide-react';
 import { useMiniApp } from '@neynar/react';
 import { APP_URL } from '~/lib/constants';
+import { useAccount, useSwitchChain, useWalletClient } from 'wagmi';
+import { base } from 'wagmi/chains';
 
 // Type definitions
 interface QuizQuestion {
@@ -67,6 +69,43 @@ interface ChallengeModePageProps {
   onExit: () => void;
   context?: any;
 }
+
+// 30 curated fallback questions for Time Mode (used if API returns none)
+const TIME_MODE_FALLBACK_QUESTIONS: QuizQuestion[] = [
+  // DePIN
+  { id: 1001, question: 'What does DePIN stand for in the Web3 ecosystem?', options: ['Decentralized Protocol for Internet Nodes','Decentralized Physical Infrastructure Networks','Digital Private Investment Network','Decentralized Payment Integration Node'], correct: 1, timeLimit: 45, explanation: 'DePIN decentralizes physical resources (connectivity, storage) with token incentives.' },
+  { id: 1002, question: 'Primary benefit of DePIN vs centralized infra?', options: ['Higher tx speeds for digital-only assets','Resilience via distributed nodes','Government-only funding','No hardware needed'], correct: 1, timeLimit: 45, explanation: 'Distributed nodes reduce single points of failure.' },
+  { id: 1003, question: 'Role of tokens in DePIN?', options: ['Only governance votes','Incentivize resource contributions','Replace all fiat','Institutional-only'], correct: 1, timeLimit: 45, explanation: 'Tokens reward bandwidth, storage, and coverage.' },
+  { id: 1004, question: 'Which DePIN category shares compute/storage?', options: ['Physical Resource Networks','Digital Resource Networks','Hybrid Energy Networks','Centralized Wireless Hubs'], correct: 1, timeLimit: 45, explanation: 'Digital Resource Networks cover bandwidth and compute.' },
+  { id: 1005, question: 'Projected DePIN market size mid‑2025?', options: ['$5B','$32B','$100B','$500B'], correct: 1, timeLimit: 45, explanation: 'Adoption in smart cities and AI drives growth.' },
+  { id: 1006, question: 'Leading DePIN for decentralized wireless?', options: ['Filecoin','Helium','The Graph','Flux'], correct: 1, timeLimit: 45, explanation: 'Helium rewards hotspot providers for IoT/5G.' },
+  { id: 1007, question: 'How does AI enhance DePIN allocation?', options: ['Centralize in single AI node','Predictive demand forecasting','Eliminate tokens','Quantum-only encryption'], correct: 1, timeLimit: 45, explanation: 'AI allocates energy/bandwidth based on forecasts.' },
+  { id: 1008, question: 'Unique scalability challenge for DePIN?', options: ['Fiat gateways','Consensus vs physical latency','Mandatory PoS for hardware','No interoperability'], correct: 1, timeLimit: 45, explanation: 'Syncing on-chain validation with hardware delays.' },
+  { id: 1009, question: "In DePIN layers, 'consensus & governance' handles?", options: ['Device deployment','Token incentives and DAO decisions','Sensor encryption only','Centralized backups'], correct: 1, timeLimit: 45, explanation: 'Smart contracts + DAO maintain fair validation.' },
+  { id: 1010, question: 'Quantum threat impact and mitigation by 2030?', options: ['No impact','May break signatures; use post‑quantum crypto','Eliminate hardware','Centralize oracles'], correct: 1, timeLimit: 45, explanation: 'Quantum‑resistant schemes protect rewards and security.' },
+  // RWA
+  { id: 1011, question: 'Basic process of RWA tokenization?', options: ['Digital art → physical','Represent tangible assets as tokens','Eliminate intermediaries','Create new coins from scratch'], correct: 1, timeLimit: 45, explanation: 'Ownership rights of assets are digitized on-chain.' },
+  { id: 1012, question: 'Key investor advantage of RWAs?', options: ['More bank custody','Fractional ownership','No division allowed','Geo‑limited'], correct: 1, timeLimit: 45, explanation: 'Small tickets into high‑value assets.' },
+  { id: 1013, question: 'Oracle role in RWAs?', options: ['Mint tokens','Provide off‑chain data/prices','Centralize governance','Stablecoin‑only trading'], correct: 1, timeLimit: 45, explanation: 'Feeds keep token value aligned with reality.' },
+  { id: 1014, question: 'RWA TVL mid‑2025 approx?', options: ['$1B','$12.7B','$100B','$1T'], correct: 1, timeLimit: 45, explanation: 'Driven by stables and treasuries.' },
+  { id: 1015, question: 'Dominant RWA class 2025?', options: ['Tokenized art','Fiat‑backed stablecoins','Metaverse land','Derivatives only'], correct: 1, timeLimit: 45, explanation: 'USDT/USDC anchor liquidity.' },
+  { id: 1016, question: 'Regulatory trend boosting RWAs?', options: ['Global bans','Clear frameworks in UAE/Singapore','Mandatory centralization','No KYC worldwide'], correct: 1, timeLimit: 45, explanation: 'Compliance rails enable institutions.' },
+  { id: 1017, question: 'Dynamic compliance solves what?', options: ['Ignore laws','Automated KYC/AML per jurisdiction','Full deregulation','Single‑chain only'], correct: 1, timeLimit: 45, explanation: 'Smart contracts enforce regional rules.' },
+  { id: 1018, question: 'Why tokenized treasuries surge 2025?', options: ['Only commodities; low yield','On‑chain bond yield; institutional demand','No fees; retail hype','NFT focus'], correct: 1, timeLimit: 45, explanation: 'Secure yield with compliant access.' },
+  { id: 1019, question: 'Post‑tokenization dividends automated how?', options: ['Manual off‑chain','Self‑executing contracts','Banks settle all','No dividends'], correct: 1, timeLimit: 45, explanation: 'Conditions trigger transparent payouts.' },
+  { id: 1020, question: 'Interoperability issue + CCIP answer?', options: ['None; single‑chain','Liquidity fragmentation; CCIP bridges data/assets','Fiat bridges only','PoW requirement'], correct: 1, timeLimit: 45, explanation: 'Secure cross‑chain transfers and data.' },
+  // Chain abstraction & interoperability
+  { id: 1021, question: 'Primary goal of chain abstraction?', options: ['Raise fees','Hide chain complexity for users','Single‑chain centralization','No smart contracts'], correct: 1, timeLimit: 45, explanation: 'Make Web3 feel unified and simple.' },
+  { id: 1022, question: 'Key benefit of interoperability?', options: ['Fewer blockchains','Seamless data/asset transfer','Force single chain','More dev complexity'], correct: 1, timeLimit: 45, explanation: 'Enables cross‑chain dApps and liquidity.' },
+  { id: 1023, question: 'Cross‑chain bridge role?', options: ['Lock assets forever','Move assets/data across chains','Replace L2s','Centralize control'], correct: 1, timeLimit: 45, explanation: 'Bridges enable portability with risks.' },
+  { id: 1024, question: 'Tech for trustless interoperability?', options: ['Centralized oracles','Zero‑knowledge proofs','Proof‑of‑work','Single‑chain validators'], correct: 1, timeLimit: 45, explanation: 'ZKPs verify across domains without trust.' },
+  { id: 1025, question: 'Challenge to chain abstraction UX?', options: ['Scalability only','Managing wallets and gas across chains','Lack of contracts','CEX overuse'], correct: 1, timeLimit: 45, explanation: 'Abstraction removes multi‑wallet/gas pain.' },
+  { id: 1026, question: 'Project tied to chain abstraction (2025)?', options: ['Bitcoin ETF','Tria (Cosmos SDK)','Pudgy Penguins','Clearpool financing'], correct: 1, timeLimit: 45, explanation: 'Tria unifies cross‑chain UX.' },
+  { id: 1027, question: 'Intent‑based vs traditional bridging?', options: ['Manual steps per chain','User goal; protocol handles details','No gas ever','Centralized relayers only'], correct: 1, timeLimit: 45, explanation: 'Users express outcomes; system routes.' },
+  { id: 1028, question: 'Why modular rollups help abstraction?', options: ['Centralize ops','Separate execution/settlement/DA','Remove interoperability','Single‑chain focus'], correct: 1, timeLimit: 45, explanation: 'Composable layers reduce friction.' },
+  { id: 1029, question: 'Risk with cross‑chain messaging (e.g., LayerZero)?', options: ['Perfect security','Messaging layer compromise risk','No transfers possible','Same consensus required'], correct: 1, timeLimit: 45, explanation: 'Oracles/relayers can be attack vectors.', },
+  { id: 1030, question: 'Anoma contributes by…', options: ['Enforce single chain','Intent‑centric cross‑chain flows','Privacy only single‑chain','Centralized bridge'], correct: 1, timeLimit: 45, explanation: 'Intent model automates multi‑chain execution.' },
+];
 
 // Sample quiz data with explanations
 const quizData: QuizQuestion[] = [
@@ -701,6 +740,9 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart: _o
 
 // Time Mode (45s) Component
 const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
+  const { address, chainId } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
+  const { data: walletClient } = useWalletClient();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(45);
   const [started, setStarted] = useState(false);
@@ -715,15 +757,40 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
     try {
       const res = await fetch('/api/questions/random?limit=25');
       const d = await res.json();
-      if (Array.isArray(d.questions)) {
-        setQuestions((prev) => [...prev, ...d.questions]);
+      if (Array.isArray(d.questions) && d.questions.length > 0) {
+        const normalized = d.questions.map((q: any, idx: number) => ({
+          id: Number(q.id ?? idx),
+          question: String(q.question ?? q.text ?? ''),
+          options: Array.isArray(q.options) ? q.options.map(String) : [],
+          correct: typeof q.correct === 'number' ? q.correct : (typeof q.correctIndex === 'number' ? q.correctIndex : 0),
+          timeLimit: 45,
+          explanation: String(q.explanation ?? ''),
+        } as QuizQuestion)).filter((q: QuizQuestion) => q.question && q.options.length >= 2);
+        if (normalized.length > 0) {
+          setQuestions((prev) => [...prev, ...normalized]);
+          return;
+        }
       }
+      // Fallback to local questions if API yields nothing
+      setQuestions((prev) => prev.length === 0 ? [...prev, ...TIME_MODE_FALLBACK_QUESTIONS] : prev);
     } catch (_e) {}
   }, []);
 
   const startRun = useCallback(async () => {
     try {
       setError(null);
+      // 1) Ensure Base network and request a zero-cost signature before starting
+      try {
+        if (walletClient) {
+          if (chainId !== base.id) {
+            await switchChainAsync({ chainId: base.id });
+          }
+          await walletClient.signMessage({ message: `Quiz Trivia • Start Time Mode • ${Date.now()} • address:${address ?? 'unknown'}` });
+        }
+      } catch (signErr: any) {
+        setError('Signature required to start.');
+        return;
+      }
       const res = await fetch('/api/time/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fid: context?.user?.fid }) });
       const d = await res.json();
       if (!res.ok || !d?.success) {
@@ -737,7 +804,7 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
     } catch (_e) {
       setError('Network error');
     }
-  }, [context?.user?.fid, fetchMoreQuestions, questions.length]);
+  }, [address, chainId, context?.user?.fid, fetchMoreQuestions, questions.length, switchChainAsync, walletClient]);
 
   // countdown
   useEffect(() => {
