@@ -2,9 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Clock, Trophy, Star, X } from 'lucide-react';
 import { useMiniApp } from '@neynar/react';
 import { APP_URL } from '~/lib/constants';
-import { useAccount, useSwitchChain, useWalletClient, useConnect, usePublicClient } from 'wagmi';
-import { base } from 'wagmi/chains';
-import type { Address } from 'viem';
 
 // Type definitions
 interface QuizQuestion {
@@ -741,11 +738,6 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart: _o
 
 // Time Mode (45s) Component
 const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
-  const { address, chainId } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
-  const { data: walletClient } = useWalletClient();
-  const { connect, connectors } = useConnect();
-  const publicClient = usePublicClient();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(45);
   const [started, setStarted] = useState(false);
@@ -782,31 +774,6 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
   const startRun = useCallback(async () => {
     try {
       setError(null);
-      // 1) Ensure a wallet is connected
-      if (!address) {
-        try {
-          await connect({ connector: connectors?.[0] });
-        } catch (_e) {
-          setError('Please connect a wallet to continue.');
-          return;
-        }
-      }
-
-      // 2) Ensure Base network and send a 0-value transaction (will cost only gas)
-      try {
-        if (!walletClient) throw new Error('Wallet not ready');
-        if (chainId !== base.id) {
-          await switchChainAsync({ chainId: base.id });
-        }
-        const toAddress = (address as Address) ?? (await walletClient.getAddresses())[0];
-        const hash = await walletClient.sendTransaction({ to: toAddress, value: 0n, chain: base });
-        if (publicClient) {
-          await publicClient.waitForTransactionReceipt({ hash });
-        }
-      } catch (_txErr) {
-        setError('Transaction signature required to start.');
-        return;
-      }
       const res = await fetch('/api/time/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fid: context?.user?.fid }) });
       const d = await res.json();
       if (!res.ok || !d?.success) {
@@ -820,7 +787,7 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
     } catch (_e) {
       setError('Network error');
     }
-  }, [address, chainId, context?.user?.fid, fetchMoreQuestions, questions.length, switchChainAsync, walletClient]);
+  }, [context?.user?.fid, fetchMoreQuestions, questions.length]);
 
   // countdown
   useEffect(() => {
