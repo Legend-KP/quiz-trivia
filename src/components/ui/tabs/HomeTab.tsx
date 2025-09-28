@@ -114,6 +114,22 @@ const TIME_MODE_FALLBACK_QUESTIONS: QuizQuestion[] = [
   { id: 1038, question: 'Key challenge for complex smart contracts on Bitcoin Layer-1?', options: ['Excessive transaction speeds','High computational overhead and block size limits','No cryptographic tools','External blockchain validation required'], correct: 1, timeLimit: 45, explanation: 'Bitcoin\'s 1MB blocks and Script simplicity limit on-chain complexity.' },
   { id: 1039, question: 'How does Stacks enable Bitcoin smart contract development?', options: ['Replace Bitcoin consensus','Clarity language with Bitcoin finality','Convert to Ethereum format','Eliminate UTXO model'], correct: 1, timeLimit: 45, explanation: 'Stacks uses Clarity for secure contracts that settle on Bitcoin Layer-1.' },
   { id: 1040, question: 'How does BOB address Bitcoin smart contract scalability?', options: ['Centralized execution','EVM compatibility and rollups with Bitcoin security','Remove Layer-2','Quantum-resistant signatures only'], correct: 1, timeLimit: 45, explanation: 'BOB combines EVM smart contracts with Bitcoin settlement via rollups.' },
+  // Protocols as Nations
+  { id: 1041, question: 'How do cyberstates challenge legacy governments in 2025?', options: ['Enforce physical territories only','Resource redirection and political pressure without geographic ties','Alliances with nation-states for funding','Centralized oracles for validation'], correct: 1, timeLimit: 45, explanation: 'Cyberstates leverage Web3 to pool global talent and funds, influencing policy while operating location-independently.' },
+  { id: 1042, question: 'Regulatory hurdle for "Protocols as Nations" in multi-jurisdictional operations?', options: ['Complete exemption from all laws','Conflicts with EU/OECD blacklisting non-cooperative havens','Mandatory PoS alignment only','Elimination of token incentives'], correct: 1, timeLimit: 45, explanation: 'International orders target protocols as tax havens, requiring hybrid compliance models.' },
+  { id: 1043, question: 'How does narrative control influence protocol sovereignty?', options: ['No impact, code overrides messaging','Influencers shape perceptions of decentralization via social media','Centralize all media on one platform','Government subsidies for promotion'], correct: 1, timeLimit: 45, explanation: 'Founders/influencers steer discourse and prices on platforms like X, governing cultural narrative.' },
+  { id: 1044, question: 'Why might "Protocols as Nations" struggle with real-world enforcement?', options: ['Over-reliance on quantum-resistant tech','Lack of brute force mechanisms like legality/military','Exclusive focus on digital-only assets','Automatic fiat integration'], correct: 1, timeLimit: 45, explanation: 'Protocols depend on voluntary participation; without coercive tools, they compete via tech advantages like SEZs.' },
+  // CLOB (Central Limit Order Book) in DeFi
+  { id: 1045, question: 'What is a Central Limit Order Book (CLOB) in DeFi?', options: ['Decentralized lending protocol for stablecoins','Trading system matching buy/sell orders by price and time priority','Automated market maker for yield farming','Governance token for DAO voting'], correct: 1, timeLimit: 45, explanation: 'CLOB enables transparent, peer-to-peer trading similar to traditional exchanges without intermediaries.' },
+  { id: 1046, question: 'How do CLOBs differ from AMMs in DeFi trading?', options: ['CLOBs use liquidity pools, AMMs use order matching','CLOBs provide precise execution with low slippage vs AMMs constant-product','CLOBs require centralized custodians, AMMs are decentralized','CLOBs only support spot, AMMs include derivatives'], correct: 1, timeLimit: 45, explanation: 'CLOBs match limit orders for better price discovery, addressing AMM issues like high slippage.' },
+  { id: 1047, question: 'Key benefit of CLOBs for institutional traders in 2025?', options: ['Unlimited leverage without collateral','Granular control over order types, mimicking CEXs','Automatic yield farming integration','Elimination of all transaction fees'], correct: 1, timeLimit: 45, explanation: 'CLOBs offer advanced features like limit orders and real-time depth visibility for TradFi-like precision.' },
+  { id: 1048, question: 'Common challenge for on-chain CLOBs in DeFi?', options: ['Excessive liquidity from over-collateralization','High latency and gas costs for order matching/cancellations','Mandatory fiat gateways','Lack of transparency in order books'], correct: 1, timeLimit: 45, explanation: 'Blockchain limitations make frequent updates expensive, though Layer-2 solutions like MegaETH help.' },
+  { id: 1049, question: 'Role of CLOBs in DeFi perpetual futures trading?', options: ['Only handle spot swaps, defer derivatives off-chain','Enable leveraged trading with oracle pricing and cross-margining','Replace stablecoins with volatile tokens','Enforce centralized clearinghouses'], correct: 1, timeLimit: 45, explanation: 'Protocols like Hyperliquid use CLOBs for perps, providing deep liquidity and low-latency execution.' },
+  { id: 1050, question: '2025 CLOB DEX innovation for liquidity unification?', options: ['Siloed order books per chain','Hybrid models integrating AMM vaults and aggregators','Exclusive PoS consensus','Offline order placement via fiat apps'], correct: 1, timeLimit: 45, explanation: 'Omnibook concepts combine CLOB precision with AMM liquidity to reduce fragmentation.' },
+  { id: 1051, question: 'How does zk-CLOB model address verification challenges?', options: ['Offload all computations to centralized sequencers','Zero-knowledge proofs verifying full trade-execution path','Eliminate order priority rules','Mandatory multi-sig approvals for every match'], correct: 1, timeLimit: 45, explanation: 'zk-CLOBs prove matching and liquidations without revealing details, enabling CEX-grade speed with DeFi trustlessness.' },
+  { id: 1052, question: 'What sustains Hyperliquid\'s 70-80% DeFi perps market share?', options: ['Centralized HLP vaults with no community ownership','HYPE token airdrops and community-owned liquidity vaults','External CEX liquidity bridges','Fixed fee structures ignoring volatility'], correct: 1, timeLimit: 45, explanation: 'HLP vault and airdrops create network effects, driving $106M monthly revenue and multi-trillion volume.' },
+  { id: 1053, question: 'Scalability issue for pure on-chain CLOBs on high-throughput chains?', options: ['Over-reliance on parallel execution without Riemann sum logic','Translating AMM curves into discrete orders with sub-second finality','Mandatory PoW integration for security','Elimination of post-only orders for simplicity'], correct: 1, timeLimit: 45, explanation: 'Protocols like Bullet use Riemann sum to discretize continuous AMM functions into CLOB orders.' },
+  { id: 1054, question: 'How do priority systems in 2025 CLOB DEXs prevent manipulation?', options: ['Process all orders FIFO without cancellation priority','Prioritize cancellations and post-only orders before GTC/IOC','Off-chain relayers ignoring on-chain timestamps','Uniform fees regardless of order type'], correct: 1, timeLimit: 45, explanation: 'On-chain priority ensures fair execution, reducing front-running while maintaining decentralization.' },
 ];
 
 // Sample quiz data with explanations
@@ -758,6 +774,8 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
   const [totalAnswered, setTotalAnswered] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   const fetchMoreQuestions = useCallback(async () => {
     try {
@@ -782,6 +800,16 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
     } catch (_e) {}
   }, []);
 
+  const fetchLeaderboard = useCallback(async () => {
+    try {
+      const response = await fetch('/api/leaderboard');
+      const data = await response.json();
+      if (data.leaderboard) {
+        setLeaderboard(data.leaderboard);
+      }
+    } catch (_e) {}
+  }, []);
+
   const startRun = useCallback(async () => {
     try {
       setError(null);
@@ -799,6 +827,11 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
       setError('Network error');
     }
   }, [context?.user?.fid, fetchMoreQuestions, questions.length]);
+
+  // Fetch leaderboard on component mount
+  useEffect(() => {
+    fetchLeaderboard();
+  }, [fetchLeaderboard]);
 
   // countdown
   useEffect(() => {
@@ -827,11 +860,13 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
           pfpUrl: context?.user?.pfpUrl,
         };
         await fetch('/api/time/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        // Refresh leaderboard after submission
+        fetchLeaderboard();
       } catch (_e) {}
       setSubmitting(false);
     };
     run();
-  }, [started, timeLeft, submitting, correctCount, totalAnswered, context?.user]);
+  }, [started, timeLeft, submitting, correctCount, totalAnswered, context?.user, fetchLeaderboard]);
 
   const handleAnswer = useCallback((idx: number) => {
     const q = questions[qIndex];
@@ -858,17 +893,90 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
         <div className="flex items-center justify-between mb-4 text-white">
           <button onClick={onExit} className="px-3 py-1 rounded bg-white/10 hover:bg-white/20">← Back</button>
           <div className="flex items-center gap-4">
-            <div className="font-bold">Time: {formatTime(timeLeft)}</div>
-            <div className="font-bold">Score: {correctCount}</div>
+            {!started && (
+              <button 
+                onClick={() => setShowLeaderboard(!showLeaderboard)} 
+                className="px-3 py-1 rounded bg-white/10 hover:bg-white/20"
+              >
+                {showLeaderboard ? 'Hide' : 'Show'} Leaderboard
+              </button>
+            )}
+            {started && (
+              <>
+                <div className="font-bold">Time: {formatTime(timeLeft)}</div>
+                <div className="font-bold">Score: {correctCount}</div>
+              </>
+            )}
           </div>
         </div>
 
         {!started ? (
-          <div className="bg-white rounded-2xl p-8 shadow-2xl text-center">
-            <h2 className="text-2xl font-bold mb-2 text-gray-800">Time Mode • 45s</h2>
-            <p className="text-gray-600 mb-6">Answer as many as you can. Costs 10 coins to start.</p>
-            {error && <div className="mb-4 text-red-600 font-semibold">{error}</div>}
-            <button onClick={startRun} className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700">Start</button>
+          <div className="space-y-6">
+            <div className="bg-white rounded-2xl p-8 shadow-2xl text-center">
+              <h2 className="text-2xl font-bold mb-2 text-gray-800">Time Mode • 45s</h2>
+              <p className="text-gray-600 mb-6">Answer as many as you can. Costs 10 coins to start.</p>
+              {error && <div className="mb-4 text-red-600 font-semibold">{error}</div>}
+              <button onClick={startRun} className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700">Start</button>
+            </div>
+
+            {showLeaderboard && (
+              <div className="bg-white rounded-2xl p-6 shadow-2xl">
+                <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">🏆 Time Mode Leaderboard</h3>
+                <p className="text-gray-600 mb-4 text-center text-sm">Ranked by correct answers</p>
+                
+                {leaderboard.length === 0 ? (
+                  <div className="text-center py-4 text-gray-500">No scores yet. Be the first to play!</div>
+                ) : (
+                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                    {leaderboard.slice(0, 10).map((player, index) => (
+                      <div
+                        key={player.fid}
+                        className={`flex items-center justify-between p-3 rounded-lg border-2 ${
+                          index < 3
+                            ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-300'
+                            : 'bg-gray-50 border-gray-200'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                            player.rank === 1 ? 'bg-yellow-500 text-yellow-900' :
+                            player.rank === 2 ? 'bg-gray-400 text-gray-900' :
+                            player.rank === 3 ? 'bg-orange-500 text-orange-900' :
+                            'bg-blue-500 text-blue-900'
+                          }`}>
+                            {player.rank === 1 ? '🥇' : 
+                             player.rank === 2 ? '🥈' : 
+                             player.rank === 3 ? '🥉' : player.rank}
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {player.pfpUrl && (
+                              <img 
+                                src={player.pfpUrl} 
+                                alt="Profile" 
+                                className="w-6 h-6 rounded-full"
+                              />
+                            )}
+                            <div>
+                              <div className="font-semibold text-gray-800 text-sm">
+                                {player.displayName || player.username}
+                              </div>
+                              <div className="text-xs text-gray-500">@{player.username}</div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-lg font-bold text-blue-600">{player.score}</div>
+                          <div className="text-xs text-gray-500">correct</div>
+                          <div className="text-xs text-gray-400">
+                            {new Date(player.completedAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ) : timeLeft <= 0 ? (
           <div className="bg-white rounded-2xl p-8 shadow-2xl text-center">
