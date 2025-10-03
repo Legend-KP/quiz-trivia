@@ -1052,7 +1052,7 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
       <div className="max-w-2xl mx-auto pt-6">
         {/* Top bar with back */}
         <div className="flex items-center justify-between mb-4 text-white">
-         
+        <button onClick={onExit} className="px-3 py-1 rounded bg-white/10 hover:bg-white/20">← Back</button>
           <div className="flex items-center gap-4">
             <div className="font-bold">Time: {formatTime(timeLeft)}</div>
             <div className="font-bold">Score: {correctCount}</div>
