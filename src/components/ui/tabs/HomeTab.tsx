@@ -273,29 +273,30 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTim
             onClick={onStartTimeMode}
             className="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-4 px-8 rounded-xl text-xl hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-2xl"
           >
-            Time Mode • 45s ⏱️
+            Time Mode ⏱️
           </button>
 
           <button
-            onClick={onStartClassic}
-            className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold py-4 px-8 rounded-xl text-xl hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 shadow-2xl"
-          >
-            Classic Quiz 🧠
-          </button>
+  onClick={onStartClassic}
+  className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold py-4 px-8 rounded-xl text-xl hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 shadow-2xl"
+>
+  Classic Quiz 🧠
+</button>
 
-          <button
-            onClick={onStartChallenge}
-            className="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold py-4 px-8 rounded-xl text-xl hover:from-orange-600 hover:to-red-700 transform hover:scale-105 transition-all duration-200 shadow-2xl"
-          >
-            Challenge (Beta) ⚔️
-          </button>
+{/* View Rules inside Classic Quiz */}
+<button
+  onClick={onShowRules}
+  className="block mx-auto bg-purple-500/30 backdrop-blur text-white font-semibold py-2 px-4 rounded-lg hover:bg-purple-500/40 transform hover:scale-105 transition-all duration-200 shadow-lg -mt-2"
+>
+  View Rules 📋
+</button>
 
-          <button
-            onClick={onShowRules}
-            className="block mx-auto bg-white/15 backdrop-blur text-white font-semibold py-3 px-6 rounded-lg hover:bg-white/25 transform hover:scale-105 transition-all duration-200 shadow-lg"
-          >
-            View Rules 📋
-          </button>
+<button
+  onClick={onStartChallenge}
+  className="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold py-4 px-8 rounded-xl text-xl hover:from-orange-600 hover:to-red-700 transform hover:scale-105 transition-all duration-200 shadow-2xl"
+>
+  Challenge (Beta) ⚔️
+</button>
         </div>
 
         {/* Enhanced depth styling */}
