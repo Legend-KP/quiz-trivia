@@ -139,44 +139,44 @@ const TIME_MODE_FALLBACK_QUESTIONS: QuizQuestion[] = [
 ];
 
 
-// Sample quiz data with explanations
+// Sample quiz data
 const quizData: QuizQuestion[] = [
   {
     id: 1,
     question: "What is the smallest unit of Ether called?",
     options: ["Gwei", "Satoshi", "Finney", "Wei"],
-    correct: 3, // 0-based index for "Wei" (4th option)
-    timeLimit: 60, // 1 minute in seconds
+    correct: 3,
+    timeLimit: 60,
     explanation: "Wei is the smallest denomination of Ether, just like a cent is to a dollar."
   },
   {
     id: 2,
     question: "What does MEV stand for in Ethereum context?",
     options: ["Most Efficient Validator", "Maximum Extractable Value", "Modular Execution Vault", "Minimal Ethereum Value"],
-    correct: 1, // 0-based index for "Maximum Extractable Value" (2nd option)
+    correct: 1,
     timeLimit: 60,
     explanation: "MEV refers to profits miners or validators can extract by reordering or censoring transactions."
   },
   {
     id: 3,
-    question: "Which Ethereum standard enables tokens to hold other tokens (like NFTs owning NFTs)?",
+    question: "Which Ethereum standard enables tokens to hold other tokens?",
     options: ["ERC-721", "ERC-20", "ERC-4626", "ERC-998"],
-    correct: 3, // 0-based index for "ERC-998" (4th option)
+    correct: 3,
     timeLimit: 60,
     explanation: "ERC-998 is a composable NFT standard allowing NFTs to own both ERC-721 and ERC-20 tokens."
   },
   {
     id: 4,
-    question: "What is a blob in the context of Ethereum&apos;s Proto-Danksharding?",
+    question: "What is a blob in the context of Ethereum's Proto-Danksharding?",
     options: ["A fungible token format", "A zero-knowledge proof", "A temporary data package stored off-chain", "A type of validator node"],
-    correct: 2, // 0-based index for "A temporary data package stored off-chain" (3rd option)
+    correct: 2,
     timeLimit: 60,
-    explanation: "Blobs are large chunks of data stored off-chain to improve scalability, introduced in EIP-4844 as part of Proto-Danksharding."
+    explanation: "Blobs are large chunks of data stored off-chain to improve scalability, introduced in EIP-4844."
   }
 ];
 
 // Rules Popup Component
-const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
+const RulesPopup = ({ onClose }: { onClose: () => void }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 relative shadow-2xl">
@@ -199,7 +199,7 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
           
           <div className="flex items-start space-x-3">
             <span className="text-blue-500 font-bold">2️⃣</span>
-            <p>You&apos;ll get 1 minute per question – so think fast! ⏳</p>
+            <p>You'll get 1 minute per question – so think fast!</p>
           </div>
           
           <div className="flex items-start space-x-3">
@@ -214,7 +214,7 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
           
           <div className="flex items-start space-x-3">
             <span className="text-blue-500 font-bold">5️⃣</span>
-            <p>Most importantly – have fun and learn something new! 🎉</p>
+            <p>Most importantly – have fun and learn something new!</p>
           </div>
         </div>
         
@@ -222,7 +222,7 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
           onClick={onClose}
           className="w-full mt-8 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-6 rounded-xl hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
         >
-          Let&apos;s Go! 🚀
+          Let's Go!
         </button>
       </div>
     </div>
@@ -230,78 +230,128 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
 };
 
 // Home Page Component
-const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTimeMode, onStartChallenge, onShowRules, onClaimDaily }) => {
+const HomePage = ({ balance, onStartClassic, onStartTimeMode, onStartChallenge, onShowRules, onClaimDaily }: any) => {
   return (
     <div className="relative w-full h-screen overflow-hidden">
-      {/* Gradient Background - Full Frame */}
       <div className="absolute inset-0 bg-gradient-to-r from-blue-900 via-purple-800 to-orange-500"></div>
       
-      {/* Grainy Texture Overlay */}
       <div className="absolute inset-0 opacity-20">
         <div className="w-full h-full" style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
         }}></div>
       </div>
 
-      {/* Content Container */}
       <div className="relative z-10 flex flex-col items-center justify-center h-full px-6 text-center">
-        
-
-
-        {/* QUIZ TRIVIA - New Font and Enhanced 3D Effect */}
         <div className="relative mb-12">
           <h3 className="text-5xl md:text-7xl font-black text-yellow-400 uppercase tracking-wider relative" style={{
             fontFamily: 'Impact, Arial Black, sans-serif',
             textShadow: '2px 2px 0px rgba(0,0,0,0.8), 4px 4px 0px rgba(0,0,0,0.6)'
           }}>
-            {/* Multiple layers for enhanced 3D effect */}
             <span className="absolute inset-0 transform translate-x-2 translate-y-2 text-yellow-600 opacity-40">QUIZ TRIVIA</span>
             <span className="absolute inset-0 transform translate-x-1 translate-y-1 text-yellow-500 opacity-70">QUIZ TRIVIA</span>
             <span className="relative z-10 drop-shadow-lg">QUIZ TRIVIA</span>
           </h3>
         </div>
 
-        {/* Balance + Claim Daily */}
         <div className="mb-6 text-white text-sm flex items-center gap-3">
           <span className="px-3 py-1 rounded-full bg-black/30 border border-white/20">Coins: {balance ?? '—'}</span>
-          <button onClick={onClaimDaily} className="px-3 py-1 rounded-full bg-yellow-500 text-yellow-900 font-semibold hover:bg-yellow-400 transition">Claim daily ✨</button>
+          <button onClick={onClaimDaily} className="px-3 py-1 rounded-full bg-yellow-500 text-yellow-900 font-semibold hover:bg-yellow-400 transition">Claim daily</button>
         </div>
 
-        {/* Mode Buttons */}
         <div className="space-y-4 w-full max-w-xs">
           <button
             onClick={onStartTimeMode}
             className="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-4 px-8 rounded-xl text-xl hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-2xl"
           >
-            Time Mode ⏱️
+            Time Mode
           </button>
 
           <button
-  onClick={onStartClassic}
-  className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold py-4 px-8 rounded-xl text-xl hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 shadow-2xl"
->
-  Classic Quiz 🧠
-</button>
+            onClick={onStartClassic}
+            className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold py-4 px-8 rounded-xl text-xl hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 shadow-2xl"
+          >
+            Classic Quiz
+          </button>
 
-{/* View Rules inside Classic Quiz */}
-<button
-  onClick={onShowRules}
-  className="block mx-auto bg-purple-500/30 backdrop-blur text-white font-semibold py-2 px-4 rounded-lg hover:bg-purple-500/40 transform hover:scale-105 transition-all duration-200 shadow-lg -mt-2"
->
-  View Rules 📋
-</button>
+          <button
+            onClick={onShowRules}
+            className="block mx-auto bg-purple-500/30 backdrop-blur text-white font-semibold py-2 px-4 rounded-lg hover:bg-purple-500/40 transform hover:scale-105 transition-all duration-200 shadow-lg -mt-2"
+          >
+            View Rules
+          </button>
 
-<button
-  onClick={onStartChallenge}
-  className="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold py-4 px-8 rounded-xl text-xl hover:from-orange-600 hover:to-red-700 transform hover:scale-105 transition-all duration-200 shadow-2xl"
->
-  Challenge (Beta) ⚔️
-</button>
+          <button
+            onClick={onStartChallenge}
+            className="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold py-4 px-8 rounded-xl text-xl hover:from-orange-600 hover:to-red-700 transform hover:scale-105 transition-all duration-200 shadow-2xl"
+          >
+            Challenge (Beta)
+          </button>
         </div>
 
-        {/* Enhanced depth styling */}
         <div className="mt-8">
           <div className="w-40 h-1 bg-gradient-to-r from-transparent via-yellow-400 to-transparent mx-auto rounded-full opacity-80"></div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Classic Quiz Intro Screen
+const ClassicQuizIntro = ({ onStart, onBack }: { onStart: () => void; onBack: () => void }) => {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4">
+      <div className="max-w-2xl mx-auto pt-8">
+        <div className="flex items-center justify-between mb-6 text-white">
+          <button 
+            onClick={onBack} 
+            className="flex items-center gap-2 px-4 py-2 rounded bg-white/10 hover:bg-white/20"
+          >
+            ← Back
+          </button>
+          <div className="flex items-center gap-4">
+            <div className="font-bold">Time: 0:45</div>
+            <div className="font-bold">Score: 0</div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl p-8 shadow-2xl text-center">
+          <h2 className="text-3xl font-bold text-gray-800 mb-4">Classic Quiz</h2>
+          
+          <p className="text-gray-600 mb-8">Answer as many as you can. Costs 10 coins to start.</p>
+
+          <div className="text-left space-y-4 mb-8 text-gray-700">
+            <div className="flex items-start space-x-3">
+              <span className="text-blue-500 font-bold">1️⃣</span>
+              <p>The quiz has 4 multiple-choice questions with 30-minute intervals between each question.</p>
+            </div>
+            
+            <div className="flex items-start space-x-3">
+              <span className="text-blue-500 font-bold">2️⃣</span>
+              <p>You'll get 1 minute per question – so think fast!</p>
+            </div>
+            
+            <div className="flex items-start space-x-3">
+              <span className="text-blue-500 font-bold">3️⃣</span>
+              <p>Correct answer = +1 point</p>
+            </div>
+            
+            <div className="flex items-start space-x-3">
+              <span className="text-blue-500 font-bold">4️⃣</span>
+              <p>Wrong answer = -1 point</p>
+            </div>
+            
+            <div className="flex items-start space-x-3">
+              <span className="text-blue-500 font-bold">5️⃣</span>
+              <p>Most importantly – have fun and learn something new!</p>
+            </div>
+          </div>
+
+          <button
+            onClick={onStart}
+            className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-4 px-8 rounded-xl text-lg hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
+          >
+            Start
+          </button>
         </div>
       </div>
     </div>
