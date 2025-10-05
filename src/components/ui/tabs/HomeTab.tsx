@@ -310,6 +310,7 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTim
 
 // Quiz Component
 const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
+  const [started, setStarted] = useState(false); // ⬅️ New: Start screen control
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(quizData[0].timeLimit);
@@ -338,7 +339,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
 
     // Check if this is the last question
     if (currentQuestion === quizData.length - 1) {
-      // This is the last question, complete the quiz after showing result
+      // Complete the quiz after showing result
       setTimeout(() => {
         const totalTime = Math.floor((Date.now() - startTime) / 1000);
         const timeString = `${Math.floor(totalTime / 60)}:${(totalTime % 60).toString().padStart(2, '0')}`;
@@ -350,34 +351,33 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
         }], timeString);
       }, 3000);
     } else {
-      // Start countdown for next question (using 10 seconds for demo)
+      // Countdown for next question (10s demo)
       setTimeout(() => {
         setWaitingForNext(true);
-        setNextQuestionTime(10); // 1800 seconds = 30 minutes (using 10 for demo)
+        setNextQuestionTime(10);
       }, 3000);
     }
   }, [currentQuestion, score, answers, startTime, onComplete]);
 
   const handleTimeUp = useCallback(() => {
-    // Auto-submit with no answer (penalty)
     handleAnswerSubmit(null);
   }, [handleAnswerSubmit]);
 
   useEffect(() => {
+    if (!started) return; // ⬅️ Timer starts only after user clicks Start
     if (timeLeft > 0 && !showResult && !waitingForNext) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
     } else if (timeLeft === 0 && !waitingForNext) {
       handleTimeUp();
     }
-  }, [timeLeft, showResult, waitingForNext, handleTimeUp]);
+  }, [timeLeft, showResult, waitingForNext, handleTimeUp, started]);
 
   useEffect(() => {
     if (nextQuestionTime && nextQuestionTime > 0) {
       const timer = setTimeout(() => setNextQuestionTime(nextQuestionTime - 1), 1000);
       return () => clearTimeout(timer);
     } else if (nextQuestionTime === 0) {
-      // Move to next question (this will only happen for non-last questions)
       setCurrentQuestion(currentQuestion + 1);
       setTimeLeft(quizData[currentQuestion + 1].timeLimit);
       setSelectedAnswer(null);
@@ -386,8 +386,6 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
       setNextQuestionTime(null);
     }
   }, [nextQuestionTime, currentQuestion, startTime]);
-
-
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -403,21 +401,40 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
 
   const question = quizData[currentQuestion];
 
+  // ⬇️ NEW START SCREEN before quiz begins
+  if (!started) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4 flex items-center justify-center">
+        <div className="bg-white rounded-2xl p-8 shadow-2xl text-center max-w-md w-full">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Classic Mode • Quiz 🧠</h2>
+          <div className="text-gray-700 space-y-2 mb-6 text-left">
+            <p>📋 The quiz has <strong>4 questions</strong> with <strong>30-minute intervals</strong> between each question.</p>
+            <p>⏳ You’ll get <strong>1 minute</strong> per question — so think fast!</p>
+            <p>✅ Correct answer = +1 point</p>
+            <p>❌ Wrong answer = -1 point</p>
+            <p>🎉 Most importantly — have fun and learn something new!</p>
+          </div>
+          <button
+            onClick={() => setStarted(true)}
+            className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all"
+          >
+            Start
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Waiting countdown for next question
   if (waitingForNext && nextQuestionTime !== null) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4 flex items-center justify-center">
         <div className="max-w-md mx-auto text-center">
           <div className="bg-white rounded-2xl p-8 shadow-2xl">
             <Clock className="mx-auto mb-4 text-blue-500" size={48} />
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              Next Question In:
-            </h2>
-            <div className="text-4xl font-bold text-blue-600 mb-4">
-              {formatWaitTime(nextQuestionTime)}
-            </div>
-            <p className="text-gray-600">
-              Question {currentQuestion + 2} of {quizData.length}
-            </p>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Next Question In:</h2>
+            <div className="text-4xl font-bold text-blue-600 mb-4">{formatWaitTime(nextQuestionTime)}</div>
+            <p className="text-gray-600">Question {currentQuestion + 2} of {quizData.length}</p>
             <div className="mt-6 p-4 bg-blue-50 rounded-lg">
               <p className="text-blue-800 font-semibold">Current Score: {score}</p>
             </div>
@@ -427,10 +444,10 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
     );
   }
 
+  // Main Quiz UI
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4">
       <div className="max-w-2xl mx-auto pt-8">
-        {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">Quiz Trivia</h1>
           <div className="flex justify-center items-center space-x-6 text-white">
@@ -440,9 +457,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
             </div>
             <div className="flex items-center space-x-2">
               <Clock className="text-blue-400" size={20} />
-              <span className={timeLeft < 60 ? 'text-red-400 font-bold' : ''}>
-                {formatTime(timeLeft)}
-              </span>
+              <span className={timeLeft < 60 ? 'text-red-400 font-bold' : ''}>{formatTime(timeLeft)}</span>
             </div>
           </div>
         </div>
@@ -462,9 +477,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
 
         {/* Question Card */}
         <div className="bg-white rounded-2xl p-8 shadow-2xl">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">
-            {question.question}
-          </h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-6">{question.question}</h2>
 
           <div className="space-y-3">
             {question.options.map((option, index) => (
@@ -502,7 +515,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
                   selectedAnswer === question.correct ? 'text-green-600' : 'text-red-600'
                 }`}>
                   {selectedAnswer === question.correct ? '✅ Correct!' : '❌ Wrong!'}
-                  {selectedAnswer === null && ' ⏰ Time&apos;s up!'}
+                  {selectedAnswer === null && ' ⏰ Time’s up!'}
                 </p>
               </div>
               
@@ -518,6 +531,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
     </div>
   );
 };
+
 
 // Results Component
 const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart: _onRestart, context, time }) => {
