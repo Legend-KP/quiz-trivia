@@ -284,12 +284,6 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTim
 </button>
 
 {/* View Rules inside Classic Quiz */}
-<button
-  onClick={onShowRules}
-  className="block mx-auto bg-purple-500/30 backdrop-blur text-white font-semibold py-2 px-4 rounded-lg hover:bg-purple-500/40 transform hover:scale-105 transition-all duration-200 shadow-lg -mt-2"
->
-  View Rules 📋
-</button>
 
 <button
   onClick={onStartChallenge}
