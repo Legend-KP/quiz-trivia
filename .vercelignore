@@ -1,0 +1,22 @@
+# Hardhat files
+ignition/
+scripts/
+contracts/
+hardhat.config.*
+.env
+.env.local
+.env.*.local
+
+# Hardhat dependencies
+node_modules/@nomicfoundation/
+node_modules/hardhat/
+node_modules/@typechain/
+
+# Build artifacts
+artifacts/
+cache/
+typechain-types/
+
+# Other files
+*.log
+.DS_Store
