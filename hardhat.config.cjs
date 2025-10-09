@@ -30,15 +30,15 @@ const config = {
   },
   etherscan: {
     apiKey: {
-      baseSepolia: process.env.BASESCAN_API_KEY || "",
-      base: process.env.BASESCAN_API_KEY || "",
+      baseSepolia: "VMZ25B4ZKF49UPSI6J1QYM261DQ98C85N3",
+      base: "VMZ25B4ZKF49UPSI6J1QYM261DQ98C85N3",
     },
     customChains: [
       {
         network: "baseSepolia",
         chainId: 84532,
         urls: {
-          apiURL: "https://api-sepolia.basescan.org/api",
+          apiURL: "https://api-sepolia.basescan.org/v2/api",
           browserURL: "https://sepolia.basescan.org",
         },
       },
