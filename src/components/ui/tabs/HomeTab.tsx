@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Clock, Trophy, Star, X } from 'lucide-react';
 import { useMiniApp } from '@neynar/react';
 import { APP_URL } from '~/lib/constants';
+import QuizStartButton from '@/components/QuizStartButton';
+import { QuizMode } from '@/lib/wallet';
 
 // Type definitions
 interface QuizQuestion {
@@ -269,28 +271,23 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTim
 
         {/* Mode Buttons */}
         <div className="space-y-4 w-full max-w-xs">
-          <button
-            onClick={onStartTimeMode}
-            className="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-4 px-8 rounded-xl text-xl hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-2xl"
-          >
-            Time Mode ⏱️
-          </button>
+          <QuizStartButton
+            mode={QuizMode.TIME_MODE}
+            modeName="Time Mode"
+            onQuizStart={onStartTimeMode}
+          />
 
-          <button
-  onClick={onStartClassic}
-  className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold py-4 px-8 rounded-xl text-xl hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 shadow-2xl"
->
-  Classic Quiz 🧠
-</button>
+          <QuizStartButton
+            mode={QuizMode.CLASSIC}
+            modeName="Classic Quiz"
+            onQuizStart={onStartClassic}
+          />
 
-{/* View Rules inside Classic Quiz */}
-
-<button
-  onClick={onStartChallenge}
-  className="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold py-4 px-8 rounded-xl text-xl hover:from-orange-600 hover:to-red-700 transform hover:scale-105 transition-all duration-200 shadow-2xl"
->
-  Challenge (Beta) ⚔️
-</button>
+          <QuizStartButton
+            mode={QuizMode.CHALLENGE}
+            modeName="Challenge Mode"
+            onQuizStart={onStartChallenge}
+          />
         </div>
 
         {/* Enhanced depth styling */}

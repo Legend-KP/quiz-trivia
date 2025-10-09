@@ -1,0 +1,5 @@
+.exit
+Get-Content .env
+type .env
+exit
+npx hardhat run scripts/test-connection.cjs --network baseSepolia
