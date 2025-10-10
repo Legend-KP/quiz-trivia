@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 import { getWalletClient } from 'wagmi/actions';
 import { encodeFunctionData, parseUnits } from 'viem';
+import { useAccount } from 'wagmi';
 
 // Extend Window interface to include ethereum
 declare global {
@@ -311,8 +312,18 @@ export async function startQuizTransactionWithWagmi(
   try {
     onStateChange?.(TransactionState.CONNECTING);
     
-    // Get wallet client from Wagmi
-    const client = await getWalletClient(config);
+    // Try to get wallet client from Wagmi
+    let client;
+    try {
+      client = await getWalletClient(config);
+    } catch (connectorError: any) {
+      // If getWalletClient fails due to connector issues, try alternative approach
+      if (connectorError.message?.includes('getChainId is not a function')) {
+        throw new WalletError('Wallet connection issue. Please try reconnecting your wallet.');
+      }
+      throw connectorError;
+    }
+    
     if (!client) {
       throw new WalletError('Wallet not connected');
     }
@@ -334,7 +345,6 @@ export async function startQuizTransactionWithWagmi(
       to: CONTRACT_ADDRESS as `0x${string}`,
       data: txData,
       value: parseUnits(requiredFee.toString(), 18),
-      chain: client.chain,
     });
     
     onStateChange?.(TransactionState.SUCCESS);
@@ -356,6 +366,8 @@ export async function startQuizTransactionWithWagmi(
       throw new WalletError('Insufficient funds for transaction');
     } else if (error.message?.includes('gas')) {
       throw new WalletError('Transaction failed due to gas issues');
+    } else if (error.message?.includes('getChainId is not a function')) {
+      throw new WalletError('Wallet connection issue. Please try reconnecting your wallet.');
     }
     
     throw new WalletError(`Transaction failed: ${error.message}`);

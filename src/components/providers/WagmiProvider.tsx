@@ -59,8 +59,12 @@ export const config = createConfig({
     [celo.id]: http(),
   },
   connectors: [
-    farcasterMiniApp(),
-    farcasterFrame(),
+    farcasterMiniApp({
+      chains: [base],
+    }),
+    farcasterFrame({
+      chains: [base],
+    }),
   ],
 });
 
