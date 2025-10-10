@@ -380,13 +380,13 @@ export async function startQuizTransactionWithWagmi(
 function getRequiredFeeForMode(mode: QuizMode): number {
   switch (mode) {
     case QuizMode.CLASSIC:
-      return 0.001; // 0.001 ETH
+      return 0.0000001; // 0.0000001 ETH
     case QuizMode.TIME_MODE:
-      return 0.001; // 0.001 ETH
+      return 0.0000001; // 0.0000001 ETH
     case QuizMode.CHALLENGE:
-      return 0.001; // 0.001 ETH
+      return 0.0000001; // 0.0000001 ETH
     default:
-      return 0.001;
+      return 0.0000001;
   }
 }
 

@@ -30,9 +30,9 @@ contract QuizTriviaEntry {
     }
     
     // Entry fees (in wei)
-    uint256 public constant CLASSIC_FEE = 0.001 ether;    // ~$0.001
-    uint256 public constant TIME_MODE_FEE = 0.001 ether; // ~$0.001
-    uint256 public constant CHALLENGE_FEE = 0.001 ether; // ~$0.001
+    uint256 public constant CLASSIC_FEE = 0.0000001 ether;    // ~$0.0000001
+    uint256 public constant TIME_MODE_FEE = 0.0000001 ether; // ~$0.0000001
+    uint256 public constant CHALLENGE_FEE = 0.0000001 ether; // ~$0.0000001
     
     // Owner
     address public owner;

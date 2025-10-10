@@ -111,7 +111,7 @@ After deployment, verify everything works:
 ## 💰 Cost Estimation
 
 - **Deployment**: ~0.001-0.005 ETH (gas fees)
-- **Quiz Entry**: 0.001 ETH per quiz
+- **Quiz Entry**: 0.0000001 ETH per quiz
 - **Gas Fees**: Very low on Base (~$0.001 per transaction)
 
 ## 🚨 Important Notes
@@ -126,7 +126,7 @@ After deployment, verify everything works:
 After deployment, your Quiz Trivia app will have:
 - **Real blockchain integration** on Base Mainnet
 - **Permanent on-chain records** of quiz participation
-- **Low-cost transactions** (~$0.001 per quiz)
+- **Ultra-low-cost transactions** (~$0.0000001 per quiz)
 - **Professional Web3 experience**
 
 ## 🔄 Network Configuration
@@ -147,7 +147,7 @@ After deployment, your Quiz Trivia app will have:
 
 1. **Users click "Start"** → Blockchain transaction modal
 2. **Users connect MetaMask** → One-time wallet setup
-3. **Users confirm transaction** → Pay 0.001 ETH + gas
+3. **Users confirm transaction** → Pay 0.0000001 ETH + gas
 4. **Quiz starts** → With permanent on-chain record
 5. **Quiz completion** → Optional on-chain completion record
 
