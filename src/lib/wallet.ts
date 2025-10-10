@@ -1,7 +1,6 @@
 import { ethers } from 'ethers';
 import { getWalletClient } from 'wagmi/actions';
 import { encodeFunctionData, parseUnits } from 'viem';
-import { useAccount } from 'wagmi';
 
 // Extend Window interface to include ethereum
 declare global {
@@ -345,6 +344,7 @@ export async function startQuizTransactionWithWagmi(
       to: CONTRACT_ADDRESS as `0x${string}`,
       data: txData,
       value: parseUnits(requiredFee.toString(), 18),
+      chain: null,
     });
     
     onStateChange?.(TransactionState.SUCCESS);
