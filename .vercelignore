@@ -11,6 +11,7 @@ hardhat.config.*
 node_modules/@nomicfoundation/
 node_modules/hardhat/
 node_modules/@typechain/
+node_modules/@nomiclabs/
 
 # Build artifacts
 artifacts/
