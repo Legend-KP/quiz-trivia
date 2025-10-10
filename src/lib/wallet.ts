@@ -248,6 +248,8 @@ export async function startQuizTransactionWithWagmi(
 
 /**
  * Get required fee for quiz mode
+ * Note: Using hardcoded values since getRequiredFee is a pure function
+ * In a real implementation, you might want to call the contract's fee functions
  */
 function getRequiredFeeForMode(mode: QuizMode): number {
   switch (mode) {
@@ -259,6 +261,22 @@ function getRequiredFeeForMode(mode: QuizMode): number {
       return 0.0000001; // 0.0000001 ETH
     default:
       return 0.0000001;
+  }
+}
+
+/**
+ * Get required fee from contract (alternative approach)
+ */
+export async function getRequiredFeeFromContract(provider: ethers.BrowserProvider, mode: QuizMode): Promise<bigint> {
+  const contract = await getContract(provider);
+  
+  // Since getRequiredFee is pure, we can call it without sending a transaction
+  try {
+    const fee = await contract.getRequiredFee(mode);
+    return fee;
+  } catch (error) {
+    console.warn('Failed to get fee from contract, using hardcoded value:', error);
+    return BigInt(Math.floor(getRequiredFeeForMode(mode) * 1e18));
   }
 }
 
@@ -276,8 +294,8 @@ export async function startQuizTransaction(
     const provider = await connectWallet();
     const contract = await getContract(provider);
     
-    // Get required fee
-    const requiredFee = await contract.getRequiredFee(mode);
+    // Get required fee - use hardcoded values since getRequiredFee is pure
+    const requiredFee = getRequiredFeeForMode(mode);
     
     onStateChange?.(TransactionState.CONFIRMING);
     
