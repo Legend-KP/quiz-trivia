@@ -1,7 +1,9 @@
 import { createConfig, http, WagmiProvider } from "wagmi";
-import { base } from "wagmi/chains";
+import { base, degen, mainnet, optimism, unichain, celo } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { farcasterFrame } from "@farcaster/frame-wagmi-connector";
 import { farcasterMiniApp } from "@farcaster/miniapp-wagmi-connector";
+// Removed unused imports since we only use Farcaster connectors now
 import { useEffect, useState } from "react";
 import { useConnect, useAccount } from "wagmi";
 import React from "react";
@@ -47,12 +49,18 @@ function useFarcasterMiniAppAutoConnect() {
 }
 
 export const config = createConfig({
-  chains: [base],
+  chains: [base, optimism, mainnet, degen, unichain, celo],
   transports: {
     [base.id]: http(),
+    [optimism.id]: http(),
+    [mainnet.id]: http(),
+    [degen.id]: http(),
+    [unichain.id]: http(),
+    [celo.id]: http(),
   },
   connectors: [
     farcasterMiniApp(),
+    farcasterFrame(),
   ],
 });
 
