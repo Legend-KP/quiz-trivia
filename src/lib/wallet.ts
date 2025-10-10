@@ -13,17 +13,134 @@ declare global {
 // Contract configuration
 export const CONTRACT_ADDRESS = '0xAdF6B40eB685b448C92d5D2c3f0C1ec997c269c2'; // Deployed on Base Mainnet
 export const CONTRACT_ABI = [
-  // QuizStarted event
-  "event QuizStarted(address indexed user, uint256 indexed mode, uint256 timestamp, uint256 entryFee)",
-  // QuizCompleted event  
-  "event QuizCompleted(address indexed user, uint256 indexed mode, uint256 score, uint256 timestamp)",
-  // Functions
-  "function startQuiz(uint8 mode) external payable",
-  "function recordQuizCompletion(address user, uint8 mode, uint256 score) external",
-  "function getUserQuizCount(address user) external view returns (uint256)",
-  "function getStats() external view returns (uint256 total, uint256 classic, uint256 time, uint256 challenge)",
-  "function getRequiredFee(uint8 mode) external pure returns (uint256)"
-];
+  {
+    "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "user", "type": "address" },
+      { "indexed": true, "internalType": "uint256", "name": "mode", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "score", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256" }
+    ],
+    "name": "QuizCompleted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "user", "type": "address" },
+      { "indexed": true, "internalType": "uint256", "name": "mode", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "entryFee", "type": "uint256" }
+    ],
+    "name": "QuizStarted",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "CHALLENGE_FEE",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "CLASSIC_FEE",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "TIME_MODE_FEE",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "enum QuizTriviaEntry.QuizMode", "name": "mode", "type": "uint8" }],
+    "name": "getRequiredFee",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getStats",
+    "outputs": [
+      { "internalType": "uint256", "name": "total", "type": "uint256" },
+      { "internalType": "uint256", "name": "classic", "type": "uint256" },
+      { "internalType": "uint256", "name": "time", "type": "uint256" },
+      { "internalType": "uint256", "name": "challenge", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "user", "type": "address" }],
+    "name": "getUserQuizCount",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "enum QuizTriviaEntry.QuizMode", "name": "", "type": "uint8" }],
+    "name": "modeCount",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "user", "type": "address" },
+      { "internalType": "enum QuizTriviaEntry.QuizMode", "name": "mode", "type": "uint8" },
+      { "internalType": "uint256", "name": "score", "type": "uint256" }
+    ],
+    "name": "recordQuizCompletion",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "enum QuizTriviaEntry.QuizMode", "name": "mode", "type": "uint8" }],
+    "name": "startQuiz",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalQuizzes",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "name": "userQuizCount",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "withdraw",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+] as const;
 
 // Quiz modes matching the smart contract
 export enum QuizMode {
