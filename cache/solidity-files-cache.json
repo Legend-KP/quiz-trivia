@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\QuizTriviaEntry.sol": {
-      "lastModificationDate": 1760039281204,
-      "contentHash": "e61307486d3f7a1c12cc1849db23791c",
+      "lastModificationDate": 1760092601096,
+      "contentHash": "37f3157da7f4109e7cb9e47a6e3b4bef",
       "sourceName": "contracts/QuizTriviaEntry.sol",
       "solcConfig": {
         "version": "0.8.19",
