@@ -15,10 +15,10 @@ import { USE_WALLET, APP_NAME } from "../../../lib/constants";
 import { useMiniApp } from "@neynar/react";
 
 /**
- * WalletTab component manages wallet-related UI for both EVM and Solana chains.
+ * WalletTab component manages wallet-related UI for Farcaster Mini App.
  * 
- * This component provides a comprehensive wallet interface that supports:
- * - EVM wallet connections (Farcaster Mini App, Farcaster Frame, Coinbase Wallet, MetaMask)
+ * This component provides a Farcaster-focused wallet interface that supports:
+ * - Farcaster Mini App wallet connection
  * - Solana wallet integration
  * - Message signing for both chains
  * - Transaction sending for both chains
@@ -109,16 +109,7 @@ function ConnectionControls({
   return (
     <div className="space-y-3 w-full">
       <Button onClick={() => connect({ connector: connectors[0] })} className="w-full">
-        Connect Farcaster Mini App
-      </Button>
-      <Button onClick={() => connect({ connector: connectors[1] })} className="w-full">
-        Connect Farcaster Frame
-      </Button>
-      <Button onClick={() => connect({ connector: connectors[2] })} className="w-full">
-        Connect Coinbase Wallet
-      </Button>
-      <Button onClick={() => connect({ connector: connectors[3] })} className="w-full">
-        Connect MetaMask
+        Connect Farcaster Wallet
       </Button>
     </div>
   );
@@ -178,7 +169,6 @@ export function WalletTab() {
     const isInFarcasterClient = typeof window !== 'undefined' && 
       (window.location.href.includes('warpcast.com') || 
        window.location.href.includes('farcaster') ||
-       window.ethereum?.isFarcaster ||
        context?.client);
     
     if (context?.user?.fid && !isConnected && connectors.length > 0 && isInFarcasterClient) {

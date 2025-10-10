@@ -53,13 +53,6 @@ export class WalletError extends Error {
 }
 
 /**
- * Check if MetaMask is installed
- */
-export function isMetaMaskInstalled(): boolean {
-  return typeof window !== 'undefined' && typeof window.ethereum !== 'undefined';
-}
-
-/**
  * Check if Farcaster Mini App is available
  */
 export function isFarcasterMiniAppAvailable(): boolean {
@@ -73,50 +66,33 @@ export function isFarcasterMiniAppAvailable(): boolean {
  * Request account access and get signer
  */
 export async function connectWallet(): Promise<ethers.BrowserProvider> {
-  // Check for Farcaster Mini App first, then fallback to MetaMask
-  if (isFarcasterMiniAppAvailable()) {
-    try {
-      // Use Farcaster Mini App provider
-      const farcaster = (window as any).farcaster;
-      if (farcaster?.miniApp?.getEthereumProvider) {
-        const provider = farcaster.miniApp.getEthereumProvider();
-        const ethersProvider = new ethers.BrowserProvider(provider);
-        
-        // Check if we're on the correct network
-        const network = await ethersProvider.getNetwork();
-        if (Number(network.chainId) !== 8453) { // Base Mainnet chain ID
-          await switchToBaseMainnet();
-        }
-        
-        return ethersProvider;
-      }
-    } catch (error: any) {
-      console.warn('Farcaster Mini App connection failed, falling back to MetaMask:', error);
-    }
-  }
-
-  if (!isMetaMaskInstalled()) {
-    throw new WalletError('No compatible wallet found. Please install MetaMask or use Farcaster to continue.');
+  // Only support Farcaster Mini App
+  if (!isFarcasterMiniAppAvailable()) {
+    throw new WalletError('Farcaster Mini App not available. Please use Farcaster to access this app.');
   }
 
   try {
-    // Request account access
-    await window.ethereum!.request({ method: 'eth_requestAccounts' });
-    
-    // Create provider
-    const provider = new ethers.BrowserProvider(window.ethereum!);
-    // Check if we're on the correct network
-    const network = await provider.getNetwork();
-    if (Number(network.chainId) !== 8453) { // Base Mainnet chain ID
-      await switchToBaseMainnet();
+    // Use Farcaster Mini App provider
+    const farcaster = (window as any).farcaster;
+    if (farcaster?.miniApp?.getEthereumProvider) {
+      const provider = farcaster.miniApp.getEthereumProvider();
+      const ethersProvider = new ethers.BrowserProvider(provider);
+      
+      // Check if we're on the correct network
+      const network = await ethersProvider.getNetwork();
+      if (Number(network.chainId) !== 8453) { // Base Mainnet chain ID
+        await switchToBaseMainnet();
+      }
+      
+      return ethersProvider;
+    } else {
+      throw new WalletError('Farcaster Mini App provider not available');
     }
-    
-    return provider;
   } catch (error: any) {
-    if (error.code === 4001) {
-      throw new WalletError('User rejected connection request');
+    if (error instanceof WalletError) {
+      throw error;
     }
-    throw new WalletError(`Failed to connect wallet: ${error.message}`);
+    throw new WalletError(`Failed to connect Farcaster wallet: ${error.message}`);
   }
 }
 
@@ -124,23 +100,33 @@ export async function connectWallet(): Promise<ethers.BrowserProvider> {
  * Switch to Base Mainnet network
  */
 export async function switchToBaseMainnet(): Promise<void> {
-  if (!isMetaMaskInstalled()) {
-    throw new WalletError('MetaMask not installed');
+  if (!isFarcasterMiniAppAvailable()) {
+    throw new WalletError('Farcaster Mini App not available');
   }
 
   try {
-    await window.ethereum!.request({
-      method: 'wallet_switchEthereumChain',
-      params: [{ chainId: NETWORK_CONFIG.chainId }],
-    });
+    const farcaster = (window as any).farcaster;
+    if (farcaster?.miniApp?.getEthereumProvider) {
+      const provider = farcaster.miniApp.getEthereumProvider();
+      await provider.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: NETWORK_CONFIG.chainId }],
+      });
+    } else {
+      throw new WalletError('Farcaster Mini App provider not available');
+    }
   } catch (error: any) {
     // If the network doesn't exist, add it
     if (error.code === 4902) {
       try {
-        await window.ethereum!.request({
-          method: 'wallet_addEthereumChain',
-          params: [NETWORK_CONFIG],
-        });
+        const farcaster = (window as any).farcaster;
+        if (farcaster?.miniApp?.getEthereumProvider) {
+          const provider = farcaster.miniApp.getEthereumProvider();
+          await provider.request({
+            method: 'wallet_addEthereumChain',
+            params: [NETWORK_CONFIG],
+          });
+        }
       } catch (addError: any) {
         throw new WalletError(`Failed to add Base Mainnet network: ${addError.message}`);
       }
@@ -154,16 +140,22 @@ export async function switchToBaseMainnet(): Promise<void> {
  * Get the current account address
  */
 export async function getCurrentAccount(): Promise<string> {
-  if (!isMetaMaskInstalled()) {
-    throw new WalletError('MetaMask not installed');
+  if (!isFarcasterMiniAppAvailable()) {
+    throw new WalletError('Farcaster Mini App not available');
   }
 
   try {
-    const accounts = await window.ethereum!.request({ method: 'eth_accounts' });
-    if (accounts.length === 0) {
-      throw new WalletError('No accounts found. Please connect your wallet.');
+    const farcaster = (window as any).farcaster;
+    if (farcaster?.miniApp?.getEthereumProvider) {
+      const provider = farcaster.miniApp.getEthereumProvider();
+      const accounts = await provider.request({ method: 'eth_accounts' });
+      if (accounts.length === 0) {
+        throw new WalletError('No accounts found. Please connect your Farcaster wallet.');
+      }
+      return accounts[0];
+    } else {
+      throw new WalletError('Farcaster Mini App provider not available');
     }
-    return accounts[0];
   } catch (error: any) {
     throw new WalletError(`Failed to get account: ${error.message}`);
   }
