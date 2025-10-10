@@ -3,7 +3,8 @@ import { Clock, Trophy, Star, X } from 'lucide-react';
 import { useMiniApp } from '@neynar/react';
 import { APP_URL } from '~/lib/constants';
 import QuizStartButton from '@/components/QuizStartButton';
-import { QuizMode } from '@/lib/wallet';
+import { QuizMode, startQuizTransactionWithWagmi, formatWalletError, WalletError } from '@/lib/wallet';
+import { useConfig } from 'wagmi';
 
 // Type definitions
 interface QuizQuestion {
@@ -779,6 +780,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart: _o
 // Time Mode (45s) Component
 const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const config = useConfig();
   const [timeLeft, setTimeLeft] = useState<number>(45);
   const [started, setStarted] = useState(false);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -842,6 +844,16 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
   const startRun = useCallback(async () => {
     try {
       setError(null);
+      
+      // First, execute the blockchain transaction
+      const txHash = await startQuizTransactionWithWagmi(QuizMode.TIME_MODE, config, (state) => {
+        // You can add loading states here if needed
+        console.log('Transaction state:', state);
+      });
+      
+      console.log('Blockchain transaction successful:', txHash);
+      
+      // Then, proceed with the API call for Time Mode
       const res = await fetch('/api/time/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fid: context?.user?.fid }) });
       const d = await res.json();
       if (!res.ok || !d?.success) {
@@ -852,10 +864,15 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
       setTimeLeft(d.durationSec || 45);
       setStarted(true);
       if (questions.length < 5) fetchMoreQuestions();
-    } catch (_e) {
-      setError('Network error');
+    } catch (e) {
+      console.error('Time Mode start error:', e);
+      if (e instanceof WalletError) {
+        setError(formatWalletError(e));
+      } else {
+        setError('Network error');
+      }
     }
-  }, [context?.user?.fid, fetchMoreQuestions, questions.length]);
+  }, [context?.user?.fid, fetchMoreQuestions, questions.length, config]);
 
   // countdown
   useEffect(() => {
@@ -1068,7 +1085,7 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
         {!started ? (
           <div className="bg-white rounded-2xl p-8 shadow-2xl text-center">
             <h2 className="text-2xl font-bold mb-2 text-gray-800">Time Mode • 45s</h2>
-            <p className="text-gray-600 mb-6">Answer as many as you can. Costs 10 coins to start.</p>
+            <p className="text-gray-600 mb-6">Answer as many as you can. Requires blockchain payment + 10 coins to start.</p>
             {error && <div className="mb-4 text-red-600 font-semibold">{error}</div>}
             <button onClick={startRun} className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700">Start</button>
           </div>
