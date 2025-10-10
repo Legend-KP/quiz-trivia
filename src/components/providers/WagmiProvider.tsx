@@ -8,19 +8,6 @@ import { useEffect, useState } from "react";
 import { useConnect, useAccount } from "wagmi";
 import React from "react";
 
-// Extend the Window interface to include Coinbase Wallet properties
-declare global {
-  interface Window {
-    ethereum?: {
-      request: (args: { method: string; params?: any[] }) => Promise<any>;
-      on: (event: string, callback: (...args: any[]) => void) => void;
-      removeListener: (event: string, callback: (...args: any[]) => void) => void;
-      isCoinbaseWallet?: boolean;
-      isCoinbaseWalletExtension?: boolean;
-      isCoinbaseWalletBrowser?: boolean;
-    };
-  }
-}
 
 // Custom hook for Coinbase Wallet detection and auto-connection
 function useCoinbaseWalletAutoConnect() {
@@ -31,9 +18,10 @@ function useCoinbaseWalletAutoConnect() {
   useEffect(() => {
     // Check if we're running in Coinbase Wallet
     const checkCoinbaseWallet = () => {
-      const isInCoinbaseWallet = window.ethereum?.isCoinbaseWallet || 
-        window.ethereum?.isCoinbaseWalletExtension ||
-        window.ethereum?.isCoinbaseWalletBrowser;
+      const ethereum = window.ethereum as any;
+      const isInCoinbaseWallet = ethereum?.isCoinbaseWallet || 
+        ethereum?.isCoinbaseWalletExtension ||
+        ethereum?.isCoinbaseWalletBrowser;
       setIsCoinbaseWallet(!!isInCoinbaseWallet);
     };
     
