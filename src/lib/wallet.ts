@@ -100,16 +100,16 @@ export async function connectWallet(): Promise<ethers.BrowserProvider> {
       // Use Farcaster Frame provider
       const provider = new ethers.BrowserProvider(window.ethereum);
       
-      // Check if we're on the correct network
-      const network = await provider.getNetwork();
-      if (Number(network.chainId) !== 8453) { // Base Mainnet chain ID
-        await switchToBaseMainnet();
-      }
-      
-      return provider;
-    } catch (error: any) {
-      console.warn('Farcaster Frame connection failed:', error);
+    // Check if we're on the correct network
+    const network = await provider.getNetwork();
+    if (Number(network.chainId) !== 8453) { // Base Mainnet chain ID
+      await switchToBaseMainnet();
     }
+    
+    return provider;
+  } catch (error: any) {
+      console.warn('Farcaster Frame connection failed:', error);
+  }
   }
 
   throw new WalletError('No Farcaster wallet found. Please use Farcaster to continue.');
@@ -211,11 +211,14 @@ export async function startQuizTransactionWithWagmi(
       args: [mode],
     });
     
+    // Convert fee to wei properly - avoid scientific notation
+    const feeInWei = getRequiredFeeInWei(mode);
+    
     // Send transaction using Farcaster wallet
     const txHash = await client.sendTransaction({
       to: CONTRACT_ADDRESS as `0x${string}`,
       data: txData,
-      value: parseUnits(requiredFee.toString(), 18),
+      value: feeInWei,
       chain: null,
     });
     
@@ -262,6 +265,15 @@ function getRequiredFeeForMode(mode: QuizMode): number {
     default:
       return 0.0000001;
   }
+}
+
+/**
+ * Get required fee as BigInt in wei (avoids decimal precision issues)
+ */
+export function getRequiredFeeInWei(mode: QuizMode): bigint {
+  const fee = getRequiredFeeForMode(mode);
+  // Convert to wei using precise calculation to avoid scientific notation
+  return BigInt(Math.floor(fee * 1000000000000000000)); // 1e18
 }
 
 /**
