@@ -108,6 +108,9 @@ function ConnectionControls({
   }
   return (
     <div className="space-y-3 w-full">
+      <Button onClick={() => connect({ connector: connectors[0] })} className="w-full">
+        Connect Farcaster Mini App
+      </Button>
       <Button onClick={() => connect({ connector: connectors[1] })} className="w-full">
         Connect Farcaster Frame
       </Button>
