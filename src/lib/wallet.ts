@@ -1,4 +1,6 @@
 import { ethers } from 'ethers';
+import { getWalletClient } from 'wagmi/actions';
+import { encodeFunctionData, parseUnits } from 'viem';
 
 // Extend Window interface to include ethereum
 declare global {
@@ -182,7 +184,85 @@ export async function getContract(provider: ethers.BrowserProvider) {
 }
 
 /**
- * Start a quiz with blockchain transaction
+ * Start a quiz with Farcaster wallet transaction (using Wagmi)
+ */
+export async function startQuizTransactionWithWagmi(
+  mode: QuizMode,
+  config: any,
+  onStateChange?: (state: TransactionState) => void
+): Promise<string> {
+  try {
+    onStateChange?.(TransactionState.CONNECTING);
+    
+    // Get wallet client from Wagmi
+    const client = await getWalletClient(config);
+    if (!client) {
+      throw new WalletError('Wallet not connected');
+    }
+    
+    // Get required fee (hardcoded for now, can be fetched from contract)
+    const requiredFee = getRequiredFeeForMode(mode);
+    
+    onStateChange?.(TransactionState.CONFIRMING);
+    
+    // Encode the startQuiz function call
+    const txData = encodeFunctionData({
+      abi: CONTRACT_ABI,
+      functionName: 'startQuiz',
+      args: [mode],
+    });
+    
+    // Send transaction using Farcaster wallet
+    const txHash = await client.sendTransaction({
+      to: CONTRACT_ADDRESS as `0x${string}`,
+      data: txData,
+      value: parseUnits(requiredFee.toString(), 18),
+      chain: client.chain,
+    });
+    
+    onStateChange?.(TransactionState.SUCCESS);
+    
+    return txHash;
+  } catch (error: any) {
+    onStateChange?.(TransactionState.ERROR);
+    
+    if (error instanceof WalletError) {
+      throw error;
+    }
+    
+    // Handle common error cases
+    if (error.code === 4001) {
+      throw new WalletError('Transaction rejected by user');
+    } else if (error.code === -32603) {
+      throw new WalletError('Transaction failed. Please try again.');
+    } else if (error.message?.includes('insufficient funds')) {
+      throw new WalletError('Insufficient funds for transaction');
+    } else if (error.message?.includes('gas')) {
+      throw new WalletError('Transaction failed due to gas issues');
+    }
+    
+    throw new WalletError(`Transaction failed: ${error.message}`);
+  }
+}
+
+/**
+ * Get required fee for quiz mode
+ */
+function getRequiredFeeForMode(mode: QuizMode): number {
+  switch (mode) {
+    case QuizMode.CLASSIC:
+      return 0.001; // 0.001 ETH
+    case QuizMode.TIME_MODE:
+      return 0.001; // 0.001 ETH
+    case QuizMode.CHALLENGE:
+      return 0.001; // 0.001 ETH
+    default:
+      return 0.001;
+  }
+}
+
+/**
+ * Start a quiz with blockchain transaction (legacy method)
  */
 export async function startQuizTransaction(
   mode: QuizMode,

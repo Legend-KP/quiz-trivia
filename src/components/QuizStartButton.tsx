@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { QuizMode, TransactionState, startQuizTransaction, formatWalletError, WalletError } from '@/lib/wallet';
+import React, { useState, useEffect } from 'react';
+import { QuizMode, TransactionState, startQuizTransactionWithWagmi, formatWalletError, WalletError } from '@/lib/wallet';
+import { useConfig } from 'wagmi';
 import TransactionModal from './TransactionModal';
 
 interface QuizStartButtonProps {
@@ -19,6 +20,29 @@ const QuizStartButton: React.FC<QuizStartButtonProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState<string>('');
   const [transactionHash, setTransactionHash] = useState<string>('');
+  const config = useConfig();
+
+  // Handle Farcaster frame transaction confirmations
+  useEffect(() => {
+    const handleFrameTransaction = (event: MessageEvent) => {
+      const data = event.data;
+      if (typeof data === "object" && data !== null && "type" in data && data.type === "farcaster:frame-transaction") {
+        console.log("✅ Frame Wallet transaction confirmed");
+        setTransactionState(TransactionState.SUCCESS);
+        
+        // Wait a moment to show success state
+        setTimeout(() => {
+          setIsModalOpen(false);
+          setTransactionState(TransactionState.IDLE);
+          // Start the actual quiz
+          onQuizStart();
+        }, 2000);
+      }
+    };
+
+    window.addEventListener("message", handleFrameTransaction);
+    return () => window.removeEventListener("message", handleFrameTransaction);
+  }, [onQuizStart]);
 
   const handleStartQuiz = async () => {
     try {
@@ -26,8 +50,8 @@ const QuizStartButton: React.FC<QuizStartButtonProps> = ({
       setIsModalOpen(true);
       setTransactionState(TransactionState.CONNECTING);
       
-      // Start the blockchain transaction
-      const txHash = await startQuizTransaction(mode, (state) => {
+      // Start the blockchain transaction using Farcaster wallet
+      const txHash = await startQuizTransactionWithWagmi(mode, config, (state) => {
         setTransactionState(state);
       });
       
