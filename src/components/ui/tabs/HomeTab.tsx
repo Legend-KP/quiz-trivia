@@ -233,7 +233,7 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
 };
 
 // Home Page Component
-const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTimeMode, onStartChallenge, onShowRules, onClaimDaily }) => {
+const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTimeMode, onStartChallenge, onClaimDaily }) => {
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {/* Gradient Background - Full Frame */}
@@ -526,14 +526,14 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
 
 
 // Results Component
-const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart: _onRestart, context, time }) => {
+const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onRestart: _onRestart, context, time }) => {
   const { actions } = useMiniApp();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const totalQuestions = quizData.length;
-  const correctAnswers = answers.filter((a: Answer) => a.isCorrect).length;
+  // const totalQuestions = quizData.length;
+  // const correctAnswers = answers.filter((a: Answer) => a.isCorrect).length;
   // const accuracy = Math.round((correctAnswers / totalQuestions) * 100);
 
   // Use the actual completion time passed from the quiz
@@ -780,7 +780,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart: _o
 
 // Time Mode (45s) Component
 const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [_sessionId] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(45);
   const [started, setStarted] = useState(false);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -850,7 +850,7 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
         setError(d?.error || 'Unable to start Time Mode');
         return;
       }
-      setSessionId(d.sessionId);
+      // setSessionId(d.sessionId);
       setTimeLeft(d.durationSec || 45);
       setStarted(true);
       if (questions.length < 5) fetchMoreQuestions();
@@ -1227,7 +1227,7 @@ const ChallengeModePage: React.FC<ChallengeModePageProps> = ({ onExit, context }
 
 // Main App Component
 export default function QuizTriviaApp() {
-  const { actions } = useMiniApp();
+  const { } = useMiniApp();
   const [currentScreen, setCurrentScreen] = useState<'home' | 'quiz' | 'results' | 'time' | 'challenge'>('home');
   const [showRules, setShowRules] = useState(false);
   const [finalScore, setFinalScore] = useState(0);

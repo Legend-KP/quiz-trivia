@@ -48,9 +48,9 @@ export async function POST(request: Request) {
       // Update challenger leaderboard entry
       const challengerEntry = {
         fid: fresh.challengerFid,
-        username: fresh.challengerUsername || '',
-        displayName: fresh.challengerDisplayName,
-        pfpUrl: fresh.challengerPfpUrl,
+        username: `user_${fresh.challengerFid}`, // Default username since not stored in challenge
+        displayName: undefined,
+        pfpUrl: undefined,
         score: c.correct,
         time: timeString,
         timeInSeconds: timeInSeconds,
@@ -62,9 +62,9 @@ export async function POST(request: Request) {
       // Update opponent leaderboard entry
       const opponentEntry = {
         fid: fresh.opponentFid!,
-        username: fresh.opponentUsername || '',
-        displayName: fresh.opponentDisplayName,
-        pfpUrl: fresh.opponentPfpUrl,
+        username: `user_${fresh.opponentFid}`, // Default username since not stored in challenge
+        displayName: undefined,
+        pfpUrl: undefined,
         score: o.correct,
         time: timeString,
         timeInSeconds: timeInSeconds,

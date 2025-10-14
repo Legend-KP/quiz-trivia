@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Trophy, Users, Calendar, Clock, Share2 } from 'lucide-react';
 import Link from 'next/link';
 import { useMiniApp } from '@neynar/react';
@@ -25,13 +25,9 @@ export default function PublicLeaderboard() {
     totalParticipants: 0,
     lastUpdated: ''
   });
-  const { context, actions } = useMiniApp();
+  const { actions } = useMiniApp();
 
-  useEffect(() => {
-    fetchLeaderboard();
-  }, [selectedMode]);
-
-  const fetchLeaderboard = async () => {
+  const fetchLeaderboard = useCallback(async () => {
     try {
       const url = selectedMode === 'ALL' ? '/api/leaderboard' : `/api/leaderboard?mode=${selectedMode}`;
       const response = await fetch(url);
@@ -49,7 +45,11 @@ export default function PublicLeaderboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedMode]);
+
+  useEffect(() => {
+    fetchLeaderboard();
+  }, [fetchLeaderboard]);
 
   const handleShare = async () => {
     try {
