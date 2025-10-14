@@ -691,10 +691,10 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onR
                         />
                       )}
                       <div>
-                        <div className="font-semibold text-gray-800">
+                        <div className="font-semibold text-white">
                           {player.displayName || player.username}
                         </div>
-                        <div className="text-sm text-gray-500">@{player.username}</div>
+                        <div className="text-sm text-gray-300">@{player.username}</div>
                         <div className="text-xs text-gray-400">
                           Completed in {player.time}
                         </div>
@@ -726,10 +726,10 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onR
                     />
                   )}
                   <div>
-                    <div className="font-semibold text-blue-800">
+                    <div className="font-semibold text-white">
                       {context.user.displayName || context.user.username}
                     </div>
-                    <div className="text-sm text-blue-600">Your Score</div>
+                    <div className="text-sm text-blue-300">Your Score</div>
                   </div>
                 </div>
                 <div className="text-right">
@@ -743,7 +743,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onR
           )}
 
           {/* Action Buttons */}
-          <div className="mt-6 text-center space-x-4">
+          <div className="mt-6 flex flex-col items-center space-y-4">
             <button
               onClick={async () => {
                 try {
@@ -996,10 +996,10 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
                           />
                         )}
                         <div>
-                          <div className="font-semibold text-gray-800">
+                          <div className="font-semibold text-white">
                             {player.displayName || player.username}
                           </div>
-                          <div className="text-sm text-gray-500">@{player.username}</div>
+                          <div className="text-sm text-gray-300">@{player.username}</div>
                           <div className="text-xs text-gray-400">
                             {new Date(player.completedAt).toLocaleDateString()}
                           </div>
@@ -1028,10 +1028,10 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
                       />
                     )}
                     <div>
-                      <div className="font-semibold text-blue-800">
+                      <div className="font-semibold text-white">
                         {context.user.displayName || context.user.username}
                       </div>
-                      <div className="text-sm text-blue-600">Your Score</div>
+                      <div className="text-sm text-blue-300">Your Score</div>
                     </div>
                   </div>
                   <div className="text-right">
