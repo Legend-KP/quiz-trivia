@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getChallengesCollection, getCurrencyAccountsCollection, getCurrencyTxnsCollection } from '~/lib/mongodb';
+import { getChallengesCollection, getCurrencyAccountsCollection, getCurrencyTxnsCollection, getLeaderboardCollection } from '~/lib/mongodb';
 
 export const runtime = 'nodejs';
 
@@ -39,6 +39,39 @@ export async function POST(request: Request) {
       } else {
         await challenges.updateOne({ id }, { $set: { status: 'tied' } });
       }
+
+      // Update leaderboard for both participants
+      const leaderboard = await getLeaderboardCollection();
+      const timeInSeconds = Number(durationSec) || 120;
+      const timeString = `${Math.floor(timeInSeconds / 60)}:${(timeInSeconds % 60).toString().padStart(2, '0')}`;
+      
+      // Update challenger leaderboard entry
+      const challengerEntry = {
+        fid: fresh.challengerFid,
+        username: fresh.challengerUsername || '',
+        displayName: fresh.challengerDisplayName,
+        pfpUrl: fresh.challengerPfpUrl,
+        score: c.correct,
+        time: timeString,
+        timeInSeconds: timeInSeconds,
+        completedAt: now,
+        mode: 'CHALLENGE' as const,
+      };
+      await leaderboard.updateOne({ fid: fresh.challengerFid, mode: 'CHALLENGE' }, { $set: challengerEntry }, { upsert: true });
+
+      // Update opponent leaderboard entry
+      const opponentEntry = {
+        fid: fresh.opponentFid!,
+        username: fresh.opponentUsername || '',
+        displayName: fresh.opponentDisplayName,
+        pfpUrl: fresh.opponentPfpUrl,
+        score: o.correct,
+        time: timeString,
+        timeInSeconds: timeInSeconds,
+        completedAt: now,
+        mode: 'CHALLENGE' as const,
+      };
+      await leaderboard.updateOne({ fid: fresh.opponentFid!, mode: 'CHALLENGE' }, { $set: opponentEntry }, { upsert: true });
     }
 
     return NextResponse.json({ success: true });

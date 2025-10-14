@@ -14,6 +14,7 @@ export interface LeaderboardEntry {
   timeInSeconds: number;
   completedAt: number;
   rank?: number;
+  mode: 'CLASSIC' | 'TIME_MODE' | 'CHALLENGE';
 }
 
 let client: MongoClient | null = null;

@@ -37,9 +37,10 @@ export async function POST(request: Request) {
       time: `${Math.floor(timeInSeconds / 60)}:${(timeInSeconds % 60).toString().padStart(2, '0')}`,
       timeInSeconds: timeInSeconds,
       completedAt: createdAt,
+      mode: 'TIME_MODE' as const,
     };
 
-    await leaderboard.updateOne({ fid: nfid }, { $set: entry }, { upsert: true });
+    await leaderboard.updateOne({ fid: nfid, mode: 'TIME_MODE' }, { $set: entry }, { upsert: true });
 
     return NextResponse.json({ success: true });
   } catch (_error) {

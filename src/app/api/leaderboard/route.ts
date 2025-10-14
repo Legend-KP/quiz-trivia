@@ -17,11 +17,15 @@ function timeStringToSeconds(timeString: string): number {
 // Global fallback storage that persists across requests (only for local/dev emergency)
 const globalFallbackStorage: LeaderboardEntry[] = [];
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const mode = searchParams.get('mode') as 'CLASSIC' | 'TIME_MODE' | 'CHALLENGE' | null;
+  
   try {
     // Try MongoDB first
     const collection = await getLeaderboardCollection();
-    const leaderboard = await collection.find({}).toArray();
+    const query = mode ? { mode } : {};
+    const leaderboard = await collection.find(query).toArray();
 
     const sortedLeaderboard = leaderboard.sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
       if (a.score !== b.score) return b.score - a.score;
@@ -38,15 +42,18 @@ export async function GET() {
       totalParticipants: rankedLeaderboard.length,
       lastUpdated: new Date().toISOString(),
       storage: 'mongodb',
+      mode: mode || 'ALL',
     });
       } catch (_mongodbError) {
       console.error('MongoDB GET failed:', _mongodbError);
+      const filteredFallback = mode ? globalFallbackStorage.filter(entry => entry.mode === mode) : globalFallbackStorage;
       return NextResponse.json({
-        leaderboard: globalFallbackStorage,
-        totalParticipants: globalFallbackStorage.length,
+        leaderboard: filteredFallback,
+        totalParticipants: filteredFallback.length,
         lastUpdated: new Date().toISOString(),
         storage: 'fallback',
         error: 'MongoDB GET failed',
+        mode: mode || 'ALL',
       }, { status: 200 });
     }
 }
@@ -54,10 +61,10 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { fid, username, displayName, pfpUrl, score, time } = body;
+    const { fid, username, displayName, pfpUrl, score, time, mode } = body;
 
-    if (!fid || !username || score === undefined) {
-      return NextResponse.json({ error: 'Missing required fields: fid, username, score' }, { status: 400 });
+    if (!fid || !username || score === undefined || !mode) {
+      return NextResponse.json({ error: 'Missing required fields: fid, username, score, mode' }, { status: 400 });
     }
 
     const newEntry: LeaderboardEntry = {
@@ -69,12 +76,14 @@ export async function POST(request: Request) {
       time,
       timeInSeconds: timeStringToSeconds(time),
       completedAt: Date.now(),
+      mode,
     };
 
     const collection = await getLeaderboardCollection();
-    await collection.updateOne({ fid }, { $set: newEntry }, { upsert: true });
+    await collection.updateOne({ fid, mode }, { $set: newEntry }, { upsert: true });
 
-    const leaderboard = await collection.find({}).toArray();
+    // Get leaderboard for the specific mode
+    const leaderboard = await collection.find({ mode }).toArray();
     const sortedLeaderboard = leaderboard.sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
       if (a.score !== b.score) return b.score - a.score;
       return (a.timeInSeconds || 0) - (b.timeInSeconds || 0);
@@ -90,24 +99,27 @@ export async function POST(request: Request) {
       totalParticipants: rankedLeaderboard.length,
       lastUpdated: new Date().toISOString(),
       storage: 'mongodb',
+      mode,
     });
       } catch (_mongodbError) {
       console.error('MongoDB POST failed:', _mongodbError);
 
       // Fallback to in-memory only as a last resort (non-persistent)
       try {
-        const { fid, username, displayName, pfpUrl, score, time } = await request.json();
-        const newEntry: LeaderboardEntry = { fid, username, displayName, pfpUrl, score, time, timeInSeconds: timeStringToSeconds(time), completedAt: Date.now() };
+        const { fid, username, displayName, pfpUrl, score, time, mode } = await request.json();
+        const newEntry: LeaderboardEntry = { fid, username, displayName, pfpUrl, score, time, timeInSeconds: timeStringToSeconds(time), completedAt: Date.now(), mode };
 
-        const existingIndex = globalFallbackStorage.findIndex((entry) => entry.fid === fid);
+        const existingIndex = globalFallbackStorage.findIndex((entry) => entry.fid === fid && entry.mode === mode);
         if (existingIndex !== -1) {
           if (score > globalFallbackStorage[existingIndex].score) globalFallbackStorage[existingIndex] = newEntry;
         } else {
           globalFallbackStorage.push(newEntry);
         }
 
-        globalFallbackStorage.sort((a, b) => (a.score !== b.score ? b.score - a.score : (a.timeInSeconds || 0) - (b.timeInSeconds || 0)));
-        const rankedFallback = globalFallbackStorage.map((entry, index) => ({ ...entry, rank: index + 1 }));
+        // Filter by mode and sort
+        const modeEntries = globalFallbackStorage.filter(entry => entry.mode === mode);
+        modeEntries.sort((a, b) => (a.score !== b.score ? b.score - a.score : (a.timeInSeconds || 0) - (b.timeInSeconds || 0)));
+        const rankedFallback = modeEntries.map((entry, index) => ({ ...entry, rank: index + 1 }));
 
         return NextResponse.json({
           success: true,
@@ -115,6 +127,7 @@ export async function POST(request: Request) {
           totalParticipants: rankedFallback.length,
           lastUpdated: new Date().toISOString(),
           storage: 'fallback',
+          mode,
         });
       } catch (_fallbackError) {
         return NextResponse.json({ success: false, error: 'Failed to update leaderboard', leaderboard: [] }, { status: 500 });
@@ -139,6 +152,7 @@ export async function PUT(request: Request) {
           time: '1:30',
           timeInSeconds: timeStringToSeconds('1:30'),
           completedAt: Date.now(),
+          mode: 'CLASSIC',
         };
         await collection.updateOne({ fid: testEntry.fid }, { $set: testEntry }, { upsert: true });
         const count = await collection.countDocuments();
@@ -150,9 +164,9 @@ export async function PUT(request: Request) {
 
     if (action === 'addTestData') {
       const testEntries: LeaderboardEntry[] = [
-        { fid: 12345, username: 'testuser1', displayName: 'Test User 1', pfpUrl: 'https://picsum.photos/32/32?random=1', score: 4, time: '2:15', timeInSeconds: timeStringToSeconds('2:15'), completedAt: Date.now() - 3600000 },
-        { fid: 67890, username: 'testuser2', displayName: 'Test User 2', pfpUrl: 'https://picsum.photos/32/32?random=2', score: 3, time: '3:45', timeInSeconds: timeStringToSeconds('3:45'), completedAt: Date.now() - 7200000 },
-        { fid: 11111, username: 'testuser3', displayName: 'Test User 3', pfpUrl: 'https://picsum.photos/32/32?random=3', score: 2, time: '4:20', timeInSeconds: timeStringToSeconds('4:20'), completedAt: Date.now() - 10800000 },
+        { fid: 12345, username: 'testuser1', displayName: 'Test User 1', pfpUrl: 'https://picsum.photos/32/32?random=1', score: 4, time: '2:15', timeInSeconds: timeStringToSeconds('2:15'), completedAt: Date.now() - 3600000, mode: 'CLASSIC' },
+        { fid: 67890, username: 'testuser2', displayName: 'Test User 2', pfpUrl: 'https://picsum.photos/32/32?random=2', score: 3, time: '3:45', timeInSeconds: timeStringToSeconds('3:45'), completedAt: Date.now() - 7200000, mode: 'TIME_MODE' },
+        { fid: 11111, username: 'testuser3', displayName: 'Test User 3', pfpUrl: 'https://picsum.photos/32/32?random=3', score: 2, time: '4:20', timeInSeconds: timeStringToSeconds('4:20'), completedAt: Date.now() - 10800000, mode: 'CHALLENGE' },
       ];
       try {
         const collection = await getLeaderboardCollection();

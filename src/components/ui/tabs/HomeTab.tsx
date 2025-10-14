@@ -32,6 +32,7 @@ interface LeaderboardEntry {
   timeInSeconds?: number;
   completedAt: number;
   rank?: number;
+  mode: 'CLASSIC' | 'TIME_MODE' | 'CHALLENGE';
 }
 
 interface RulesPopupProps {
@@ -541,7 +542,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart: _o
   const fetchLeaderboard = useCallback(async () => {
     console.log('🔍 Fetching leaderboard...');
     try {
-      const response = await fetch('/api/leaderboard');
+      const response = await fetch('/api/leaderboard?mode=CLASSIC');
       const data = await response.json();
       console.log('📥 Leaderboard response:', data);
       
@@ -588,6 +589,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers, onRestart: _o
         pfpUrl: context.user.pfpUrl,
         score: score,
         time: totalTime,
+        mode: 'CLASSIC',
       };
 
       console.log('📤 Sending payload:', payload);
@@ -794,7 +796,7 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
   const fetchTimeLeaderboard = useCallback(async () => {
     try {
       setLoadingLeaderboard(true);
-      const response = await fetch('/api/leaderboard?mode=time');
+      const response = await fetch('/api/leaderboard?mode=TIME_MODE');
       const data = await response.json();
       if (data.leaderboard) {
         setTimeLeaderboard(data.leaderboard);

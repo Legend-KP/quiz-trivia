@@ -14,11 +14,13 @@ interface LeaderboardEntry {
   time: string;
   completedAt: number;
   rank?: number;
+  mode: 'CLASSIC' | 'TIME_MODE' | 'CHALLENGE';
 }
 
 export default function PublicLeaderboard() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedMode, setSelectedMode] = useState<'ALL' | 'CLASSIC' | 'TIME_MODE' | 'CHALLENGE'>('ALL');
   const [stats, setStats] = useState({
     totalParticipants: 0,
     lastUpdated: ''
@@ -27,11 +29,12 @@ export default function PublicLeaderboard() {
 
   useEffect(() => {
     fetchLeaderboard();
-  }, []);
+  }, [selectedMode]);
 
   const fetchLeaderboard = async () => {
     try {
-      const response = await fetch('/api/leaderboard');
+      const url = selectedMode === 'ALL' ? '/api/leaderboard' : `/api/leaderboard?mode=${selectedMode}`;
+      const response = await fetch(url);
       const data = await response.json();
       if (data.leaderboard) {
         setLeaderboard(data.leaderboard);
@@ -78,6 +81,31 @@ export default function PublicLeaderboard() {
           <p className="text-white text-lg opacity-90">Central DAO Presents</p>
         </div>
 
+        {/* Mode Selector */}
+        <div className="flex justify-center mb-8">
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2 flex gap-2">
+            {[
+              { value: 'ALL', label: 'All Modes', icon: '🏆' },
+              { value: 'CLASSIC', label: 'Classic', icon: '🧠' },
+              { value: 'TIME_MODE', label: 'Time Mode', icon: '⏱️' },
+              { value: 'CHALLENGE', label: 'Challenge', icon: '⚔️' }
+            ].map((mode) => (
+              <button
+                key={mode.value}
+                onClick={() => setSelectedMode(mode.value as any)}
+                className={`px-4 py-2 rounded-lg font-semibold transition-all duration-200 ${
+                  selectedMode === mode.value
+                    ? 'bg-white text-gray-800 shadow-lg'
+                    : 'text-white hover:bg-white/20'
+                }`}
+              >
+                <span className="mr-2">{mode.icon}</span>
+                {mode.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className="bg-white rounded-xl p-6 text-center shadow-lg">
@@ -104,8 +132,12 @@ export default function PublicLeaderboard() {
         {/* Leaderboard */}
         <div className="bg-white rounded-2xl p-8 shadow-2xl">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">🏆 Public Leaderboard</h2>
-            <p className="text-gray-600">All Quiz Trivia Participants</p>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              🏆 {selectedMode === 'ALL' ? 'All Modes' : selectedMode === 'CLASSIC' ? 'Classic Mode' : selectedMode === 'TIME_MODE' ? 'Time Mode' : 'Challenge Mode'} Leaderboard
+            </h2>
+            <p className="text-gray-600">
+              {selectedMode === 'ALL' ? 'All Quiz Trivia Participants' : `${selectedMode === 'CLASSIC' ? 'Classic' : selectedMode === 'TIME_MODE' ? 'Time Mode' : 'Challenge'} Participants`}
+            </p>
             {!loading && (
               <div className="mt-2 text-sm text-gray-500">
                 {leaderboard.length} participants • Last updated: {new Date().toLocaleString()}
