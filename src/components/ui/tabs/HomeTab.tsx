@@ -807,15 +807,11 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
     }
   }, []);
 
-  // Auto-refresh Time Mode leaderboard when viewing results
+  // Fetch Time Mode leaderboard when viewing results (no auto-refresh)
   useEffect(() => {
     if (!showResults) return;
-    // Initial fetch on entering results
+    // Initial fetch on entering results only
     fetchTimeLeaderboard();
-    const intervalId = setInterval(() => {
-      fetchTimeLeaderboard();
-    }, 15000); // refresh every 15s
-    return () => clearInterval(intervalId);
   }, [showResults, fetchTimeLeaderboard]);
 
   const fetchMoreQuestions = useCallback(async () => {
@@ -947,15 +943,6 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
             <div className="text-center mb-6">
               <h3 className="text-2xl font-bold text-gray-800 mb-2">🏆 Time Mode Leaderboard</h3>
               <p className="text-gray-600">Ranked by correct answers in 45 seconds</p>
-              <div className="mt-3 flex items-center justify-center gap-3">
-                <button
-                  onClick={fetchTimeLeaderboard}
-                  disabled={loadingLeaderboard}
-                  className="px-3 py-1 rounded bg-blue-600 text-white text-sm disabled:opacity-60"
-                >
-                  {loadingLeaderboard ? 'Refreshing…' : 'Refresh'}
-                </button>
-              </div>
               {!loadingLeaderboard && (
                 <div className="mt-2 text-sm text-gray-500">
                   {timeLeaderboard.length} participants • Last updated: {new Date().toLocaleString()}
