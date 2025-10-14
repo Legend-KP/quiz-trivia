@@ -22,34 +22,34 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
     switch (state) {
       case TransactionState.CONNECTING:
         return {
-          title: 'Connecting Wallet',
+          title: 'Connecting Your Wallet',
           icon: '🔗',
-          message: 'Please connect your MetaMask wallet to continue...',
+          message: 'Hang tight! We’re getting your wallet ready to start the quiz...',
           showSpinner: true
         };
       
       case TransactionState.CONFIRMING:
         return {
-          title: 'Confirm Transaction',
+          title: 'Confirm Your Entry',
           icon: '⏳',
-          message: 'Please confirm the transaction in your MetaMask wallet. This will only cost ~$0.001 in gas fees.',
+          message: 'Almost there! Please confirm to lock in your quiz entry.',
           showSpinner: true
         };
       
       case TransactionState.SUCCESS:
         return {
-          title: 'Transaction Successful!',
+          title: 'You’re In! 🎉',
           icon: '✅',
-          message: 'Your quiz entry has been recorded on the blockchain!',
+          message: 'Your quiz entry is live — get ready to play and test your knowledge!',
           showSpinner: false,
           showTxHash: true
         };
       
       case TransactionState.ERROR:
         return {
-          title: 'Transaction Failed',
+          title: 'Oops! Something Went Wrong',
           icon: '❌',
-          message: error || 'Something went wrong. Please try again.',
+          message: error || 'Please try again — looks like something didn’t go through.',
           showSpinner: false
         };
       
@@ -57,11 +57,12 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
         return {
           title: 'Processing',
           icon: '⏳',
-          message: 'Please wait...',
+          message: 'Just a sec... we’re getting things ready.',
           showSpinner: true
         };
     }
   };
+  
 
   const content = getModalContent();
   const isSuccess = state === TransactionState.SUCCESS;
