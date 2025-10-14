@@ -742,8 +742,8 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onR
             </div>
           )}
 
-          {/* Share Leaderboard Button */}
-          <div className="mt-6 text-center">
+          {/* Action Buttons */}
+          <div className="mt-6 text-center space-x-4">
             <button
               onClick={async () => {
                 try {
@@ -770,6 +770,12 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onR
               className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200"
             >
               📣 Share on Farcaster
+            </button>
+            <button
+              onClick={() => window.location.href = '/'}
+              className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200"
+            >
+              🏠 Back to Home
             </button>
           </div>
         </div>
