@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import { getWalletClient } from 'wagmi/actions';
-import { encodeFunctionData, parseUnits } from 'viem';
+import { encodeFunctionData } from 'viem';
 
 // Extend Window interface to include ethereum
 declare global {
@@ -198,9 +198,6 @@ export async function startQuizTransactionWithWagmi(
     if (!client) {
       throw new WalletError('Wallet not connected');
     }
-    
-    // Get required fee (hardcoded for now, can be fetched from contract)
-    const requiredFee = getRequiredFeeForMode(mode);
     
     onStateChange?.(TransactionState.CONFIRMING);
     

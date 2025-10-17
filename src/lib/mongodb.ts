@@ -83,6 +83,7 @@ export interface CurrencyAccountDocument {
   dailyStreakDay: number; // 0..7, resets after claim beyond 7
   lastClaimAt?: number; // ms epoch
   lastDailyBaseAt?: number; // ms epoch, last time the daily base grant was applied
+  lastSpinAt?: number; // ms epoch, last time the user spun the wheel
   createdAt: number;
   updatedAt: number;
 }
@@ -91,7 +92,7 @@ export interface CurrencyTxnDocument {
   _id?: any;
   fid: number;
   amount: number; // positive or negative
-  reason: 'time_entry' | 'challenge_entry' | 'win_reward' | 'daily_claim' | 'admin_adjust' | 'other';
+  reason: 'time_entry' | 'challenge_entry' | 'win_reward' | 'daily_claim' | 'spin_wheel' | 'admin_adjust' | 'other';
   refId?: string; // relates to attempt/challenge id
   createdAt: number;
 }
