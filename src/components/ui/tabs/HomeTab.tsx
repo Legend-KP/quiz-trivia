@@ -1354,14 +1354,6 @@ export default function QuizTriviaApp() {
               ×
             </button>
             
-            {/* Back to Home button */}
-            <button
-              onClick={handleSpinWheelClose}
-              className="absolute top-4 left-4 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-medium transition-colors"
-            >
-              ← Back to Home
-            </button>
-            
             <SpinWheel 
               onSpin={handleSpinWheelSpin} 
               onQTTokenWin={handleQTTokenWin}

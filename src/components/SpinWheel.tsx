@@ -128,9 +128,10 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, disabled = 
                     left: '50%',
                     transform: `translate(-50%, -50%) rotate(${centerAngle}deg)`,
                     textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-                    width: '60px',
-                    height: '20px',
-                    marginTop: '-40px'
+                    width: '80px',
+                    height: '30px',
+                    marginTop: '-50px',
+                    marginLeft: '0px'
                   }}
                 >
                   {option.label}
