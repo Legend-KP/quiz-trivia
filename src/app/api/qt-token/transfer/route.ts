@@ -3,18 +3,18 @@ import { ethers } from 'ethers';
 
 export const runtime = 'nodejs';
 
-// QT Token Contract Configuration
-const QT_TOKEN_ADDRESS = process.env.QT_TOKEN_ADDRESS || '';
-const QT_TOKEN_ABI = [
-  "function transfer(address to, uint256 amount) external returns (bool)",
-  "function balanceOf(address account) external view returns (uint256)"
+// QT Reward Distributor Contract Configuration
+const QT_DISTRIBUTOR_ADDRESS = process.env.QT_DISTRIBUTOR_ADDRESS || '';
+const QT_DISTRIBUTOR_ABI = [
+  "function claimQTReward() external",
+  "function canClaimToday(address user) external view returns (bool)",
+  "function getQTBalance() external view returns (uint256)",
+  "function getUserClaimStatus(address user) external view returns (uint256 lastClaim, bool canClaimToday)"
 ];
 
-// Your wallet configuration (you'll need to provide these)
+// Your wallet configuration for contract interactions
 const WALLET_PRIVATE_KEY = process.env.WALLET_PRIVATE_KEY || '';
 const RPC_URL = process.env.RPC_URL || 'https://mainnet.base.org';
-
-const QT_TOKEN_AMOUNT = ethers.parseUnits('10000', 18); // 10,000 QT tokens
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,8 +28,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    if (!QT_TOKEN_ADDRESS || !WALLET_PRIVATE_KEY) {
-      return new Response(JSON.stringify({ error: 'QT token configuration missing' }), { 
+    if (!QT_DISTRIBUTOR_ADDRESS || !WALLET_PRIVATE_KEY) {
+      return new Response(JSON.stringify({ error: 'QT distributor configuration missing' }), { 
         status: 500, 
         headers: { 'content-type': 'application/json' } 
       });
@@ -40,34 +40,45 @@ export async function POST(req: NextRequest) {
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
 
     // Create contract instance
-    const qtTokenContract = new ethers.Contract(QT_TOKEN_ADDRESS, QT_TOKEN_ABI, wallet);
+    const qtDistributor = new ethers.Contract(QT_DISTRIBUTOR_ADDRESS, QT_DISTRIBUTOR_ABI, wallet);
 
-    // Check if wallet has enough QT tokens
-    const walletBalance = await qtTokenContract.balanceOf(wallet.address);
-    if (walletBalance < QT_TOKEN_AMOUNT) {
-      return new Response(JSON.stringify({ error: 'Insufficient QT token balance' }), { 
+    // Check if user can claim today
+    const canClaim = await qtDistributor.canClaimToday(userAddress);
+    if (!canClaim) {
+      return new Response(JSON.stringify({ error: 'User has already claimed today' }), { 
         status: 400, 
         headers: { 'content-type': 'application/json' } 
       });
     }
 
-    // Transfer QT tokens to user
-    const tx = await qtTokenContract.transfer(userAddress, QT_TOKEN_AMOUNT);
+    // Check contract balance
+    const contractBalance = await qtDistributor.getQTBalance();
+    const rewardAmount = ethers.parseUnits('10000', 18);
+    
+    if (contractBalance < rewardAmount) {
+      return new Response(JSON.stringify({ error: 'Insufficient QT tokens in contract' }), { 
+        status: 400, 
+        headers: { 'content-type': 'application/json' } 
+      });
+    }
+
+    // Call claimQTReward function (this will transfer tokens to user)
+    const tx = await qtDistributor.claimQTReward();
     await tx.wait(); // Wait for transaction confirmation
 
     return new Response(JSON.stringify({ 
       success: true, 
       txHash: tx.hash,
       amount: '10000',
-      message: '10,000 QT tokens transferred successfully!'
+      message: '10,000 QT tokens claimed successfully!'
     }), { 
       headers: { 'content-type': 'application/json' } 
     });
 
   } catch (err: any) {
-    console.error('QT token transfer error:', err);
+    console.error('QT token claim error:', err);
     return new Response(JSON.stringify({ 
-      error: err?.message || 'Failed to transfer QT tokens' 
+      error: err?.message || 'Failed to claim QT tokens' 
     }), { 
       status: 500, 
       headers: { 'content-type': 'application/json' } 
