@@ -3,6 +3,7 @@ import { Clock, Trophy, Star, X } from 'lucide-react';
 import { useMiniApp } from '@neynar/react';
 import { APP_URL } from '~/lib/constants';
 import QuizStartButton from '@/components/QuizStartButton';
+import SpinWheel from '@/components/SpinWheel';
 import { QuizMode } from '@/lib/wallet';
 
 // Type definitions
@@ -45,7 +46,8 @@ interface HomePageProps {
   onStartTimeMode: () => void;
   onStartChallenge: () => void;
   onShowRules: () => void;
-  onClaimDaily: () => void;
+  onSpinWheel: () => Promise<{ success: boolean; spinResult?: any; balance?: number; error?: string }>;
+  onQTTokenWin: (userAddress: string) => Promise<{ success: boolean; txHash?: string; error?: string }>;
 }
 
 interface QuizPageProps {
@@ -233,7 +235,7 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
 };
 
 // Home Page Component
-const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTimeMode, onStartChallenge, onClaimDaily }) => {
+const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTimeMode, onStartChallenge, onSpinWheel, onQTTokenWin }) => {
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {/* Gradient Background - Full Frame */}
@@ -264,10 +266,16 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTim
           </h3>
         </div>
 
-        {/* Balance + Claim Daily */}
-        <div className="mb-6 text-white text-sm flex items-center gap-3">
-          <span className="px-3 py-1 rounded-full bg-black/30 border border-white/20">Coins: {balance ?? '—'}</span>
-          <button onClick={onClaimDaily} className="px-3 py-1 rounded-full bg-yellow-500 text-yellow-900 font-semibold hover:bg-yellow-400 transition">Claim daily ✨</button>
+        {/* Balance Display */}
+        <div className="mb-6 text-white text-sm flex items-center justify-center">
+          <span className="px-4 py-2 rounded-full bg-black/30 border border-white/20 text-lg font-semibold">
+            💰 Coins: {balance ?? '—'}
+          </span>
+        </div>
+
+        {/* Spin Wheel */}
+        <div className="mb-8">
+          <SpinWheel onSpin={onSpinWheel} onQTTokenWin={onQTTokenWin} />
         </div>
 
         {/* Mode Buttons */}
@@ -1271,12 +1279,45 @@ export default function QuizTriviaApp() {
       .catch(() => {});
   }, [context?.user?.fid]);
 
-  const handleClaimDaily = async () => {
+  const handleSpinWheel = async () => {
     const fid = context?.user?.fid;
-    if (!fid) return;
-    const res = await fetch('/api/currency/claim-daily', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fid }) });
-    const d = await res.json();
-    if (d?.balance !== undefined) setBalance(d.balance);
+    if (!fid) return { success: false, error: 'No user ID' };
+    
+    try {
+      const res = await fetch('/api/currency/claim-daily', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ fid }) 
+      });
+      const data = await res.json();
+      
+      if (data?.balance !== undefined) {
+        setBalance(data.balance);
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Spin wheel error:', error);
+      return { success: false, error: 'Failed to spin wheel' };
+    }
+  };
+
+  const handleQTTokenWin = async (userAddress: string) => {
+    try {
+      const res = await fetch('/api/qt-token/transfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          userAddress,
+          fid: context?.user?.fid 
+        })
+      });
+      const data = await res.json();
+      return data;
+    } catch (error) {
+      console.error('QT token transfer error:', error);
+      return { success: false, error: 'Failed to transfer QT tokens' };
+    }
   };
 
   return (
@@ -1288,7 +1329,8 @@ export default function QuizTriviaApp() {
           onStartTimeMode={handleStartTime}
           onStartChallenge={() => setCurrentScreen('challenge')}
           onShowRules={handleShowRules}
-          onClaimDaily={handleClaimDaily}
+          onSpinWheel={handleSpinWheel}
+          onQTTokenWin={handleQTTokenWin}
         />
       )}
       

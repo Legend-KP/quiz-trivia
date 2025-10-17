@@ -1,0 +1,184 @@
+import React, { useState, useRef, useEffect } from 'react';
+
+interface SpinWheelProps {
+  onSpin: () => Promise<{ success: boolean; spinResult?: any; balance?: number; error?: string }>;
+  onQTTokenWin?: (userAddress: string) => Promise<{ success: boolean; txHash?: string; error?: string }>;
+  disabled?: boolean;
+}
+
+const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, disabled = false }) => {
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [showResult, setShowResult] = useState(false);
+  const wheelRef = useRef<HTMLDivElement>(null);
+
+  const wheelOptions = [
+    { id: '0_coins', label: '0', color: '#FF6B6B', coins: 0 },
+    { id: '5_coins', label: '5', color: '#4ECDC4', coins: 5 },
+    { id: '10_coins', label: '10', color: '#45B7D1', coins: 10 },
+    { id: '15_coins', label: '15', color: '#96CEB4', coins: 15 },
+    { id: '25_coins', label: '25', color: '#FFEAA7', coins: 25 },
+    { id: 'qt_token', label: 'QT', color: '#DDA0DD', coins: '10k' }
+  ];
+
+  const handleSpin = async () => {
+    if (isSpinning || disabled) return;
+
+    setIsSpinning(true);
+    setResult(null);
+    setShowResult(false);
+
+    // Add spinning animation
+    if (wheelRef.current) {
+      wheelRef.current.style.transition = 'transform 3s cubic-bezier(0.23, 1, 0.32, 1)';
+      const randomRotation = 1800 + Math.random() * 360; // 5+ full rotations + random
+      wheelRef.current.style.transform = `rotate(${randomRotation}deg)`;
+    }
+
+    try {
+      const response = await onSpin();
+      
+      if (response.success && response.spinResult) {
+        setResult(response.spinResult);
+        
+        // If user won QT tokens, handle the transfer
+        if (response.spinResult.isToken && onQTTokenWin) {
+          try {
+            // For now, we'll use a placeholder address
+            // In a real implementation, you'd get the user's wallet address
+            const userAddress = '0x0000000000000000000000000000000000000000'; // Placeholder
+            const qtResponse = await onQTTokenWin(userAddress);
+            
+            if (qtResponse.success) {
+              setResult({
+                ...response.spinResult,
+                txHash: qtResponse.txHash
+              });
+            } else {
+              console.error('QT token transfer failed:', qtResponse.error);
+            }
+          } catch (qtError) {
+            console.error('QT token transfer error:', qtError);
+          }
+        }
+        
+        setTimeout(() => {
+          setShowResult(true);
+        }, 3000); // Show result after animation
+      } else {
+        console.error('Spin failed:', response.error);
+      }
+    } catch (error) {
+      console.error('Spin error:', error);
+    } finally {
+      setTimeout(() => {
+        setIsSpinning(false);
+      }, 3000);
+    }
+  };
+
+  const resetWheel = () => {
+    if (wheelRef.current) {
+      wheelRef.current.style.transition = 'none';
+      wheelRef.current.style.transform = 'rotate(0deg)';
+    }
+    setShowResult(false);
+    setResult(null);
+  };
+
+  return (
+    <div className="flex flex-col items-center space-y-6">
+      {/* Spin Wheel */}
+      <div className="relative">
+        <div 
+          ref={wheelRef}
+          className="w-64 h-64 rounded-full border-8 border-white shadow-2xl relative overflow-hidden"
+          style={{ background: 'conic-gradient(from 0deg, #FF6B6B 0deg 60deg, #4ECDC4 60deg 120deg, #45B7D1 120deg 180deg, #96CEB4 180deg 240deg, #FFEAA7 240deg 300deg, #DDA0DD 300deg 360deg)' }}
+        >
+          {/* Wheel segments */}
+          {wheelOptions.map((option, index) => (
+            <div
+              key={option.id}
+              className="absolute w-full h-full"
+              style={{
+                transform: `rotate(${index * 60}deg)`,
+                transformOrigin: '50% 50%'
+              }}
+            >
+              <div 
+                className="absolute top-0 left-1/2 w-0 h-0 border-l-32 border-r-32 border-b-32 border-l-transparent border-r-transparent"
+                style={{ 
+                  borderBottomColor: option.color,
+                  transform: 'translateX(-50%)',
+                  transformOrigin: '50% 100%'
+                }}
+              />
+              <div 
+                className="absolute text-white font-bold text-lg"
+                style={{
+                  top: '20%',
+                  left: '50%',
+                  transform: 'translateX(-50%) rotate(30deg)',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
+                }}
+              >
+                {option.label}
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        {/* Center pointer */}
+        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2">
+          <div className="w-0 h-0 border-l-4 border-r-4 border-b-8 border-l-transparent border-r-transparent border-b-white"></div>
+        </div>
+      </div>
+
+      {/* Spin Button */}
+      <button
+        onClick={handleSpin}
+        disabled={isSpinning || disabled}
+        className={`px-8 py-3 rounded-full font-bold text-white text-lg transition-all duration-300 ${
+          isSpinning || disabled
+            ? 'bg-gray-400 cursor-not-allowed'
+            : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 hover:scale-105 shadow-lg'
+        }`}
+      >
+        {isSpinning ? 'Spinning...' : '🎰 Spin the Wheel!'}
+      </button>
+
+      {/* Result Modal */}
+      {showResult && result && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 max-w-sm mx-4 text-center shadow-2xl">
+            <div className="text-6xl mb-4">🎉</div>
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">Congratulations!</h3>
+            <div className="text-xl text-gray-600 mb-6">
+              You won: <span className="font-bold text-purple-600">{result.label}</span>
+            </div>
+            {result.isToken && (
+              <div className="bg-yellow-100 border border-yellow-400 rounded-lg p-4 mb-4">
+                <p className="text-yellow-800 font-semibold">
+                  🎁 10,000 QT Tokens sent to your wallet!
+                </p>
+                {result.txHash && (
+                  <p className="text-xs text-yellow-600 mt-2">
+                    Transaction: {result.txHash.slice(0, 10)}...{result.txHash.slice(-8)}
+                  </p>
+                )}
+              </div>
+            )}
+            <button
+              onClick={resetWheel}
+              className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-2 rounded-full font-semibold hover:from-purple-600 hover:to-pink-600 transition-all"
+            >
+              Awesome!
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default SpinWheel;
