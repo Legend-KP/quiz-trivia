@@ -18,7 +18,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, disabled = 
     { id: '10_coins', label: '10', color: '#45B7D1', coins: 10 },
     { id: '15_coins', label: '15', color: '#96CEB4', coins: 15 },
     { id: '25_coins', label: '25', color: '#FFEAA7', coins: 25 },
-    { id: 'qt_token', label: 'QT', color: '#DDA0DD', coins: '10k' }
+    { id: 'qt_token', label: '10k $QT', color: '#DDA0DD', coins: '10k' }
   ];
 
   const handleSpin = async () => {
@@ -93,44 +93,56 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, disabled = 
         <div 
           ref={wheelRef}
           className="w-64 h-64 rounded-full border-8 border-white shadow-2xl relative overflow-hidden"
-          style={{ background: 'conic-gradient(from 0deg, #FF6B6B 0deg 60deg, #4ECDC4 60deg 120deg, #45B7D1 120deg 180deg, #96CEB4 180deg 240deg, #FFEAA7 240deg 300deg, #DDA0DD 300deg 360deg)' }}
+          style={{ 
+            background: 'conic-gradient(from 0deg, #FF6B6B 0deg 60deg, #4ECDC4 60deg 120deg, #45B7D1 120deg 180deg, #96CEB4 180deg 240deg, #FFEAA7 240deg 300deg, #DDA0DD 300deg 360deg)'
+          }}
         >
-          {/* Wheel segments */}
-          {wheelOptions.map((option, index) => (
-            <div
-              key={option.id}
-              className="absolute w-full h-full"
-              style={{
-                transform: `rotate(${index * 60}deg)`,
-                transformOrigin: '50% 50%'
-              }}
-            >
-              <div 
-                className="absolute top-0 left-1/2 w-0 h-0 border-l-32 border-r-32 border-b-32 border-l-transparent border-r-transparent"
-                style={{ 
-                  borderBottomColor: option.color,
-                  transform: 'translateX(-50%)',
-                  transformOrigin: '50% 100%'
-                }}
-              />
-              <div 
-                className="absolute text-white font-bold text-lg"
+          {/* Wheel segments with centered text */}
+          {wheelOptions.map((option, index) => {
+            const angle = index * 60; // 60 degrees per segment
+            const centerAngle = angle + 30; // Center of each segment
+            
+            return (
+              <div
+                key={option.id}
+                className="absolute w-full h-full"
                 style={{
-                  top: '20%',
-                  left: '50%',
-                  transform: 'translateX(-50%) rotate(30deg)',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
+                  transform: `rotate(${angle}deg)`,
+                  transformOrigin: '50% 50%'
                 }}
               >
-                {option.label}
+                {/* Segment triangle */}
+                <div 
+                  className="absolute top-0 left-1/2 w-0 h-0 border-l-32 border-r-32 border-b-32 border-l-transparent border-r-transparent"
+                  style={{ 
+                    borderBottomColor: option.color,
+                    transform: 'translateX(-50%)',
+                    transformOrigin: '50% 100%'
+                  }}
+                />
+                {/* Centered text */}
+                <div 
+                  className="absolute text-white font-bold text-sm flex items-center justify-center"
+                  style={{
+                    top: '50%',
+                    left: '50%',
+                    transform: `translate(-50%, -50%) rotate(${centerAngle}deg)`,
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                    width: '60px',
+                    height: '20px',
+                    marginTop: '-40px'
+                  }}
+                >
+                  {option.label}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
         
         {/* Center pointer */}
-        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2">
-          <div className="w-0 h-0 border-l-4 border-r-4 border-b-8 border-l-transparent border-r-transparent border-b-white"></div>
+        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2 z-10">
+          <div className="w-0 h-0 border-l-4 border-r-4 border-b-8 border-l-transparent border-r-transparent border-b-white drop-shadow-lg"></div>
         </div>
       </div>
 

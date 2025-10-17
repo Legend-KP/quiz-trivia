@@ -46,8 +46,7 @@ interface HomePageProps {
   onStartTimeMode: () => void;
   onStartChallenge: () => void;
   onShowRules: () => void;
-  onSpinWheel: () => Promise<{ success: boolean; spinResult?: any; balance?: number; error?: string }>;
-  onQTTokenWin: (userAddress: string) => Promise<{ success: boolean; txHash?: string; error?: string }>;
+  onSpinWheel: () => void;
 }
 
 interface QuizPageProps {
@@ -235,7 +234,7 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
 };
 
 // Home Page Component
-const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTimeMode, onStartChallenge, onSpinWheel, onQTTokenWin }) => {
+const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTimeMode, onStartChallenge, onSpinWheel }) => {
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {/* Gradient Background - Full Frame */}
@@ -266,16 +265,10 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTim
           </h3>
         </div>
 
-        {/* Balance Display */}
-        <div className="mb-6 text-white text-sm flex items-center justify-center">
-          <span className="px-4 py-2 rounded-full bg-black/30 border border-white/20 text-lg font-semibold">
-            💰 Coins: {balance ?? '—'}
-          </span>
-        </div>
-
-        {/* Spin Wheel */}
-        <div className="mb-8">
-          <SpinWheel onSpin={onSpinWheel} onQTTokenWin={onQTTokenWin} />
+        {/* Balance + Spin Wheel Button */}
+        <div className="mb-6 text-white text-sm flex items-center gap-3">
+          <span className="px-3 py-1 rounded-full bg-black/30 border border-white/20">Coins: {balance ?? '—'}</span>
+          <button onClick={onSpinWheel} className="px-3 py-1 rounded-full bg-yellow-500 text-yellow-900 font-semibold hover:bg-yellow-400 transition">🎰 Spin the Wheel!</button>
         </div>
 
         {/* Mode Buttons */}
@@ -1279,7 +1272,17 @@ export default function QuizTriviaApp() {
       .catch(() => {});
   }, [context?.user?.fid]);
 
-  const handleSpinWheel = async () => {
+  const [showSpinWheel, setShowSpinWheel] = useState(false);
+
+  const handleSpinWheel = () => {
+    setShowSpinWheel(true);
+  };
+
+  const handleSpinWheelClose = () => {
+    setShowSpinWheel(false);
+  };
+
+  const handleSpinWheelSpin = async () => {
     const fid = context?.user?.fid;
     if (!fid) return { success: false, error: 'No user ID' };
     
@@ -1330,8 +1333,41 @@ export default function QuizTriviaApp() {
           onStartChallenge={() => setCurrentScreen('challenge')}
           onShowRules={handleShowRules}
           onSpinWheel={handleSpinWheel}
-          onQTTokenWin={handleQTTokenWin}
         />
+      )}
+
+      {/* Spin Wheel Modal */}
+      {showSpinWheel && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={handleSpinWheelClose}
+        >
+          <div 
+            className="bg-white rounded-2xl p-6 max-w-md mx-4 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button (×) */}
+            <button
+              onClick={handleSpinWheelClose}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl font-bold"
+            >
+              ×
+            </button>
+            
+            {/* Back to Home button */}
+            <button
+              onClick={handleSpinWheelClose}
+              className="absolute top-4 left-4 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-medium transition-colors"
+            >
+              ← Back to Home
+            </button>
+            
+            <SpinWheel 
+              onSpin={handleSpinWheelSpin} 
+              onQTTokenWin={handleQTTokenWin}
+            />
+          </div>
+        </div>
       )}
       
       {currentScreen === 'quiz' && (
