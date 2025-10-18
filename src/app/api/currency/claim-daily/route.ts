@@ -20,14 +20,14 @@ const SPIN_OPTIONS = [
 function getRandomSpinResult() {
   const random = Math.random();
   let cumulativeProbability = 0;
-  
+ 
   for (const option of SPIN_OPTIONS) {
     cumulativeProbability += option.probability;
     if (random <= cumulativeProbability) {
       return option;
     }
   }
-  
+ 
   // Fallback to first option
   return SPIN_OPTIONS[0];
 }
@@ -36,11 +36,11 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
     const fid = Number(body.fid);
+
     if (!Number.isFinite(fid)) return new Response(JSON.stringify({ error: 'Invalid fid' }), { status: 400, headers: { 'content-type': 'application/json' } });
 
     const accounts = await getCurrencyAccountsCollection();
     const txns = await getCurrencyTxnsCollection();
-
     const now = Date.now();
     const today = new Date(now);
 
@@ -54,10 +54,13 @@ export async function POST(req: NextRequest) {
     const doc = await accounts.findOne({ fid });
     const lastSpin = doc?.lastSpinAt ? new Date(doc.lastSpinAt) : undefined;
 
+    // COMMENTED OUT FOR TESTING - Remove this comment block when going live
+    /*
     // If already spun today, no-op
     if (lastSpin && isSameUTCDate(lastSpin, today)) {
       return new Response(JSON.stringify({ success: true, balance: doc?.balance ?? 0, alreadySpun: true }), { headers: { 'content-type': 'application/json' } });
     }
+    */
 
     // Get random spin result
     const spinResult = getRandomSpinResult();
@@ -81,15 +84,15 @@ export async function POST(req: NextRequest) {
         { fid },
         { $set: { lastSpinAt: now, updatedAt: now } }
       );
-
       // Note: QT token transfer will be handled by the frontend
       // by calling the /api/qt-token/transfer endpoint
     }
 
     const after = await accounts.findOne({ fid });
-    return new Response(JSON.stringify({ 
-      success: true, 
-      balance: after?.balance ?? 0, 
+
+    return new Response(JSON.stringify({
+      success: true,
+      balance: after?.balance ?? 0,
       spinResult: {
         id: spinResult.id,
         coins: spinResult.coins,
@@ -101,5 +104,3 @@ export async function POST(req: NextRequest) {
     return new Response(JSON.stringify({ error: err?.message || 'Internal error' }), { status: 500, headers: { 'content-type': 'application/json' } });
   }
 }
-
- 
