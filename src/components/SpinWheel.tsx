@@ -3,10 +3,11 @@ import React, { useState, useRef } from 'react';
 interface SpinWheelProps {
   onSpin: () => Promise<{ success: boolean; spinResult?: any; balance?: number; error?: string }>;
   onQTTokenWin?: (userAddress: string) => Promise<{ success: boolean; txHash?: string; error?: string }>;
+  userAddress?: string;
   disabled?: boolean;
 }
 
-const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, disabled = false }) => {
+const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress, disabled = false }) => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [showResult, setShowResult] = useState(false);
@@ -54,11 +55,8 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, disabled = 
         setResult(response.spinResult);
         
         // If user won QT tokens, handle the transfer
-        if (response.spinResult.isToken && onQTTokenWin) {
+        if (response.spinResult.isToken && onQTTokenWin && userAddress) {
           try {
-            // For now, we'll use a placeholder address
-            // In a real implementation, you'd get the user's wallet address
-            const userAddress = '0x0000000000000000000000000000000000000000'; // Placeholder
             const qtResponse = await onQTTokenWin(userAddress);
             
             if (qtResponse.success) {

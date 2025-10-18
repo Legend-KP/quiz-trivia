@@ -1357,6 +1357,7 @@ export default function QuizTriviaApp() {
             <SpinWheel 
               onSpin={handleSpinWheelSpin} 
               onQTTokenWin={handleQTTokenWin}
+              userAddress="0x0000000000000000000000000000000000000000" // TODO: Get real user wallet address
             />
           </div>
         </div>
