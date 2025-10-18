@@ -100,7 +100,6 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, disabled = 
           {/* Wheel segments with centered text */}
           {wheelOptions.map((option, index) => {
             const angle = index * 60; // 60 degrees per segment
-            const centerAngle = angle + 30; // Center of each segment
             
             return (
               <div
@@ -111,27 +110,16 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, disabled = 
                   transformOrigin: '50% 50%'
                 }}
               >
-                {/* Segment triangle */}
+                {/* Text positioned near circumference and shifted right */}
                 <div 
-                  className="absolute top-0 left-1/2 w-0 h-0 border-l-32 border-r-32 border-b-32 border-l-transparent border-r-transparent"
-                  style={{ 
-                    borderBottomColor: option.color,
-                    transform: 'translateX(-50%)',
-                    transformOrigin: '50% 100%'
-                  }}
-                />
-                {/* Centered text */}
-                <div 
-                  className="absolute text-white font-bold text-sm flex items-center justify-center"
+                  className="absolute text-white font-bold text-lg"
                   style={{
-                    top: '50%',
-                    left: '50%',
-                    transform: `translate(-50%, -50%) rotate(${centerAngle}deg)`,
+                    top: '10%',
+                    left: '70%',
+                    transform: `translateX(-50%) rotate(30deg)`,
+                    transformOrigin: 'center',
                     textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-                    width: '80px',
-                    height: '30px',
-                    marginTop: '-50px',
-                    marginLeft: '0px'
+                    whiteSpace: 'nowrap'
                   }}
                 >
                   {option.label}
