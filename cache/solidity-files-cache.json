@@ -37,8 +37,8 @@
       ]
     },
     "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\QTRewardDistributor.sol": {
-      "lastModificationDate": 1760729685483,
-      "contentHash": "a0142a6b3bb920441362c6085596d38c",
+      "lastModificationDate": 1760785554885,
+      "contentHash": "0e35e8eecc20ce966e661e56ac06058b",
       "sourceName": "contracts/QTRewardDistributor.sol",
       "solcConfig": {
         "version": "0.8.19",

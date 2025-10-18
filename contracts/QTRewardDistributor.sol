@@ -73,6 +73,24 @@ contract QTRewardDistributor {
     }
     
     /**
+     * @dev Claim QT reward for a specific user (owner only)
+     * @param userAddress Address of the user to claim reward for
+     */
+    function claimQTRewardForUser(address userAddress) external onlyOwner nonReentrant {
+        require(canClaimToday(userAddress), "User already claimed today");
+        require(getQTBalance() >= REWARD_AMOUNT, "Insufficient QT tokens in contract");
+        
+        // Update claim tracking
+        uint256 today = block.timestamp / 86400;
+        lastClaimDate[userAddress] = today;
+        
+        // Transfer QT tokens to user
+        require(transferQT(userAddress, REWARD_AMOUNT), "QT token transfer failed");
+        
+        emit QTRewardClaimed(userAddress, REWARD_AMOUNT, block.timestamp);
+    }
+    
+    /**
      * @dev Deposit QT tokens to the contract (owner only)
      * @param amount Amount of QT tokens to deposit
      */

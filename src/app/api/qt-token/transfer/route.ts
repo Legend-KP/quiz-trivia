@@ -3,14 +3,17 @@ import { ethers } from 'ethers';
 
 export const runtime = 'nodejs';
 
-// QT Token Contract Configuration
-const QT_TOKEN_ADDRESS = process.env.QT_TOKEN_ADDRESS || '';
-const QT_TOKEN_ABI = [
-  "function transfer(address to, uint256 amount) external returns (bool)",
-  "function balanceOf(address account) external view returns (uint256)"
+// QT Reward Distributor Contract Configuration
+const QT_DISTRIBUTOR_ADDRESS = process.env.QT_DISTRIBUTOR_ADDRESS || '';
+const QT_DISTRIBUTOR_ABI = [
+  "function claimQTReward() external",
+  "function claimQTRewardForUser(address userAddress) external",
+  "function canClaimToday(address user) external view returns (bool)",
+  "function getQTBalance() external view returns (uint256)",
+  "function getUserClaimStatus(address user) external view returns (uint256 lastClaim, bool canClaimToday)"
 ];
 
-// Your wallet configuration for sending tokens
+// Your wallet configuration for contract interactions
 const WALLET_PRIVATE_KEY = process.env.WALLET_PRIVATE_KEY || '';
 const RPC_URL = process.env.RPC_URL || 'https://mainnet.base.org';
 
@@ -34,8 +37,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    if (!QT_TOKEN_ADDRESS || !WALLET_PRIVATE_KEY) {
-      return new Response(JSON.stringify({ error: 'QT token configuration missing' }), {
+    if (!QT_DISTRIBUTOR_ADDRESS || !WALLET_PRIVATE_KEY) {
+      return new Response(JSON.stringify({ error: 'QT distributor configuration missing' }), {
         status: 500,
         headers: { 'content-type': 'application/json' }
       });
@@ -46,31 +49,40 @@ export async function POST(req: NextRequest) {
     const wallet = new ethers.Wallet(WALLET_PRIVATE_KEY, provider);
 
     // Create contract instance
-    const qtToken = new ethers.Contract(QT_TOKEN_ADDRESS, QT_TOKEN_ABI, wallet);
+    const qtDistributor = new ethers.Contract(QT_DISTRIBUTOR_ADDRESS, QT_DISTRIBUTOR_ABI, wallet);
 
-    // Check wallet balance
-    const walletBalance = await qtToken.balanceOf(wallet.address);
-    const rewardAmount = ethers.parseUnits('10000', 18); // 10,000 tokens with 18 decimals
-   
-    if (walletBalance < rewardAmount) {
+    // Check if user can claim today
+    const canClaim = await qtDistributor.canClaimToday(userAddress);
+    if (!canClaim) {
+      return new Response(JSON.stringify({ error: 'User has already claimed today' }), {
+        status: 400,
+        headers: { 'content-type': 'application/json' }
+      });
+    }
+
+    // Check contract balance
+    const contractBalance = await qtDistributor.getQTBalance();
+    const rewardAmount = ethers.parseUnits('10000', 18);
+    
+    if (contractBalance < rewardAmount) {
       return new Response(JSON.stringify({ 
-        error: 'Insufficient QT tokens in wallet',
-        balance: ethers.formatUnits(walletBalance, 18)
+        error: 'Insufficient QT tokens in contract',
+        balance: ethers.formatUnits(contractBalance, 18)
       }), {
         status: 400,
         headers: { 'content-type': 'application/json' }
       });
     }
 
-    // Transfer tokens to user
-    const tx = await qtToken.transfer(userAddress, rewardAmount);
+    // Call claimQTRewardForUser function (this will transfer tokens to user)
+    const tx = await qtDistributor.claimQTRewardForUser(userAddress);
     const receipt = await tx.wait(); // Wait for transaction confirmation
 
     return new Response(JSON.stringify({
       success: true,
       txHash: tx.hash,
       amount: '10000',
-      message: '10,000 QT tokens sent successfully!',
+      message: '10,000 QT tokens claimed successfully!',
       blockNumber: receipt.blockNumber
     }), {
       headers: { 'content-type': 'application/json' }
@@ -79,7 +91,7 @@ export async function POST(req: NextRequest) {
     console.error('QT token transfer error:', err);
     
     // More detailed error messages
-    let errorMessage = 'Failed to transfer QT tokens';
+    let errorMessage = 'Failed to claim QT tokens';
     if (err.code === 'INSUFFICIENT_FUNDS') {
       errorMessage = 'Insufficient gas funds in wallet';
     } else if (err.code === 'NETWORK_ERROR') {
