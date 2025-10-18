@@ -12,13 +12,14 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, disabled = 
   const [showResult, setShowResult] = useState(false);
   const wheelRef = useRef<HTMLDivElement>(null);
 
+  // IMPORTANT: This order MUST match the backend SPIN_OPTIONS order exactly
   const wheelOptions = [
     { id: '0_coins', label: '0', color: '#FF6B6B', coins: 0 },
     { id: '5_coins', label: '5', color: '#4ECDC4', coins: 5 },
     { id: '10_coins', label: '10', color: '#45B7D1', coins: 10 },
     { id: '15_coins', label: '15', color: '#96CEB4', coins: 15 },
     { id: '25_coins', label: '25', color: '#FFEAA7', coins: 25 },
-    { id: 'qt_token', label: '10k $QT', color: '#DDA0DD', coins: '10k' }
+    { id: 'qt_token', label: '10k $QT', color: '#DDA0DD', coins: '10k', isToken: true }
   ];
 
   const handleSpin = async () => {
@@ -28,17 +29,28 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, disabled = 
     setResult(null);
     setShowResult(false);
 
-    // Add spinning animation
-    if (wheelRef.current) {
-      wheelRef.current.style.transition = 'transform 3s cubic-bezier(0.23, 1, 0.32, 1)';
-      const randomRotation = 1800 + Math.random() * 360; // 5+ full rotations + random
-      wheelRef.current.style.transform = `rotate(${randomRotation}deg)`;
-    }
-
     try {
       const response = await onSpin();
       
       if (response.success && response.spinResult) {
+        // Find which segment index the result corresponds to
+        const resultIndex = wheelOptions.findIndex(opt => opt.id === response.spinResult.id);
+        
+        // Calculate the angle to land on this segment
+        // Each segment is 60 degrees, we want to land in the middle of the segment
+        const segmentAngle = resultIndex * 60;
+        const targetAngle = 360 - segmentAngle + 30; // +30 to center on segment, inverse rotation
+        
+        // Add multiple full rotations for effect
+        const fullRotations = 1800; // 5 full rotations
+        const finalRotation = fullRotations + targetAngle;
+        
+        // Now animate the wheel to the calculated position
+        if (wheelRef.current) {
+          wheelRef.current.style.transition = 'transform 3s cubic-bezier(0.23, 1, 0.32, 1)';
+          wheelRef.current.style.transform = `rotate(${finalRotation}deg)`;
+        }
+        
         setResult(response.spinResult);
         
         // If user won QT tokens, handle the transfer

@@ -9,12 +9,12 @@ function isSameUTCDate(a: Date, b: Date) {
 
 // Spin wheel options with probabilities
 const SPIN_OPTIONS = [
-  { id: '0_coins', coins: 0, probability: 0.20, label: '0 Coins' },
-  { id: '5_coins', coins: 5, probability: 0.25, label: '5 Coins' },
-  { id: '10_coins', coins: 10, probability: 0.20, label: '10 Coins' },
-  { id: '15_coins', coins: 15, probability: 0.15, label: '15 Coins' },
-  { id: '25_coins', coins: 25, probability: 0.10, label: '25 Coins' },
-  { id: 'qt_token', coins: 0, probability: 0.10, label: '10k QT Token', isToken: true }
+  { id: '0_coins', coins: 0, probability: 0.20, label: '0 Coins', isToken: false },
+  { id: '5_coins', coins: 5, probability: 0.25, label: '5 Coins', isToken: false },
+  { id: '10_coins', coins: 10, probability: 0.20, label: '10 Coins', isToken: false },
+  { id: '15_coins', coins: 15, probability: 0.15, label: '15 Coins', isToken: false },
+  { id: '25_coins', coins: 25, probability: 0.10, label: '25 Coins', isToken: false },
+  { id: 'qt_token', coins: 0, probability: 0.10, label: '10k $QT Token', isToken: true }
 ];
 
 function getRandomSpinResult() {
