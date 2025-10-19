@@ -54,22 +54,12 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
         
         setResult(response.spinResult);
         
-        // If user won QT tokens, handle the transfer
-        if (response.spinResult.isToken && onQTTokenWin && userAddress) {
-          try {
-            const qtResponse = await onQTTokenWin(userAddress);
-            
-            if (qtResponse.success) {
-              setResult({
-                ...response.spinResult,
-                txHash: qtResponse.txHash
-              });
-            } else {
-              console.error('QT token transfer failed:', qtResponse.error);
-            }
-          } catch (qtError) {
-            console.error('QT token transfer error:', qtError);
-          }
+        // If user won QT tokens, show instructions for claiming
+        if (response.spinResult.isToken) {
+          setResult({
+            ...response.spinResult,
+            needsWalletClaim: true
+          });
         }
         
         setTimeout(() => {
@@ -84,6 +74,32 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
       setTimeout(() => {
         setIsSpinning(false);
       }, 3000);
+    }
+  };
+
+  const handleClaimQTTokens = async () => {
+    if (!userAddress) {
+      alert('Please connect your wallet to claim QT tokens');
+      return;
+    }
+
+    try {
+      // This will trigger a wallet transaction
+      // The user will need to sign the transaction in their Farcaster wallet
+      const qtResponse = await onQTTokenWin?.(userAddress);
+      
+      if (qtResponse?.success) {
+        setResult({
+          ...result,
+          txHash: qtResponse.txHash
+        });
+      } else {
+        console.error('QT token claim failed:', qtResponse?.error);
+        alert('Failed to claim QT tokens. Please try again.');
+      }
+    } catch (error) {
+      console.error('QT token claim error:', error);
+      alert('Failed to claim QT tokens. Please try again.');
     }
   };
 
@@ -175,9 +191,18 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
             </div>
             {result.isToken && (
               <div className="bg-yellow-100 border border-yellow-400 rounded-lg p-4 mb-4">
-                <p className="text-yellow-800 font-semibold">
-                  🎁 10,000 QT Tokens sent to your wallet!
+                <p className="text-yellow-800 font-semibold mb-2">
+                  🎁 You won 10,000 QT Tokens!
                 </p>
+                <p className="text-yellow-700 text-sm mb-3">
+                  To claim your tokens, you need to sign a transaction with your wallet.
+                </p>
+                <button
+                  onClick={handleClaimQTTokens}
+                  className="bg-yellow-500 text-yellow-900 px-4 py-2 rounded-lg font-semibold hover:bg-yellow-400 transition-colors"
+                >
+                  🚀 Claim QT Tokens
+                </button>
                 {result.txHash && (
                   <p className="text-xs text-yellow-600 mt-2">
                     Transaction: {result.txHash.slice(0, 10)}...{result.txHash.slice(-8)}

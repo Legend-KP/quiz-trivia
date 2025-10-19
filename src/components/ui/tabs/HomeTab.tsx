@@ -5,6 +5,7 @@ import { APP_URL } from '~/lib/constants';
 import QuizStartButton from '@/components/QuizStartButton';
 import SpinWheel from '@/components/SpinWheel';
 import { QuizMode } from '@/lib/wallet';
+import { useQTClaim } from '~/hooks/useQTClaim';
 
 // Type definitions
 interface QuizQuestion {
@@ -1305,22 +1306,11 @@ export default function QuizTriviaApp() {
     }
   };
 
+  // Use the QT claim hook
+  const { claimQTReward, isProcessing, error: qtError } = useQTClaim();
+
   const handleQTTokenWin = async (userAddress: string) => {
-    try {
-      const res = await fetch('/api/qt-token/transfer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          userAddress,
-          fid: context?.user?.fid 
-        })
-      });
-      const data = await res.json();
-      return data;
-    } catch (error) {
-      console.error('QT token transfer error:', error);
-      return { success: false, error: 'Failed to transfer QT tokens' };
-    }
+    return await claimQTReward(userAddress);
   };
 
   return (
@@ -1357,7 +1347,7 @@ export default function QuizTriviaApp() {
             <SpinWheel 
               onSpin={handleSpinWheelSpin} 
               onQTTokenWin={handleQTTokenWin}
-              userAddress="0x0000000000000000000000000000000000000000" // TODO: Get real user wallet address
+              userAddress="0x0000000000000000000000000000000000000000" // TODO: Get real user wallet address from Farcaster
             />
           </div>
         </div>
