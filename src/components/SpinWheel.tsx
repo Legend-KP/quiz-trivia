@@ -14,8 +14,6 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
   const [isClaiming, setIsClaiming] = useState(false);
   const wheelRef = useRef<HTMLDivElement>(null);
 
-  // Debug logging
-  console.log('🔍 SpinWheel props:', { onSpin: !!onSpin, onQTTokenWin: !!onQTTokenWin, userAddress, disabled });
 
   // IMPORTANT: This order MUST match the backend SPIN_OPTIONS order exactly
   const wheelOptions = [
@@ -82,45 +80,35 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
   };
 
   const handleClaimQTTokens = async () => {
-    console.log('🎯 Claim QT Tokens button clicked!', { userAddress, onQTTokenWin: !!onQTTokenWin });
-    
     if (isClaiming) {
-      console.log('⏳ Already claiming, ignoring click');
       return;
     }
 
     if (!userAddress || userAddress === "0x0000000000000000000000000000000000000000") {
-      console.log('❌ No valid user address');
       alert('Please connect your Farcaster wallet to claim QT tokens');
       return;
     }
 
     if (!onQTTokenWin) {
-      console.log('❌ No onQTTokenWin function provided');
       alert('QT token claiming is not available');
       return;
     }
 
     try {
       setIsClaiming(true);
-      console.log('🚀 Calling onQTTokenWin...');
       // This will trigger a wallet transaction
       // The user will need to sign the transaction in their Farcaster wallet
       const qtResponse = await onQTTokenWin(userAddress);
-      console.log('📥 QT response received:', qtResponse);
       
       if (qtResponse?.success) {
-        console.log('✅ QT claim successful!');
         setResult({
           ...result,
           txHash: qtResponse.txHash
         });
       } else {
-        console.error('❌ QT token claim failed:', qtResponse?.error);
         alert(`Failed to claim QT tokens: ${qtResponse?.error || 'Unknown error'}`);
       }
-    } catch (error) {
-      console.error('❌ QT token claim error:', error);
+    } catch (_error) {
       alert('Failed to claim QT tokens. Please try again.');
     } finally {
       setIsClaiming(false);
@@ -222,10 +210,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
                   To claim your tokens, you need to sign a transaction with your wallet.
                 </p>
                 <button
-                  onClick={(e) => {
-                    console.log('🎯 Button clicked!', e);
-                    handleClaimQTTokens();
-                  }}
+                  onClick={handleClaimQTTokens}
                   disabled={isClaiming}
                   className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
                     isClaiming 

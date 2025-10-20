@@ -4,10 +4,6 @@ import { useAccount, useConnect, useWriteContract, useWaitForTransactionReceipt 
 
 // QT Reward Distributor Contract Configuration
 const QT_DISTRIBUTOR_ADDRESS = process.env.NEXT_PUBLIC_QT_DISTRIBUTOR_ADDRESS as `0x${string}` || '0xb8AD9216A88E2f9a24c7e2207dE4e69101031f02';
-
-// Debug logging
-console.log('🔧 QT_DISTRIBUTOR_ADDRESS:', QT_DISTRIBUTOR_ADDRESS);
-console.log('🔧 Environment variable:', process.env.NEXT_PUBLIC_QT_DISTRIBUTOR_ADDRESS);
 const QT_DISTRIBUTOR_ABI = [
   {
     "inputs": [],
@@ -73,27 +69,20 @@ export function useQTClaim() {
       setError(null);
       setTxHash(null);
 
-      console.log('🚀 Starting QT token claim process...', { userAddress, isConnected, address });
-
       // Check if user is connected, if not, connect using Farcaster wallet
       if (!isConnected) {
-        console.log('🔌 Not connected, attempting to connect...');
         if (connectors.length === 0) {
           throw new Error('No Farcaster wallet connector available');
         }
         await connect({ connector: connectors[0] });
         // Wait a moment for connection to establish
         await new Promise(resolve => setTimeout(resolve, 1000));
-        console.log('✅ Connected to Farcaster wallet');
       }
 
       // Verify the connected address matches the user address
       if (address && address.toLowerCase() !== userAddress.toLowerCase()) {
-        console.log('❌ Address mismatch:', { connected: address, expected: userAddress });
         throw new Error('Connected wallet does not match user address');
       }
-
-      console.log('📝 Executing claimQTReward transaction...');
 
       // Execute the claim transaction using Wagmi
       writeContract({
@@ -107,7 +96,6 @@ export function useQTClaim() {
       return { success: true, txHash: hash || undefined };
 
     } catch (err: any) {
-      console.error('❌ QT token claim error:', err);
       setIsProcessing(false);
       setError(err.message || 'Failed to claim QT tokens');
       return { 
