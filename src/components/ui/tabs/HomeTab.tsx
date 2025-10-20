@@ -1307,7 +1307,7 @@ export default function QuizTriviaApp() {
   };
 
   // Use the QT claim hook
-  const { claimQTReward, isProcessing, error: qtError } = useQTClaim();
+  const { claimQTReward, address } = useQTClaim();
 
   const handleQTTokenWin = async (userAddress: string) => {
     return await claimQTReward(userAddress);
@@ -1347,7 +1347,7 @@ export default function QuizTriviaApp() {
             <SpinWheel 
               onSpin={handleSpinWheelSpin} 
               onQTTokenWin={handleQTTokenWin}
-              userAddress="0x0000000000000000000000000000000000000000" // TODO: Get real user wallet address from Farcaster
+              userAddress={address || "0x0000000000000000000000000000000000000000"}
             />
           </div>
         </div>

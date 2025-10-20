@@ -78,8 +78,8 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
   };
 
   const handleClaimQTTokens = async () => {
-    if (!userAddress) {
-      alert('Please connect your wallet to claim QT tokens');
+    if (!userAddress || userAddress === "0x0000000000000000000000000000000000000000") {
+      alert('Please connect your Farcaster wallet to claim QT tokens');
       return;
     }
 
@@ -95,7 +95,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
         });
       } else {
         console.error('QT token claim failed:', qtResponse?.error);
-        alert('Failed to claim QT tokens. Please try again.');
+        alert(`Failed to claim QT tokens: ${qtResponse?.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('QT token claim error:', error);

@@ -1,9 +1,9 @@
 "use client";
-import { useState } from 'react';
-import { ethers } from 'ethers';
+import { useState, useEffect } from 'react';
+import { useAccount, useConnect, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 
 // QT Reward Distributor Contract Configuration
-const QT_DISTRIBUTOR_ADDRESS = process.env.NEXT_PUBLIC_QT_DISTRIBUTOR_ADDRESS || '';
+const QT_DISTRIBUTOR_ADDRESS = process.env.NEXT_PUBLIC_QT_DISTRIBUTOR_ADDRESS as `0x${string}` || '0xb8AD9216A88E2f9a24c7e2207dE4e69101031f02';
 const QT_DISTRIBUTOR_ABI = [
   {
     "inputs": [],
@@ -26,96 +26,92 @@ const QT_DISTRIBUTOR_ABI = [
     "stateMutability": "view",
     "type": "function"
   }
-];
+] as const;
 
 export function useQTClaim() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [txHash, setTxHash] = useState<string | null>(null);
+  
+  const { isConnected, address } = useAccount();
+  const { connect, connectors } = useConnect();
+  const { writeContract, data: hash, isPending, error: writeError } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  // Update processing state based on Wagmi states
+  useEffect(() => {
+    if (isPending || isConfirming) {
+      setIsProcessing(true);
+    } else if (isConfirmed || writeError) {
+      setIsProcessing(false);
+    }
+  }, [isPending, isConfirming, isConfirmed, writeError]);
+
+  // Update txHash when hash changes
+  useEffect(() => {
+    if (hash) {
+      setTxHash(hash);
+    }
+  }, [hash]);
+
+  // Update error when writeError changes
+  useEffect(() => {
+    if (writeError) {
+      setError(writeError.message || 'Transaction failed');
+    }
+  }, [writeError]);
 
   const claimQTReward = async (userAddress: string): Promise<{ success: boolean; txHash?: string; error?: string }> => {
     try {
       setIsProcessing(true);
       setError(null);
+      setTxHash(null);
 
-      // Check if window.ethereum exists (Farcaster wallet should inject this)
-      if (!window.ethereum) {
-        throw new Error('No wallet found. Please connect your Farcaster wallet.');
+      // Check if user is connected, if not, connect using Farcaster wallet
+      if (!isConnected) {
+        if (connectors.length === 0) {
+          throw new Error('No Farcaster wallet connector available');
+        }
+        await connect({ connector: connectors[0] });
+        // Wait a moment for connection to establish
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
 
-      // Request account access
-      await window.ethereum.request({ method: 'eth_requestAccounts' });
-
-      // Create provider from Farcaster wallet
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-
-      // Verify the connected address matches
-      const connectedAddress = await signer.getAddress();
-      if (connectedAddress.toLowerCase() !== userAddress.toLowerCase()) {
+      // Verify the connected address matches the user address
+      if (address && address.toLowerCase() !== userAddress.toLowerCase()) {
         throw new Error('Connected wallet does not match user address');
       }
 
-      // Create contract instance
-      const qtDistributor = new ethers.Contract(
-        QT_DISTRIBUTOR_ADDRESS,
-        QT_DISTRIBUTOR_ABI,
-        signer
-      );
+      // Execute the claim transaction using Wagmi
+      writeContract({
+        address: QT_DISTRIBUTOR_ADDRESS,
+        abi: QT_DISTRIBUTOR_ABI,
+        functionName: 'claimQTReward',
+      });
 
-      // Check if user can claim
-      const canClaim = await qtDistributor.canClaimToday(userAddress);
-      if (!canClaim) {
-        throw new Error('You have already claimed your QT tokens today');
-      }
+      // Return success immediately - the transaction will be handled by Wagmi hooks
+      return { success: true, txHash: hash || undefined };
 
-      // Check contract balance
-      const contractBalance = await qtDistributor.getQTBalance();
-      const rewardAmount = ethers.parseUnits('10000', 18);
-      
-      if (contractBalance < rewardAmount) {
-        throw new Error('Insufficient QT tokens in contract. Please contact support.');
-      }
-
-      // Call claimQTReward - this will trigger Farcaster wallet popup
-      const tx = await qtDistributor.claimQTReward();
-      
-      console.log('Transaction sent:', tx.hash);
-      
-      // Wait for confirmation
-      const receipt = await tx.wait();
-      
-      console.log('Transaction confirmed:', receipt);
-
-      setIsProcessing(false);
-      return {
-        success: true,
-        txHash: tx.hash
-      };
     } catch (err: any) {
-      console.error('QT claim error:', err);
-      
-      let errorMessage = 'Failed to claim QT tokens';
-      
-      // Handle specific errors
-      if (err.code === 'ACTION_REJECTED' || err.code === 4001) {
-        errorMessage = 'Transaction rejected by user';
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      
-      setError(errorMessage);
+      console.error('QT token claim error:', err);
       setIsProcessing(false);
-      
-      return {
-        success: false,
-        error: errorMessage
+      setError(err.message || 'Failed to claim QT tokens');
+      return { 
+        success: false, 
+        error: err.message || 'Failed to claim QT tokens' 
       };
     }
   };
 
   return {
     claimQTReward,
-    isProcessing,
-    error
+    isProcessing: isProcessing || isPending || isConfirming,
+    error,
+    isConnected,
+    address,
+    txHash: hash || txHash,
+    isConfirmed
   };
 }
