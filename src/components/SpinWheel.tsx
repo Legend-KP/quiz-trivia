@@ -192,11 +192,11 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
             <div className="bg-white rounded-2xl p-8 max-w-sm mx-4 text-center shadow-2xl">
               <div className="text-6xl mb-4">{result.coins === '0' ? '😢' : '🎉'}</div>
               <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                {result.coins === '0' ? 'Almost There!' : 'Congratulations!'}
+                {result.coins === '0' ? 'Better Luck Next Time!' : 'Congratulations!'}
               </h3>
               <div className="text-xl text-gray-600 mb-6">
               {result.coins === 0 ? (
-    <span className="font-bold text-gray-500">You won nothing this time. Try again!</span>
+    <span className="font-bold text-gray-500">Better luck next time! The wheel has more surprises waiting! 🎰</span>
   ) : (
     <>You won: <span className="font-bold text-purple-600">{result.label}</span></>
   )}
@@ -208,7 +208,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
                   🎁 You won 10,000 QT Tokens!
                 </p>
                 <p className="text-yellow-700 text-sm mb-3">
-                  To claim your tokens, you need to sign a transaction with your wallet.
+                  
                 </p>
                 <button
                   onClick={handleClaimQTTokens}
