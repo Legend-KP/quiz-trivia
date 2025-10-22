@@ -26,6 +26,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
     const checkCooldown = () => {
       const lastSpinTime = localStorage.getItem('lastSpinTime');
       const hasSharedToday = localStorage.getItem('hasSharedToday');
+      const hasUsedShareSpin = localStorage.getItem('hasUsedShareSpin');
       
       if (lastSpinTime) {
         const timeSinceLastSpin = Date.now() - parseInt(lastSpinTime);
@@ -33,15 +34,23 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
         const remainingTime = cooldownPeriod - timeSinceLastSpin;
         
         if (remainingTime > 0) {
-          setCanSpin(false);
-          setTimeLeft(Math.ceil(remainingTime / 1000)); // Convert to seconds
-          setHasShared(hasSharedToday === 'true');
+          // If user has shared today but hasn't used their share spin yet
+          if (hasSharedToday === 'true' && hasUsedShareSpin === 'false') {
+            setCanSpin(true);
+            setTimeLeft(0);
+            setHasShared(true);
+          } else {
+            setCanSpin(false);
+            setTimeLeft(Math.ceil(remainingTime / 1000)); // Convert to seconds
+            setHasShared(hasSharedToday === 'true');
+          }
         } else {
           setCanSpin(true);
           setTimeLeft(0);
           setHasShared(false);
           localStorage.removeItem('lastSpinTime');
           localStorage.removeItem('hasSharedToday');
+          localStorage.removeItem('hasUsedShareSpin');
         }
       }
     };
@@ -115,6 +124,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
       setCanSpin(true); // Allow immediate spin
       setTimeLeft(0);
       localStorage.setItem('hasSharedToday', 'true');
+      localStorage.setItem('hasUsedShareSpin', 'false'); // Track if they've used their share spin
       
       // Show success message briefly
       setTimeout(() => {
@@ -152,10 +162,20 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
       const response = await onSpin();
       
       if (response.success && response.spinResult) {
-        // Record the spin time for 24-hour cooldown
-        localStorage.setItem('lastSpinTime', Date.now().toString());
-        setCanSpin(false);
-        setTimeLeft(24 * 60 * 60); // 24 hours in seconds
+        // Check if this is a share spin
+        const hasUsedShareSpin = localStorage.getItem('hasUsedShareSpin');
+        
+        if (hasUsedShareSpin === 'false') {
+          // This is the share spin - mark it as used and don't set cooldown
+          localStorage.setItem('hasUsedShareSpin', 'true');
+          setCanSpin(false); // No more spins until next day
+          setTimeLeft(24 * 60 * 60); // 24 hours in seconds
+        } else {
+          // Regular spin - set normal cooldown
+          localStorage.setItem('lastSpinTime', Date.now().toString());
+          setCanSpin(false);
+          setTimeLeft(24 * 60 * 60); // 24 hours in seconds
+        }
         
         // Find which segment index the result corresponds to
         const resultIndex = wheelOptions.findIndex(opt => opt.id === response.spinResult.id);
