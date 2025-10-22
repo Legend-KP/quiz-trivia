@@ -14,6 +14,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
   const [isClaiming, setIsClaiming] = useState(false);
   const wheelRef = useRef<HTMLDivElement>(null);
 
+
   // IMPORTANT: This order MUST match the backend SPIN_OPTIONS order exactly
   const wheelOptions = [
     { id: '0_coins', label: '0', color: '#FF6B6B', coins: 0 },
@@ -35,12 +36,19 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
       const response = await onSpin();
       
       if (response.success && response.spinResult) {
+        // Find which segment index the result corresponds to
         const resultIndex = wheelOptions.findIndex(opt => opt.id === response.spinResult.id);
+        
+        // Calculate the angle to land on this segment
+        // Each segment is 60 degrees, we want to land in the middle of the segment
         const segmentAngle = resultIndex * 60;
-        const targetAngle = 360 - segmentAngle + 30;
-        const fullRotations = 1800;
+        const targetAngle = 360 - segmentAngle + 30; // +30 to center on segment, inverse rotation
+        
+        // Add multiple full rotations for effect
+        const fullRotations = 1800; // 5 full rotations
         const finalRotation = fullRotations + targetAngle;
         
+        // Now animate the wheel to the calculated position
         if (wheelRef.current) {
           wheelRef.current.style.transition = 'transform 3s cubic-bezier(0.23, 1, 0.32, 1)';
           wheelRef.current.style.transform = `rotate(${finalRotation}deg)`;
@@ -48,6 +56,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
         
         setResult(response.spinResult);
         
+        // If user won QT tokens, show instructions for claiming
         if (response.spinResult.isToken) {
           setResult({
             ...response.spinResult,
@@ -57,7 +66,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
         
         setTimeout(() => {
           setShowResult(true);
-        }, 3000);
+        }, 3000); // Show result after animation
       } else {
         console.error('Spin failed:', response.error);
       }
@@ -87,6 +96,8 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
 
     try {
       setIsClaiming(true);
+      // This will trigger a wallet transaction
+      // The user will need to sign the transaction in their Farcaster wallet
       const qtResponse = await onQTTokenWin(userAddress);
       
       if (qtResponse?.success) {
@@ -114,18 +125,19 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
   };
 
   return (
-    <div className="flex flex-col items-center space-y-6 -translate-x-6"> {/* Shifted slightly left */}
+    <div className="flex flex-col items-center space-y-6">
       {/* Spin Wheel */}
       <div className="relative">
         <div 
           ref={wheelRef}
           className="w-64 h-64 rounded-full border-8 border-white shadow-2xl relative overflow-hidden"
           style={{ 
-            background: 'conic-gradient(from -90deg, #FF6B6B 0deg 60deg, #4ECDC4 60deg 120deg, #45B7D1 120deg 180deg, #96CEB4 180deg 240deg, #FFEAA7 240deg 300deg, #DDA0DD 300deg 360deg)'
+            background: 'conic-gradient(from 0deg, #FF6B6B 0deg 60deg, #4ECDC4 60deg 120deg, #45B7D1 120deg 180deg, #96CEB4 180deg 240deg, #FFEAA7 240deg 300deg, #DDA0DD 300deg 360deg)'
           }}
         >
+          {/* Wheel segments with centered text */}
           {wheelOptions.map((option, index) => {
-            const angle = index * 60 - 90; 
+            const angle = index * 60; // 60 degrees per segment
             
             return (
               <div
@@ -136,12 +148,13 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
                   transformOrigin: '50% 50%'
                 }}
               >
+                {/* Text positioned near circumference and shifted right */}
                 <div 
                   className="absolute text-white font-bold text-lg"
                   style={{
-                    top: '50%',
-                    left: '85%',
-                    transform: `translate(-50%, -50%) rotate(90deg)`,
+                    top: '10%',
+                    left: '70%',
+                    transform: `translateX(-50%) rotate(30deg)`,
                     transformOrigin: 'center',
                     textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                     whiteSpace: 'nowrap'
@@ -154,9 +167,9 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
           })}
         </div>
         
-        {/* Pointer on left side */}
-        <div className="absolute top-1/2 left-0 transform -translate-y-1/2 -translate-x-3 z-10 rotate-90">
-          <div className="w-0 h-0 border-t-[12px] border-b-[12px] border-l-[20px] border-t-transparent border-b-transparent border-l-white drop-shadow-2xl"></div>
+        {/* Center pointer - at top pointing down */}
+        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-3 z-10">
+          <div className="w-0 h-0 border-l-[12px] border-r-[12px] border-b-[20px] border-l-transparent border-r-transparent border-b-white drop-shadow-2xl"></div>
         </div>
       </div>
 
