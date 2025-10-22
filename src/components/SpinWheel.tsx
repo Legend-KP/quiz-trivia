@@ -35,15 +35,13 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
       const response = await onSpin();
       
       if (response.success && response.spinResult) {
-        // Find which segment index the result corresponds to
         const resultIndex = wheelOptions.findIndex(opt => opt.id === response.spinResult.id);
         
-        // Each segment is 60 degrees, we want to land in the middle of the segment
+        // Each segment is 60 degrees
         const segmentAngle = resultIndex * 60;
-        const targetAngle = 360 - segmentAngle + 30; // +30 to center on segment
+        const targetAngle = 360 - segmentAngle + 30; // same logic, rotation direction unaffected
         
-        // Add multiple full rotations for effect
-        const fullRotations = 1800; // 5 full rotations
+        const fullRotations = 1800;
         const finalRotation = fullRotations + targetAngle;
         
         if (wheelRef.current) {
@@ -76,7 +74,9 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
   };
 
   const handleClaimQTTokens = async () => {
-    if (isClaiming) return;
+    if (isClaiming) {
+      return;
+    }
 
     if (!userAddress || userAddress === "0x0000000000000000000000000000000000000000") {
       alert('Please connect your Farcaster wallet to claim QT tokens');
@@ -124,13 +124,15 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
           ref={wheelRef}
           className="w-64 h-64 rounded-full border-8 border-white shadow-2xl relative overflow-hidden"
           style={{ 
-            // rotated so "0" is at 0 degrees to the right
-            background: 'conic-gradient(from 90deg, #FF6B6B 0deg 60deg, #4ECDC4 60deg 120deg, #45B7D1 120deg 180deg, #96CEB4 180deg 240deg, #FFEAA7 240deg 300deg, #DDA0DD 300deg 360deg)'
+            // Rotated anticlockwise by 90 degrees so that '0' starts at left (0°)
+            background: 'conic-gradient(from -90deg, #FF6B6B 0deg 60deg, #4ECDC4 60deg 120deg, #45B7D1 120deg 180deg, #96CEB4 180deg 240deg, #FFEAA7 240deg 300deg, #DDA0DD 300deg 360deg)'
           }}
         >
           {/* Wheel segments with centered text */}
           {wheelOptions.map((option, index) => {
-            const angle = index * 60 + 90; // rotate segments 90° right
+            // Offset all segments by -90° to rotate wheel anticlockwise
+            const angle = index * 60 - 90; 
+            
             return (
               <div
                 key={option.id}
@@ -140,12 +142,13 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
                   transformOrigin: '50% 50%'
                 }}
               >
+                {/* Adjusted text positioning */}
                 <div 
                   className="absolute text-white font-bold text-lg"
                   style={{
-                    top: '10%',
-                    left: '70%',
-                    transform: `translateX(-50%) rotate(30deg)`,
+                    top: '50%',
+                    left: '85%',
+                    transform: `translate(-50%, -50%) rotate(90deg)`,
                     transformOrigin: 'center',
                     textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                     whiteSpace: 'nowrap'
@@ -158,9 +161,9 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
           })}
         </div>
         
-        {/* Pointer (top center) */}
-        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-3 z-10">
-          <div className="w-0 h-0 border-l-[12px] border-r-[12px] border-b-[20px] border-l-transparent border-r-transparent border-b-white drop-shadow-2xl"></div>
+        {/* Center pointer - now on the LEFT side pointing right */}
+        <div className="absolute top-1/2 left-0 transform -translate-y-1/2 -translate-x-3 z-10 rotate-90">
+          <div className="w-0 h-0 border-t-[12px] border-b-[12px] border-l-[20px] border-t-transparent border-b-transparent border-l-white drop-shadow-2xl"></div>
         </div>
       </div>
 
