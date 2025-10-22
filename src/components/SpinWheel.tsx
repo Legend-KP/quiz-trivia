@@ -167,9 +167,11 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
           })}
         </div>
         
-        {/* Center pointer - at top pointing down */}
-        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-3 z-10">
-          <div className="w-0 h-0 border-l-[12px] border-r-[12px] border-b-[20px] border-l-transparent border-r-transparent border-b-white drop-shadow-2xl"></div>
+        {/* Center pointer - at top right pointing down */}
+        <div className="absolute top-0 left-1/2 transform translate-x-8 -translate-y-3 z-10">
+          <div className="w-0 h-0 border-l-[12px] border-r-[12px] border-b-[20px] border-l-transparent border-r-transparent border-b-white drop-shadow-2xl" 
+               style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))' }}>
+          </div>
         </div>
       </div>
 
