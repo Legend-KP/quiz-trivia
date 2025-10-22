@@ -36,11 +36,8 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
       
       if (response.success && response.spinResult) {
         const resultIndex = wheelOptions.findIndex(opt => opt.id === response.spinResult.id);
-        
-        // Each segment is 60 degrees
         const segmentAngle = resultIndex * 60;
-        const targetAngle = 360 - segmentAngle + 30; // same logic, rotation direction unaffected
-        
+        const targetAngle = 360 - segmentAngle + 30;
         const fullRotations = 1800;
         const finalRotation = fullRotations + targetAngle;
         
@@ -117,20 +114,17 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
   };
 
   return (
-    <div className="flex flex-col items-center space-y-6">
+    <div className="flex flex-col items-center space-y-6 -translate-x-6"> {/* Shifted slightly left */}
       {/* Spin Wheel */}
       <div className="relative">
         <div 
           ref={wheelRef}
           className="w-64 h-64 rounded-full border-8 border-white shadow-2xl relative overflow-hidden"
           style={{ 
-            // Rotated anticlockwise by 90 degrees so that '0' starts at left (0°)
             background: 'conic-gradient(from -90deg, #FF6B6B 0deg 60deg, #4ECDC4 60deg 120deg, #45B7D1 120deg 180deg, #96CEB4 180deg 240deg, #FFEAA7 240deg 300deg, #DDA0DD 300deg 360deg)'
           }}
         >
-          {/* Wheel segments with centered text */}
           {wheelOptions.map((option, index) => {
-            // Offset all segments by -90° to rotate wheel anticlockwise
             const angle = index * 60 - 90; 
             
             return (
@@ -142,7 +136,6 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
                   transformOrigin: '50% 50%'
                 }}
               >
-                {/* Adjusted text positioning */}
                 <div 
                   className="absolute text-white font-bold text-lg"
                   style={{
@@ -161,7 +154,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
           })}
         </div>
         
-        {/* Center pointer - now on the LEFT side pointing right */}
+        {/* Pointer on left side */}
         <div className="absolute top-1/2 left-0 transform -translate-y-1/2 -translate-x-3 z-10 rotate-90">
           <div className="w-0 h-0 border-t-[12px] border-b-[12px] border-l-[20px] border-t-transparent border-b-transparent border-l-white drop-shadow-2xl"></div>
         </div>
