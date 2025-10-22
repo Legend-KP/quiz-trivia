@@ -74,17 +74,42 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
   // Handle share to spin again
   const handleShareToSpin = async () => {
     if (isSharing || hasShared) return;
-
+    
     try {
       setIsSharing(true);
       
-      // Use Farcaster SDK to compose cast
-      await actions.composeCast({
-        text: `Checkout Quiz Trivia by @kushal-paliwal`,
-        embeds: [`${window.location.origin}`]
-      });
+      // Try Farcaster SDK first, with fallback to simple share
+      if (actions && actions.composeCast) {
+        try {
+          // Use Farcaster SDK to compose cast with timeout
+          const sharePromise = actions.composeCast({
+            text: `Checkout Quiz Trivia by @kushal-paliwal`,
+            embeds: [`${window.location.origin}`]
+          });
+          
+          // Add timeout to prevent hanging
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Share timeout')), 5000)
+          );
+          
+          await Promise.race([sharePromise, timeoutPromise]);
+        } catch (sdkError) {
+          console.warn('Farcaster SDK failed, using fallback:', sdkError);
+          // Fallback: Just copy to clipboard and show success
+          const shareText = `Checkout Quiz Trivia by @kushal-paliwal ${window.location.origin}`;
+          if (navigator.clipboard) {
+            await navigator.clipboard.writeText(shareText);
+          }
+        }
+      } else {
+        // Fallback: Just copy to clipboard and show success
+        const shareText = `Checkout Quiz Trivia by @kushal-paliwal ${window.location.origin}`;
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(shareText);
+        }
+      }
       
-      // Grant extra spin
+      // Grant extra spin immediately after share attempt
       setHasShared(true);
       setCanShareSpin(false);
       setCanSpin(true); // Allow immediate spin
@@ -99,7 +124,8 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
       
     } catch (error) {
       console.error('Share failed:', error);
-      alert('Failed to share. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Please try again.';
+      alert(`Failed to share: ${errorMessage}`);
     } finally {
       setIsSharing(false);
     }
@@ -300,7 +326,16 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
         {showResult && result && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-8 max-w-sm mx-4 text-center shadow-2xl">
-              {result.coins === 0 ? (
+              {result.isToken ? (
+                // QT Token win section
+                <div>
+                  <div className="text-6xl mb-4">🎁</div>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-2">Congratulations!</h3>
+                  <div className="text-xl text-gray-600 mb-6">
+                    <span className="font-bold text-yellow-600">You won 10,000 QT Tokens!</span>
+                  </div>
+                </div>
+              ) : result.coins === 0 ? (
                 // Zero result section
                 <div>
                   <div className="text-6xl mb-4">😢</div>
@@ -310,7 +345,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
                   </div>
                 </div>
               ) : (
-                // Winning result section
+                // Regular winning result section
                 <div>
                   <div className="text-6xl mb-4">🎉</div>
                   <h3 className="text-2xl font-bold text-gray-800 mb-2">Congratulations!</h3>
@@ -321,11 +356,8 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
               )}
             {result.isToken && (
               <div className="bg-yellow-100 border border-yellow-400 rounded-lg p-4 mb-4">
-                <p className="text-yellow-800 font-semibold mb-2">
-                  🎁 You won 10,000 QT Tokens!
-                </p>
                 <p className="text-yellow-700 text-sm mb-3">
-                  
+                  To claim your tokens, you need to sign a transaction with your wallet.
                 </p>
                 <button
                   onClick={handleClaimQTTokens}
