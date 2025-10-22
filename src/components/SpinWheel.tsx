@@ -169,12 +169,12 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
           // This is the share spin - mark it as used and don't set cooldown
           localStorage.setItem('hasUsedShareSpin', 'true');
           setCanSpin(false); // No more spins until next day
-          setTimeLeft(24 * 60 * 60); // 24 hours in seconds
+          setTimeLeft(30); // 30 seconds for testing (was 24 hours)
         } else {
           // Regular spin - set normal cooldown
           localStorage.setItem('lastSpinTime', Date.now().toString());
           setCanSpin(false);
-          setTimeLeft(24 * 60 * 60); // 24 hours in seconds
+          setTimeLeft(30); // 30 seconds for testing (was 24 hours)
         }
         
         // Find which segment index the result corresponds to
@@ -266,6 +266,17 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
     setResult(null);
   };
 
+  // TESTING: Clear all spin data (remove this in production)
+  const clearSpinData = () => {
+    localStorage.removeItem('lastSpinTime');
+    localStorage.removeItem('hasSharedToday');
+    localStorage.removeItem('hasUsedShareSpin');
+    setCanSpin(true);
+    setTimeLeft(0);
+    setHasShared(false);
+    setCanShareSpin(false);
+  };
+
   return (
     <div className="flex flex-col items-center space-y-6">
       {/* Spin Wheel */}
@@ -336,9 +347,15 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
               {formatTime(timeLeft)}
             </div>
           </div>
-          <div className="text-xs text-gray-500">
-            You can spin once every 24 hours
-          </div>
+              <div className="text-xs text-gray-500">
+                You can spin once every 30 seconds (TESTING MODE)
+              </div>
+              <button
+                onClick={clearSpinData}
+                className="mt-2 px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600"
+              >
+                🧪 Clear Test Data
+              </button>
         </div>
       )}
 
