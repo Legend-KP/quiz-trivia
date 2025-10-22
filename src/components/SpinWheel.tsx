@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useMiniApp } from '@neynar/react';
 
 interface SpinWheelProps {
   onSpin: () => Promise<{ success: boolean; spinResult?: any; balance?: number; error?: string }>;
@@ -15,42 +14,25 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
   const [isClaiming, setIsClaiming] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [canSpin, setCanSpin] = useState(true);
-  const [hasShared, setHasShared] = useState(false);
-  const [canShareSpin, setCanShareSpin] = useState(false);
-  const [isSharing, setIsSharing] = useState(false);
   const wheelRef = useRef<HTMLDivElement>(null);
-  const { actions } = useMiniApp();
 
-  // Check cooldown timer and share status
+  // Check cooldown timer
   useEffect(() => {
     const checkCooldown = () => {
       const lastSpinTime = localStorage.getItem('lastSpinTime');
-      const hasSharedToday = localStorage.getItem('hasSharedToday');
-      const hasUsedShareSpin = localStorage.getItem('hasUsedShareSpin');
       
       if (lastSpinTime) {
         const timeSinceLastSpin = Date.now() - parseInt(lastSpinTime);
-        const cooldownPeriod = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+        const cooldownPeriod = 60 * 60 * 1000; // 1 hour in milliseconds
         const remainingTime = cooldownPeriod - timeSinceLastSpin;
         
         if (remainingTime > 0) {
-          // If user has shared today but hasn't used their share spin yet
-          if (hasSharedToday === 'true' && hasUsedShareSpin === 'false') {
-            setCanSpin(true);
-            setTimeLeft(0);
-            setHasShared(true);
-          } else {
-            setCanSpin(false);
-            setTimeLeft(Math.ceil(remainingTime / 1000)); // Convert to seconds
-            setHasShared(hasSharedToday === 'true');
-          }
+          setCanSpin(false);
+          setTimeLeft(Math.ceil(remainingTime / 1000)); // Convert to seconds
         } else {
           setCanSpin(true);
           setTimeLeft(0);
-          setHasShared(false);
           localStorage.removeItem('lastSpinTime');
-          localStorage.removeItem('hasSharedToday');
-          localStorage.removeItem('hasUsedShareSpin');
         }
       }
     };
@@ -80,66 +62,6 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Handle share to spin again
-  const handleShareToSpin = async () => {
-    if (isSharing || hasShared) return;
-    
-    try {
-      setIsSharing(true);
-      
-      // Try Farcaster SDK first, with fallback to simple share
-      if (actions && actions.composeCast) {
-        try {
-          // Use Farcaster SDK to compose cast with timeout
-          const sharePromise = actions.composeCast({
-            text: `Checkout Quiz Trivia by @kushal-paliwal`,
-            embeds: [`${window.location.origin}`]
-          });
-          
-          // Add timeout to prevent hanging
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Share timeout')), 5000)
-          );
-          
-          await Promise.race([sharePromise, timeoutPromise]);
-        } catch (sdkError) {
-          console.warn('Farcaster SDK failed, using fallback:', sdkError);
-          // Fallback: Just copy to clipboard and show success
-          const shareText = `Checkout Quiz Trivia by @kushal-paliwal ${window.location.origin}`;
-          if (navigator.clipboard) {
-            await navigator.clipboard.writeText(shareText);
-          }
-        }
-      } else {
-        // Fallback: Just copy to clipboard and show success
-        const shareText = `Checkout Quiz Trivia by @kushal-paliwal ${window.location.origin}`;
-        if (navigator.clipboard) {
-          await navigator.clipboard.writeText(shareText);
-        }
-      }
-      
-      // Grant extra spin immediately after share attempt
-      setHasShared(true);
-      setCanShareSpin(false);
-      setCanSpin(true); // Allow immediate spin
-      setTimeLeft(0);
-      localStorage.setItem('hasSharedToday', 'true');
-      localStorage.setItem('hasUsedShareSpin', 'false'); // Track if they've used their share spin
-      
-      // Show success message briefly
-      setTimeout(() => {
-        setShowResult(false);
-        setResult(null);
-      }, 2000);
-      
-    } catch (error) {
-      console.error('Share failed:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Please try again.';
-      alert(`Failed to share: ${errorMessage}`);
-    } finally {
-      setIsSharing(false);
-    }
-  };
 
   // IMPORTANT: This order MUST match the backend SPIN_OPTIONS order exactly
   const wheelOptions = [
@@ -162,20 +84,10 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
       const response = await onSpin();
       
       if (response.success && response.spinResult) {
-        // Check if this is a share spin
-        const hasUsedShareSpin = localStorage.getItem('hasUsedShareSpin');
-        
-        if (hasUsedShareSpin === 'false') {
-          // This is the share spin - mark it as used and don't set cooldown
-          localStorage.setItem('hasUsedShareSpin', 'true');
-          setCanSpin(false); // No more spins until next day
-          setTimeLeft(30); // 30 seconds for testing (was 24 hours)
-        } else {
-          // Regular spin - set normal cooldown
-          localStorage.setItem('lastSpinTime', Date.now().toString());
-          setCanSpin(false);
-          setTimeLeft(30); // 30 seconds for testing (was 24 hours)
-        }
+        // Record the spin time for 1-hour cooldown
+        localStorage.setItem('lastSpinTime', Date.now().toString());
+        setCanSpin(false);
+        setTimeLeft(60 * 60); // 1 hour in seconds
         
         // Find which segment index the result corresponds to
         const resultIndex = wheelOptions.findIndex(opt => opt.id === response.spinResult.id);
@@ -207,7 +119,6 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
         
         setTimeout(() => {
           setShowResult(true);
-          setCanShareSpin(true); // Enable share option after spin
         }, 3000); // Show result after animation
       } else {
         console.error('Spin failed:', response.error);
@@ -266,16 +177,6 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
     setResult(null);
   };
 
-  // TESTING: Clear all spin data (remove this in production)
-  const clearSpinData = () => {
-    localStorage.removeItem('lastSpinTime');
-    localStorage.removeItem('hasSharedToday');
-    localStorage.removeItem('hasUsedShareSpin');
-    setCanSpin(true);
-    setTimeLeft(0);
-    setHasShared(false);
-    setCanShareSpin(false);
-  };
 
   return (
     <div className="flex flex-col items-center space-y-6">
@@ -348,14 +249,8 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
             </div>
           </div>
               <div className="text-xs text-gray-500">
-                You can spin once every 30 seconds (TESTING MODE)
+                You can spin once every hour
               </div>
-              <button
-                onClick={clearSpinData}
-                className="mt-2 px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600"
-              >
-                🧪 Clear Test Data
-              </button>
         </div>
       )}
 
@@ -415,34 +310,6 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
               </div>
             )}
             
-            {/* Share to Spin Again Button */}
-            {canShareSpin && !hasShared && (
-              <div className="mb-4">
-                <button
-                  onClick={handleShareToSpin}
-                  disabled={isSharing}
-                  className={`w-full px-6 py-3 rounded-full font-semibold transition-all ${
-                    isSharing
-                      ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 hover:scale-105 shadow-lg'
-                  }`}
-                >
-                  {isSharing ? '⏳ Sharing...' : '📢 Share to Spin Again!'}
-                </button>
-                <p className="text-xs text-gray-500 mt-1 text-center">
-                  Share on Farcaster to get one more spin today
-                </p>
-              </div>
-            )}
-            
-            {/* Success message after sharing */}
-            {hasShared && (
-              <div className="mb-4 p-3 bg-green-100 border border-green-400 rounded-lg">
-                <p className="text-green-800 font-semibold text-center">
-                  ✅ Shared! You can spin again now!
-                </p>
-              </div>
-            )}
             
             <button
               onClick={resetWheel}
