@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useMiniApp } from '@neynar/react';
 
 interface SpinWheelProps {
   onSpin: () => Promise<{ success: boolean; spinResult?: any; balance?: number; error?: string }>;
@@ -14,12 +15,18 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
   const [isClaiming, setIsClaiming] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [canSpin, setCanSpin] = useState(true);
+  const [hasShared, setHasShared] = useState(false);
+  const [canShareSpin, setCanShareSpin] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const wheelRef = useRef<HTMLDivElement>(null);
+  const { actions } = useMiniApp();
 
-  // Check cooldown timer
+  // Check cooldown timer and share status
   useEffect(() => {
     const checkCooldown = () => {
       const lastSpinTime = localStorage.getItem('lastSpinTime');
+      const hasSharedToday = localStorage.getItem('hasSharedToday');
+      
       if (lastSpinTime) {
         const timeSinceLastSpin = Date.now() - parseInt(lastSpinTime);
         const cooldownPeriod = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
@@ -28,10 +35,13 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
         if (remainingTime > 0) {
           setCanSpin(false);
           setTimeLeft(Math.ceil(remainingTime / 1000)); // Convert to seconds
+          setHasShared(hasSharedToday === 'true');
         } else {
           setCanSpin(true);
           setTimeLeft(0);
+          setHasShared(false);
           localStorage.removeItem('lastSpinTime');
+          localStorage.removeItem('hasSharedToday');
         }
       }
     };
@@ -59,6 +69,40 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Handle share to spin again
+  const handleShareToSpin = async () => {
+    if (isSharing || hasShared) return;
+
+    try {
+      setIsSharing(true);
+      
+      // Use Farcaster SDK to compose cast
+      await actions.composeCast({
+        text: `Checkout Quiz Trivia by @kushal-paliwal`,
+        embeds: [`${window.location.origin}`]
+      });
+      
+      // Grant extra spin
+      setHasShared(true);
+      setCanShareSpin(false);
+      setCanSpin(true); // Allow immediate spin
+      setTimeLeft(0);
+      localStorage.setItem('hasSharedToday', 'true');
+      
+      // Show success message briefly
+      setTimeout(() => {
+        setShowResult(false);
+        setResult(null);
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Share failed:', error);
+      alert('Failed to share. Please try again.');
+    } finally {
+      setIsSharing(false);
+    }
   };
 
   // IMPORTANT: This order MUST match the backend SPIN_OPTIONS order exactly
@@ -117,6 +161,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
         
         setTimeout(() => {
           setShowResult(true);
+          setCanShareSpin(true); // Enable share option after spin
         }, 3000); // Show result after animation
       } else {
         console.error('Spin failed:', response.error);
@@ -300,6 +345,36 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
                 )}
               </div>
             )}
+            
+            {/* Share to Spin Again Button */}
+            {canShareSpin && !hasShared && (
+              <div className="mb-4">
+                <button
+                  onClick={handleShareToSpin}
+                  disabled={isSharing}
+                  className={`w-full px-6 py-3 rounded-full font-semibold transition-all ${
+                    isSharing
+                      ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 hover:scale-105 shadow-lg'
+                  }`}
+                >
+                  {isSharing ? '⏳ Sharing...' : '📢 Share to Spin Again!'}
+                </button>
+                <p className="text-xs text-gray-500 mt-1 text-center">
+                  Share on Farcaster to get one more spin today
+                </p>
+              </div>
+            )}
+            
+            {/* Success message after sharing */}
+            {hasShared && (
+              <div className="mb-4 p-3 bg-green-100 border border-green-400 rounded-lg">
+                <p className="text-green-800 font-semibold text-center">
+                  ✅ Shared! You can spin again now!
+                </p>
+              </div>
+            )}
+            
             <button
               onClick={resetWheel}
               className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-2 rounded-full font-semibold hover:from-purple-600 hover:to-pink-600 transition-all"
