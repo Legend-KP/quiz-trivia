@@ -40,8 +40,9 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
         
         // Each segment is 60 degrees, we want to land in the middle of the segment
         const segmentAngle = resultIndex * 60;
-        const targetAngle = 360 - segmentAngle + 30; // +30 to center on segment, inverse rotation
+        const targetAngle = 360 - segmentAngle + 30; // +30 to center on segment
         
+        // Add multiple full rotations for effect
         const fullRotations = 1800; // 5 full rotations
         const finalRotation = fullRotations + targetAngle;
         
@@ -75,9 +76,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
   };
 
   const handleClaimQTTokens = async () => {
-    if (isClaiming) {
-      return;
-    }
+    if (isClaiming) return;
 
     if (!userAddress || userAddress === "0x0000000000000000000000000000000000000000") {
       alert('Please connect your Farcaster wallet to claim QT tokens');
@@ -125,13 +124,13 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
           ref={wheelRef}
           className="w-64 h-64 rounded-full border-8 border-white shadow-2xl relative overflow-hidden"
           style={{ 
-            // ✅ Rotated wheel to align '0' segment at 0 degrees (top)
+            // rotated so "0" is at 0 degrees to the right
             background: 'conic-gradient(from 90deg, #FF6B6B 0deg 60deg, #4ECDC4 60deg 120deg, #45B7D1 120deg 180deg, #96CEB4 180deg 240deg, #FFEAA7 240deg 300deg, #DDA0DD 300deg 360deg)'
           }}
         >
+          {/* Wheel segments with centered text */}
           {wheelOptions.map((option, index) => {
-            const angle = index * 60;
-            
+            const angle = index * 60 + 90; // rotate segments 90° right
             return (
               <div
                 key={option.id}
@@ -159,7 +158,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
           })}
         </div>
         
-        {/* Pointer */}
+        {/* Pointer (top center) */}
         <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-3 z-10">
           <div className="w-0 h-0 border-l-[12px] border-r-[12px] border-b-[20px] border-l-transparent border-r-transparent border-b-white drop-shadow-2xl"></div>
         </div>
