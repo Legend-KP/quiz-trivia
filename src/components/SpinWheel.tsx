@@ -195,11 +195,12 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
               {result.label === '0' ? 'Better Luck Next Time!' : 'Congratulations!'}
             </h3>
             <div className="text-xl text-gray-600 mb-6">
-              {result.label === '0' ? (
-                <span className="font-bold text-gray-500">You won nothing this time. Try again!</span>
-              ) : (
-                <>You won: <span className="font-bold text-purple-600">{result.label}</span></>
-              )}
+            {result.coins === 0 ? (
+  <span className="font-bold text-gray-500">You won nothing this time. Try again!</span>
+) : (
+  <>You won: <span className="font-bold text-purple-600">{result.label}</span></>
+)}
+
             </div>
             {result.isToken && (
               <div className="bg-yellow-100 border border-yellow-400 rounded-lg p-4 mb-4">
