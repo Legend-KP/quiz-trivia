@@ -190,17 +190,13 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
         {showResult && result && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-8 max-w-sm mx-4 text-center shadow-2xl">
-              <div className="text-6xl mb-4">{result.label === '0' ? '🎯' : '🎉'}</div>
+              <div className="text-6xl mb-4">{result.coins === 0 ? '😢' : '🎉'}</div>
               <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                {result.label === '0' ? 'Almost There!' : 'Congratulations!'}
+                {result.label === '0' ? 'Better Luck Next Time!' : 'Oops!'}
               </h3>
               <div className="text-xl text-gray-600 mb-6">
               {result.coins === 0 ? (
-                <div className="space-y-2">
-                  <span className="font-bold text-gray-500 block">You landed on 0 this time!</span>
-                  <span className="text-sm text-gray-400">Don't worry, the wheel is full of surprises! 🎰</span>
-                  <span className="text-sm text-blue-500 font-semibold">Come back tomorrow for another spin!</span>
-                </div>
+    <span className="font-bold text-gray-500">You won nothing this time. Try again!</span>
   ) : (
     <>You won: <span className="font-bold text-purple-600">{result.label}</span></>
   )}
