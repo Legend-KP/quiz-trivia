@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 interface SpinWheelProps {
   onSpin: () => Promise<{ success: boolean; spinResult?: any; balance?: number; error?: string }>;
@@ -12,8 +12,54 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
   const [result, setResult] = useState<any>(null);
   const [showResult, setShowResult] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [canSpin, setCanSpin] = useState(true);
   const wheelRef = useRef<HTMLDivElement>(null);
 
+  // Check cooldown timer
+  useEffect(() => {
+    const checkCooldown = () => {
+      const lastSpinTime = localStorage.getItem('lastSpinTime');
+      if (lastSpinTime) {
+        const timeSinceLastSpin = Date.now() - parseInt(lastSpinTime);
+        const cooldownPeriod = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+        const remainingTime = cooldownPeriod - timeSinceLastSpin;
+        
+        if (remainingTime > 0) {
+          setCanSpin(false);
+          setTimeLeft(Math.ceil(remainingTime / 1000)); // Convert to seconds
+        } else {
+          setCanSpin(true);
+          setTimeLeft(0);
+          localStorage.removeItem('lastSpinTime');
+        }
+      }
+    };
+
+    checkCooldown();
+    const interval = setInterval(checkCooldown, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Update timer every second
+  useEffect(() => {
+    if (timeLeft > 0) {
+      const timer = setTimeout(() => {
+        setTimeLeft(timeLeft - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else if (timeLeft === 0 && !canSpin) {
+      setCanSpin(true);
+    }
+  }, [timeLeft, canSpin]);
+
+  // Format time for display
+  const formatTime = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   // IMPORTANT: This order MUST match the backend SPIN_OPTIONS order exactly
   const wheelOptions = [
@@ -26,7 +72,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
   ];
 
   const handleSpin = async () => {
-    if (isSpinning || disabled) return;
+    if (isSpinning || disabled || !canSpin) return;
 
     setIsSpinning(true);
     setResult(null);
@@ -36,6 +82,11 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
       const response = await onSpin();
       
       if (response.success && response.spinResult) {
+        // Record the spin time for 24-hour cooldown
+        localStorage.setItem('lastSpinTime', Date.now().toString());
+        setCanSpin(false);
+        setTimeLeft(24 * 60 * 60); // 24 hours in seconds
+        
         // Find which segment index the result corresponds to
         const resultIndex = wheelOptions.findIndex(opt => opt.id === response.spinResult.id);
         
@@ -174,17 +225,31 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
       </div>
 
       {/* Spin Button */}
-      <button
-        onClick={handleSpin}
-        disabled={isSpinning || disabled}
-        className={`px-8 py-3 rounded-full font-bold text-white text-lg transition-all duration-300 ${
-          isSpinning || disabled
-            ? 'bg-gray-400 cursor-not-allowed'
-            : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 hover:scale-105 shadow-lg'
-        }`}
-      >
-        {isSpinning ? 'Spinning...' : '🎰 Spin the Wheel!'}
-      </button>
+      {canSpin ? (
+        <button
+          onClick={handleSpin}
+          disabled={isSpinning || disabled}
+          className={`px-8 py-3 rounded-full font-bold text-white text-lg transition-all duration-300 ${
+            isSpinning || disabled
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 hover:scale-105 shadow-lg'
+          }`}
+        >
+          {isSpinning ? 'Spinning...' : '🎰 Spin the Wheel!'}
+        </button>
+      ) : (
+        <div className="text-center">
+          <div className="bg-gray-100 rounded-lg p-4 mb-2">
+            <div className="text-sm text-gray-600 mb-1">Next spin available in:</div>
+            <div className="text-2xl font-bold text-gray-800 font-mono">
+              {formatTime(timeLeft)}
+            </div>
+          </div>
+          <div className="text-xs text-gray-500">
+            You can spin once every 24 hours
+          </div>
+        </div>
+      )}
 
         {/* Result Modal */}
         {showResult && result && (
