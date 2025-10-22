@@ -190,18 +190,25 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
         {showResult && result && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-8 max-w-sm mx-4 text-center shadow-2xl">
-              <div className="text-6xl mb-4">{result.coins === '0' ? '😢' : '🎉'}</div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                {result.coins === '0' ? 'Better Luck Next Time!' : 'Congratulations!'}
-              </h3>
-              <div className="text-xl text-gray-600 mb-6">
               {result.coins === 0 ? (
-    <span className="font-bold text-gray-500">Better luck next time! The wheel has more surprises waiting! 🎰</span>
-  ) : (
-    <>You won: <span className="font-bold text-purple-600">{result.label}</span></>
-  )}
-
-            </div>
+                // Zero result section
+                <div>
+                  <div className="text-6xl mb-4">😢</div>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-2">Better luck next time</h3>
+                  <div className="text-xl text-gray-600 mb-6">
+                    <span className="font-bold text-gray-500">The wheel has more surprises waiting! 🎰</span>
+                  </div>
+                </div>
+              ) : (
+                // Winning result section
+                <div>
+                  <div className="text-6xl mb-4">🎉</div>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-2">Congratulations!</h3>
+                  <div className="text-xl text-gray-600 mb-6">
+                    <>You won: <span className="font-bold text-purple-600">{result.label}</span></>
+                  </div>
+                </div>
+              )}
             {result.isToken && (
               <div className="bg-yellow-100 border border-yellow-400 rounded-lg p-4 mb-4">
                 <p className="text-yellow-800 font-semibold mb-2">
