@@ -278,7 +278,7 @@ export async function startQuizWithSignature(
     const userAddress = client.account.address;
     const timestamp = BigInt(Math.floor(Date.now() / 1000));
     
-    // 🔑 REAL CONTRACT APPROACH: Get nonce from deployed contract
+    // 🔑 CRITICAL FIX: Always get FRESH nonce from contract
     let nonce = BigInt(0); // Default fallback
     let contract;
     
@@ -287,7 +287,7 @@ export async function startQuizWithSignature(
       const provider = new ethers.BrowserProvider(client.transport);
       contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
       
-      console.log('📊 Getting current nonce from REAL contract...');
+      console.log('📊 Getting FRESH nonce from contract...');
       
       // Try to get the nonce with a timeout
       const noncePromise = contract.getUserNonce(userAddress);
@@ -296,7 +296,8 @@ export async function startQuizWithSignature(
       );
       
       nonce = await Promise.race([noncePromise, timeoutPromise]);
-      console.log('✅ Current nonce from contract:', nonce.toString());
+      console.log('✅ FRESH nonce from contract:', nonce.toString());
+      console.log('🔑 This ensures signature matches contract expectations');
     } catch (contractError) {
       const errorMessage = contractError instanceof Error ? contractError.message : 'Unknown error';
       console.warn('⚠️ Contract call failed, using default nonce 0:', errorMessage);
@@ -312,6 +313,7 @@ export async function startQuizWithSignature(
     console.log('Nonce:', nonce.toString());
     console.log('📝 Signature Parameters:');
     console.log('  Nonce:', nonce.toString(), '← FRESH from contract');
+    console.log('🔑 This nonce will be used for signature creation');
     console.log('=====================');
     
     // 🔑 REAL CONTRACT APPROACH: Get message hash from contract
@@ -461,10 +463,43 @@ export async function getUserNonce(userAddress: string): Promise<number> {
     const provider = await connectWallet();
     const contract = await getContract(provider);
     const nonce = await contract.getUserNonce(userAddress);
+    console.log('📊 Current user nonce:', nonce.toNumber());
     return nonce.toNumber();
   } catch (error: any) {
     console.warn('Failed to get user nonce:', error.message);
     return 0; // Default to 0 for new users
+  }
+}
+
+/**
+ * Get user's quiz statistics with nonce info
+ */
+export async function getUserQuizInfo(userAddress: string): Promise<{
+  quizCount: number;
+  nonce: number;
+  nextQuizNumber: number;
+}> {
+  try {
+    const provider = await connectWallet();
+    const contract = await getContract(provider);
+    
+    const [quizCount, nonce] = await Promise.all([
+      contract.getUserQuizCount(userAddress),
+      contract.getUserNonce(userAddress)
+    ]);
+    
+    return {
+      quizCount: quizCount.toNumber(),
+      nonce: nonce.toNumber(),
+      nextQuizNumber: nonce.toNumber() + 1
+    };
+  } catch (error: any) {
+    console.warn('Failed to get user quiz info:', error.message);
+    return {
+      quizCount: 0,
+      nonce: 0,
+      nextQuizNumber: 1
+    };
   }
 }
 
