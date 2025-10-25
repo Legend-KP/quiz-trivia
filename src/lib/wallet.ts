@@ -248,25 +248,20 @@ export async function startQuizWithSignature(
       nonce: nonce.toString()
     });
     
-    // Create the raw message hash (without Ethereum prefix) - this matches what the contract expects
-    const rawMessageHash = ethers.solidityPackedKeccak256(
+    // Get the exact message hash that the contract will use
+    const contractMessageHash = await contract.getMessageHash(userAddress, Number(mode), timestamp, nonce);
+    console.log('📝 Contract message hash:', contractMessageHash);
+    
+    // Create the raw hash that needs to be signed (without Ethereum prefix)
+    const rawHash = ethers.solidityPackedKeccak256(
       ['address', 'uint8', 'uint256', 'uint256'],
       [userAddress, Number(mode), timestamp, nonce]
     );
+    console.log('📝 Raw hash to sign:', rawHash);
     
-    console.log('📝 Message hash components:', {
-      userAddress,
-      mode: Number(mode),
-      timestamp: timestamp.toString(),
-      nonce: nonce.toString(),
-      rawMessageHash
-    });
-    
-    console.log('Raw message hash:', rawMessageHash);
-    
-    // Sign the raw message hash (wallet will add Ethereum prefix automatically)
+    // Sign the raw hash (wallet will add Ethereum prefix)
     const signature = await client.signMessage({
-      message: { raw: rawMessageHash as `0x${string}` }
+      message: { raw: rawHash as `0x${string}` }
     });
     
     console.log('Signature:', signature);
