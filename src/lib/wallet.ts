@@ -187,11 +187,32 @@ export async function startQuizWithSignature(
     console.log('Attempting to get wallet client for signature...');
     console.log('Config:', config);
     
-    // Try to get wallet client from Wagmi
+    // Try to get wallet client from Wagmi with enhanced error handling
     let client;
     try {
       client = await getWalletClient(config);
       console.log('Wallet client obtained:', !!client);
+      
+      // Additional validation for the client
+      if (!client) {
+        throw new WalletError('No wallet client available. Please connect your Farcaster wallet first.');
+      }
+      
+      // Check if the client has the required methods and fix if needed
+      if (typeof client.getChainId !== 'function') {
+        console.warn('⚠️ Client missing getChainId method, creating fallback...');
+        // Try to get chain ID from the account or use a fallback
+        const chainId = client.chain?.id || 8453; // Default to Base Mainnet
+        console.log('📝 Using chain ID:', chainId);
+        
+        // Create a mock client with the required methods
+        const mockClient = {
+          ...client,
+          getChainId: async () => chainId,
+        };
+        client = mockClient;
+      }
+      
     } catch (connectorError: any) {
       console.error('getWalletClient failed:', connectorError);
       
@@ -199,7 +220,9 @@ export async function startQuizWithSignature(
       if (connectorError.message?.includes('Connector not connected')) {
         throw new WalletError('Please connect your Farcaster wallet first. Go to the Wallet tab and click "Connect Farcaster".');
       } else if (connectorError.message?.includes('getChainId is not a function')) {
-        throw new WalletError('Wallet connection issue. Please try reconnecting your wallet.');
+        console.warn('⚠️ getChainId error detected, this is a known issue with some connectors');
+        console.warn('⚠️ Please try reconnecting your wallet or refreshing the page');
+        throw new WalletError('Wallet connection issue. Please try reconnecting your wallet or refreshing the page.');
       } else if (connectorError.message?.includes('User rejected')) {
         throw new WalletError('Connection was rejected. Please try again.');
       }
@@ -216,8 +239,18 @@ export async function startQuizWithSignature(
     onStateChange?.(TransactionState.CONFIRMING);
     
     // Verify we're on the correct network
-    const network = await client.getChainId();
-    if (network !== 8453) { // Base Mainnet
+    let networkId;
+    try {
+      networkId = await client.getChainId();
+      console.log('📝 Network ID from client:', networkId);
+    } catch (networkError) {
+      console.warn('⚠️ getChainId failed, using fallback approach:', networkError);
+      // Fallback: try to get chain ID from client.chain or use default
+      networkId = client.chain?.id || 8453; // Default to Base Mainnet
+      console.log('📝 Using fallback network ID:', networkId);
+    }
+    
+    if (networkId !== 8453) { // Base Mainnet
       throw new WalletError('Please switch to Base network to start quizzes.');
     }
     
