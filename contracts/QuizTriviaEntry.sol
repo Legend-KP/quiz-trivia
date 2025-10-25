@@ -2,10 +2,9 @@
 pragma solidity ^0.8.19;
 
 /**
- * @title QuizTriviaSignature
- * @dev Smart contract for Quiz Trivia with signature-based entry
+ * @title QuizTriviaSignature - FIXED VERSION
+ * @dev This version correctly verifies signatures from ethers.js
  * @notice Users sign messages to start quizzes - NO PAYMENT REQUIRED
- * This creates a better UX while maintaining on-chain verification
  */
 contract QuizTriviaSignature {
     // Events
@@ -66,14 +65,15 @@ contract QuizTriviaSignature {
         require(mode <= QuizMode.CHALLENGE, "Invalid mode");
         require(block.timestamp - timestamp < 300, "Signature expired"); // 5 min validity
         
-        // Create the message hash
+        // Create the message hash that was signed
         bytes32 messageHash = getMessageHash(msg.sender, mode, timestamp, userNonce[msg.sender]);
         
         // Verify signature hasn't been used
         require(!usedSignatures[messageHash], "Signature already used");
         
-        // Verify the signature is from the user
-        require(verifySignature(messageHash, signature, msg.sender), "Invalid signature");
+        // 🔑 FIX: Correctly verify the signature
+        address recoveredSigner = recoverSigner(messageHash, signature);
+        require(recoveredSigner == msg.sender, "Invalid signature");
         
         // Mark signature as used
         usedSignatures[messageHash] = true;
@@ -92,11 +92,7 @@ contract QuizTriviaSignature {
     
     /**
      * @dev Get the message hash for signing
-     * @param user The user address
-     * @param mode The quiz mode
-     * @param timestamp The timestamp
-     * @param nonce The user's current nonce
-     * @return The message hash to sign
+     * This creates the raw hash that will be signed by the user
      */
     function getMessageHash(
         address user,
@@ -104,31 +100,35 @@ contract QuizTriviaSignature {
         uint256 timestamp,
         uint256 nonce
     ) public pure returns (bytes32) {
+        // Create the raw message hash
+        return keccak256(abi.encodePacked(user, mode, timestamp, nonce));
+    }
+    
+    /**
+     * @dev Get the Ethereum Signed Message hash
+     * This is what ethers.js actually signs
+     */
+    function getEthSignedMessageHash(bytes32 messageHash) public pure returns (bytes32) {
         return keccak256(abi.encodePacked(
             "\x19Ethereum Signed Message:\n32",
-            keccak256(abi.encodePacked(user, mode, timestamp, nonce))
+            messageHash
         ));
     }
     
     /**
-     * @dev Verify a signature
-     * @param messageHash The message hash
-     * @param signature The signature to verify
-     * @param signer The expected signer
-     * @return True if signature is valid
+     * @dev Recover the signer address from a signature
+     * This correctly handles ethers.js signatures
      */
-    function verifySignature(
+    function recoverSigner(
         bytes32 messageHash,
-        bytes memory signature,
-        address signer
-    ) internal pure returns (bool) {
+        bytes memory signature
+    ) public pure returns (address) {
+        require(signature.length == 65, "Invalid signature length");
+        
+        // Split signature into r, s, v
         bytes32 r;
         bytes32 s;
         uint8 v;
-        
-        if (signature.length != 65) {
-            return false;
-        }
         
         assembly {
             r := mload(add(signature, 32))
@@ -136,22 +136,38 @@ contract QuizTriviaSignature {
             v := byte(0, mload(add(signature, 96)))
         }
         
+        // Adjust v if needed
         if (v < 27) {
             v += 27;
         }
         
-        if (v != 27 && v != 28) {
-            return false;
-        }
+        require(v == 27 || v == 28, "Invalid signature v value");
         
-        return ecrecover(messageHash, v, r, s) == signer;
+        // 🔑 CRITICAL FIX: Add Ethereum Signed Message prefix before recovery
+        bytes32 ethSignedMessageHash = getEthSignedMessageHash(messageHash);
+        
+        // Recover and return the signer
+        return ecrecover(ethSignedMessageHash, v, r, s);
+    }
+    
+    /**
+     * @dev Verify a signature (for testing/debugging)
+     * Returns true if signature is valid for the given signer
+     */
+    function verifySignature(
+        address user,
+        QuizMode mode,
+        uint256 timestamp,
+        uint256 nonce,
+        bytes memory signature
+    ) public pure returns (bool) {
+        bytes32 messageHash = getMessageHash(user, mode, timestamp, nonce);
+        address recoveredSigner = recoverSigner(messageHash, signature);
+        return recoveredSigner == user;
     }
     
     /**
      * @dev Record quiz completion
-     * @param user The user who completed the quiz
-     * @param mode The quiz mode
-     * @param score The final score
      */
     function recordQuizCompletion(
         address user,
@@ -164,8 +180,6 @@ contract QuizTriviaSignature {
     
     /**
      * @dev Get user's quiz count
-     * @param user The user address
-     * @return The number of quizzes started by this user
      */
     function getUserQuizCount(address user) external view returns (uint256) {
         return userQuizCount[user];
@@ -173,8 +187,6 @@ contract QuizTriviaSignature {
     
     /**
      * @dev Get user's current nonce
-     * @param user The user address
-     * @return The current nonce
      */
     function getUserNonce(address user) external view returns (uint256) {
         return userNonce[user];
@@ -182,10 +194,6 @@ contract QuizTriviaSignature {
     
     /**
      * @dev Get total statistics
-     * @return total Total quizzes started
-     * @return classic Total classic quizzes
-     * @return time Total time mode quizzes
-     * @return challenge Total challenge quizzes
      */
     function getStats() external view returns (
         uint256 total,

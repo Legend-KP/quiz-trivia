@@ -11,8 +11,28 @@ declare global {
 }
 
 // Contract configuration - Updated for signature-based contract
-export const CONTRACT_ADDRESS = '0x9bA64Ef81372f9A0dFB331eaA830B075162D1b66'; // Will be updated after deployment
-export const CONTRACT_ABI = [{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":true,"internalType":"uint256","name":"mode","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"score","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"QuizCompleted","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":true,"internalType":"uint256","name":"mode","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"},{"indexed":false,"internalType":"bytes32","name":"signatureHash","type":"bytes32"}],"name":"QuizStarted","type":"event"},{"inputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"enum QuizTriviaSignature.QuizMode","name":"mode","type":"uint8"},{"internalType":"uint256","name":"timestamp","type":"uint256"},{"internalType":"uint256","name":"nonce","type":"uint256"}],"name":"getMessageHash","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"pure","type":"function"},{"inputs":[],"name":"getStats","outputs":[{"internalType":"uint256","name":"total","type":"uint256"},{"internalType":"uint256","name":"classic","type":"uint256"},{"internalType":"uint256","name":"time","type":"uint256"},{"internalType":"uint256","name":"challenge","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserNonce","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserQuizCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"enum QuizTriviaSignature.QuizMode","name":"","type":"uint8"}],"name":"modeCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"enum QuizTriviaSignature.QuizMode","name":"mode","type":"uint8"},{"internalType":"uint256","name":"score","type":"uint256"}],"name":"recordQuizCompletion","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"enum QuizTriviaSignature.QuizMode","name":"mode","type":"uint8"},{"internalType":"uint256","name":"timestamp","type":"uint256"},{"internalType":"bytes","name":"signature","type":"bytes"}],"name":"startQuizWithSignature","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"totalQuizzes","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"name":"usedSignatures","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"userNonce","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"userQuizCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"withdraw","outputs":[],"stateMutability":"nonpayable","type":"function"}] as const;
+export const CONTRACT_ADDRESS = '0x904f81eeD7f129aA6e65bD21e697A681BEA8bf47'; // Improved contract with fixed signature verification
+export const CONTRACT_ABI = [
+  {"inputs":[],"stateMutability":"nonpayable","type":"constructor"},
+  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":true,"internalType":"uint256","name":"mode","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"score","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"QuizCompleted","type":"event"},
+  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":true,"internalType":"uint256","name":"mode","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"},{"indexed":false,"internalType":"bytes32","name":"signatureHash","type":"bytes32"}],"name":"QuizStarted","type":"event"},
+  {"inputs":[{"internalType":"bytes32","name":"messageHash","type":"bytes32"}],"name":"getEthSignedMessageHash","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"pure","type":"function"},
+  {"inputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"enum QuizTriviaSignature.QuizMode","name":"mode","type":"uint8"},{"internalType":"uint256","name":"timestamp","type":"uint256"},{"internalType":"uint256","name":"nonce","type":"uint256"}],"name":"getMessageHash","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"pure","type":"function"},
+  {"inputs":[],"name":"getStats","outputs":[{"internalType":"uint256","name":"total","type":"uint256"},{"internalType":"uint256","name":"classic","type":"uint256"},{"internalType":"uint256","name":"time","type":"uint256"},{"internalType":"uint256","name":"challenge","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserNonce","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserQuizCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"enum QuizTriviaSignature.QuizMode","name":"","type":"uint8"}],"name":"modeCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"enum QuizTriviaSignature.QuizMode","name":"mode","type":"uint8"},{"internalType":"uint256","name":"score","type":"uint256"}],"name":"recordQuizCompletion","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"internalType":"bytes32","name":"messageHash","type":"bytes32"},{"internalType":"bytes","name":"signature","type":"bytes"}],"name":"recoverSigner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"pure","type":"function"},
+  {"inputs":[{"internalType":"enum QuizTriviaSignature.QuizMode","name":"mode","type":"uint8"},{"internalType":"uint256","name":"timestamp","type":"uint256"},{"internalType":"bytes","name":"signature","type":"bytes"}],"name":"startQuizWithSignature","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[],"name":"totalQuizzes","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"name":"usedSignatures","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"userNonce","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"userQuizCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"enum QuizTriviaSignature.QuizMode","name":"mode","type":"uint8"},{"internalType":"uint256","name":"timestamp","type":"uint256"},{"internalType":"uint256","name":"nonce","type":"uint256"},{"internalType":"bytes","name":"signature","type":"bytes"}],"name":"verifySignature","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"pure","type":"function"},
+  {"inputs":[],"name":"withdraw","outputs":[],"stateMutability":"nonpayable","type":"function"}
+] as const;
 
 // Quiz modes matching the smart contract
 export enum QuizMode {
@@ -291,50 +311,42 @@ export async function startQuizWithSignature(
     console.log('Nonce:', nonce.toString());
     console.log('=====================');
     
-    // 🔑 KEY FIX: Get the hash directly from the contract (RECOMMENDED APPROACH)
-    let messageHash;
+    // 🔑 KEY FIX: Get the RAW hash from the contract (NEW APPROACH)
+    let rawMessageHash;
     if (contract) {
       try {
-        messageHash = await contract.getMessageHash(userAddress, Number(mode), timestamp, nonce);
-        console.log('📝 Message hash from contract:', messageHash);
+        // The new contract's getMessageHash() returns the raw hash (no Ethereum prefix)
+        rawMessageHash = await contract.getMessageHash(userAddress, Number(mode), timestamp, nonce);
+        console.log('📝 Raw message hash from contract:', rawMessageHash);
       } catch (hashError) {
         const errorMessage = hashError instanceof Error ? hashError.message : 'Unknown error';
         console.warn('⚠️ Contract getMessageHash failed, using fallback:', errorMessage);
-        // Fallback: create the message hash manually
-        const rawHash = ethers.solidityPackedKeccak256(
+        // Fallback: create the raw hash manually
+        rawMessageHash = ethers.solidityPackedKeccak256(
           ['address', 'uint8', 'uint256', 'uint256'],
           [userAddress, Number(mode), timestamp, nonce]
         );
-        messageHash = ethers.solidityPackedKeccak256(
-          ['string', 'bytes32'],
-          ['\x19Ethereum Signed Message:\n32', rawHash]
-        );
-        console.log('📝 Fallback message hash:', messageHash);
+        console.log('📝 Fallback raw message hash:', rawMessageHash);
       }
     } else {
-      // Fallback: create the message hash manually
-      const rawHash = ethers.solidityPackedKeccak256(
+      // Fallback: create the raw hash manually
+      rawMessageHash = ethers.solidityPackedKeccak256(
         ['address', 'uint8', 'uint256', 'uint256'],
         [userAddress, Number(mode), timestamp, nonce]
       );
-      messageHash = ethers.solidityPackedKeccak256(
-        ['string', 'bytes32'],
-        ['\x19Ethereum Signed Message:\n32', rawHash]
-      );
-      console.log('📝 Fallback message hash (no contract):', messageHash);
+      console.log('📝 Fallback raw message hash (no contract):', rawMessageHash);
     }
     
-    // Sign the message hash (convert to bytes first)
+    // Sign the raw message hash (wallet will add Ethereum prefix automatically)
     let signature;
     try {
-      // Convert hash to bytes and sign
-      const messageBytes = ethers.getBytes(messageHash);
+      // Sign the raw hash - wallet will add Ethereum prefix
       signature = await client.signMessage({
-        message: { raw: messageBytes }
+        message: { raw: rawMessageHash as `0x${string}` }
       });
       console.log('✅ Signature created:', signature);
       console.log('=== SIGNATURE VERIFICATION DEBUG ===');
-      console.log('Message hash used:', messageHash);
+      console.log('Raw message hash used:', rawMessageHash);
       console.log('Signature created:', signature);
       console.log('=====================================');
     } catch (signError) {
