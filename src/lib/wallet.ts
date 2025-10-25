@@ -223,19 +223,39 @@ export async function startQuizWithSignature(
     const contract = await getContract(new ethers.BrowserProvider(client.transport));
     const nonce = await contract.getUserNonce(userAddress);
     
-    // Create message hash for signing
-    const messageHash = await contract.getMessageHash(userAddress, mode, timestamp, nonce);
-    
-    // Sign the message hash
-    const signature = await client.signMessage({
-      message: { raw: messageHash }
+    console.log('Debug info:', {
+      userAddress,
+      mode: Number(mode),
+      timestamp: timestamp.toString(),
+      nonce: nonce.toString()
     });
+    
+    // Create the raw message hash (without Ethereum prefix) - this matches what the contract expects
+    const rawMessageHash = ethers.solidityPackedKeccak256(
+      ['address', 'uint8', 'uint256', 'uint256'],
+      [userAddress, Number(mode), timestamp, nonce]
+    );
+    
+    console.log('Raw message hash:', rawMessageHash);
+    
+    // Sign the raw message hash (wallet will add Ethereum prefix automatically)
+    const signature = await client.signMessage({
+      message: { raw: rawMessageHash as `0x${string}` }
+    });
+    
+    console.log('Signature:', signature);
     
     // Encode the startQuizWithSignature function call
     const txData = encodeFunctionData({
       abi: CONTRACT_ABI,
       functionName: 'startQuizWithSignature',
       args: [Number(mode), BigInt(timestamp), signature],
+    });
+    
+    console.log('Transaction data:', {
+      to: CONTRACT_ADDRESS,
+      data: txData,
+      value: '0'
     });
     
     // Send transaction using Farcaster wallet (NO VALUE REQUIRED)
@@ -245,6 +265,8 @@ export async function startQuizWithSignature(
       value: BigInt(0), // NO PAYMENT REQUIRED
       chain: null,
     });
+    
+    console.log('Transaction hash:', txHash);
     
     onStateChange?.(TransactionState.SUCCESS);
     
@@ -269,8 +291,13 @@ export async function startQuizWithSignature(
       throw new WalletError('Signature already used. Please try again.');
     } else if (error.message?.includes('getChainId is not a function')) {
       throw new WalletError('Wallet connection issue. Please try reconnecting your wallet.');
+    } else if (error.message?.includes('missing revert data')) {
+      throw new WalletError('Contract call failed. Please check if the contract is deployed correctly.');
+    } else if (error.message?.includes('CALL_EXCEPTION')) {
+      throw new WalletError('Contract call failed. Please verify the contract address and try again.');
     }
     
+    console.error('Full error details:', error);
     throw new WalletError(`Transaction failed: ${error.message}`);
   }
 }
