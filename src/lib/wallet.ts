@@ -183,20 +183,34 @@ export async function startQuizTransactionWithWagmi(
   try {
     onStateChange?.(TransactionState.CONNECTING);
     
+    // Debug: Log connection attempt
+    console.log('Attempting to get wallet client...');
+    console.log('Config:', config);
+    
     // Try to get wallet client from Wagmi
     let client;
     try {
       client = await getWalletClient(config);
+      console.log('Wallet client obtained:', !!client);
     } catch (connectorError: any) {
-      // If getWalletClient fails due to connector issues, try alternative approach
-      if (connectorError.message?.includes('getChainId is not a function')) {
+      console.error('getWalletClient failed:', connectorError);
+      
+      // Enhanced error handling for different connector issues
+      if (connectorError.message?.includes('Connector not connected')) {
+        throw new WalletError('Please connect your Farcaster wallet first. Go to the Wallet tab and click "Connect Farcaster".');
+      } else if (connectorError.message?.includes('getChainId is not a function')) {
         throw new WalletError('Wallet connection issue. Please try reconnecting your wallet.');
+      } else if (connectorError.message?.includes('User rejected')) {
+        throw new WalletError('Connection was rejected. Please try again.');
       }
-      throw connectorError;
+      
+      // Log the full error for debugging
+      console.error('Full connector error:', connectorError);
+      throw new WalletError(`Connection failed: ${connectorError.message || 'Unknown error'}`);
     }
     
     if (!client) {
-      throw new WalletError('Wallet not connected');
+      throw new WalletError('Wallet not connected. Please connect your Farcaster wallet first.');
     }
     
     onStateChange?.(TransactionState.CONFIRMING);
