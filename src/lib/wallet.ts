@@ -10,9 +10,26 @@ declare global {
   }
 }
 
-// Contract configuration
-export const CONTRACT_ADDRESS = '0x0FCe1a892C3F166A4ea81D0eA7Bcf85759351D01'; // Deployed on Base Mainnet
-export const CONTRACT_ABI = [{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":true,"internalType":"uint256","name":"mode","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"score","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"QuizCompleted","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":true,"internalType":"uint256","name":"mode","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"entryFee","type":"uint256"}],"name":"QuizStarted","type":"event"},{"inputs":[],"name":"CHALLENGE_FEE","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"CLASSIC_FEE","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"TIME_MODE_FEE","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"enum QuizTriviaEntry.QuizMode","name":"mode","type":"uint8"}],"name":"getRequiredFee","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"pure","type":"function"},{"inputs":[],"name":"getStats","outputs":[{"internalType":"uint256","name":"total","type":"uint256"},{"internalType":"uint256","name":"classic","type":"uint256"},{"internalType":"uint256","name":"time","type":"uint256"},{"internalType":"uint256","name":"challenge","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserQuizCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"enum QuizTriviaEntry.QuizMode","name":"","type":"uint8"}],"name":"modeCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"enum QuizTriviaEntry.QuizMode","name":"mode","type":"uint8"},{"internalType":"uint256","name":"score","type":"uint256"}],"name":"recordQuizCompletion","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"enum QuizTriviaEntry.QuizMode","name":"mode","type":"uint8"}],"name":"startQuiz","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[],"name":"totalQuizzes","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"userQuizCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"withdraw","outputs":[],"stateMutability":"nonpayable","type":"function"}] as const;
+// Contract configuration - Updated for signature-based contract
+export const CONTRACT_ADDRESS = '0x9bA64Ef81372f9A0dFB331eaA830B075162D1b66'; // Will be updated after deployment
+export const CONTRACT_ABI = [
+  {"inputs":[],"stateMutability":"nonpayable","type":"constructor"},
+  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":true,"internalType":"uint256","name":"mode","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"score","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"QuizCompleted","type":"event"},
+  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":true,"internalType":"uint256","name":"mode","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"},{"indexed":false,"internalType":"bytes32","name":"signatureHash","type":"bytes32"}],"name":"QuizStarted","type":"event"},
+  {"inputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"enum QuizTriviaSignature.QuizMode","name":"mode","type":"uint8"},{"internalType":"uint256","name":"timestamp","type":"uint256"},{"internalType":"uint256","name":"nonce","type":"uint256"}],"name":"getMessageHash","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"pure","type":"function"},
+  {"inputs":[],"name":"getStats","outputs":[{"internalType":"uint256","name":"total","type":"uint256"},{"internalType":"uint256","name":"classic","type":"uint256"},{"internalType":"uint256","name":"time","type":"uint256"},{"internalType":"uint256","name":"challenge","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserNonce","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserQuizCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"enum QuizTriviaSignature.QuizMode","name":"","type":"uint8"}],"name":"modeCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"enum QuizTriviaSignature.QuizMode","name":"mode","type":"uint8"},{"internalType":"uint256","name":"score","type":"uint256"}],"name":"recordQuizCompletion","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"internalType":"enum QuizTriviaSignature.QuizMode","name":"mode","type":"uint8"},{"internalType":"uint256","name":"timestamp","type":"uint256"},{"internalType":"bytes","name":"signature","type":"bytes"}],"name":"startQuizWithSignature","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[],"name":"totalQuizzes","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"name":"usedSignatures","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"userNonce","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"userQuizCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"withdraw","outputs":[],"stateMutability":"nonpayable","type":"function"}
+] as const;
 
 // Quiz modes matching the smart contract
 export enum QuizMode {
@@ -173,9 +190,9 @@ export async function getContract(provider: ethers.BrowserProvider) {
 }
 
 /**
- * Start a quiz with Farcaster wallet transaction (using Wagmi)
+ * Start a quiz with signature-based authentication (NO PAYMENT REQUIRED)
  */
-export async function startQuizTransactionWithWagmi(
+export async function startQuizWithSignature(
   mode: QuizMode,
   config: any,
   onStateChange?: (state: TransactionState) => void
@@ -184,7 +201,7 @@ export async function startQuizTransactionWithWagmi(
     onStateChange?.(TransactionState.CONNECTING);
     
     // Debug: Log connection attempt
-    console.log('Attempting to get wallet client...');
+    console.log('Attempting to get wallet client for signature...');
     console.log('Config:', config);
     
     // Try to get wallet client from Wagmi
@@ -215,21 +232,34 @@ export async function startQuizTransactionWithWagmi(
     
     onStateChange?.(TransactionState.CONFIRMING);
     
-    // Encode the startQuiz function call
-    const txData = encodeFunctionData({
-      abi: CONTRACT_ABI,
-      functionName: 'startQuiz',
-      args: [mode],
+    // Get user address and current nonce
+    const userAddress = client.account.address;
+    const timestamp = BigInt(Math.floor(Date.now() / 1000));
+    
+    // Get user's current nonce from contract
+    const contract = await getContract(new ethers.BrowserProvider(client.transport));
+    const nonce = await contract.getUserNonce(userAddress);
+    
+    // Create message hash for signing
+    const messageHash = await contract.getMessageHash(userAddress, mode, timestamp, nonce);
+    
+    // Sign the message hash
+    const signature = await client.signMessage({
+      message: { raw: messageHash }
     });
     
-    // Convert fee to wei properly - avoid scientific notation
-    const feeInWei = getRequiredFeeInWei(mode);
+    // Encode the startQuizWithSignature function call
+    const txData = encodeFunctionData({
+      abi: CONTRACT_ABI,
+      functionName: 'startQuizWithSignature',
+      args: [Number(mode), BigInt(timestamp), signature],
+    });
     
-    // Send transaction using Farcaster wallet
+    // Send transaction using Farcaster wallet (NO VALUE REQUIRED)
     const txHash = await client.sendTransaction({
       to: CONTRACT_ADDRESS as `0x${string}`,
       data: txData,
-      value: feeInWei,
+      value: BigInt(0), // NO PAYMENT REQUIRED
       chain: null,
     });
     
@@ -248,10 +278,12 @@ export async function startQuizTransactionWithWagmi(
       throw new WalletError('Transaction rejected by user');
     } else if (error.code === -32603) {
       throw new WalletError('Transaction failed. Please try again.');
-    } else if (error.message?.includes('insufficient funds')) {
-      throw new WalletError('Insufficient funds for transaction');
-    } else if (error.message?.includes('gas')) {
-      throw new WalletError('Transaction failed due to gas issues');
+    } else if (error.message?.includes('Signature expired')) {
+      throw new WalletError('Signature expired. Please try again.');
+    } else if (error.message?.includes('Invalid signature')) {
+      throw new WalletError('Invalid signature. Please try again.');
+    } else if (error.message?.includes('Signature already used')) {
+      throw new WalletError('Signature already used. Please try again.');
     } else if (error.message?.includes('getChainId is not a function')) {
       throw new WalletError('Wallet connection issue. Please try reconnecting your wallet.');
     }
@@ -261,98 +293,16 @@ export async function startQuizTransactionWithWagmi(
 }
 
 /**
- * Get required fee for quiz mode
- * Note: Using hardcoded values since getRequiredFee is a pure function
- * In a real implementation, you might want to call the contract's fee functions
- */
-function getRequiredFeeForMode(mode: QuizMode): number {
-  switch (mode) {
-    case QuizMode.CLASSIC:
-      return 0.0000001; // 0.0000001 ETH
-    case QuizMode.TIME_MODE:
-      return 0.0000001; // 0.0000001 ETH
-    case QuizMode.CHALLENGE:
-      return 0.0000001; // 0.0000001 ETH
-    default:
-      return 0.0000001;
-  }
-}
-
-/**
- * Get required fee as BigInt in wei (avoids decimal precision issues)
- */
-export function getRequiredFeeInWei(mode: QuizMode): bigint {
-  const fee = getRequiredFeeForMode(mode);
-  // Convert to wei using precise calculation to avoid scientific notation
-  return BigInt(Math.floor(fee * 1000000000000000000)); // 1e18
-}
-
-/**
- * Get required fee from contract (alternative approach)
- */
-export async function getRequiredFeeFromContract(provider: ethers.BrowserProvider, mode: QuizMode): Promise<bigint> {
-  const contract = await getContract(provider);
-  
-  // Since getRequiredFee is pure, we can call it without sending a transaction
-  try {
-    const fee = await contract.getRequiredFee(mode);
-    return fee;
-  } catch (error) {
-    console.warn('Failed to get fee from contract, using hardcoded value:', error);
-    return BigInt(Math.floor(getRequiredFeeForMode(mode) * 1e18));
-  }
-}
-
-/**
- * Start a quiz with blockchain transaction (legacy method)
+ * Legacy function - now uses signature-based authentication
+ * @deprecated Use startQuizWithSignature instead
  */
 export async function startQuizTransaction(
   mode: QuizMode,
   onStateChange?: (state: TransactionState) => void
 ): Promise<string> {
-  try {
-    onStateChange?.(TransactionState.CONNECTING);
-    
-    // Connect wallet
-    const provider = await connectWallet();
-    const contract = await getContract(provider);
-    
-    // Get required fee - use hardcoded values since getRequiredFee is pure
-    const requiredFee = getRequiredFeeForMode(mode);
-    
-    onStateChange?.(TransactionState.CONFIRMING);
-    
-    // Start the transaction
-    const tx = await contract.startQuiz(mode, {
-      value: requiredFee
-    });
-    
-    // Wait for confirmation
-    const receipt = await tx.wait();
-    
-    onStateChange?.(TransactionState.SUCCESS);
-    
-    return receipt.transactionHash;
-  } catch (error: any) {
-    onStateChange?.(TransactionState.ERROR);
-    
-    if (error instanceof WalletError) {
-      throw error;
-    }
-    
-    // Handle common error cases
-    if (error.code === 4001) {
-      throw new WalletError('Transaction rejected by user');
-    } else if (error.code === -32603) {
-      throw new WalletError('Transaction failed. Please try again.');
-    } else if (error.message?.includes('insufficient funds')) {
-      throw new WalletError('Insufficient funds for transaction');
-    } else if (error.message?.includes('gas')) {
-      throw new WalletError('Transaction failed due to gas issues');
-    }
-    
-    throw new WalletError(`Transaction failed: ${error.message}`);
-  }
+  // Redirect to signature-based method
+  console.warn('startQuizTransaction is deprecated. Use startQuizWithSignature instead.');
+  throw new WalletError('This method is deprecated. Please use the new signature-based authentication.');
 }
 
 /**
@@ -385,14 +335,16 @@ export async function getUserQuizStats(userAddress: string): Promise<{
   classicQuizzes: number;
   timeQuizzes: number;
   challengeQuizzes: number;
+  userNonce: number;
 }> {
   try {
     const provider = await connectWallet();
     const contract = await getContract(provider);
     
-    const [quizCount, stats] = await Promise.all([
+    const [quizCount, stats, nonce] = await Promise.all([
       contract.getUserQuizCount(userAddress),
-      contract.getStats()
+      contract.getStats(),
+      contract.getUserNonce(userAddress)
     ]);
     
     return {
@@ -400,7 +352,8 @@ export async function getUserQuizStats(userAddress: string): Promise<{
       totalQuizzes: stats.total.toNumber(),
       classicQuizzes: stats.classic.toNumber(),
       timeQuizzes: stats.time.toNumber(),
-      challengeQuizzes: stats.challenge.toNumber()
+      challengeQuizzes: stats.challenge.toNumber(),
+      userNonce: nonce.toNumber()
     };
   } catch (error: any) {
     throw new WalletError(`Failed to get stats: ${error.message}`);

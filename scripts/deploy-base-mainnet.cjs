@@ -2,7 +2,7 @@ require("dotenv").config();
 const { ethers } = require("hardhat");
 
 async function main() {
-  console.log("🚀 Starting QuizTriviaEntry deployment to Base Mainnet...");
+  console.log("🚀 Starting QuizTriviaSignature deployment to Base Mainnet...");
   
   // Check if we have a private key
   if (!process.env.PRIVATE_KEY) {
@@ -13,20 +13,21 @@ async function main() {
   }
   
   // Get the contract factory
-  const QuizTriviaEntry = await ethers.getContractFactory("QuizTriviaEntry");
+  const QuizTriviaSignature = await ethers.getContractFactory("QuizTriviaSignature");
   
   // Deploy the contract
-  console.log("📦 Deploying contract to Base Mainnet...");
-  const contract = await QuizTriviaEntry.deploy();
+  console.log("📦 Deploying signature-based contract to Base Mainnet...");
+  const contract = await QuizTriviaSignature.deploy();
   
   // Wait for deployment
   await contract.waitForDeployment();
   
   const contractAddress = await contract.getAddress();
   
-  console.log("✅ QuizTriviaEntry deployed successfully to Base Mainnet!");
+  console.log("✅ QuizTriviaSignature deployed successfully to Base Mainnet!");
   console.log("📍 Contract Address:", contractAddress);
   console.log("🔗 Base Explorer:", `https://basescan.org/address/${contractAddress}`);
+  console.log("💡 This contract uses signature-based authentication - NO PAYMENT REQUIRED!");
   
   // Verify the deployment by calling a view function
   try {
@@ -49,6 +50,11 @@ async function main() {
   console.log("2. Verify contract on BaseScan:");
   console.log(`   npx hardhat verify --network base ${contractAddress}`);
   console.log("3. Test your app with: npm run dev");
+  console.log("\n💡 Benefits of signature-based approach:");
+  console.log("   - No payment required from users");
+  console.log("   - Better user experience");
+  console.log("   - Still maintains blockchain verification");
+  console.log("   - Prevents replay attacks with nonces");
 }
 
 main().catch((error) => {

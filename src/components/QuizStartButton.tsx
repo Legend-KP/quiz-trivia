@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { QuizMode, TransactionState, startQuizTransactionWithWagmi, formatWalletError, WalletError } from '@/lib/wallet';
+import { QuizMode, TransactionState, startQuizWithSignature, formatWalletError, WalletError } from '@/lib/wallet';
 import { useConfig } from 'wagmi';
 import TransactionModal from './TransactionModal';
 
@@ -50,8 +50,8 @@ const QuizStartButton: React.FC<QuizStartButtonProps> = ({
       setIsModalOpen(true);
       setTransactionState(TransactionState.CONNECTING);
       
-      // Start the blockchain transaction using Farcaster wallet
-      const txHash = await startQuizTransactionWithWagmi(mode, config, (state) => {
+      // Start the quiz with signature-based authentication (NO PAYMENT REQUIRED)
+      const txHash = await startQuizWithSignature(mode, config, (state) => {
         setTransactionState(state);
       });
       

@@ -30,9 +30,9 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
       
       case TransactionState.CONFIRMING:
         return {
-          title: 'Confirm Your Entry',
-          icon: '⏳',
-          message: 'Almost there! Please confirm to lock in your quiz entry.',
+          title: 'Sign Your Entry',
+          icon: '✍️',
+          message: 'Almost there! Please sign the message to verify your quiz entry (no payment required).',
           showSpinner: true
         };
       
@@ -153,7 +153,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
         {state === TransactionState.CONFIRMING && (
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-xs text-blue-800">
-              💡 <strong>Tip:</strong> This transaction only costs about $0.001 in gas fees and creates a permanent record of your quiz participation on the blockchain!
+              💡 <strong>Tip:</strong> This signature creates a permanent record of your quiz participation on the blockchain - no payment required!
             </p>
           </div>
         )}
