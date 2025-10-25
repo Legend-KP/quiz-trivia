@@ -804,6 +804,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onR
 };
 
 // Time Mode (45s) Component
+// Time Mode (45s) Component with Question Shuffling
 const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
   const [_sessionId] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(45);
@@ -817,6 +818,16 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
   const [showResults, setShowResults] = useState(false);
   const [timeLeaderboard, setTimeLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
+
+  // Utility function to shuffle an array using Fisher-Yates algorithm
+  const shuffleArray = useCallback((array: QuizQuestion[]): QuizQuestion[] => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }, []);
 
   const fetchTimeLeaderboard = useCallback(async () => {
     try {
@@ -852,15 +863,24 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
           timeLimit: 45,
           explanation: String(q.explanation ?? ''),
         } as QuizQuestion)).filter((q: QuizQuestion) => q.question && q.options.length >= 2);
+        
         if (normalized.length > 0) {
-          setQuestions((prev) => [...prev, ...normalized]);
+          // ✨ SHUFFLE the normalized questions before adding to state
+          const shuffledQuestions = shuffleArray(normalized);
+          setQuestions((prev) => [...prev, ...shuffledQuestions]);
           return;
         }
       }
       // Fallback to local questions if API yields nothing
-      setQuestions((prev) => prev.length === 0 ? [...prev, ...TIME_MODE_FALLBACK_QUESTIONS] : prev);
-    } catch (_e) {}
-  }, []);
+      // ✨ SHUFFLE fallback questions before using them
+      const shuffledFallback = shuffleArray(TIME_MODE_FALLBACK_QUESTIONS);
+      setQuestions((prev) => prev.length === 0 ? [...prev, ...shuffledFallback] : prev);
+    } catch (_e) {
+      // On error, use shuffled fallback questions
+      const shuffledFallback = shuffleArray(TIME_MODE_FALLBACK_QUESTIONS);
+      setQuestions((prev) => prev.length === 0 ? [...prev, ...shuffledFallback] : prev);
+    }
+  }, [shuffleArray]);
 
   const startRun = useCallback(async () => {
     try {
@@ -874,11 +894,19 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
       // setSessionId(d.sessionId);
       setTimeLeft(d.durationSec || 45);
       setStarted(true);
-      if (questions.length < 5) fetchMoreQuestions();
+      
+      // ✨ Fetch and shuffle questions when starting the game
+      if (questions.length < 5) {
+        await fetchMoreQuestions();
+      } else {
+        // ✨ If questions already exist, shuffle them for a new game
+        setQuestions((prev) => shuffleArray(prev));
+        setQIndex(0); // Reset to first question
+      }
     } catch (_e) {
       setError('Network error');
     }
-  }, [context?.user?.fid, fetchMoreQuestions, questions.length]);
+  }, [context?.user?.fid, fetchMoreQuestions, questions.length, shuffleArray]);
 
   // countdown
   useEffect(() => {
