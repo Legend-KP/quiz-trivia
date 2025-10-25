@@ -298,6 +298,19 @@ export async function startQuizWithSignature(
       nonce = await Promise.race([noncePromise, timeoutPromise]);
       console.log('✅ FRESH nonce from contract:', nonce.toString());
       console.log('🔑 This ensures signature matches contract expectations');
+      console.log('📝 Contract will use this nonce for verification');
+      
+      // 🔑 ADDITIONAL FIX: Add small delay to ensure nonce is fresh
+      console.log('⏳ Waiting 1 second to ensure nonce is fresh...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Get nonce again to ensure it's truly fresh
+      const freshNonce = await contract.getUserNonce(userAddress);
+      if (freshNonce.toString() !== nonce.toString()) {
+        console.log('🔄 Nonce changed during wait, using fresh nonce:', freshNonce.toString());
+        nonce = freshNonce;
+      }
+      
     } catch (contractError) {
       const errorMessage = contractError instanceof Error ? contractError.message : 'Unknown error';
       console.warn('⚠️ Contract call failed, using default nonce 0:', errorMessage);
