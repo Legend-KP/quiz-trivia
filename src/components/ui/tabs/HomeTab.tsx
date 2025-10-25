@@ -818,6 +818,7 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
   const [showResults, setShowResults] = useState(false);
   const [timeLeaderboard, setTimeLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
+  const { actions } = useMiniApp();
 
   // Utility function to shuffle an array using Fisher-Yates algorithm
   const shuffleArray = useCallback((array: QuizQuestion[]): QuizQuestion[] => {
@@ -1089,6 +1090,43 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
                 </div>
               </div>
             )}
+
+            {/* Action Buttons */}
+            <div className="mt-6 flex flex-col items-center space-y-4">
+              <button
+                onClick={async () => {
+                  try {
+                    await actions.composeCast({
+                      text: `I just played Quiz Trivia Time Mode! ⏱️ I scored ${correctCount} correct answers in 45 seconds. Come try it:`,
+                      embeds: [
+                        context?.user?.fid
+                          ? `${APP_URL}/share/${context.user.fid}`
+                          : `${APP_URL}`,
+                      ],
+                    });
+                  } catch (err) {
+                    console.error('Failed to open Farcaster composer:', err);
+                    const text = encodeURIComponent(`I just played Quiz Trivia Time Mode! ⏱️ I scored ${correctCount} correct answers in 45 seconds. Come try it:`);
+                    const url = encodeURIComponent(
+                      context?.user?.fid ? `${APP_URL}/share/${context.user.fid}` : `${APP_URL}`
+                    );
+                    const warpcastUrl = `https://warpcast.com/~/compose?text=${text}%20${url}`;
+                    if (typeof window !== 'undefined') {
+                      window.open(warpcastUrl, '_blank', 'noopener,noreferrer');
+                    }
+                  }
+                }}
+                className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200"
+              >
+                📣 Share on Farcaster
+              </button>
+              <button
+                onClick={onExit}
+                className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200"
+              >
+                🏠 Back to Home
+              </button>
+            </div>
           </div>
         </div>
       </div>
