@@ -215,12 +215,28 @@ export async function startQuizWithSignature(
     
     onStateChange?.(TransactionState.CONFIRMING);
     
+    // Verify we're on the correct network
+    const network = await client.getChainId();
+    if (network !== 8453) { // Base Mainnet
+      throw new WalletError('Please switch to Base network to start quizzes.');
+    }
+    
     // Get user address and current nonce
     const userAddress = client.account.address;
     const timestamp = BigInt(Math.floor(Date.now() / 1000));
     
     // Get user's current nonce from contract
     const contract = await getContract(new ethers.BrowserProvider(client.transport));
+    
+    // Test contract connection first
+    try {
+      const nonce = await contract.getUserNonce(userAddress);
+      console.log('✅ Contract connection successful, nonce:', nonce.toString());
+    } catch (contractError) {
+      console.error('❌ Contract connection failed:', contractError);
+      throw new WalletError('Unable to connect to quiz system. Please try again.');
+    }
+    
     const nonce = await contract.getUserNonce(userAddress);
     
     console.log('Debug info:', {
@@ -292,9 +308,11 @@ export async function startQuizWithSignature(
     } else if (error.message?.includes('getChainId is not a function')) {
       throw new WalletError('Wallet connection issue. Please try reconnecting your wallet.');
     } else if (error.message?.includes('missing revert data')) {
-      throw new WalletError('Contract call failed. Please check if the contract is deployed correctly.');
+      throw new WalletError('Unable to start quiz. Please try again in a moment.');
     } else if (error.message?.includes('CALL_EXCEPTION')) {
-      throw new WalletError('Contract call failed. Please verify the contract address and try again.');
+      throw new WalletError('Quiz system is temporarily unavailable. Please try again.');
+    } else if (error.message?.includes('execution reverted')) {
+      throw new WalletError('Quiz entry failed. Please try again.');
     }
     
     console.error('Full error details:', error);
