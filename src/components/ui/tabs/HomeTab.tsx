@@ -849,7 +849,7 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
     if (!showResults) return;
     // Initial fetch on entering results only
     fetchTimeLeaderboard();
-  }, [showResults, fetchTimeLeaderboard]);
+  }, [showResults]);
 
   const fetchMoreQuestions = useCallback(async () => {
     try {
@@ -943,7 +943,7 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
       setShowResults(true);
     };
     run();
-  }, [started, timeLeft, submitting, correctCount, totalAnswered, context?.user, fetchTimeLeaderboard]);
+  }, [started, timeLeft, submitting, correctCount, totalAnswered, context?.user]);
 
   const handleAnswer = useCallback((idx: number) => {
     const q = questions[qIndex];
