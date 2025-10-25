@@ -228,10 +228,11 @@ export async function startQuizWithSignature(
     // Get user's current nonce from contract
     // Use a simpler approach - start with nonce 0 if contract call fails
     let nonce = BigInt(0); // Default to 0
+    let contract;
     
     try {
       const provider = new ethers.BrowserProvider(client.transport);
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+      contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
       nonce = await contract.getUserNonce(userAddress);
       console.log('✅ Contract connection successful, nonce:', nonce.toString());
     } catch (contractError) {
@@ -248,18 +249,23 @@ export async function startQuizWithSignature(
       nonce: nonce.toString()
     });
     
-    // Get the exact message hash that the contract will use
-    const contractMessageHash = await contract.getMessageHash(userAddress, Number(mode), timestamp, nonce);
-    console.log('📝 Contract message hash:', contractMessageHash);
-    
     // Create the raw hash that needs to be signed (without Ethereum prefix)
+    // This matches what the contract expects in getMessageHash
     const rawHash = ethers.solidityPackedKeccak256(
       ['address', 'uint8', 'uint256', 'uint256'],
       [userAddress, Number(mode), timestamp, nonce]
     );
     console.log('📝 Raw hash to sign:', rawHash);
     
-    // Sign the raw hash (wallet will add Ethereum prefix)
+    // Get the exact message hash that the contract will use for verification
+    let contractMessageHash;
+    if (contract) {
+      contractMessageHash = await contract.getMessageHash(userAddress, Number(mode), timestamp, nonce);
+      console.log('📝 Contract message hash:', contractMessageHash);
+    }
+    
+    // Sign the raw hash (wallet will add Ethereum prefix automatically)
+    // This should match what the contract expects
     const signature = await client.signMessage({
       message: { raw: rawHash as `0x${string}` }
     });
