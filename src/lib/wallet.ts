@@ -235,7 +235,8 @@ export async function startQuizWithSignature(
       nonce = await contract.getUserNonce(userAddress);
       console.log('✅ Contract connection successful, nonce:', nonce.toString());
     } catch (contractError) {
-      console.warn('⚠️ Contract call failed, using default nonce 0:', contractError.message);
+      const errorMessage = contractError instanceof Error ? contractError.message : 'Unknown error';
+      console.warn('⚠️ Contract call failed, using default nonce 0:', errorMessage);
       console.log('🔍 This is normal for first-time users');
       // Continue with nonce 0 - this is fine for new users
     }
@@ -334,8 +335,8 @@ export async function startQuizWithSignature(
  * @deprecated Use startQuizWithSignature instead
  */
 export async function startQuizTransaction(
-  mode: QuizMode,
-  onStateChange?: (state: TransactionState) => void
+  _mode: QuizMode,
+  _onStateChange?: (state: TransactionState) => void
 ): Promise<string> {
   // Redirect to signature-based method
   console.warn('startQuizTransaction is deprecated. Use startQuizWithSignature instead.');
