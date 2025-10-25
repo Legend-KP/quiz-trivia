@@ -3,7 +3,7 @@ import { getCurrencyAccountsCollection, getCurrencyTxnsCollection } from '~/lib/
 
 export const runtime = 'nodejs';
 
-function isSameUTCDate(a: Date, b: Date) {
+function _isSameUTCDate(a: Date, b: Date) {
   return a.getUTCFullYear() === b.getUTCFullYear() && a.getUTCMonth() === b.getUTCMonth() && a.getUTCDate() === b.getUTCDate();
 }
 
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     const accounts = await getCurrencyAccountsCollection();
     const txns = await getCurrencyTxnsCollection();
     const now = Date.now();
-    const today = new Date(now);
+    const _today = new Date(now);
 
     // Ensure account exists
     await accounts.updateOne(
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
     );
 
     const doc = await accounts.findOne({ fid });
-    const lastSpin = doc?.lastSpinAt ? new Date(doc.lastSpinAt) : undefined;
+    const _lastSpin = doc?.lastSpinAt ? new Date(doc.lastSpinAt) : undefined;
 
     // COMMENTED OUT FOR TESTING - Remove this comment block when going live
     /*

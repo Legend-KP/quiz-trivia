@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getUserNonce } from '../lib/wallet';
 
 interface DebugPanelProps {
@@ -9,7 +9,7 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({ userAddress }) => {
   const [nonce, setNonce] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
 
-  const refreshNonce = async () => {
+  const refreshNonce = useCallback(async () => {
     if (!userAddress) return;
     
     setIsLoading(true);
@@ -21,7 +21,7 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({ userAddress }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userAddress]);
 
   useEffect(() => {
     if (userAddress) {
@@ -30,7 +30,7 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({ userAddress }) => {
       const interval = setInterval(refreshNonce, 5000);
       return () => clearInterval(interval);
     }
-  }, [userAddress]);
+  }, [userAddress, refreshNonce]);
 
   if (!userAddress) {
     return (

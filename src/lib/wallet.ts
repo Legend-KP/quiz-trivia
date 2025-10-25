@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import { getWalletClient } from 'wagmi/actions';
-import { encodeFunctionData } from 'viem';
+// import { encodeFunctionData } from 'viem'; // Removed - not used in simplified approach
 
 // Extend Window interface to include ethereum
 declare global {
@@ -280,8 +280,8 @@ export async function startQuizWithSignature(
     
     // 🔑 SIMPLIFIED APPROACH: Use local nonce management
     // This avoids contract dependency issues
-    let nonce = BigInt(0); // Start with 0 for all users
-    let contract = null; // No contract dependency
+    const nonce = BigInt(0); // Start with 0 for all users
+    const contract = null; // No contract dependency
     
     console.log('📊 Using local nonce management (no contract dependency)');
     console.log('✅ Current nonce:', nonce.toString());
