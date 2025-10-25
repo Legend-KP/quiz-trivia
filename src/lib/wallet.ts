@@ -231,14 +231,23 @@ export async function startQuizWithSignature(
     let contract;
     
     try {
+      // Create provider using the client's transport
       const provider = new ethers.BrowserProvider(client.transport);
       contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
-      nonce = await contract.getUserNonce(userAddress);
+      
+      // Try to get the nonce with a timeout
+      const noncePromise = contract.getUserNonce(userAddress);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Contract call timeout')), 5000)
+      );
+      
+      nonce = await Promise.race([noncePromise, timeoutPromise]);
       console.log('✅ Contract connection successful, nonce:', nonce.toString());
     } catch (contractError) {
       const errorMessage = contractError instanceof Error ? contractError.message : 'Unknown error';
       console.warn('⚠️ Contract call failed, using default nonce 0:', errorMessage);
-      console.log('🔍 This is normal for first-time users');
+      console.log('🔍 This is normal for first-time users or network issues');
+      console.log('🔍 Continuing with nonce 0 - this is safe for new users');
       // Continue with nonce 0 - this is fine for new users
     }
     
@@ -260,17 +269,41 @@ export async function startQuizWithSignature(
     // Get the exact message hash that the contract will use for verification
     let contractMessageHash;
     if (contract) {
-      contractMessageHash = await contract.getMessageHash(userAddress, Number(mode), timestamp, nonce);
-      console.log('📝 Contract message hash:', contractMessageHash);
+      try {
+        contractMessageHash = await contract.getMessageHash(userAddress, Number(mode), timestamp, nonce);
+        console.log('📝 Contract message hash:', contractMessageHash);
+      } catch (hashError) {
+        const errorMessage = hashError instanceof Error ? hashError.message : 'Unknown error';
+        console.warn('⚠️ Contract getMessageHash failed, using fallback:', errorMessage);
+        // Fallback: create the message hash manually
+        contractMessageHash = ethers.solidityPackedKeccak256(
+          ['string', 'bytes32'],
+          ['\x19Ethereum Signed Message:\n32', rawHash]
+        );
+        console.log('📝 Fallback message hash:', contractMessageHash);
+      }
+    } else {
+      // Fallback: create the message hash manually
+      contractMessageHash = ethers.solidityPackedKeccak256(
+        ['string', 'bytes32'],
+        ['\x19Ethereum Signed Message:\n32', rawHash]
+      );
+      console.log('📝 Fallback message hash (no contract):', contractMessageHash);
     }
     
     // Sign the raw hash (wallet will add Ethereum prefix automatically)
     // This should match what the contract expects
-    const signature = await client.signMessage({
-      message: { raw: rawHash as `0x${string}` }
-    });
-    
-    console.log('Signature:', signature);
+    let signature;
+    try {
+      signature = await client.signMessage({
+        message: { raw: rawHash as `0x${string}` }
+      });
+      console.log('✅ Signature created:', signature);
+    } catch (signError) {
+      const errorMessage = signError instanceof Error ? signError.message : 'Unknown error';
+      console.error('❌ Signature creation failed:', errorMessage);
+      throw new WalletError(`Failed to create signature: ${errorMessage}`);
+    }
     
     // Encode the startQuizWithSignature function call
     const txData = encodeFunctionData({
