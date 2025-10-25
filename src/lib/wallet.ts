@@ -284,54 +284,59 @@ export async function startQuizWithSignature(
       // Continue with nonce 0 - this is fine for new users
     }
     
-    console.log('Debug info:', {
-      userAddress,
-      mode: Number(mode),
-      timestamp: timestamp.toString(),
-      nonce: nonce.toString()
-    });
+    console.log('=== SIGNATURE DEBUG ===');
+    console.log('User:', userAddress);
+    console.log('Mode:', Number(mode));
+    console.log('Timestamp:', timestamp.toString());
+    console.log('Nonce:', nonce.toString());
+    console.log('=====================');
     
-    // Create the raw hash that needs to be signed (without Ethereum prefix)
-    // This matches what the contract expects in getMessageHash
-    const rawHash = ethers.solidityPackedKeccak256(
-      ['address', 'uint8', 'uint256', 'uint256'],
-      [userAddress, Number(mode), timestamp, nonce]
-    );
-    console.log('📝 Raw hash to sign:', rawHash);
-    
-    // Get the exact message hash that the contract will use for verification
-    let contractMessageHash;
+    // 🔑 KEY FIX: Get the hash directly from the contract (RECOMMENDED APPROACH)
+    let messageHash;
     if (contract) {
       try {
-        contractMessageHash = await contract.getMessageHash(userAddress, Number(mode), timestamp, nonce);
-        console.log('📝 Contract message hash:', contractMessageHash);
+        messageHash = await contract.getMessageHash(userAddress, Number(mode), timestamp, nonce);
+        console.log('📝 Message hash from contract:', messageHash);
       } catch (hashError) {
         const errorMessage = hashError instanceof Error ? hashError.message : 'Unknown error';
         console.warn('⚠️ Contract getMessageHash failed, using fallback:', errorMessage);
         // Fallback: create the message hash manually
-        contractMessageHash = ethers.solidityPackedKeccak256(
+        const rawHash = ethers.solidityPackedKeccak256(
+          ['address', 'uint8', 'uint256', 'uint256'],
+          [userAddress, Number(mode), timestamp, nonce]
+        );
+        messageHash = ethers.solidityPackedKeccak256(
           ['string', 'bytes32'],
           ['\x19Ethereum Signed Message:\n32', rawHash]
         );
-        console.log('📝 Fallback message hash:', contractMessageHash);
+        console.log('📝 Fallback message hash:', messageHash);
       }
     } else {
       // Fallback: create the message hash manually
-      contractMessageHash = ethers.solidityPackedKeccak256(
+      const rawHash = ethers.solidityPackedKeccak256(
+        ['address', 'uint8', 'uint256', 'uint256'],
+        [userAddress, Number(mode), timestamp, nonce]
+      );
+      messageHash = ethers.solidityPackedKeccak256(
         ['string', 'bytes32'],
         ['\x19Ethereum Signed Message:\n32', rawHash]
       );
-      console.log('📝 Fallback message hash (no contract):', contractMessageHash);
+      console.log('📝 Fallback message hash (no contract):', messageHash);
     }
     
-    // Sign the raw hash (wallet will add Ethereum prefix automatically)
-    // This should match what the contract expects
+    // Sign the message hash (convert to bytes first)
     let signature;
     try {
+      // Convert hash to bytes and sign
+      const messageBytes = ethers.getBytes(messageHash);
       signature = await client.signMessage({
-        message: { raw: rawHash as `0x${string}` }
+        message: { raw: messageBytes }
       });
       console.log('✅ Signature created:', signature);
+      console.log('=== SIGNATURE VERIFICATION DEBUG ===');
+      console.log('Message hash used:', messageHash);
+      console.log('Signature created:', signature);
+      console.log('=====================================');
     } catch (signError) {
       const errorMessage = signError instanceof Error ? signError.message : 'Unknown error';
       console.error('❌ Signature creation failed:', errorMessage);
