@@ -2,17 +2,17 @@
 pragma solidity ^0.8.19;
 
 /**
- * @title QuizTriviaSignature - FIXED VERSION
- * @dev This version correctly verifies signatures from ethers.js
- * @notice Users sign messages to start quizzes - NO PAYMENT REQUIRED
+ * @title QuizTriviaEntry
+ * @dev Smart contract for Quiz Trivia with micro transaction entry fees
+ * @notice Users pay small fees to start quizzes - maintains revenue while providing Web3 experience
  */
-contract QuizTriviaSignature {
+contract QuizTriviaEntry {
     // Events
     event QuizStarted(
         address indexed user,
         uint256 indexed mode,
         uint256 timestamp,
-        bytes32 signatureHash
+        uint256 feePaid
     );
     
     event QuizCompleted(
@@ -32,14 +32,16 @@ contract QuizTriviaSignature {
     // Owner
     address public owner;
     
+    // Entry fees (in wei)
+    uint256 public constant CLASSIC_FEE = 0.000000 ether;      // ~$0.0000001
+    uint256 public constant TIME_MODE_FEE = 0.000000 ether;   // ~$0.0000001
+    uint256 public constant CHALLENGE_FEE = 0.000000 ether;    // ~$0.0000001
+    
     // Quiz statistics
     mapping(address => uint256) public userQuizCount;
     mapping(QuizMode => uint256) public modeCount;
-    mapping(bytes32 => bool) public usedSignatures;
     uint256 public totalQuizzes;
-    
-    // Nonce to prevent replay attacks
-    mapping(address => uint256) public userNonce;
+    uint256 public totalFeesCollected;
     
     // Modifier
     modifier onlyOwner() {
@@ -52,122 +54,51 @@ contract QuizTriviaSignature {
     }
     
     /**
-     * @dev Start a quiz with signature verification (NO PAYMENT)
+     * @dev Start a quiz by paying the entry fee
      * @param mode The quiz mode (0=Classic, 1=Time, 2=Challenge)
-     * @param timestamp The timestamp when user initiated
-     * @param signature The user's signature proving intent to start
      */
-    function startQuizWithSignature(
-        QuizMode mode,
-        uint256 timestamp,
-        bytes memory signature
-    ) external {
+    function startQuiz(QuizMode mode) external payable {
         require(mode <= QuizMode.CHALLENGE, "Invalid mode");
-        require(block.timestamp - timestamp < 300, "Signature expired"); // 5 min validity
         
-        // Create the message hash that was signed
-        bytes32 messageHash = getMessageHash(msg.sender, mode, timestamp, userNonce[msg.sender]);
-        
-        // Verify signature hasn't been used
-        require(!usedSignatures[messageHash], "Signature already used");
-        
-        // 🔑 FIX: Correctly verify the signature
-        address recoveredSigner = recoverSigner(messageHash, signature);
-        require(recoveredSigner == msg.sender, "Invalid signature");
-        
-        // Mark signature as used
-        usedSignatures[messageHash] = true;
-        
-        // Increment nonce to prevent replay
-        userNonce[msg.sender]++;
+        uint256 requiredFee = getRequiredFee(mode);
+        require(msg.value >= requiredFee, "Insufficient payment");
         
         // Update statistics
         userQuizCount[msg.sender]++;
         modeCount[mode]++;
         totalQuizzes++;
+        totalFeesCollected += requiredFee;
         
         // Emit event
-        emit QuizStarted(msg.sender, uint256(mode), block.timestamp, messageHash);
-    }
-    
-    /**
-     * @dev Get the message hash for signing
-     * This creates the raw hash that will be signed by the user
-     */
-    function getMessageHash(
-        address user,
-        QuizMode mode,
-        uint256 timestamp,
-        uint256 nonce
-    ) public pure returns (bytes32) {
-        // Create the raw message hash
-        return keccak256(abi.encodePacked(user, mode, timestamp, nonce));
-    }
-    
-    /**
-     * @dev Get the Ethereum Signed Message hash
-     * This is what ethers.js actually signs
-     */
-    function getEthSignedMessageHash(bytes32 messageHash) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(
-            "\x19Ethereum Signed Message:\n32",
-            messageHash
-        ));
-    }
-    
-    /**
-     * @dev Recover the signer address from a signature
-     * This correctly handles ethers.js signatures
-     */
-    function recoverSigner(
-        bytes32 messageHash,
-        bytes memory signature
-    ) public pure returns (address) {
-        require(signature.length == 65, "Invalid signature length");
+        emit QuizStarted(msg.sender, uint256(mode), block.timestamp, requiredFee);
         
-        // Split signature into r, s, v
-        bytes32 r;
-        bytes32 s;
-        uint8 v;
-        
-        assembly {
-            r := mload(add(signature, 32))
-            s := mload(add(signature, 64))
-            v := byte(0, mload(add(signature, 96)))
+        // Refund excess payment
+        if (msg.value > requiredFee) {
+            payable(msg.sender).transfer(msg.value - requiredFee);
         }
-        
-        // Adjust v if needed
-        if (v < 27) {
-            v += 27;
-        }
-        
-        require(v == 27 || v == 28, "Invalid signature v value");
-        
-        // 🔑 CRITICAL FIX: Add Ethereum Signed Message prefix before recovery
-        bytes32 ethSignedMessageHash = getEthSignedMessageHash(messageHash);
-        
-        // Recover and return the signer
-        return ecrecover(ethSignedMessageHash, v, r, s);
     }
     
     /**
-     * @dev Verify a signature (for testing/debugging)
-     * Returns true if signature is valid for the given signer
+     * @dev Get the required fee for a quiz mode
+     * @param mode The quiz mode
+     * @return The fee in wei
      */
-    function verifySignature(
-        address user,
-        QuizMode mode,
-        uint256 timestamp,
-        uint256 nonce,
-        bytes memory signature
-    ) public pure returns (bool) {
-        bytes32 messageHash = getMessageHash(user, mode, timestamp, nonce);
-        address recoveredSigner = recoverSigner(messageHash, signature);
-        return recoveredSigner == user;
+    function getRequiredFee(QuizMode mode) public pure returns (uint256) {
+        if (mode == QuizMode.CLASSIC) {
+            return CLASSIC_FEE;
+        } else if (mode == QuizMode.TIME_MODE) {
+            return TIME_MODE_FEE;
+        } else if (mode == QuizMode.CHALLENGE) {
+            return CHALLENGE_FEE;
+        }
+        revert("Invalid mode");
     }
     
     /**
      * @dev Record quiz completion
+     * @param user The user who completed the quiz
+     * @param mode The quiz mode
+     * @param score The final score
      */
     function recordQuizCompletion(
         address user,
@@ -180,39 +111,51 @@ contract QuizTriviaSignature {
     
     /**
      * @dev Get user's quiz count
+     * @param user The user address
+     * @return The number of quizzes started by this user
      */
     function getUserQuizCount(address user) external view returns (uint256) {
         return userQuizCount[user];
     }
     
     /**
-     * @dev Get user's current nonce
-     */
-    function getUserNonce(address user) external view returns (uint256) {
-        return userNonce[user];
-    }
-    
-    /**
      * @dev Get total statistics
+     * @return total Total quizzes started
+     * @return classic Total classic quizzes
+     * @return time Total time mode quizzes
+     * @return challenge Total challenge quizzes
+     * @return fees Total fees collected
      */
     function getStats() external view returns (
         uint256 total,
         uint256 classic,
         uint256 time,
-        uint256 challenge
+        uint256 challenge,
+        uint256 fees
     ) {
         return (
             totalQuizzes,
             modeCount[QuizMode.CLASSIC],
             modeCount[QuizMode.TIME_MODE],
-            modeCount[QuizMode.CHALLENGE]
+            modeCount[QuizMode.CHALLENGE],
+            totalFeesCollected
         );
     }
     
     /**
-     * @dev Withdraw contract balance (for any accidental sends)
+     * @dev Withdraw collected fees
      */
     function withdraw() external onlyOwner {
-        payable(owner).transfer(address(this).balance);
+        uint256 balance = address(this).balance;
+        require(balance > 0, "No funds to withdraw");
+        payable(owner).transfer(balance);
+    }
+    
+    /**
+     * @dev Get contract balance
+     * @return The current balance in wei
+     */
+    function getBalance() external view returns (uint256) {
+        return address(this).balance;
     }
 }

@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\QuizTriviaEntry.sol": {
-      "lastModificationDate": 1761420386512,
-      "contentHash": "b476a8535b2b13cf5fcef9004ad79e26",
+      "lastModificationDate": 1761458724809,
+      "contentHash": "7864ff59447a02265182d63b93586058",
       "sourceName": "contracts/QuizTriviaEntry.sol",
       "solcConfig": {
         "version": "0.8.19",
@@ -33,7 +33,7 @@
         "^0.8.19"
       ],
       "artifacts": [
-        "QuizTriviaSignature"
+        "QuizTriviaEntry"
       ]
     },
     "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\QTRewardDistributor.sol": {
@@ -69,6 +69,41 @@
       ],
       "artifacts": [
         "QTRewardDistributor"
+      ]
+    },
+    "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\QuizTriviaEntry-Fixed.sol": {
+      "lastModificationDate": 1761456943333,
+      "contentHash": "ff090a7bb25be105df56e4d9cf3a3a30",
+      "sourceName": "contracts/QuizTriviaEntry-Fixed.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "QuizTriviaSignature"
       ]
     }
   }
