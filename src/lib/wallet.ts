@@ -71,7 +71,7 @@ export async function connectWallet(): Promise<ethers.BrowserProvider> {
   }
 
   try {
-    const provider = new ethers.BrowserProvider(window.ethereum);
+      const provider = new ethers.BrowserProvider(window.ethereum);
     await provider.send('eth_requestAccounts', []);
     return provider;
   } catch (error: any) {
@@ -236,18 +236,91 @@ export async function startQuizWithSignature(
       console.log('📝 Fallback raw message hash (no contract):', rawMessageHash);
     }
     
-    // Sign the raw message hash (wallet will add Ethereum prefix automatically)
+    // 🔑 DEFINITIVE FIX: Handle double prefix issue
     let signature;
     try {
-      // Sign the raw hash - wallet will add Ethereum prefix
-      signature = await client.signMessage({
-        message: { raw: rawMessageHash as `0x${string}` }
-      });
-      console.log('✅ Signature created:', signature);
-      console.log('=== SIGNATURE VERIFICATION DEBUG ===');
-      console.log('Raw message hash used:', rawMessageHash);
-      console.log('Signature created:', signature);
-      console.log('=====================================');
+      console.log('🔍 Attempting signature with different methods...');
+      
+      // Method 1: Try personal_sign (most reliable for raw hashes)
+      try {
+        console.log('📝 Trying personal_sign method...');
+        signature = await window.ethereum.request({
+          method: 'personal_sign',
+          params: [rawMessageHash, userAddress],
+        });
+        console.log('✅ Signature created with personal_sign:', signature);
+      } catch (personalSignError) {
+        console.log('⚠️ personal_sign failed, trying signMessage...');
+        
+        // Method 2: Fallback to signMessage
+        signature = await client.signMessage({
+          message: { raw: rawMessageHash as `0x${string}` }
+        });
+        console.log('✅ Signature created with signMessage:', signature);
+      }
+      
+      // 🔍 DEBUG: Verify signature locally BEFORE sending transaction
+      console.log('=== DEBUG SIGNATURE ===');
+      console.log('Message Hash:', rawMessageHash);
+      console.log('Signature:', signature);
+      console.log('User Address:', userAddress);
+      console.log('Mode:', Number(mode));
+      console.log('Timestamp:', timestamp.toString());
+      console.log('Nonce:', nonce.toString());
+      
+      // Try to verify locally
+      try {
+        const provider = new ethers.BrowserProvider(client.transport);
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+        
+        const isValid = await contract.verifySignature(
+          userAddress,
+          Number(mode),
+          timestamp,
+          nonce,
+          signature
+        );
+        
+        console.log('Local verification:', isValid ? '✅ VALID' : '❌ INVALID');
+        
+        if (!isValid) {
+          console.error('❌ Signature is invalid BEFORE sending transaction!');
+          console.error('This means the signing method is wrong - likely double prefix issue');
+          console.error('🔍 The wallet is adding Ethereum prefix, but contract expects raw hash');
+          
+          // 🔧 ALTERNATIVE FIX: Try signing without raw format
+          console.log('🔄 Trying alternative signing method...');
+          try {
+            const alternativeSignature = await client.signMessage({
+              message: rawMessageHash // Remove { raw: ... } wrapper
+            });
+            console.log('📝 Alternative signature:', alternativeSignature);
+            
+            const alternativeIsValid = await contract.verifySignature(
+              userAddress,
+              Number(mode),
+              timestamp,
+              nonce,
+              alternativeSignature
+            );
+            
+            if (alternativeIsValid) {
+              console.log('✅ Alternative signature is VALID! Using this one.');
+              signature = alternativeSignature;
+            } else {
+              console.log('❌ Alternative signature also invalid');
+            }
+          } catch (altError) {
+            console.log('❌ Alternative signing failed:', altError);
+          }
+        } else {
+          console.log('✅ Signature is valid - ready for transaction');
+        }
+      } catch (verifyError) {
+        console.log('Could not verify locally:', verifyError);
+      }
+      console.log('======================');
+      
     } catch (signError) {
       const errorMessage = signError instanceof Error ? signError.message : 'Unknown error';
       console.error('❌ Signature creation failed:', errorMessage);
