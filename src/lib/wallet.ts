@@ -38,162 +38,60 @@ export const CONTRACT_ABI = [
 export enum QuizMode {
   CLASSIC = 0,
   TIME_MODE = 1,
-  CHALLENGE = 2
+  CHALLENGE = 2,
 }
 
-// Network configuration for Base Mainnet
-export const NETWORK_CONFIG = {
-  chainId: '0x2105', // 8453 in hex
-  chainName: 'Base',
-  rpcUrls: ['https://mainnet.base.org'],
-  blockExplorerUrls: ['https://basescan.org'],
-  nativeCurrency: {
-    name: 'Ethereum',
-    symbol: 'ETH',
-    decimals: 18
-  }
-};
-
-// Transaction states
+// Transaction states for UI feedback
 export enum TransactionState {
   IDLE = 'idle',
   CONNECTING = 'connecting',
   CONFIRMING = 'confirming',
   SUCCESS = 'success',
-  ERROR = 'error'
+  ERROR = 'error',
 }
 
-// Error types
+// Custom error class for wallet-related errors
 export class WalletError extends Error {
-  constructor(message: string, public code?: string) {
+  constructor(message: string) {
     super(message);
     this.name = 'WalletError';
   }
 }
 
 /**
- * Check if MetaMask is installed
- */
-export function isMetaMaskInstalled(): boolean {
-  return typeof window !== 'undefined' && typeof window.ethereum !== 'undefined';
-}
-
-/**
- * Check if Farcaster Mini App is available
- */
-export function isFarcasterMiniAppAvailable(): boolean {
-  return typeof window !== 'undefined' && 
-    ((window as any).farcaster?.miniApp || 
-     (window as any).farcaster?.context ||
-     typeof (window as any).farcaster !== 'undefined');
-}
-
-/**
- * Request account access and get signer
+ * Connect to wallet and get provider
  */
 export async function connectWallet(): Promise<ethers.BrowserProvider> {
-  // Check for Farcaster Mini App first
-  if (isFarcasterMiniAppAvailable()) {
-    try {
-      // Use Farcaster Mini App provider
-      const farcaster = (window as any).farcaster;
-      if (farcaster?.miniApp?.getEthereumProvider) {
-        const provider = farcaster.miniApp.getEthereumProvider();
-        const ethersProvider = new ethers.BrowserProvider(provider);
-        
-        // Check if we're on the correct network
-        const network = await ethersProvider.getNetwork();
-        if (Number(network.chainId) !== 8453) { // Base Mainnet chain ID
-          await switchToBaseMainnet();
-        }
-        
-        return ethersProvider;
-      }
-    } catch (error: any) {
-      console.warn('Farcaster Mini App connection failed:', error);
-    }
+  if (typeof window === 'undefined') {
+    throw new WalletError('Wallet connection not available on server side');
   }
 
-  // Check for Farcaster Frame provider
-  if (typeof window !== 'undefined' && window.ethereum) {
-    try {
-      // Use Farcaster Frame provider
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      
-    // Check if we're on the correct network
-    const network = await provider.getNetwork();
-    if (Number(network.chainId) !== 8453) { // Base Mainnet chain ID
-      await switchToBaseMainnet();
-    }
-    
+  if (!window.ethereum) {
+    throw new WalletError('No wallet found. Please install MetaMask or connect your Farcaster wallet.');
+  }
+
+  try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    await provider.send('eth_requestAccounts', []);
     return provider;
   } catch (error: any) {
-      console.warn('Farcaster Frame connection failed:', error);
-  }
-  }
-
-  throw new WalletError('No Farcaster wallet found. Please use Farcaster to continue.');
-}
-
-/**
- * Switch to Base Mainnet network
- */
-export async function switchToBaseMainnet(): Promise<void> {
-  if (typeof window === 'undefined' || !window.ethereum) {
-    throw new WalletError('No wallet provider found');
-  }
-
-  try {
-    await window.ethereum.request({
-      method: 'wallet_switchEthereumChain',
-      params: [{ chainId: NETWORK_CONFIG.chainId }],
-    });
-  } catch (error: any) {
-    // If the network doesn't exist, add it
-    if (error.code === 4902) {
-      try {
-        await window.ethereum.request({
-          method: 'wallet_addEthereumChain',
-          params: [NETWORK_CONFIG],
-        });
-      } catch (addError: any) {
-        throw new WalletError(`Failed to add Base Mainnet network: ${addError.message}`);
-      }
-    } else {
-      throw new WalletError(`Failed to switch to Base Mainnet: ${error.message}`);
+    if (error.code === 4001) {
+      throw new WalletError('User rejected wallet connection');
     }
-  }
-}
-
-/**
- * Get the current account address
- */
-export async function getCurrentAccount(): Promise<string> {
-  if (typeof window === 'undefined' || !window.ethereum) {
-    throw new WalletError('No wallet provider found');
-  }
-
-  try {
-    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-    if (accounts.length === 0) {
-      throw new WalletError('No accounts found. Please connect your Farcaster wallet.');
-    }
-    return accounts[0];
-  } catch (error: any) {
-    throw new WalletError(`Failed to get account: ${error.message}`);
+    throw new WalletError(`Failed to connect wallet: ${error.message}`);
   }
 }
 
 /**
  * Get contract instance
  */
-export async function getContract(provider: ethers.BrowserProvider) {
+export async function getContract(provider: ethers.BrowserProvider): Promise<ethers.Contract> {
   const signer = await provider.getSigner();
   return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 }
 
 /**
- * Start a quiz with signature-based authentication (NO PAYMENT REQUIRED)
+ * Start a quiz with signature verification (NO PAYMENT REQUIRED)
  */
 export async function startQuizWithSignature(
   mode: QuizMode,
@@ -203,29 +101,26 @@ export async function startQuizWithSignature(
   try {
     onStateChange?.(TransactionState.CONNECTING);
     
-    // Debug: Log connection attempt
-    console.log('Attempting to get wallet client for signature...');
-    console.log('Config:', config);
+    console.log('🎮 Starting quiz with signature...');
+    console.log('📝 Mode:', mode);
+    console.log('📝 Config:', config);
     
-    // Try to get wallet client from Wagmi with enhanced error handling
+    // Get wallet client
     let client;
     try {
       client = await getWalletClient(config);
-      console.log('Wallet client obtained:', !!client);
+      console.log('✅ Wallet client obtained');
       
-      // Additional validation for the client
       if (!client) {
         throw new WalletError('No wallet client available. Please connect your Farcaster wallet first.');
       }
       
-      // Check if the client has the required methods and fix if needed
+      // Handle getChainId issues
       if (typeof client.getChainId !== 'function') {
         console.warn('⚠️ Client missing getChainId method, creating fallback...');
-        // Try to get chain ID from the account or use a fallback
         const chainId = client.chain?.id || 8453; // Default to Base Mainnet
         console.log('📝 Using chain ID:', chainId);
         
-        // Create a mock client with the required methods
         const mockClient = {
           ...client,
           getChainId: async () => chainId,
@@ -236,7 +131,6 @@ export async function startQuizWithSignature(
     } catch (connectorError: any) {
       console.error('getWalletClient failed:', connectorError);
       
-      // Enhanced error handling for different connector issues
       if (connectorError.message?.includes('Connector not connected')) {
         throw new WalletError('Please connect your Farcaster wallet first. Go to the Wallet tab and click "Connect Farcaster".');
       } else if (connectorError.message?.includes('getChainId is not a function')) {
@@ -247,7 +141,6 @@ export async function startQuizWithSignature(
         throw new WalletError('Connection was rejected. Please try again.');
       }
       
-      // Log the full error for debugging
       console.error('Full connector error:', connectorError);
       throw new WalletError(`Connection failed: ${connectorError.message || 'Unknown error'}`);
     }
@@ -258,14 +151,13 @@ export async function startQuizWithSignature(
     
     onStateChange?.(TransactionState.CONFIRMING);
     
-    // Verify we're on the correct network
+    // Verify network
     let networkId;
     try {
       networkId = await client.getChainId();
       console.log('📝 Network ID from client:', networkId);
     } catch (networkError) {
       console.warn('⚠️ getChainId failed, using fallback approach:', networkError);
-      // Fallback: try to get chain ID from client.chain or use default
       networkId = client.chain?.id || 8453; // Default to Base Mainnet
       console.log('📝 Using fallback network ID:', networkId);
     }
@@ -299,17 +191,6 @@ export async function startQuizWithSignature(
       console.log('✅ FRESH nonce from contract:', nonce.toString());
       console.log('🔑 This ensures signature matches contract expectations');
       console.log('📝 Contract will use this nonce for verification');
-      
-      // 🔑 ADDITIONAL FIX: Add small delay to ensure nonce is fresh
-      console.log('⏳ Waiting 1 second to ensure nonce is fresh...');
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Get nonce again to ensure it's truly fresh
-      const freshNonce = await contract.getUserNonce(userAddress);
-      if (freshNonce.toString() !== nonce.toString()) {
-        console.log('🔄 Nonce changed during wait, using fresh nonce:', freshNonce.toString());
-        nonce = freshNonce;
-      }
       
     } catch (contractError) {
       const errorMessage = contractError instanceof Error ? contractError.message : 'Unknown error';
@@ -408,7 +289,6 @@ export async function startQuizWithSignature(
       throw error;
     }
     
-    // Handle common error cases
     if (error.code === 4001) {
       throw new WalletError('Transaction rejected by user');
     } else if (error.code === -32603) {
@@ -435,34 +315,21 @@ export async function startQuizWithSignature(
 }
 
 /**
- * Legacy function - now uses signature-based authentication
- * @deprecated Use startQuizWithSignature instead
- */
-export async function startQuizTransaction(
-  _mode: QuizMode,
-  _onStateChange?: (state: TransactionState) => void
-): Promise<string> {
-  // Redirect to signature-based method
-  console.warn('startQuizTransaction is deprecated. Use startQuizWithSignature instead.');
-  throw new WalletError('This method is deprecated. Please use the new signature-based authentication.');
-}
-
-/**
- * Record quiz completion (optional - can be called by frontend)
+ * Record quiz completion
  */
 export async function recordQuizCompletion(
   userAddress: string,
   mode: QuizMode,
   score: number
-): Promise<string> {
+): Promise<void> {
   try {
     const provider = await connectWallet();
     const contract = await getContract(provider);
     
-    const tx = await contract.recordQuizCompletion(userAddress, mode, score);
-    const receipt = await tx.wait();
+    const tx = await contract.recordQuizCompletion(userAddress, Number(mode), score);
+    await tx.wait();
     
-    return receipt.transactionHash;
+    console.log('✅ Quiz completion recorded:', tx.hash);
   } catch (error: any) {
     throw new WalletError(`Failed to record completion: ${error.message}`);
   }
@@ -554,30 +421,39 @@ export async function getUserQuizStats(userAddress: string): Promise<{
  * Format error message for user display
  */
 export function formatWalletError(error: WalletError): string {
-  switch (error.code) {
-    case '4001':
-      return 'Transaction was cancelled';
-    case '4902':
-      return 'Please switch to Base Sepolia network';
-    default:
-      return error.message || 'An unknown error occurred';
+  return error.message;
+}
+
+/**
+ * Check if wallet is connected
+ */
+export async function isWalletConnected(): Promise<boolean> {
+  try {
+    if (typeof window === 'undefined' || !window.ethereum) {
+      return false;
+    }
+    
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const accounts = await provider.listAccounts();
+    return accounts.length > 0;
+  } catch {
+    return false;
   }
 }
 
 /**
- * Get network name from chain ID
+ * Get current wallet address
  */
-export function getNetworkName(chainId: number): string {
-  switch (chainId) {
-    case 84532:
-      return 'Base Sepolia';
-    case 1:
-      return 'Ethereum Mainnet';
-    case 11155111:
-      return 'Sepolia';
-    default:
-      return `Chain ${chainId}`;
+export async function getCurrentWalletAddress(): Promise<string | null> {
+  try {
+    if (typeof window === 'undefined' || !window.ethereum) {
+      return null;
+    }
+    
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    return await signer.getAddress();
+  } catch {
+    return null;
   }
 }
-
-
