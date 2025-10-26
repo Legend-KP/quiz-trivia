@@ -188,7 +188,7 @@ export async function startQuizTransactionWithWagmi(
 /**
  * Get required fee in wei for a quiz mode
  */
-export function getRequiredFeeInWei(mode: QuizMode): bigint {
+export function getRequiredFeeInWei(_mode: QuizMode): bigint {
   // FREE entry: 0 ETH (no payment required)
   return BigInt(0);
 }

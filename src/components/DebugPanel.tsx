@@ -1,23 +1,23 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getUserNonce } from '../lib/wallet';
+import { getUserQuizCount } from '../lib/wallet';
 
 interface DebugPanelProps {
   userAddress?: string;
 }
 
 export const DebugPanel: React.FC<DebugPanelProps> = ({ userAddress }) => {
-  const [nonce, setNonce] = useState<number>(0);
+  const [quizCount, setQuizCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
 
-  const refreshNonce = useCallback(async () => {
+  const refreshQuizCount = useCallback(async () => {
     if (!userAddress) return;
     
     setIsLoading(true);
     try {
-      const currentNonce = await getUserNonce(userAddress);
-      setNonce(currentNonce);
+      const count = await getUserQuizCount(userAddress);
+      setQuizCount(count);
     } catch (error) {
-      console.error('Failed to get nonce:', error);
+      console.error('Failed to get quiz count:', error);
     } finally {
       setIsLoading(false);
     }
@@ -25,12 +25,12 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({ userAddress }) => {
 
   useEffect(() => {
     if (userAddress) {
-      refreshNonce();
+      refreshQuizCount();
       // Auto-refresh every 5 seconds
-      const interval = setInterval(refreshNonce, 5000);
+      const interval = setInterval(refreshQuizCount, 5000);
       return () => clearInterval(interval);
     }
-  }, [userAddress, refreshNonce]);
+  }, [userAddress, refreshQuizCount]);
 
   if (!userAddress) {
     return (
@@ -64,12 +64,12 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({ userAddress }) => {
       <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>🔍 Debug Panel</div>
       <div>Address: {userAddress.slice(0, 6)}...{userAddress.slice(-4)}</div>
       <div>
-        Current Nonce: {isLoading ? '⏳' : nonce}
+        Quiz Count: {isLoading ? '⏳' : quizCount}
         {isLoading && ' (refreshing...)'}
       </div>
-      <div>Next Quiz: #{nonce + 1}</div>
+      <div>Next Quiz: #{quizCount + 1}</div>
       <button 
-        onClick={refreshNonce}
+        onClick={refreshQuizCount}
         disabled={isLoading}
         style={{ 
           marginTop: '5px', 

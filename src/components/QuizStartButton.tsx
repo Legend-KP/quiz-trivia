@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { QuizMode, TransactionState, startQuizWithSignature, formatWalletError, WalletError } from '@/lib/wallet';
+import { QuizMode, TransactionState, startQuizTransactionWithWagmi, formatWalletError, WalletError } from '@/lib/wallet';
 import { useConfig } from 'wagmi';
 import TransactionModal from './TransactionModal';
 
@@ -51,7 +51,7 @@ const QuizStartButton: React.FC<QuizStartButtonProps> = ({
       setTransactionState(TransactionState.CONNECTING);
       
       // Start the quiz with signature-based authentication (NO PAYMENT REQUIRED)
-      const txHash = await startQuizWithSignature(mode, config, (state) => {
+      const txHash = await startQuizTransactionWithWagmi(mode, config, (state) => {
         setTransactionState(state);
       });
       
