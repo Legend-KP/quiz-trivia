@@ -244,14 +244,24 @@ export async function startQuizWithSignature(
       console.log('Message hash:', rawMessageHash);
       console.log('User address:', userAddress);
       
-      // 🔑 FIX: Use window.ethereum.request with personal_sign
-      // This is more compatible with Farcaster wallet
+      // 🔑 FIX: Try multiple signing methods for Farcaster wallet compatibility
       if (typeof window !== 'undefined' && window.ethereum) {
-        signature = await window.ethereum.request({
-          method: 'personal_sign',
-          params: [rawMessageHash, userAddress],
-        });
-        console.log('✅ Signature created with personal_sign:', signature);
+        try {
+          // Method 1: Try eth_sign (most compatible)
+          signature = await window.ethereum.request({
+            method: 'eth_sign',
+            params: [userAddress, rawMessageHash],
+          });
+          console.log('✅ Signature created with eth_sign:', signature);
+        } catch (ethSignError) {
+          console.log('⚠️ eth_sign failed, trying signMessage...');
+          
+          // Method 2: Fallback to client.signMessage
+          signature = await client.signMessage({
+            message: rawMessageHash
+          });
+          console.log('✅ Signature created with signMessage:', signature);
+        }
       } else {
         throw new Error('window.ethereum not available');
       }
