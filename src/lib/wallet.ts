@@ -131,7 +131,7 @@ export async function startQuizTransactionWithWagmi(
     console.log('💳 User balance:', ethers.formatEther(balance), 'ETH');
     
     // Only check if user has enough for gas (very small amount)
-    const minGasBalance = ethers.parseEther('0.001'); // ~$0.001 for gas
+    const minGasBalance = ethers.parseEther('0.00001'); // ~$0.00001 for gas (Base network is very cheap!)
     if (balance < minGasBalance) {
       throw new WalletError(`Insufficient balance for gas fees. You need at least ${ethers.formatEther(minGasBalance)} ETH for transaction gas.`);
     }
