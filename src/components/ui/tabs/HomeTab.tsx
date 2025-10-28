@@ -6,6 +6,9 @@ import QuizStartButton from '@/components/QuizStartButton';
 import SpinWheel from '@/components/SpinWheel';
 import { QuizMode } from '@/lib/wallet';
 import { useQTClaim } from '~/hooks/useQTClaim';
+import { WeeklyQuizConfig, QuizState, calculateQuizState, getNextQuizStartTime, getQuizEndTime, getQuizIdFromDate, validateQuizConfig } from '@/utils/quizSchedule';
+import { useQuizState } from '@/hooks/useQuizTimer';
+import { WeeklyQuizCard } from '@/components/WeeklyQuizCard';
 
 // Type definitions
 interface QuizQuestion {
@@ -161,41 +164,95 @@ const TIME_MODE_FALLBACK_QUESTIONS: QuizQuestion[] = [
 ];
 
 
-// Sample quiz data with explanations
-const quizData: QuizQuestion[] = [
-  {
-    id: 1,
-    question: "What is the smallest unit of Ether called?",
-    options: ["Gwei", "Satoshi", "Finney", "Wei"],
-    correct: 3, // 0-based index for "Wei" (4th option)
-    timeLimit: 60, // 1 minute in seconds
-    explanation: "Wei is the smallest denomination of Ether, just like a cent is to a dollar."
-  },
-  {
-    id: 2,
-    question: "What does MEV stand for in Ethereum context?",
-    options: ["Most Efficient Validator", "Maximum Extractable Value", "Modular Execution Vault", "Minimal Ethereum Value"],
-    correct: 1, // 0-based index for "Maximum Extractable Value" (2nd option)
-    timeLimit: 60,
-    explanation: "MEV refers to profits miners or validators can extract by reordering or censoring transactions."
-  },
-  {
-    id: 3,
-    question: "Which Ethereum standard enables tokens to hold other tokens (like NFTs owning NFTs)?",
-    options: ["ERC-721", "ERC-20", "ERC-4626", "ERC-998"],
-    correct: 3, // 0-based index for "ERC-998" (4th option)
-    timeLimit: 60,
-    explanation: "ERC-998 is a composable NFT standard allowing NFTs to own both ERC-721 and ERC-20 tokens."
-  },
-  {
-    id: 4,
-    question: "What is a blob in the context of Ethereum&apos;s Proto-Danksharding?",
-    options: ["A fungible token format", "A zero-knowledge proof", "A temporary data package stored off-chain", "A type of validator node"],
-    correct: 2, // 0-based index for "A temporary data package stored off-chain" (3rd option)
-    timeLimit: 60,
-    explanation: "Blobs are large chunks of data stored off-chain to improve scalability, introduced in EIP-4844 as part of Proto-Danksharding."
-  }
-];
+// Weekly Quiz Configuration - UPDATE THIS BEFORE EACH QUIZ!
+const weeklyQuizConfig: WeeklyQuizConfig = {
+  id: "2025-11-05", // Quiz identifier (YYYY-MM-DD format)
+  topic: "DeFi Protocols", // This week's topic
+  startTime: "2025-11-05T18:00:00Z", // Tuesday 6 PM UTC
+  endTime: "2025-11-06T06:00:00Z", // Wednesday 6 AM UTC
+  questions: [
+    {
+      id: 1,
+      question: "What does TVL stand for in DeFi?",
+      options: ["Total Value Locked", "Token Value Limit", "Transaction Volume Limit", "Total Virtual Liquidity"],
+      correct: 0,
+      timeLimit: 45, // 45 seconds per question
+      explanation: "TVL measures the total value of assets locked in DeFi protocols, indicating the size and activity of the ecosystem."
+    },
+    {
+      id: 2,
+      question: "Which protocol pioneered automated market makers (AMMs)?",
+      options: ["Uniswap", "Compound", "MakerDAO", "Aave"],
+      correct: 0,
+      timeLimit: 45,
+      explanation: "Uniswap introduced the constant product formula (x*y=k) that became the foundation for most AMMs."
+    },
+    {
+      id: 3,
+      question: "What is impermanent loss in DeFi?",
+      options: ["Loss from smart contract bugs", "Loss from price volatility in liquidity pools", "Loss from high gas fees", "Loss from MEV attacks"],
+      correct: 1,
+      timeLimit: 45,
+      explanation: "Impermanent loss occurs when the price ratio of tokens in a liquidity pool changes compared to holding them separately."
+    },
+    {
+      id: 4,
+      question: "Which DeFi protocol focuses on lending and borrowing?",
+      options: ["Uniswap", "Compound", "SushiSwap", "Curve"],
+      correct: 1,
+      timeLimit: 45,
+      explanation: "Compound pioneered algorithmic money markets where users can lend and borrow assets with interest rates determined by supply and demand."
+    },
+    {
+      id: 5,
+      question: "What is yield farming?",
+      options: ["Growing crops on blockchain", "Earning rewards by providing liquidity", "Mining cryptocurrency", "Trading futures"],
+      correct: 1,
+      timeLimit: 45,
+      explanation: "Yield farming involves providing liquidity to DeFi protocols in exchange for rewards, often in the form of governance tokens."
+    },
+    {
+      id: 6,
+      question: "Which token is used for governance in Uniswap?",
+      options: ["UNI", "SWAP", "UNI-V2", "UNISWAP"],
+      correct: 0,
+      timeLimit: 45,
+      explanation: "UNI is Uniswap's governance token that allows holders to vote on protocol upgrades and parameter changes."
+    },
+    {
+      id: 7,
+      question: "What is a flash loan?",
+      options: ["A loan with no collateral", "A loan that must be repaid in the same transaction", "A loan with high interest", "A loan for emergencies only"],
+      correct: 1,
+      timeLimit: 45,
+      explanation: "Flash loans allow borrowing without collateral, but the loan must be repaid within the same transaction block."
+    },
+    {
+      id: 8,
+      question: "Which DeFi protocol specializes in stablecoin swaps?",
+      options: ["Uniswap", "Curve", "Balancer", "SushiSwap"],
+      correct: 1,
+      timeLimit: 45,
+      explanation: "Curve Finance is optimized for stablecoin trading with low slippage due to its stable invariant curve."
+    },
+    {
+      id: 9,
+      question: "What is composability in DeFi?",
+      options: ["Building complex interfaces", "Combining different protocols like building blocks", "Creating new tokens", "Optimizing gas usage"],
+      correct: 1,
+      timeLimit: 45,
+      explanation: "Composability allows DeFi protocols to integrate with each other, creating complex financial products from simple building blocks."
+    },
+    {
+      id: 10,
+      question: "Which DeFi protocol introduced liquidity mining?",
+      options: ["Uniswap", "Compound", "MakerDAO", "Synthetix"],
+      correct: 1,
+      timeLimit: 45,
+      explanation: "Compound pioneered liquidity mining by distributing COMP tokens to users who supply or borrow assets on the platform."
+    }
+  ]
+};
 
 // Rules Popup Component
 const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
@@ -253,6 +310,54 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
 
 // Home Page Component
 const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTimeMode, onStartChallenge, onSpinWheel }) => {
+  // Calculate quiz state and countdown
+  const quizState = calculateQuizState(weeklyQuizConfig);
+  const { countdown } = useQuizState({
+    startTime: weeklyQuizConfig.startTime,
+    endTime: weeklyQuizConfig.endTime
+  });
+
+  // Validate quiz configuration
+  useEffect(() => {
+    validateQuizConfig(weeklyQuizConfig);
+  }, []);
+
+  // Check if user has completed this quiz (you'll need to implement this)
+  const [userCompleted, setUserCompleted] = useState(false);
+  const [userScore, setUserScore] = useState<number | undefined>();
+  const [userRank, setUserRank] = useState<number | undefined>();
+  const [participantCount, setParticipantCount] = useState<number | undefined>();
+
+  // Fetch participant count and user status
+  useEffect(() => {
+    const fetchQuizStatus = async () => {
+      try {
+        const response = await fetch(`/api/leaderboard?mode=CLASSIC&quizId=${weeklyQuizConfig.id}`);
+        const data = await response.json();
+        
+        if (data.leaderboard) {
+          setParticipantCount(data.leaderboard.length);
+          
+          // Check if current user has completed this quiz
+          // You'll need to get the current user's FID from context
+          // const currentUserFid = context?.user?.fid;
+          // const userEntry = data.leaderboard.find((entry: any) => entry.fid === currentUserFid);
+          // if (userEntry) {
+          //   setUserCompleted(true);
+          //   setUserScore(userEntry.score);
+          //   setUserRank(userEntry.rank);
+          // }
+        }
+      } catch (error) {
+        console.error('Failed to fetch quiz status:', error);
+      }
+    };
+
+    if (quizState === 'live' || quizState === 'ended') {
+      fetchQuizStatus();
+    }
+  }, [quizState, weeklyQuizConfig.id]);
+
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {/* Gradient Background - Full Frame */}
@@ -268,8 +373,6 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTim
       {/* Content Container */}
       <div className="relative z-10 flex flex-col items-center justify-center h-full px-6 text-center">
         
-
-
         {/* QUIZ TRIVIA - New Font and Enhanced 3D Effect */}
         <div className="relative mb-12">
           <h3 className="text-5xl md:text-7xl font-black text-yellow-400 uppercase tracking-wider relative" style={{
@@ -289,18 +392,26 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTim
           <button onClick={onSpinWheel} className="px-3 py-1 rounded-full bg-yellow-500 text-yellow-900 font-semibold hover:bg-yellow-400 transition">🎰 Spin the Wheel!</button>
         </div>
 
-        {/* Mode Buttons */}
+        {/* Weekly Quiz Card */}
+        <div className="mb-8">
+          <WeeklyQuizCard
+            state={quizState}
+            config={weeklyQuizConfig}
+            countdown={countdown}
+            onStartQuiz={onStartClassic}
+            userCompleted={userCompleted}
+            participantCount={participantCount}
+            userScore={userScore}
+            userRank={userRank}
+          />
+        </div>
+
+        {/* Other Mode Buttons */}
         <div className="space-y-4 w-full max-w-xs">
           <QuizStartButton
             mode={QuizMode.TIME_MODE}
             modeName="Time Mode"
             onQuizStart={onStartTimeMode}
-          />
-
-          <QuizStartButton
-            mode={QuizMode.CLASSIC}
-            modeName="Classic Quiz"
-            onQuizStart={onStartClassic}
           />
 
           <QuizStartButton
@@ -321,10 +432,10 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTim
 
 // Quiz Component
 const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
-  const [started, setStarted] = useState(false); // ⬅️ New: Start screen control
+  const [started, setStarted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(quizData[0].timeLimit);
+  const [timeLeft, setTimeLeft] = useState(weeklyQuizConfig.questions[0].timeLimit); // Use 45 seconds
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [answers, setAnswers] = useState<Answer[]>([]);
@@ -333,7 +444,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
   const [startTime] = useState<number>(Date.now());
 
   const handleAnswerSubmit = useCallback((answerIndex: number | null) => {
-    const question = quizData[currentQuestion];
+    const question = weeklyQuizConfig.questions[currentQuestion];
     const isCorrect = answerIndex === question.correct;
     const newScore = isCorrect ? score + 1 : score - 1;
     
@@ -349,7 +460,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
     setShowResult(true);
 
     // Check if this is the last question
-    if (currentQuestion === quizData.length - 1) {
+    if (currentQuestion === weeklyQuizConfig.questions.length - 1) {
       // Complete the quiz after showing result
       setTimeout(() => {
         const totalTime = Math.floor((Date.now() - startTime) / 1000);
@@ -362,10 +473,10 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
         }], timeString);
       }, 3000);
     } else {
-      // Countdown for next question (10s demo)
+      // Countdown for next question (10s intervals)
       setTimeout(() => {
         setWaitingForNext(true);
-        setNextQuestionTime(10);
+        setNextQuestionTime(10); // 10 seconds between questions
       }, 3000);
     }
   }, [currentQuestion, score, answers, startTime, onComplete]);
@@ -375,7 +486,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
   }, [handleAnswerSubmit]);
 
   useEffect(() => {
-    if (!started) return; // ⬅️ Timer starts only after user clicks Start
+    if (!started) return;
     if (timeLeft > 0 && !showResult && !waitingForNext) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
@@ -390,7 +501,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
       return () => clearTimeout(timer);
     } else if (nextQuestionTime === 0) {
       setCurrentQuestion(currentQuestion + 1);
-      setTimeLeft(quizData[currentQuestion + 1].timeLimit);
+      setTimeLeft(weeklyQuizConfig.questions[currentQuestion + 1].timeLimit);
       setSelectedAnswer(null);
       setShowResult(false);
       setWaitingForNext(false);
@@ -410,26 +521,27 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const question = quizData[currentQuestion];
+  const question = weeklyQuizConfig.questions[currentQuestion];
 
-  // ⬇️ NEW START SCREEN before quiz begins
+  // Start screen before quiz begins
   if (!started) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4 flex items-center justify-center">
         <div className="bg-white rounded-2xl p-8 shadow-2xl text-center max-w-md w-full">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Classic Mode • Quiz 🧠</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Weekly Quiz • {weeklyQuizConfig.topic} 🧠</h2>
           <div className="text-gray-700 space-y-2 mb-6 text-left">
-            <p>📋 The quiz has <strong>4 questions</strong> with <strong>30-minute intervals</strong> between each question.</p>
-            <p>⏳ You’ll get <strong>1 minute</strong> per question — so think fast!</p>
+            <p>📋 The quiz has <strong>10 questions</strong> with <strong>10-second intervals</strong> between each question.</p>
+            <p>⏳ You'll get <strong>45 seconds</strong> per question — so think fast!</p>
             <p>✅ Correct answer = +1 point</p>
             <p>❌ Wrong answer = -1 point</p>
+            <p>🏆 Top 10 winners get QT token rewards!</p>
             <p>🎉 Most importantly — have fun and learn something new!</p>
           </div>
           <button
             onClick={() => setStarted(true)}
             className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all"
           >
-            Start
+            Start Quiz
           </button>
         </div>
       </div>
@@ -445,7 +557,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
             <Clock className="mx-auto mb-4 text-blue-500" size={48} />
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Next Question In:</h2>
             <div className="text-4xl font-bold text-blue-600 mb-4">{formatWaitTime(nextQuestionTime)}</div>
-            <p className="text-gray-600">Question {currentQuestion + 2} of {quizData.length}</p>
+            <p className="text-gray-600">Question {currentQuestion + 2} of {weeklyQuizConfig.questions.length}</p>
             <div className="mt-6 p-4 bg-blue-50 rounded-lg">
               <p className="text-blue-800 font-semibold">Current Score: {score}</p>
             </div>
@@ -460,7 +572,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4">
       <div className="max-w-2xl mx-auto pt-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Quiz Trivia</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Weekly Quiz: {weeklyQuizConfig.topic}</h1>
           <div className="flex justify-center items-center space-x-6 text-white">
             <div className="flex items-center space-x-2">
               <Trophy className="text-yellow-400" size={20} />
@@ -476,12 +588,12 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
         {/* Progress Bar */}
         <div className="mb-6">
           <div className="flex justify-between text-white mb-2">
-            <span>Question {currentQuestion + 1} of {quizData.length}</span>
+            <span>Question {currentQuestion + 1} of {weeklyQuizConfig.questions.length}</span>
           </div>
           <div className="w-full bg-gray-700 rounded-full h-2">
             <div 
               className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${((currentQuestion + 1) / quizData.length) * 100}%` }}
+              style={{ width: `${((currentQuestion + 1) / weeklyQuizConfig.questions.length) * 100}%` }}
             ></div>
           </div>
         </div>
@@ -526,7 +638,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
                   selectedAnswer === question.correct ? 'text-green-600' : 'text-red-600'
                 }`}>
                   {selectedAnswer === question.correct ? '✅ Correct!' : '❌ Wrong!'}
-                  {selectedAnswer === null && ' ⏰ Time’s up!'}
+                  {selectedAnswer === null && ' ⏰ Time\'s up!'}
                 </p>
               </div>
               
@@ -561,7 +673,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onR
   const fetchLeaderboard = useCallback(async () => {
     console.log('🔍 Fetching leaderboard...');
     try {
-      const response = await fetch('/api/leaderboard?mode=CLASSIC');
+      const response = await fetch(`/api/leaderboard?mode=CLASSIC&quizId=${weeklyQuizConfig.id}`);
       const data = await response.json();
       console.log('📥 Leaderboard response:', data);
       
@@ -596,7 +708,8 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onR
       username: context.user.username,
       displayName: context.user.displayName,
       score,
-      totalTime
+      totalTime,
+      quizId: weeklyQuizConfig.id // NEW: Include quiz ID
     });
 
     setSubmitting(true);
@@ -609,6 +722,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onR
         score: score,
         time: totalTime,
         mode: 'CLASSIC',
+        quizId: weeklyQuizConfig.id, // NEW: Include quiz ID for weekly quizzes
       };
 
       console.log('📤 Sending payload:', payload);

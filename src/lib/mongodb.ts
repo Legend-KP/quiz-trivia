@@ -15,6 +15,7 @@ export interface LeaderboardEntry {
   completedAt: number;
   rank?: number;
   mode: 'CLASSIC' | 'TIME_MODE' | 'CHALLENGE';
+  quizId?: string;  // NEW: Weekly quiz identifier (e.g., "2025-11-05")
 }
 
 let client: MongoClient | null = null;
