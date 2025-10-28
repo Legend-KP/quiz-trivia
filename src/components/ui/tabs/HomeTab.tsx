@@ -392,22 +392,23 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTim
           <button onClick={onSpinWheel} className="px-3 py-1 rounded-full bg-yellow-500 text-yellow-900 font-semibold hover:bg-yellow-400 transition">🎰 Spin the Wheel!</button>
         </div>
 
-        {/* Weekly Quiz Card */}
-        <div className="mb-8">
-          <WeeklyQuizCard
-            state={quizState}
-            config={weeklyQuizConfig}
-            countdown={countdown}
-            onStartQuiz={onStartClassic}
-            userCompleted={userCompleted}
-            participantCount={participantCount}
-            userScore={userScore}
-            userRank={userRank}
-          />
-        </div>
-
-        {/* Other Mode Buttons */}
+        {/* Mode Buttons */}
         <div className="space-y-4 w-full max-w-xs">
+          {/* Classic Mode - Weekly Quiz Challenge */}
+          <div className="mb-6">
+            <WeeklyQuizCard
+              state={quizState}
+              config={weeklyQuizConfig}
+              countdown={countdown}
+              onStartQuiz={onStartClassic}
+              userCompleted={userCompleted}
+              participantCount={participantCount}
+              userScore={userScore}
+              userRank={userRank}
+            />
+          </div>
+
+          {/* Other Modes */}
           <QuizStartButton
             mode={QuizMode.TIME_MODE}
             modeName="Time Mode"
