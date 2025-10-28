@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, Trophy, Users, Calendar, ExternalLink } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { WeeklyQuizConfig, QuizState, getTokenReward, formatTokens } from '@/utils/quizSchedule';
 
 interface WeeklyQuizCardProps {

@@ -6,7 +6,7 @@ import QuizStartButton from '@/components/QuizStartButton';
 import SpinWheel from '@/components/SpinWheel';
 import { QuizMode } from '@/lib/wallet';
 import { useQTClaim } from '~/hooks/useQTClaim';
-import { WeeklyQuizConfig, QuizState, calculateQuizState, getNextQuizStartTime, getQuizEndTime, getQuizIdFromDate, validateQuizConfig } from '@/utils/quizSchedule';
+import { WeeklyQuizConfig, calculateQuizState, validateQuizConfig } from '@/utils/quizSchedule';
 import { useQuizState } from '@/hooks/useQuizTimer';
 import { WeeklyQuizCard } from '@/components/WeeklyQuizCard';
 
@@ -323,9 +323,9 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTim
   }, []);
 
   // Check if user has completed this quiz (you'll need to implement this)
-  const [userCompleted, setUserCompleted] = useState(false);
-  const [userScore, setUserScore] = useState<number | undefined>();
-  const [userRank, setUserRank] = useState<number | undefined>();
+  const [userCompleted, _setUserCompleted] = useState(false);
+  const [userScore, _setUserScore] = useState<number | undefined>();
+  const [userRank, _setUserRank] = useState<number | undefined>();
   const [participantCount, setParticipantCount] = useState<number | undefined>();
 
   // Fetch participant count and user status
@@ -356,7 +356,7 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTim
     if (quizState === 'live' || quizState === 'ended') {
       fetchQuizStatus();
     }
-  }, [quizState, weeklyQuizConfig.id]);
+  }, [quizState]);
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
@@ -531,7 +531,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
           <h2 className="text-2xl font-bold text-gray-800 mb-4">Weekly Quiz • {weeklyQuizConfig.topic} 🧠</h2>
           <div className="text-gray-700 space-y-2 mb-6 text-left">
             <p>📋 The quiz has <strong>10 questions</strong> with <strong>10-second intervals</strong> between each question.</p>
-            <p>⏳ You'll get <strong>45 seconds</strong> per question — so think fast!</p>
+            <p>⏳ You&apos;ll get <strong>45 seconds</strong> per question — so think fast!</p>
             <p>✅ Correct answer = +1 point</p>
             <p>❌ Wrong answer = -1 point</p>
             <p>🏆 Top 10 winners get QT token rewards!</p>
