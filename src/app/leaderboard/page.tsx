@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Trophy, Users, Calendar, Clock, Share2 } from 'lucide-react';
 import Link from 'next/link';
 import { useMiniApp } from '@neynar/react';
-import { getTokenReward, formatTokens } from '@/utils/quizSchedule';
 
 interface LeaderboardEntry {
   fid: number;
@@ -206,12 +205,6 @@ export default function PublicLeaderboard() {
                   <div className="text-right">
                     <div className="text-xl font-bold text-blue-600">{player.score}</div>
                     <div className="text-xs text-gray-500">points</div>
-                    {player.rank && player.rank <= 10 && (
-                      <div className="flex items-center justify-end gap-1 text-yellow-600 font-bold text-sm mt-1">
-                        <span>💰</span>
-                        <span>{formatTokens(getTokenReward(player.rank))} QT</span>
-                      </div>
-                    )}
                     <div className="text-xs text-gray-400">
                       {new Date(player.completedAt).toLocaleDateString()}
                     </div>

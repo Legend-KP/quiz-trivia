@@ -8,17 +8,13 @@ interface QuizStartButtonProps {
   modeName: string;
   onQuizStart: () => void;
   className?: string;
-  state?: 'upcoming' | 'live' | 'ended' | 'completed'; // NEW: Quiz state
-  disabled?: boolean; // NEW: Disabled state
 }
 
 const QuizStartButton: React.FC<QuizStartButtonProps> = ({
   mode,
   modeName,
   onQuizStart,
-  className = "",
-  state = 'live', // Default to live for backward compatibility
-  disabled = false
+  className = ""
 }) => {
   const [transactionState, setTransactionState] = useState<TransactionState>(TransactionState.IDLE);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -94,16 +90,6 @@ const QuizStartButton: React.FC<QuizStartButtonProps> = ({
   };
 
   const getButtonText = () => {
-    // Handle state-based text first
-    if (state === 'upcoming') {
-      return 'Starts Soon';
-    } else if (state === 'ended') {
-      return 'Quiz Ended';
-    } else if (state === 'completed') {
-      return 'Completed ✓';
-    }
-    
-    // Fallback to mode-based text for live state
     switch (mode) {
       case QuizMode.CLASSIC:
         return 'Classic Quiz 🧠';
@@ -117,14 +103,6 @@ const QuizStartButton: React.FC<QuizStartButtonProps> = ({
   };
 
   const getButtonGradient = () => {
-    // Handle state-based styling first
-    if (state === 'upcoming' || state === 'ended') {
-      return 'from-gray-400 to-gray-500 hover:from-gray-400 hover:to-gray-500';
-    } else if (state === 'completed') {
-      return 'from-green-500 to-green-600 hover:from-green-500 hover:to-green-600';
-    }
-    
-    // Fallback to mode-based styling for live state
     switch (mode) {
       case QuizMode.CLASSIC:
         return 'from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700';
@@ -137,23 +115,12 @@ const QuizStartButton: React.FC<QuizStartButtonProps> = ({
     }
   };
 
-  const isButtonDisabled = () => {
-    return disabled || state === 'upcoming' || state === 'ended' || state === 'completed' || isModalOpen;
-  };
-
-  const getButtonAnimation = () => {
-    if (state === 'live' && !disabled) {
-      return 'animate-pulse';
-    }
-    return '';
-  };
-
   return (
     <>
       <button
         onClick={handleStartQuiz}
-        disabled={isButtonDisabled()}
-        className={`w-full bg-gradient-to-r ${getButtonGradient()} text-white font-bold py-4 px-8 rounded-xl text-xl transform hover:scale-105 transition-all duration-200 shadow-2xl disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none ${getButtonAnimation()} ${className}`}
+        disabled={isModalOpen}
+        className={`w-full bg-gradient-to-r ${getButtonGradient()} text-white font-bold py-4 px-8 rounded-xl text-xl transform hover:scale-105 transition-all duration-200 shadow-2xl disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none ${className}`}
       >
         {getButtonText()}
         {isModalOpen && (

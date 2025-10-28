@@ -20,23 +20,11 @@ const globalFallbackStorage: LeaderboardEntry[] = [];
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const mode = searchParams.get('mode') as 'CLASSIC' | 'TIME_MODE' | 'CHALLENGE' | null;
-  const quizId = searchParams.get('quizId'); // NEW: Filter by quiz ID
   
   try {
     // Try MongoDB first
     const collection = await getLeaderboardCollection();
-    const query: any = {};
-    
-    // Add mode filter if provided
-    if (mode) {
-      query.mode = mode;
-    }
-    
-    // Add quizId filter if provided (for weekly quizzes)
-    if (quizId) {
-      query.quizId = quizId;
-    }
-    
+    const query = mode ? { mode } : {};
     const leaderboard = await collection.find(query).toArray();
 
     const sortedLeaderboard = leaderboard.sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
@@ -73,7 +61,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { fid, username, displayName, pfpUrl, score, time, mode, quizId } = body; // Added quizId
+    const { fid, username, displayName, pfpUrl, score, time, mode } = body;
 
     if (!fid || !username || score === undefined || !mode) {
       return NextResponse.json({ error: 'Missing required fields: fid, username, score, mode' }, { status: 400 });
@@ -89,14 +77,10 @@ export async function POST(request: Request) {
       timeInSeconds: timeStringToSeconds(time),
       completedAt: Date.now(),
       mode,
-      quizId, // NEW: Include quizId for weekly quizzes
     };
 
     const collection = await getLeaderboardCollection();
-    
-    // For weekly quizzes, use quizId in the upsert query
-    const upsertQuery = quizId ? { fid, mode, quizId } : { fid, mode };
-    await collection.updateOne(upsertQuery, { $set: newEntry }, { upsert: true });
+    await collection.updateOne({ fid, mode }, { $set: newEntry }, { upsert: true });
 
     // Get leaderboard for the specific mode
     const leaderboard = await collection.find({ mode }).toArray();
@@ -116,7 +100,6 @@ export async function POST(request: Request) {
       lastUpdated: new Date().toISOString(),
       storage: 'mongodb',
       mode,
-      quizId, // Include quizId in response
     });
       } catch (_mongodbError) {
       console.error('MongoDB POST failed:', _mongodbError);
