@@ -11,7 +11,7 @@ export const runtime = 'nodejs';
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const quizId = searchParams.get('quizId');
-  const mode = searchParams.get('mode') || 'CLASSIC';
+  const mode = searchParams.get('mode') as 'CLASSIC' | 'TIME_MODE' | 'CHALLENGE' || 'CLASSIC';
 
   if (!quizId) {
     return NextResponse.json({ error: 'quizId parameter is required' }, { status: 400 });
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
 
   try {
     const collection = await getLeaderboardCollection();
-    const query = { mode, quizId };
+    const query: any = { mode, quizId };
     
     const leaderboard = await collection.find(query).toArray();
     
