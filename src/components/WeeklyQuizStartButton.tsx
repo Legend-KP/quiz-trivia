@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { QuizMode, TransactionState, startQuizTransactionWithWagmi, formatWalletError, WalletError } from '~/lib/wallet';
 import { useConfig } from 'wagmi';
 import TransactionModal from './TransactionModal';
-import { QuizState } from '~/lib/weeklyQuiz';
+import { QuizState, currentWeeklyQuiz, getNextQuizStartTime } from '~/lib/weeklyQuiz';
+import { useCountdown } from '~/hooks/useWeeklyQuiz';
 
 interface WeeklyQuizStartButtonProps {
   quizState: QuizState;
@@ -23,6 +24,22 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
   const [error, setError] = useState<string>('');
   const [transactionHash, setTransactionHash] = useState<string>('');
   const config = useConfig();
+  
+  // Get next quiz countdown based on state
+  const nextQuizTime = React.useMemo(() => {
+    if (quizState === 'live') {
+      // Show time until quiz ends
+      return new Date(currentWeeklyQuiz.endTime);
+    } else if (quizState === 'ended') {
+      // Show time until next quiz starts
+      return getNextQuizStartTime();
+    } else {
+      // Upcoming: show time until this quiz starts
+      return new Date(currentWeeklyQuiz.startTime);
+    }
+  }, [quizState]);
+  
+  const countdown = useCountdown(nextQuizTime);
 
   // Handle Farcaster frame transaction confirmations
   useEffect(() => {
@@ -186,15 +203,13 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
 
               <div className="space-y-4 text-gray-700">
                 <div className="bg-blue-50 rounded-lg p-4">
-                  <div className="font-semibold text-blue-800 mb-2">📋 Quiz Details</div>
-                  <p className="text-sm">• 10 questions per quiz</p>
-                  <p className="text-sm">• 45 seconds per question</p>
-                  <p className="text-sm">• 10-second intervals between questions</p>
-                  <p className="text-sm">• Schedule: Tuesday & Friday, 6 PM - 6 AM UTC</p>
+                  <div className="font-semibold text-blue-800 mb-2">🧩 Weekly Quiz Challenge</div>
+                  <p className="text-sm">• 10 questions and 45 seconds per question</p>
+                  <p className="text-sm">• Runs every Tuesday & Friday, 6 PM – 6 AM UTC</p>
                 </div>
 
                 <div className="bg-yellow-50 rounded-lg p-4">
-                  <div className="font-semibold text-yellow-800 mb-2">🏆 Token Rewards</div>
+                  <div className="font-semibold text-yellow-800 mb-2">💰 Rewards — 15M $QT Tokens</div>
                   <p className="text-sm">🥇 1st Place: 4.0M QT</p>
                   <p className="text-sm">🥈 2nd Place: 2.5M QT</p>
                   <p className="text-sm">🥉 3rd Place: 1.5M QT</p>
@@ -203,36 +218,38 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
 
                 <div className="bg-green-50 rounded-lg p-4">
                   <div className="font-semibold text-green-800 mb-2">✅ Scoring Rules</div>
-                  <p className="text-sm">• Correct answer: +1 point</p>
-                  <p className="text-sm">• Wrong answer: -1 point</p>
-                  <p className="text-sm">• Timeout: 0 points</p>
+                  <p className="text-sm">+1 for correct answers</p>
+                  <p className="text-sm">-1 for wrong answers</p>
                 </div>
 
                 {quizState === 'upcoming' && (
                   <div className="bg-purple-50 rounded-lg p-4">
                     <div className="font-semibold text-purple-800 mb-2">⏰ Next Quiz</div>
-                    <p className="text-sm">The quiz will start soon! Check back later.</p>
+                    <p className="text-sm font-medium text-purple-900">Starts in: {countdown}</p>
                   </div>
                 )}
 
                 {quizState === 'live' && !userCompleted && (
                   <div className="bg-red-50 rounded-lg p-4">
                     <div className="font-semibold text-red-800 mb-2">🔴 Live Now!</div>
-                    <p className="text-sm">Quiz is currently active. Click Start below to participate.</p>
+                    <p className="text-sm mb-2">Quiz is currently active. Click Start below to participate.</p>
+                    <p className="text-sm font-medium text-red-900">Ends in: {countdown}</p>
                   </div>
                 )}
 
                 {userCompleted && (
                   <div className="bg-green-50 rounded-lg p-4">
                     <div className="font-semibold text-green-800 mb-2">✅ Completed</div>
-                    <p className="text-sm">You&apos;ve already completed this quiz!</p>
+                    <p className="text-sm mb-2">You&apos;ve already completed this quiz!</p>
+                    <p className="text-sm font-medium text-green-900">Next quiz in: {countdown}</p>
                   </div>
                 )}
 
                 {quizState === 'ended' && (
                   <div className="bg-gray-50 rounded-lg p-4">
                     <div className="font-semibold text-gray-800 mb-2">⏹️ Quiz Ended</div>
-                    <p className="text-sm">This quiz has ended. Check the leaderboard to see results!</p>
+                    <p className="text-sm mb-2">This quiz has ended. Check the leaderboard to see results!</p>
+                    <p className="text-sm font-medium text-gray-900">Next quiz in: {countdown}</p>
                   </div>
                 )}
               </div>
