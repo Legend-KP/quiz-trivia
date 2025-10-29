@@ -21,7 +21,7 @@ export interface WeeklyQuizConfig {
 export type QuizState = 'upcoming' | 'live' | 'ended';
 
 // Current Weekly Quiz Configuration
-// Update this manually before each quiz (Tuesday evening for Tuesday quiz, Friday evening for Friday quiz)
+// Update this manually before each quiz (Monday evening for Tuesday quiz, Thursday evening for Friday quiz)
 export const currentWeeklyQuiz: WeeklyQuizConfig = {
   id: "2025-11-05", // Update this date for each quiz
   topic: "DeFi Protocols", // Update this topic for each quiz
@@ -129,30 +129,42 @@ export function calculateQuizState(config: WeeklyQuizConfig): QuizState {
 // Get next quiz start time (Tuesday or Friday at 6 PM UTC)
 export function getNextQuizStartTime(): Date {
   const now = new Date();
-  const today = new Date(now.getTime());
+  const currentDay = now.getUTCDay(); // 0 = Sunday, 2 = Tuesday, 5 = Friday
+  const currentHour = now.getUTCHours();
   
-  // Find next Tuesday or Friday
-  const daysUntilTuesday = (2 - today.getDay() + 7) % 7; // Tuesday = 2
-  const daysUntilFriday = (5 - today.getDay() + 7) % 7; // Friday = 5
+  let daysToAdd = 0;
   
-  let nextQuizDay: number;
-  if (daysUntilTuesday === 0 || daysUntilFriday === 0) {
-    // If today is Tuesday or Friday, check if we're before 6 PM UTC
-    const currentHour = now.getUTCHours();
-    if (currentHour < 18) {
-      // Quiz starts today
-      nextQuizDay = 0;
+  if (currentDay === 2) {
+    // Today is Tuesday
+    if (currentHour >= 18) {
+      // After 6 PM UTC, next quiz is Friday
+      daysToAdd = 3;
     } else {
-      // Quiz starts next Tuesday or Friday
-      nextQuizDay = Math.min(daysUntilTuesday === 0 ? 5 : daysUntilTuesday, daysUntilFriday === 0 ? 2 : daysUntilFriday);
+      // Before 6 PM UTC, quiz is today
+      daysToAdd = 0;
     }
-  } else {
-    // Find the next Tuesday or Friday
-    nextQuizDay = Math.min(daysUntilTuesday, daysUntilFriday);
+  } else if (currentDay === 5) {
+    // Today is Friday
+    if (currentHour >= 18) {
+      // After 6 PM UTC, next quiz is Tuesday (4 days)
+      daysToAdd = 4;
+    } else {
+      // Before 6 PM UTC, quiz is today
+      daysToAdd = 0;
+    }
+  } else if (currentDay === 0 || currentDay === 1) {
+    // Sunday (0) or Monday (1) → next is Tuesday
+    daysToAdd = (2 - currentDay + 7) % 7;
+  } else if (currentDay === 3 || currentDay === 4) {
+    // Wednesday (3) or Thursday (4) → next is Friday
+    daysToAdd = (5 - currentDay + 7) % 7;
+  } else if (currentDay === 6) {
+    // Saturday (6) → next is Tuesday (3 days)
+    daysToAdd = 3;
   }
   
-  const nextQuizDate = new Date(today);
-  nextQuizDate.setUTCDate(today.getUTCDate() + nextQuizDay);
+  const nextQuizDate = new Date(now);
+  nextQuizDate.setUTCDate(now.getUTCDate() + daysToAdd);
   nextQuizDate.setUTCHours(18, 0, 0, 0); // 6 PM UTC
   
   return nextQuizDate;
@@ -197,7 +209,7 @@ export function isQuizActive(startTime: string, endTime: string): boolean {
 
 // Token reward distribution for top 10
 export function getTokenReward(rank: number): number {
-  const rewards = {
+  const rewards: Record<number, number> = {
     1: 4000000,  // 4M QT
     2: 2500000,  // 2.5M QT
     3: 1500000,  // 1.5M QT
@@ -210,7 +222,7 @@ export function getTokenReward(rank: number): number {
     10: 1000000, // 1M QT
   };
   
-  return rewards[rank as keyof typeof rewards] || 0;
+  return rewards[rank] || 0;
 }
 
 // Format token amounts for display

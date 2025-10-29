@@ -25,23 +25,18 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
   const [transactionHash, setTransactionHash] = useState<string>('');
   const config = useConfig();
   
-  // Get next quiz countdown based on state
-  // FOR TESTING: Set to 10 seconds from now
+  // Get correct countdown based on quiz state
   const nextQuizTime = React.useMemo(() => {
-    // TESTING MODE: Return 10 seconds from now
-    return new Date(Date.now() + 10 * 1000);
-    
-    // PRODUCTION CODE (commented out for testing):
-    // if (quizState === 'live') {
-    //   // Show time until quiz ends
-    //   return new Date(currentWeeklyQuiz.endTime);
-    // } else if (quizState === 'ended') {
-    //   // Show time until next quiz starts
-    //   return getNextQuizStartTime();
-    // } else {
-    //   // Upcoming: show time until this quiz starts
-    //   return new Date(currentWeeklyQuiz.startTime);
-    // }
+    if (quizState === 'live') {
+      // Show time until quiz ends
+      return new Date(currentWeeklyQuiz.endTime);
+    } else if (quizState === 'ended') {
+      // Show time until next quiz starts (Tuesday or Friday)
+      return getNextQuizStartTime();
+    } else {
+      // Upcoming: show time until this quiz starts
+      return new Date(currentWeeklyQuiz.startTime);
+    }
   }, [quizState]);
   
   const countdown = useCountdown(nextQuizTime);
@@ -153,13 +148,62 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
       case 'live':
         return 'from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700';
       case 'ended':
-        return 'from-gray-400 to-gray-500 cursor-not-allowed';
+        return 'from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600';
       default:
         return 'from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700';
     }
   };
 
+  const getStateInfo = () => {
+    if (userCompleted) {
+      return {
+        bgColor: 'bg-green-50',
+        textColor: 'text-green-800',
+        icon: '✅',
+        title: 'Completed',
+        message: 'Next quiz in'
+      };
+    }
+
+    switch (quizState) {
+      case 'upcoming':
+        return {
+          bgColor: 'bg-purple-50',
+          textColor: 'text-purple-800',
+          icon: '⏰',
+          title: 'Next Quiz',
+          message: 'Starts in'
+        };
+      case 'live':
+        return {
+          bgColor: 'bg-red-50',
+          textColor: 'text-red-800',
+          icon: '🔴',
+          title: 'Live Now!',
+          message: 'Ends in'
+        };
+      case 'ended':
+        return {
+          bgColor: 'bg-gray-50',
+          textColor: 'text-gray-800',
+          icon: '⏹️',
+          title: 'Quiz Ended',
+          message: 'Next quiz in'
+        };
+      default:
+        return {
+          bgColor: 'bg-purple-50',
+          textColor: 'text-purple-800',
+          icon: '⏰',
+          title: 'Next Quiz',
+          message: 'Starts in'
+        };
+    }
+  };
+
   const isDisabled = isModalOpen;
+  const canStartQuiz = quizState === 'live' && !userCompleted;
+  const stateInfo = getStateInfo();
 
   return (
     <>
@@ -182,7 +226,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
         )}
       </button>
 
-      {/* Details Modal */}
+      {/* Details Modal - Simplified Design */}
       {isDetailsModalOpen && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
@@ -199,66 +243,71 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
               ×
             </button>
 
-            <div className="mt-6">
+            <div className="mt-2">
               <h3 className="text-2xl font-bold text-gray-800 mb-4">
-                {quizState === 'upcoming' && '📅 Weekly Quiz Challenge'}
-                {quizState === 'live' && '🔴 Weekly Quiz Challenge - LIVE NOW'}
-                {quizState === 'ended' && '⏹️ Weekly Quiz Challenge Ended'}
+                📅 Weekly Quiz Challenge
               </h3>
 
-              <div className="space-y-4 text-gray-700">
+              <div className="space-y-3">
+                {/* Quiz Info */}
                 <div className="bg-blue-50 rounded-lg p-4">
-                  <div className="font-semibold text-blue-800 mb-2">🧩 Weekly Quiz Challenge</div>
-                  <p className="text-sm">• 10 questions and 45 seconds per question</p>
-                  <p className="text-sm">• Runs every Tuesday & Friday, 6 PM – 6 AM UTC</p>
+                  <div className="font-semibold text-blue-800 mb-2">
+                    🧩 Weekly Quiz Challenge
+                  </div>
+                  <p className="text-sm text-blue-700">
+                    • 10 questions and 45 seconds per question
+                  </p>
+                  <p className="text-sm text-blue-700">
+                    • Runs every Tuesday & Friday, 6 PM – 6 AM UTC
+                  </p>
                 </div>
 
+                {/* Rewards */}
                 <div className="bg-yellow-50 rounded-lg p-4">
-                  <div className="font-semibold text-yellow-800 mb-2">💰 Rewards — 15M $QT Tokens</div>
-                  <p className="text-sm">🥇 1st Place: 4.0M QT</p>
-                  <p className="text-sm">🥈 2nd Place: 2.5M QT</p>
-                  <p className="text-sm">🥉 3rd Place: 1.5M QT</p>
-                  <p className="text-sm">4th-10th: 1.0M QT each</p>
+                  <div className="font-semibold text-yellow-800 mb-2">
+                    🔥 Rewards — 15M $QT Tokens
+                  </div>
+                  <p className="text-sm text-yellow-700">🥇 1st Place: 4.0M QT</p>
+                  <p className="text-sm text-yellow-700">🥈 2nd Place: 2.5M QT</p>
+                  <p className="text-sm text-yellow-700">🥉 3rd Place: 1.5M QT</p>
+                  <p className="text-sm text-yellow-700">4th-10th: 1.0M QT each</p>
                 </div>
 
+                {/* Scoring Rules */}
                 <div className="bg-green-50 rounded-lg p-4">
-                  <div className="font-semibold text-green-800 mb-2">✅ Scoring Rules</div>
-                  <p className="text-sm">+1 for correct answers</p>
-                  <p className="text-sm">-1 for wrong answers</p>
+                  <div className="font-semibold text-green-800 mb-2">
+                    ✅ Scoring Rules
+                  </div>
+                  <p className="text-sm text-green-700">
+                    +1 for correct answers
+                  </p>
+                  <p className="text-sm text-green-700">
+                    -1 for wrong answers
+                  </p>
                 </div>
 
-                {quizState === 'upcoming' && (
-                  <div className="bg-purple-50 rounded-lg p-4">
-                    <div className="font-semibold text-purple-800 mb-2">⏰ Next Quiz</div>
-                    <p className="text-sm font-medium text-purple-900">Starts in: {countdown}</p>
+                {/* State-specific Section */}
+                <div className={`${stateInfo.bgColor} rounded-lg p-4`}>
+                  <div className={`font-semibold ${stateInfo.textColor} mb-2`}>
+                    {stateInfo.icon} {stateInfo.title}
                   </div>
-                )}
-
-                {quizState === 'live' && !userCompleted && (
-                  <div className="bg-red-50 rounded-lg p-4">
-                    <div className="font-semibold text-red-800 mb-2">🔴 Live Now!</div>
-                    <p className="text-sm mb-2">Quiz is currently active. Click Start below to participate.</p>
-                    <p className="text-sm font-medium text-red-900">Ends in: {countdown}</p>
-                  </div>
-                )}
-
-                {userCompleted && (
-                  <div className="bg-green-50 rounded-lg p-4">
-                    <div className="font-semibold text-green-800 mb-2">✅ Completed</div>
-                    <p className="text-sm mb-2">You&apos;ve already completed this quiz!</p>
-                    <p className="text-sm font-medium text-green-900">Next quiz in: {countdown}</p>
-                  </div>
-                )}
-
-                {quizState === 'ended' && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="font-semibold text-gray-800 mb-2">⏹️ Quiz Ended</div>
-                    <p className="text-sm mb-2">This quiz has ended. Check the leaderboard to see results!</p>
-                    <p className="text-sm font-medium text-gray-900">Next quiz in: {countdown}</p>
-                  </div>
-                )}
+                  {quizState === 'ended' && !userCompleted && (
+                    <p className={`text-sm ${stateInfo.textColor} mb-2`}>
+                      This quiz has ended. Check the leaderboard to see results!
+                    </p>
+                  )}
+                  {userCompleted && (
+                    <p className={`text-sm ${stateInfo.textColor} mb-2`}>
+                      You&apos;ve already completed this quiz!
+                    </p>
+                  )}
+                  <p className={`text-sm font-medium ${stateInfo.textColor}`}>
+                    {stateInfo.message}: {countdown}
+                  </p>
+                </div>
               </div>
 
+              {/* Buttons */}
               <div className="mt-6 flex gap-3">
                 <button
                   onClick={() => setIsDetailsModalOpen(false)}
@@ -267,7 +316,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                   Close
                 </button>
                 
-                {quizState === 'live' && !userCompleted && (
+                {canStartQuiz && (
                   <button
                     onClick={handleStartQuizConfirmed}
                     className="flex-1 px-4 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold rounded-lg hover:from-green-600 hover:to-blue-700 transition"

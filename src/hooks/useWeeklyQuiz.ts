@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { WeeklyQuizConfig, QuizState, calculateQuizState } from '~/lib/weeklyQuiz';
 
 // Hook for countdown timer
 export function useCountdown(targetTime: string | Date): string {
@@ -43,33 +44,19 @@ export function useCountdown(targetTime: string | Date): string {
 }
 
 // Hook for quiz state management
-export function useQuizState(config: any): 'upcoming' | 'live' | 'ended' {
-  const [state, setState] = useState<'upcoming' | 'live' | 'ended'>('upcoming');
+export function useQuizState(config: WeeklyQuizConfig): QuizState {
+  const [state, setState] = useState<QuizState>(() => calculateQuizState(config));
   
   useEffect(() => {
-    const calculateState = () => {
-      const now = Date.now();
-      const start = new Date(config.startTime).getTime();
-      const end = new Date(config.endTime).getTime();
-      
-      if (now < start) {
-        return 'upcoming';
-      } else if (now >= start && now < end) {
-        return 'live';
-      } else {
-        return 'ended';
-      }
+    const checkState = () => {
+      setState(calculateQuizState(config));
     };
     
-    setState(calculateState());
-    
-    // Update state every minute to handle transitions
-    const interval = setInterval(() => {
-      setState(calculateState());
-    }, 60000);
+    // Update state every second to handle transitions accurately
+    const interval = setInterval(checkState, 1000);
     
     return () => clearInterval(interval);
-  }, [config.startTime, config.endTime]);
+  }, [config]);
   
   return state;
 }
