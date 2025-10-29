@@ -1,6 +1,6 @@
 import React from 'react';
-import { Clock, Trophy, Users, Calendar, ExternalLink } from 'lucide-react';
-import { WeeklyQuizConfig, QuizState, getTokenReward, formatTokens } from '~/lib/weeklyQuiz';
+import { Trophy, Users, Calendar, ExternalLink } from 'lucide-react';
+import { WeeklyQuizConfig, getTokenReward, formatTokens } from '~/lib/weeklyQuiz';
 import { useCountdown, useQuizState } from '~/hooks/useWeeklyQuiz';
 
 interface WeeklyQuizCardProps {
@@ -15,7 +15,7 @@ interface WeeklyQuizCardProps {
 const UpcomingQuizView: React.FC<WeeklyQuizCardProps & { countdown: string }> = ({ 
   config, 
   countdown, 
-  participantCount 
+  participantCount: _participantCount 
 }) => {
   return (
     <div className="bg-white rounded-2xl p-6 shadow-2xl border-2 border-blue-200">
@@ -231,19 +231,29 @@ export const WeeklyQuizCard: React.FC<WeeklyQuizCardProps> = ({
 }) => {
   const quizState = useQuizState(config);
   
+  // Get countdowns for all states
+  const upcomingCountdown = useCountdown(config.startTime);
+  const liveCountdown = useCountdown(config.endTime);
+  
+  // For ended state, show countdown to next quiz
+  const nextQuiz = React.useMemo(() => {
+    const nextQuizDate = new Date(config.startTime);
+    nextQuizDate.setDate(nextQuizDate.getDate() + (nextQuizDate.getDay() === 2 ? 3 : 4)); // Next Tuesday or Friday
+    return nextQuizDate;
+  }, [config.startTime]);
+  
+  const endedCountdown = useCountdown(nextQuiz);
+  
   // Get appropriate countdown based on state
   const countdown = React.useMemo(() => {
     if (quizState === 'upcoming') {
-      return useCountdown(config.startTime);
+      return upcomingCountdown;
     } else if (quizState === 'live') {
-      return useCountdown(config.endTime);
+      return liveCountdown;
     } else {
-      // For ended state, show countdown to next quiz
-      const nextQuiz = new Date(config.startTime);
-      nextQuiz.setDate(nextQuiz.getDate() + (nextQuiz.getDay() === 2 ? 3 : 4)); // Next Tuesday or Friday
-      return useCountdown(nextQuiz);
+      return endedCountdown;
     }
-  }, [quizState, config.startTime, config.endTime]);
+  }, [quizState, upcomingCountdown, liveCountdown, endedCountdown]);
 
   const props = {
     config,

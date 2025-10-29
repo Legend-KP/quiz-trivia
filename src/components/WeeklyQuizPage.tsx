@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Clock, Trophy, Star, X } from 'lucide-react';
-import { useMiniApp } from '@neynar/react';
-import { APP_URL } from '~/lib/constants';
-import { WeeklyQuizConfig, QuizQuestion } from '~/lib/weeklyQuiz';
+import { Clock, Trophy, Star } from 'lucide-react';
+import { WeeklyQuizConfig } from '~/lib/weeklyQuiz';
 
 // Type definitions
 interface Answer {
@@ -12,20 +10,6 @@ interface Answer {
   isCorrect: boolean;
 }
 
-interface LeaderboardEntry {
-  fid: number;
-  username: string;
-  displayName?: string;
-  pfpUrl?: string;
-  score: number;
-  time: string;
-  timeInSeconds?: number;
-  completedAt: number;
-  rank?: number;
-  mode: 'CLASSIC' | 'TIME_MODE' | 'CHALLENGE';
-  quizId?: string;
-}
-
 interface WeeklyQuizPageProps {
   config: WeeklyQuizConfig;
   onComplete: (score: number, answers: Answer[], time: string) => void;
@@ -33,7 +17,7 @@ interface WeeklyQuizPageProps {
 }
 
 // Weekly Quiz Component
-const WeeklyQuizPage: React.FC<WeeklyQuizPageProps> = ({ config, onComplete, context }) => {
+const WeeklyQuizPage: React.FC<WeeklyQuizPageProps> = ({ config, onComplete, context: _context }) => {
   const [started, setStarted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
@@ -133,7 +117,7 @@ const WeeklyQuizPage: React.FC<WeeklyQuizPageProps> = ({ config, onComplete, con
           <h2 className="text-2xl font-bold text-gray-800 mb-4">Weekly Quiz Challenge 🧠</h2>
           <div className="text-gray-700 space-y-2 mb-6 text-left">
             <p>📋 The quiz has <strong>10 questions</strong> with <strong>10-second intervals</strong> between each question.</p>
-            <p>⏳ You'll get <strong>45 seconds</strong> per question — so think fast!</p>
+            <p>⏳ You&apos;ll get <strong>45 seconds</strong> per question — so think fast!</p>
             <p>✅ Correct answer = +1 point</p>
             <p>❌ Wrong answer = -1 point</p>
             <p>🏆 Top 10 winners get QT token rewards!</p>

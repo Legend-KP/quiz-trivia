@@ -8,7 +8,7 @@ import { QuizMode } from '~/lib/wallet';
 import { useQTClaim } from '~/hooks/useQTClaim';
 import WeeklyQuizCard from '~/components/WeeklyQuizCard';
 import WeeklyQuizPage from '~/components/WeeklyQuizPage';
-import { currentWeeklyQuiz, QuizState } from '~/lib/weeklyQuiz';
+import { currentWeeklyQuiz } from '~/lib/weeklyQuiz';
 import { useQuizState } from '~/hooks/useWeeklyQuiz';
 
 // Type definitions
@@ -258,7 +258,7 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
 
 // Home Page Component
 const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTimeMode, onStartChallenge, onSpinWheel, onStartWeeklyQuiz }) => {
-  const weeklyQuizState = useQuizState(currentWeeklyQuiz);
+  const _weeklyQuizState = useQuizState(currentWeeklyQuiz);
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {/* Gradient Background - Full Frame */}
