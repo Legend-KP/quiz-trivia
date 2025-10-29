@@ -120,7 +120,7 @@ export default function PublicLeaderboard() {
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2 flex gap-2">
             {[
               { value: 'ALL', label: 'All Modes', icon: '🏆' },
-              { value: 'CLASSIC', label: 'Classic', icon: '🧠' },
+              { value: 'CLASSIC', label: 'Weekly Quiz', icon: '📅' },
               { value: 'TIME_MODE', label: 'Time Mode', icon: '⏱️' },
               { value: 'CHALLENGE', label: 'Challenge', icon: '⚔️' }
             ].map((mode) => (
@@ -167,10 +167,10 @@ export default function PublicLeaderboard() {
         <div className="bg-white rounded-2xl p-8 shadow-2xl">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              🏆 {selectedMode === 'ALL' ? 'All Modes' : selectedMode === 'CLASSIC' ? 'Classic Mode' : selectedMode === 'TIME_MODE' ? 'Time Mode' : 'Challenge Mode'} Leaderboard
+              🏆 {selectedMode === 'ALL' ? 'All Modes' : selectedMode === 'CLASSIC' ? 'Weekly Quiz' : selectedMode === 'TIME_MODE' ? 'Time Mode' : 'Challenge Mode'} Leaderboard
             </h2>
             <p className="text-gray-600">
-              {selectedMode === 'ALL' ? 'All Quiz Trivia Participants' : `${selectedMode === 'CLASSIC' ? 'Classic' : selectedMode === 'TIME_MODE' ? 'Time Mode' : 'Challenge'} Participants`}
+              {selectedMode === 'ALL' ? 'All Quiz Trivia Participants' : `${selectedMode === 'CLASSIC' ? 'Weekly Quiz' : selectedMode === 'TIME_MODE' ? 'Time Mode' : 'Challenge'} Participants`}
             </p>
             {!loading && (
               <div className="mt-2 text-sm text-gray-500">
