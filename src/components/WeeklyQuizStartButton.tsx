@@ -327,6 +327,18 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                   Close
                 </button>
                 
+                {quizState === 'ended' && (
+                  <button
+                    onClick={() => {
+                      setIsDetailsModalOpen(false);
+                      window.location.href = '/leaderboard';
+                    }}
+                    className="flex-1 px-3 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold text-sm rounded-lg hover:from-blue-600 hover:to-purple-700 transition"
+                  >
+                    📊 View Leaderboard
+                  </button>
+                )}
+                
                 {canStartQuiz && (
                   <button
                     onClick={handleStartQuizConfirmed}
