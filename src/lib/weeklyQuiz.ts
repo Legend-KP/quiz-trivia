@@ -65,15 +65,10 @@ export function getTestingQuizTimes() {
     endTime = new Date(startTime.getTime() + liveDuration);
   }
   
-  // For testing mode: Create unique ID per cycle using timestamp
-  // For production: Use date (YYYY-MM-DD) since there's one quiz per day
-  const testingId = `test-${startTime.getTime()}`; // Unique per cycle
-  const productionId = startTime.toISOString().split('T')[0]; // Date-based
-  
   return {
     startTime: startTime.toISOString(),
     endTime: endTime.toISOString(),
-    id: testingId // Use testing ID to ensure each cycle has unique leaderboard
+    id: startTime.toISOString().split('T')[0]
   };
 }
 

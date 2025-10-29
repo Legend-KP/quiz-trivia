@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Trophy, Users, Calendar, Clock, Share2 } from 'lucide-react';
 import Link from 'next/link';
 import { useMiniApp } from '@neynar/react';
+import { currentWeeklyQuiz } from '~/lib/weeklyQuiz';
 
 interface LeaderboardEntry {
   fid: number;
@@ -25,11 +26,22 @@ export default function PublicLeaderboard() {
     totalParticipants: 0,
     lastUpdated: ''
   });
+  const [currentQuizId, setCurrentQuizId] = useState<string | null>(null);
   const { actions } = useMiniApp();
 
-  const fetchLeaderboard = useCallback(async () => {
+  const fetchLeaderboard = useCallback(async (quizId?: string | null) => {
     try {
-      const url = selectedMode === 'ALL' ? '/api/leaderboard' : `/api/leaderboard?mode=${selectedMode}`;
+      setLoading(true);
+      let url: string;
+      
+      // For CLASSIC mode (weekly quiz), always filter by current quizId
+      if (selectedMode === 'CLASSIC') {
+        const idToUse = quizId || currentWeeklyQuiz.id;
+        url = `/api/leaderboard?mode=CLASSIC&quizId=${idToUse}`;
+      } else {
+        url = selectedMode === 'ALL' ? '/api/leaderboard' : `/api/leaderboard?mode=${selectedMode}`;
+      }
+      
       const response = await fetch(url);
       const data = await response.json();
       if (data.leaderboard) {
@@ -49,7 +61,29 @@ export default function PublicLeaderboard() {
 
   useEffect(() => {
     fetchLeaderboard();
-  }, [fetchLeaderboard]);
+    // Initialize quizId for CLASSIC mode
+    if (selectedMode === 'CLASSIC') {
+      setCurrentQuizId(currentWeeklyQuiz.id);
+    }
+  }, [fetchLeaderboard, selectedMode]);
+
+  // Monitor quizId changes - refresh leaderboard when new weekly quiz starts (only for CLASSIC mode)
+  useEffect(() => {
+    if (selectedMode === 'CLASSIC') {
+      const checkQuizId = () => {
+        const newQuizId = currentWeeklyQuiz.id;
+        if (newQuizId !== currentQuizId) {
+          console.log('🔄 New weekly quiz started! Refreshing leaderboard...', newQuizId);
+          setCurrentQuizId(newQuizId);
+          fetchLeaderboard(newQuizId);
+        }
+      };
+      
+      // Check every 5 seconds for quizId changes (when new quiz starts)
+      const interval = setInterval(checkQuizId, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [selectedMode, currentQuizId, fetchLeaderboard]);
 
   const handleShare = async () => {
     try {
