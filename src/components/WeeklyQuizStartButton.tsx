@@ -26,17 +26,22 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
   const config = useConfig();
   
   // Get next quiz countdown based on state
+  // FOR TESTING: Set to 10 seconds from now
   const nextQuizTime = React.useMemo(() => {
-    if (quizState === 'live') {
-      // Show time until quiz ends
-      return new Date(currentWeeklyQuiz.endTime);
-    } else if (quizState === 'ended') {
-      // Show time until next quiz starts
-      return getNextQuizStartTime();
-    } else {
-      // Upcoming: show time until this quiz starts
-      return new Date(currentWeeklyQuiz.startTime);
-    }
+    // TESTING MODE: Return 10 seconds from now
+    return new Date(Date.now() + 10 * 1000);
+    
+    // PRODUCTION CODE (commented out for testing):
+    // if (quizState === 'live') {
+    //   // Show time until quiz ends
+    //   return new Date(currentWeeklyQuiz.endTime);
+    // } else if (quizState === 'ended') {
+    //   // Show time until next quiz starts
+    //   return getNextQuizStartTime();
+    // } else {
+    //   // Upcoming: show time until this quiz starts
+    //   return new Date(currentWeeklyQuiz.startTime);
+    // }
   }, [quizState]);
   
   const countdown = useCountdown(nextQuizTime);
