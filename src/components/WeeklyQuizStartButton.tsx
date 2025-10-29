@@ -207,14 +207,25 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
 
   return (
     <>
+      {/* Smooth glow animation for live quiz state */}
+      {quizState === 'live' && !userCompleted && (
+        <style>{`
+          @keyframes glow-pulse {
+            0%, 100% {
+              box-shadow: 0 0 30px rgba(135, 206, 250, 0.8), 0 0 60px rgba(135, 206, 250, 0.6), 0 0 90px rgba(135, 206, 250, 0.4), 0 0 120px rgba(255, 255, 255, 0.3), 0 0 150px rgba(255, 255, 255, 0.2);
+            }
+            50% {
+              box-shadow: 0 0 40px rgba(135, 206, 250, 1), 0 0 80px rgba(135, 206, 250, 0.8), 0 0 120px rgba(135, 206, 250, 0.6), 0 0 160px rgba(255, 255, 255, 0.5), 0 0 200px rgba(255, 255, 255, 0.3);
+            }
+          }
+        `}</style>
+      )}
       <button
         onClick={handleStartQuiz}
         disabled={isDisabled}
-        className={`w-full bg-gradient-to-r ${getButtonGradient()} text-white font-bold py-4 px-8 rounded-xl text-xl transform hover:scale-105 transition-all duration-200 shadow-2xl disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none ${
-          quizState === 'live' && !userCompleted ? 'animate-pulse shadow-red-500/50 shadow-2xl ring-4 ring-red-500/30' : ''
-        } ${className}`}
+        className={`w-full bg-gradient-to-r ${getButtonGradient()} text-white font-bold py-4 px-8 rounded-xl text-xl transform hover:scale-105 transition-all duration-200 shadow-2xl disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none ${className}`}
         style={quizState === 'live' && !userCompleted ? {
-          boxShadow: '0 0 20px rgba(239, 68, 68, 0.6), 0 0 40px rgba(239, 68, 68, 0.4), 0 0 60px rgba(239, 68, 68, 0.2)'
+          animation: 'glow-pulse 2s ease-in-out infinite'
         } : {}}
       >
         {getButtonText()}
