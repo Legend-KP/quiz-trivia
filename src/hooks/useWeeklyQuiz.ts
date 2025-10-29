@@ -49,14 +49,16 @@ export function useQuizState(config: WeeklyQuizConfig): QuizState {
   
   useEffect(() => {
     const checkState = () => {
+      // Recalculate state based on current time (works with testing cycles)
       setState(calculateQuizState(config));
     };
     
     // Update state every second to handle transitions accurately
+    // For testing mode (1 min wait → 5 min live), this ensures smooth transitions
     const interval = setInterval(checkState, 1000);
     
     return () => clearInterval(interval);
-  }, [config]);
+  }, [config.startTime, config.endTime]); // Update when times change
   
   return state;
 }

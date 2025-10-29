@@ -20,14 +20,75 @@ export interface WeeklyQuizConfig {
 
 export type QuizState = 'upcoming' | 'live' | 'ended';
 
+// TESTING MODE: 1 min wait → 5 min live → 1 min wait → repeat
+// Synchronized cycle for all users (based on fixed epoch time)
+// This ensures everyone sees the same quiz state at the same time
+//
+// SYNCHRONIZATION GUARANTEE:
+// - If User A checks at 14:32:15 UTC → calculates countdown from synchronized cycle
+// - If User B checks at 14:32:15 UTC → calculates SAME countdown (same moment, same result)
+// - If User B checks at 14:33:59 UTC → calculates different countdown (different moment, correct)
+// 
+// All users calculate from the same epoch reference point, so:
+// - Same moment checked = Same countdown displayed ✓
+// - Different moments checked = Different countdowns displayed (correct behavior) ✓
+export function getTestingQuizTimes() {
+  const now = Date.now();
+  const cycleDuration = 6 * 60 * 1000; // 6 minutes total (1 min wait + 5 min live)
+  const waitDuration = 1 * 60 * 1000; // 1 minute wait
+  const liveDuration = 5 * 60 * 1000; // 5 minutes live
+  
+  // Use a fixed epoch time (Jan 1, 2025 00:00:00 UTC) as reference for synchronization
+  // This ensures all users are synchronized to the same cycle
+  const epochTime = new Date('2025-01-01T00:00:00Z').getTime();
+  const timeSinceEpoch = now - epochTime;
+  
+  // Calculate position in current cycle (synchronized for all users)
+  const cyclePosition = timeSinceEpoch % cycleDuration;
+  
+  // Calculate the start of the current cycle (same for all users)
+  const currentCycleStart = epochTime + (timeSinceEpoch - cyclePosition);
+  
+  // Calculate quiz times based on current cycle (synchronized)
+  let startTime: Date;
+  let endTime: Date;
+  
+  if (cyclePosition < waitDuration) {
+    // Currently in wait period (upcoming state)
+    // Quiz starts at the end of wait period
+    startTime = new Date(currentCycleStart + waitDuration);
+    endTime = new Date(startTime.getTime() + liveDuration);
+  } else {
+    // Currently in live period (live state)
+    // Quiz started at the end of wait period, ends after live duration
+    startTime = new Date(currentCycleStart + waitDuration);
+    endTime = new Date(startTime.getTime() + liveDuration);
+  }
+  
+  return {
+    startTime: startTime.toISOString(),
+    endTime: endTime.toISOString(),
+    id: startTime.toISOString().split('T')[0]
+  };
+}
+
 // Current Weekly Quiz Configuration
-// Update this manually before each quiz (Monday evening for Tuesday quiz, Thursday evening for Friday quiz)
-export const currentWeeklyQuiz: WeeklyQuizConfig = {
-  id: new Date().toISOString().split('T')[0], // Today's date (YYYY-MM-DD)
-  topic: "DeFi Protocols", // Update this topic for each quiz
-  startTime: new Date(Date.now() - 60000).toISOString(), // Started 1 minute ago (makes it LIVE now)
-  endTime: new Date(Date.now() + 12 * 60 * 60 * 1000 - 60000).toISOString(), // Ends 12 hours from now
-  questions: [
+// TESTING MODE: Creates a repeating 6-minute cycle
+//   - 1 minute wait (upcoming state)
+//   - 5 minutes live (live state)  
+//   - Then repeats (1 min wait again)
+// Cycle: Wait 1min → Live 5min → Wait 1min → Live 5min...
+// NOTE: Times are calculated once when module loads. For continuous testing beyond 6 minutes, 
+//       refresh the page to recalculate times. One full cycle (6 min) should be enough to test the flow.
+// To disable testing mode, comment out getTestingQuizTimes() and use static dates
+function getCurrentWeeklyQuiz(): WeeklyQuizConfig {
+  const testingTimes = getTestingQuizTimes();
+  return {
+    id: testingTimes.id,
+    topic: "DeFi Protocols", // Update this topic for each quiz
+    startTime: testingTimes.startTime, // Calculated based on testing cycle
+    endTime: testingTimes.endTime, // 5 minutes after startTime
+    questions: [
     {
       id: 1,
       question: "What does TVL stand for in DeFi?",
@@ -109,7 +170,11 @@ export const currentWeeklyQuiz: WeeklyQuizConfig = {
       explanation: "Wormhole is a cross-chain bridge protocol that enables asset transfers between different blockchain networks."
     }
   ]
-};
+  };
+}
+
+// Export current quiz (recalculated on each access for testing cycle)
+export const currentWeeklyQuiz: WeeklyQuizConfig = getCurrentWeeklyQuiz();
 
 // Calculate quiz state based on current time
 export function calculateQuizState(config: WeeklyQuizConfig): QuizState {
@@ -126,8 +191,30 @@ export function calculateQuizState(config: WeeklyQuizConfig): QuizState {
   }
 }
 
-// Get next quiz start time (Tuesday or Friday at 6 PM UTC)
+// Get next quiz start time
+// In TESTING MODE: Returns next cycle start (synchronized for all users)
+// In PRODUCTION: Returns next Tuesday or Friday at 6 PM UTC
 export function getNextQuizStartTime(): Date {
+  // TESTING MODE: Calculate next cycle start time (synchronized)
+  const now = Date.now();
+  const cycleDuration = 6 * 60 * 1000; // 6 minutes total
+  const waitDuration = 1 * 60 * 1000; // 1 minute wait
+  
+  // Use same epoch time for synchronization
+  const epochTime = new Date('2025-01-01T00:00:00Z').getTime();
+  const timeSinceEpoch = now - epochTime;
+  
+  // Calculate position in current cycle (synchronized)
+  const cyclePosition = timeSinceEpoch % cycleDuration;
+  
+  // Find next cycle start (beginning of next wait period)
+  const currentCycleStart = epochTime + (timeSinceEpoch - cyclePosition);
+  const nextCycleStart = currentCycleStart + cycleDuration;
+  
+  return new Date(nextCycleStart);
+  
+  // PRODUCTION CODE (commented out for testing):
+  /*
   const now = new Date();
   const currentDay = now.getUTCDay(); // 0 = Sunday, 2 = Tuesday, 5 = Friday
   const currentHour = now.getUTCHours();
@@ -168,6 +255,7 @@ export function getNextQuizStartTime(): Date {
   nextQuizDate.setUTCHours(18, 0, 0, 0); // 6 PM UTC
   
   return nextQuizDate;
+  */
 }
 
 // Format countdown timer
