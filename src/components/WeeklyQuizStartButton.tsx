@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { QuizMode, TransactionState, startQuizTransactionWithWagmi, formatWalletError, WalletError } from '@/lib/wallet';
+import { QuizMode, TransactionState, startQuizTransactionWithWagmi, formatWalletError, WalletError } from '~/lib/wallet';
 import { useConfig } from 'wagmi';
 import TransactionModal from './TransactionModal';
-import { QuizState } from '@/lib/weeklyQuiz';
+import { QuizState } from '~/lib/weeklyQuiz';
 
 interface WeeklyQuizStartButtonProps {
   quizState: QuizState;

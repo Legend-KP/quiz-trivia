@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Clock, Trophy, Star, X } from 'lucide-react';
 import { useMiniApp } from '@neynar/react';
 import { APP_URL } from '~/lib/constants';
-import { WeeklyQuizConfig, QuizQuestion } from '@/lib/weeklyQuiz';
+import { WeeklyQuizConfig, QuizQuestion } from '~/lib/weeklyQuiz';
 
 // Type definitions
 interface Answer {
@@ -241,7 +241,7 @@ const WeeklyQuizPage: React.FC<WeeklyQuizPageProps> = ({ config, onComplete, con
                   selectedAnswer === question.correct ? 'text-green-600' : 'text-red-600'
                 }`}>
                   {selectedAnswer === question.correct ? '✅ Correct!' : '❌ Wrong!'}
-                  {selectedAnswer === null && ' ⏰ Time's up!'}
+                  {selectedAnswer === null && ' ⏰ Time\'s up!'}
                 </p>
               </div>
               

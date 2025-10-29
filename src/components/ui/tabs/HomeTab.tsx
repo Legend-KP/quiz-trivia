@@ -2,14 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Clock, Trophy, Star, X } from 'lucide-react';
 import { useMiniApp } from '@neynar/react';
 import { APP_URL } from '~/lib/constants';
-import QuizStartButton from '@/components/QuizStartButton';
-import SpinWheel from '@/components/SpinWheel';
-import { QuizMode } from '@/lib/wallet';
+import QuizStartButton from '~/components/QuizStartButton';
+import SpinWheel from '~/components/SpinWheel';
+import { QuizMode } from '~/lib/wallet';
 import { useQTClaim } from '~/hooks/useQTClaim';
-import WeeklyQuizCard from '@/components/WeeklyQuizCard';
-import WeeklyQuizPage from '@/components/WeeklyQuizPage';
-import { currentWeeklyQuiz, QuizState } from '@/lib/weeklyQuiz';
-import { useQuizState } from '@/hooks/useWeeklyQuiz';
+import WeeklyQuizCard from '~/components/WeeklyQuizCard';
+import WeeklyQuizPage from '~/components/WeeklyQuizPage';
+import { currentWeeklyQuiz, QuizState } from '~/lib/weeklyQuiz';
+import { useQuizState } from '~/hooks/useWeeklyQuiz';
 
 // Type definitions
 interface QuizQuestion {

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getLeaderboardCollection, LeaderboardEntry } from '../../../lib/mongodb';
-import { getTokenReward } from '../../../lib/weeklyQuiz';
+import { getLeaderboardCollection, LeaderboardEntry } from '~/lib/mongodb';
+import { getTokenReward } from '~/lib/weeklyQuiz';
 
 export const runtime = 'nodejs';
 
