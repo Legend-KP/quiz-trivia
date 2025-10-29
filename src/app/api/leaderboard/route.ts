@@ -20,11 +20,15 @@ const globalFallbackStorage: LeaderboardEntry[] = [];
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const mode = searchParams.get('mode') as 'CLASSIC' | 'TIME_MODE' | 'CHALLENGE' | null;
+  const quizId = searchParams.get('quizId') as string | null;
   
   try {
     // Try MongoDB first
     const collection = await getLeaderboardCollection();
-    const query = mode ? { mode } : {};
+    const query: any = {};
+    if (mode) query.mode = mode;
+    if (quizId) query.quizId = quizId;
+    
     const leaderboard = await collection.find(query).toArray();
 
     const sortedLeaderboard = leaderboard.sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
@@ -43,10 +47,14 @@ export async function GET(request: Request) {
       lastUpdated: new Date().toISOString(),
       storage: 'mongodb',
       mode: mode || 'ALL',
+      quizId: quizId || null,
     });
       } catch (_mongodbError) {
       console.error('MongoDB GET failed:', _mongodbError);
-      const filteredFallback = mode ? globalFallbackStorage.filter(entry => entry.mode === mode) : globalFallbackStorage;
+      let filteredFallback = globalFallbackStorage;
+      if (mode) filteredFallback = filteredFallback.filter(entry => entry.mode === mode);
+      if (quizId) filteredFallback = filteredFallback.filter(entry => entry.quizId === quizId);
+      
       return NextResponse.json({
         leaderboard: filteredFallback,
         totalParticipants: filteredFallback.length,
@@ -54,6 +62,7 @@ export async function GET(request: Request) {
         storage: 'fallback',
         error: 'MongoDB GET failed',
         mode: mode || 'ALL',
+        quizId: quizId || null,
       }, { status: 200 });
     }
 }
@@ -61,7 +70,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { fid, username, displayName, pfpUrl, score, time, mode } = body;
+    const { fid, username, displayName, pfpUrl, score, time, mode, quizId } = body;
 
     if (!fid || !username || score === undefined || !mode) {
       return NextResponse.json({ error: 'Missing required fields: fid, username, score, mode' }, { status: 400 });
@@ -77,6 +86,7 @@ export async function POST(request: Request) {
       timeInSeconds: timeStringToSeconds(time),
       completedAt: Date.now(),
       mode,
+      quizId, // Include quizId if provided
     };
 
     const collection = await getLeaderboardCollection();

@@ -6,6 +6,10 @@ import QuizStartButton from '@/components/QuizStartButton';
 import SpinWheel from '@/components/SpinWheel';
 import { QuizMode } from '@/lib/wallet';
 import { useQTClaim } from '~/hooks/useQTClaim';
+import WeeklyQuizCard from '@/components/WeeklyQuizCard';
+import WeeklyQuizPage from '@/components/WeeklyQuizPage';
+import { currentWeeklyQuiz, QuizState } from '@/lib/weeklyQuiz';
+import { useQuizState } from '@/hooks/useWeeklyQuiz';
 
 // Type definitions
 interface QuizQuestion {
@@ -48,6 +52,7 @@ interface HomePageProps {
   onStartChallenge: () => void;
   onShowRules: () => void;
   onSpinWheel: () => void;
+  onStartWeeklyQuiz: () => void;
 }
 
 interface QuizPageProps {
@@ -252,7 +257,8 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
 };
 
 // Home Page Component
-const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTimeMode, onStartChallenge, onSpinWheel }) => {
+const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTimeMode, onStartChallenge, onSpinWheel, onStartWeeklyQuiz }) => {
+  const weeklyQuizState = useQuizState(currentWeeklyQuiz);
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {/* Gradient Background - Full Frame */}
@@ -287,6 +293,16 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTim
         <div className="mb-6 text-white text-sm flex items-center gap-3">
           <span className="px-3 py-1 rounded-full bg-black/30 border border-white/20">Coins: {balance ?? '—'}</span>
           <button onClick={onSpinWheel} className="px-3 py-1 rounded-full bg-yellow-500 text-yellow-900 font-semibold hover:bg-yellow-400 transition">🎰 Spin the Wheel!</button>
+        </div>
+
+        {/* Weekly Quiz Card */}
+        <div className="mb-6 w-full max-w-md">
+          <WeeklyQuizCard
+            config={currentWeeklyQuiz}
+            onStartQuiz={onStartWeeklyQuiz}
+            userCompleted={false} // This would need to be tracked per user
+            participantCount={0} // This would need to be fetched from API
+          />
         </div>
 
         {/* Mode Buttons */}
@@ -609,6 +625,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onR
         score: score,
         time: totalTime,
         mode: 'CLASSIC',
+        quizId: '2025-11-05', // Use current weekly quiz ID
       };
 
       console.log('📤 Sending payload:', payload);
@@ -1306,7 +1323,7 @@ const ChallengeModePage: React.FC<ChallengeModePageProps> = ({ onExit, context }
 // Main App Component
 export default function QuizTriviaApp() {
   const { } = useMiniApp();
-  const [currentScreen, setCurrentScreen] = useState<'home' | 'quiz' | 'results' | 'time' | 'challenge'>('home');
+  const [currentScreen, setCurrentScreen] = useState<'home' | 'quiz' | 'results' | 'time' | 'challenge' | 'weekly-quiz'>('home');
   const [showRules, setShowRules] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
   const [finalAnswers, setFinalAnswers] = useState<Answer[]>([]);
@@ -1322,6 +1339,10 @@ export default function QuizTriviaApp() {
 
   const handleStartTime = () => {
     setCurrentScreen('time');
+  };
+
+  const handleStartWeeklyQuiz = () => {
+    setCurrentScreen('weekly-quiz');
   };
 
   const handleShowRules = () => {
@@ -1406,6 +1427,7 @@ export default function QuizTriviaApp() {
           onStartChallenge={() => setCurrentScreen('challenge')}
           onShowRules={handleShowRules}
           onSpinWheel={handleSpinWheel}
+          onStartWeeklyQuiz={handleStartWeeklyQuiz}
         />
       )}
 
@@ -1453,6 +1475,14 @@ export default function QuizTriviaApp() {
       {currentScreen === 'challenge' && (
         <ChallengeModePage 
           onExit={() => setCurrentScreen('home')}
+          context={context}
+        />
+      )}
+
+      {currentScreen === 'weekly-quiz' && (
+        <WeeklyQuizPage 
+          config={currentWeeklyQuiz}
+          onComplete={handleQuizComplete}
           context={context}
         />
       )}
