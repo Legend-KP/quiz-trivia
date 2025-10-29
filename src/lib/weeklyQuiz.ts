@@ -23,10 +23,10 @@ export type QuizState = 'upcoming' | 'live' | 'ended';
 // Current Weekly Quiz Configuration
 // Update this manually before each quiz (Monday evening for Tuesday quiz, Thursday evening for Friday quiz)
 export const currentWeeklyQuiz: WeeklyQuizConfig = {
-  id: "2025-11-05", // Update this date for each quiz
+  id: new Date().toISOString().split('T')[0], // Today's date (YYYY-MM-DD)
   topic: "DeFi Protocols", // Update this topic for each quiz
-  startTime: "2025-11-05T18:00:00Z", // Tuesday 6 PM UTC
-  endTime: "2025-11-06T06:00:00Z", // Wednesday 6 AM UTC
+  startTime: new Date(Date.now() - 60000).toISOString(), // Started 1 minute ago (makes it LIVE now)
+  endTime: new Date(Date.now() + 12 * 60 * 60 * 1000 - 60000).toISOString(), // Ends 12 hours from now
   questions: [
     {
       id: 1,
