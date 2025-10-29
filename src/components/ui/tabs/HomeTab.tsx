@@ -66,6 +66,7 @@ interface ResultsPageProps {
   time: string;
   onRestart: () => void;
   context?: any;
+  quizId?: string; // Weekly quiz ID if this is a weekly quiz result
 }
 
 interface TimeModePageProps {
@@ -557,7 +558,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ onComplete }) => {
 
 
 // Results Component
-const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onRestart: _onRestart, context, time }) => {
+const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onRestart: _onRestart, context, time, quizId }) => {
   const { actions } = useMiniApp();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -571,14 +572,18 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onR
   const totalTime = time || "0:00";
 
   const fetchLeaderboard = useCallback(async () => {
-    console.log('🔍 Fetching leaderboard...');
+    console.log('🔍 Fetching leaderboard...', { quizId, mode: 'CLASSIC' });
     try {
-      const response = await fetch('/api/leaderboard?mode=CLASSIC');
+      // If quizId is provided (weekly quiz), filter by quizId. Otherwise show all classic results
+      const url = quizId 
+        ? `/api/leaderboard?mode=CLASSIC&quizId=${quizId}`
+        : '/api/leaderboard?mode=CLASSIC';
+      const response = await fetch(url);
       const data = await response.json();
       console.log('📥 Leaderboard response:', data);
       
       if (data.leaderboard) {
-        console.log(`📊 Setting leaderboard with ${data.leaderboard.length} entries`);
+        console.log(`📊 Setting leaderboard with ${data.leaderboard.length} entries for quizId: ${quizId || 'all'}`);
         setLeaderboard(data.leaderboard);
       } else {
         console.warn('⚠️ No leaderboard data in response');
@@ -591,7 +596,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onR
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [quizId]);
 
   const submitScore = useCallback(async () => {
     if (!context?.user?.fid || submitted) {
@@ -608,7 +613,8 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onR
       username: context.user.username,
       displayName: context.user.displayName,
       score,
-      totalTime
+      totalTime,
+      quizId
     });
 
     setSubmitting(true);
@@ -621,7 +627,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onR
         score: score,
         time: totalTime,
         mode: 'CLASSIC',
-        quizId: '2025-11-05', // Use current weekly quiz ID
+        quizId: quizId || undefined, // Use quizId if provided (weekly quiz), otherwise undefined
       };
 
       console.log('📤 Sending payload:', payload);
@@ -653,7 +659,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onR
     } finally {
       setSubmitting(false);
     }
-  }, [context?.user, submitted, score, totalTime]);
+  }, [context?.user, submitted, score, totalTime, quizId]);
 
   useEffect(() => {
     fetchLeaderboard();
@@ -674,8 +680,12 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onR
         {/* Leaderboard */}
         <div className="bg-white rounded-2xl p-8 shadow-2xl">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">🏆 Public Leaderboard</h2>
-            <p className="text-gray-600">All Quiz Trivia Participants</p>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              🏆 {quizId ? 'Weekly Quiz Leaderboard' : 'Public Leaderboard'}
+            </h2>
+            <p className="text-gray-600">
+              {quizId ? `Quiz Results (ID: ${quizId})` : 'All Quiz Trivia Participants'}
+            </p>
             {!loading && (
               <div className="mt-2 text-sm text-gray-500">
                 {leaderboard.length} participants • Last updated: {new Date().toLocaleString()}
@@ -1324,6 +1334,7 @@ export default function QuizTriviaApp() {
   const [finalScore, setFinalScore] = useState(0);
   const [finalAnswers, setFinalAnswers] = useState<Answer[]>([]);
   const [finalTime, setFinalTime] = useState<string>('0:00');
+  const [finalQuizId, setFinalQuizId] = useState<string | undefined>(undefined); // Track quizId for weekly quiz
   const [balance, setBalance] = useState<number | null>(null);
 
   // Get Farcaster context
@@ -1353,6 +1364,9 @@ export default function QuizTriviaApp() {
     setFinalScore(score);
     setFinalAnswers(answers);
     setFinalTime(time);
+    // If we're coming from weekly quiz, set the quizId from current weekly quiz
+    const isWeeklyQuiz = currentScreen === 'weekly-quiz';
+    setFinalQuizId(isWeeklyQuiz ? currentWeeklyQuiz.id : undefined);
     setCurrentScreen('results');
   };
 
@@ -1361,6 +1375,7 @@ export default function QuizTriviaApp() {
     setFinalScore(0);
     setFinalAnswers([]);
     setFinalTime('0:00');
+    setFinalQuizId(undefined);
   };
 
   // Fetch balance
@@ -1490,6 +1505,7 @@ export default function QuizTriviaApp() {
           time={finalTime}
           onRestart={handleRestart}
           context={context}
+          quizId={finalQuizId}
         />
       )}
       

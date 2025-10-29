@@ -291,8 +291,11 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                   <p className="text-xs text-green-700 mb-1">
                     +1 for correct answers
                   </p>
-                  <p className="text-xs text-green-700">
+                  <p className="text-xs text-green-700 mb-1">
                     -1 for wrong answers
+                  </p>
+                  <p className="text-xs text-green-700">
+                    0 for missed/no answer
                   </p>
                 </div>
 

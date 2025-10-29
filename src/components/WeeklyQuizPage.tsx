@@ -32,7 +32,8 @@
     const handleAnswerSubmit = useCallback((answerIndex: number | null) => {
       const question = config.questions[currentQuestion];
       const isCorrect = answerIndex === question.correct;
-      const newScore = isCorrect ? score + 1 : score - 1;
+      // Weekly mode scoring: +1 for correct, -1 for wrong, 0 for unanswered/missed
+      const newScore = isCorrect ? score + 1 : (answerIndex === null ? score : score - 1);
       
       setAnswers([...answers, {
         questionId: question.id,
@@ -120,6 +121,7 @@
               <p>⏳ You&apos;ll get <strong>45 seconds</strong> per question — so think fast!</p>
               <p>✅ Correct answer = +1 point</p>
               <p>❌ Wrong answer = -1 point</p>
+              <p>⏰ Missed/No answer = 0 points</p>
               <p>🏆 Top 10 winners get QT token rewards!</p>
               <p>🎯 Topic: <strong>{config.topic}</strong></p>
             </div>
@@ -222,10 +224,9 @@
               <div className="mt-6 space-y-4">
                 <div className="p-4 rounded-lg bg-gray-100">
                   <p className={`font-semibold ${
-                    selectedAnswer === question.correct ? 'text-green-600' : 'text-red-600'
+                    selectedAnswer === question.correct ? 'text-green-600' : selectedAnswer === null ? 'text-gray-600' : 'text-red-600'
                   }`}>
-                    {selectedAnswer === question.correct ? '✅ Correct!' : '❌ Wrong!'}
-                    {selectedAnswer === null && ' ⏰ Time\'s up!'}
+                    {selectedAnswer === question.correct ? '✅ Correct! (+1 point)' : selectedAnswer === null ? '⏰ Time&apos;s up! (0 points)' : '❌ Wrong! (-1 point)'}
                   </p>
                 </div>
                 
