@@ -19,6 +19,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
 }) => {
   const [transactionState, setTransactionState] = useState<TransactionState>(TransactionState.IDLE);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [error, setError] = useState<string>('');
   const [transactionHash, setTransactionHash] = useState<string>('');
   const config = useConfig();
@@ -45,10 +46,18 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
     return () => window.removeEventListener("message", handleFrameTransaction);
   }, [onQuizStart]);
 
-  const handleStartQuiz = async () => {
+  const handleStartQuiz = () => {
+    // Always show details modal first
+    setIsDetailsModalOpen(true);
+  };
+
+  const handleStartQuizConfirmed = async () => {
     if (quizState !== 'live' || userCompleted) {
+      setIsDetailsModalOpen(false);
       return; // Don't start if not live or already completed
     }
+
+    setIsDetailsModalOpen(false);
 
     try {
       setError('');
@@ -128,7 +137,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
     }
   };
 
-  const isDisabled = quizState !== 'live' || userCompleted || isModalOpen;
+  const isDisabled = isModalOpen;
 
   return (
     <>
@@ -150,6 +159,105 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
           <span className="ml-2 animate-pulse">🚀</span>
         )}
       </button>
+
+      {/* Details Modal */}
+      {isDetailsModalOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => setIsDetailsModalOpen(false)}
+        >
+          <div 
+            className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 relative shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setIsDetailsModalOpen(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl font-bold"
+            >
+              ×
+            </button>
+
+            <div className="mt-6">
+              <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                {quizState === 'upcoming' && '📅 Weekly Quiz Challenge'}
+                {quizState === 'live' && '🔴 Weekly Quiz Challenge - LIVE NOW'}
+                {quizState === 'ended' && '⏹️ Weekly Quiz Challenge Ended'}
+              </h3>
+
+              <div className="space-y-4 text-gray-700">
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <div className="font-semibold text-blue-800 mb-2">📋 Quiz Details</div>
+                  <p className="text-sm">• 10 questions per quiz</p>
+                  <p className="text-sm">• 45 seconds per question</p>
+                  <p className="text-sm">• 10-second intervals between questions</p>
+                  <p className="text-sm">• Schedule: Tuesday & Friday, 6 PM - 6 AM UTC</p>
+                </div>
+
+                <div className="bg-yellow-50 rounded-lg p-4">
+                  <div className="font-semibold text-yellow-800 mb-2">🏆 Token Rewards</div>
+                  <p className="text-sm">🥇 1st Place: 4.0M QT</p>
+                  <p className="text-sm">🥈 2nd Place: 2.5M QT</p>
+                  <p className="text-sm">🥉 3rd Place: 1.5M QT</p>
+                  <p className="text-sm">4th-10th: 1.0M QT each</p>
+                </div>
+
+                <div className="bg-green-50 rounded-lg p-4">
+                  <div className="font-semibold text-green-800 mb-2">✅ Scoring Rules</div>
+                  <p className="text-sm">• Correct answer: +1 point</p>
+                  <p className="text-sm">• Wrong answer: -1 point</p>
+                  <p className="text-sm">• Timeout: 0 points</p>
+                </div>
+
+                {quizState === 'upcoming' && (
+                  <div className="bg-purple-50 rounded-lg p-4">
+                    <div className="font-semibold text-purple-800 mb-2">⏰ Next Quiz</div>
+                    <p className="text-sm">The quiz will start soon! Check back later.</p>
+                  </div>
+                )}
+
+                {quizState === 'live' && !userCompleted && (
+                  <div className="bg-red-50 rounded-lg p-4">
+                    <div className="font-semibold text-red-800 mb-2">🔴 Live Now!</div>
+                    <p className="text-sm">Quiz is currently active. Click Start below to participate.</p>
+                  </div>
+                )}
+
+                {userCompleted && (
+                  <div className="bg-green-50 rounded-lg p-4">
+                    <div className="font-semibold text-green-800 mb-2">✅ Completed</div>
+                    <p className="text-sm">You&apos;ve already completed this quiz!</p>
+                  </div>
+                )}
+
+                {quizState === 'ended' && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="font-semibold text-gray-800 mb-2">⏹️ Quiz Ended</div>
+                    <p className="text-sm">This quiz has ended. Check the leaderboard to see results!</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={() => setIsDetailsModalOpen(false)}
+                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition"
+                >
+                  Close
+                </button>
+                
+                {quizState === 'live' && !userCompleted && (
+                  <button
+                    onClick={handleStartQuizConfirmed}
+                    className="flex-1 px-4 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold rounded-lg hover:from-green-600 hover:to-blue-700 transition"
+                  >
+                    Start Quiz 🚀
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <TransactionModal
         isOpen={isModalOpen}
