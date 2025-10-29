@@ -6,8 +6,8 @@ import QuizStartButton from '~/components/QuizStartButton';
 import SpinWheel from '~/components/SpinWheel';
 import { QuizMode } from '~/lib/wallet';
 import { useQTClaim } from '~/hooks/useQTClaim';
-import WeeklyQuizCard from '~/components/WeeklyQuizCard';
 import WeeklyQuizPage from '~/components/WeeklyQuizPage';
+import WeeklyQuizStartButton from '~/components/WeeklyQuizStartButton';
 import { currentWeeklyQuiz } from '~/lib/weeklyQuiz';
 import { useQuizState } from '~/hooks/useWeeklyQuiz';
 
@@ -295,18 +295,14 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartClassic, onStartTim
           <button onClick={onSpinWheel} className="px-3 py-1 rounded-full bg-yellow-500 text-yellow-900 font-semibold hover:bg-yellow-400 transition">🎰 Spin the Wheel!</button>
         </div>
 
-        {/* Weekly Quiz Card */}
-        <div className="mb-6 w-full max-w-md">
-          <WeeklyQuizCard
-            config={currentWeeklyQuiz}
-            onStartQuiz={onStartWeeklyQuiz}
-            userCompleted={false} // This would need to be tracked per user
-            participantCount={0} // This would need to be fetched from API
-          />
-        </div>
-
         {/* Mode Buttons */}
         <div className="space-y-4 w-full max-w-xs">
+          <WeeklyQuizStartButton
+            quizState={_weeklyQuizState}
+            onQuizStart={onStartWeeklyQuiz}
+            userCompleted={false} // This would need to be tracked per user
+          />
+
           <QuizStartButton
             mode={QuizMode.TIME_MODE}
             modeName="Time Mode"

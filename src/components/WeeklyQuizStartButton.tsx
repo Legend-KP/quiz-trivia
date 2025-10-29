@@ -96,18 +96,18 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
 
   const getButtonText = () => {
     if (userCompleted) {
-      return 'Completed ✓';
+      return 'Weekly Quiz Challenge ✓';
     }
     
     switch (quizState) {
       case 'upcoming':
-        return 'Starts Soon';
+        return 'Weekly Quiz Challenge 📅';
       case 'live':
-        return 'START QUIZ NOW';
+        return 'Weekly Quiz Challenge 🔴 LIVE';
       case 'ended':
-        return 'Quiz Ended';
+        return 'Weekly Quiz Challenge ⏹️';
       default:
-        return 'Weekly Quiz';
+        return 'Weekly Quiz Challenge';
     }
   };
 
@@ -118,13 +118,13 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
     
     switch (quizState) {
       case 'upcoming':
-        return 'from-gray-400 to-gray-500 cursor-not-allowed';
+        return 'from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700';
       case 'live':
-        return 'from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700';
+        return 'from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700';
       case 'ended':
         return 'from-gray-400 to-gray-500 cursor-not-allowed';
       default:
-        return 'from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700';
+        return 'from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700';
     }
   };
 
