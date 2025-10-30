@@ -145,11 +145,6 @@ export const USE_WALLET: boolean = false;
 export const ANALYTICS_ENABLED: boolean = true;
 
 /**
- * Feature flags
- */
-export const SHOW_CHALLENGE_MODE: boolean = false;
-
-/**
  * Required chains for the mini app.
  *
  * Contains an array of CAIP-2 identifiers for blockchains that the mini app requires.
