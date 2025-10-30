@@ -90,10 +90,20 @@ export async function POST(request: Request) {
     };
 
     const collection = await getLeaderboardCollection();
-    await collection.updateOne({ fid, mode }, { $set: newEntry }, { upsert: true });
+    if (quizId) {
+      // Enforce single attempt per quizId: if an entry exists for this fid+mode+quizId, do not overwrite
+      const existing = await collection.findOne({ fid, mode, quizId });
+      if (existing) {
+        return NextResponse.json({ success: false, error: 'already_submitted', message: 'User has already submitted for this quiz.' }, { status: 409 });
+      }
+      await collection.insertOne(newEntry);
+    } else {
+      // Fallback behavior when quizId is absent: upsert by fid+mode
+      await collection.updateOne({ fid, mode }, { $set: newEntry }, { upsert: true });
+    }
 
     // Get leaderboard for the specific mode
-    const leaderboard = await collection.find({ mode }).toArray();
+    const leaderboard = await collection.find(quizId ? { mode, quizId } : { mode }).toArray();
     const sortedLeaderboard = leaderboard.sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
       if (a.score !== b.score) return b.score - a.score;
       return (a.timeInSeconds || 0) - (b.timeInSeconds || 0);

@@ -256,8 +256,42 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
 // Home Page Component
 const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartChallenge, onSpinWheel, onStartWeeklyQuiz }) => {
   const _weeklyQuizState = useQuizState(currentWeeklyQuiz);
+  const [weeklyUserCompleted, setWeeklyUserCompleted] = useState(false);
   const { actions, added, context } = useMiniApp();
   const attemptedAddRef = useRef(false);
+
+  // Determine if current user has already completed the current weekly quiz (single attempt enforcement)
+  useEffect(() => {
+    const fid = context?.user?.fid;
+    const quizId = currentWeeklyQuiz.id;
+    if (!fid || !quizId) {
+      setWeeklyUserCompleted(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        // Server check
+        const res = await fetch(`/api/leaderboard?mode=CLASSIC&quizId=${quizId}`);
+        const data = await res.json();
+        const exists = Array.isArray(data?.leaderboard) && data.leaderboard.some((e: any) => e.fid === fid);
+        // Local backup check
+        const lsKey = `weekly_completed_${quizId}_${fid}`;
+        const localDone = typeof window !== 'undefined' ? !!localStorage.getItem(lsKey) : false;
+        if (!cancelled) setWeeklyUserCompleted(exists || localDone);
+      } catch (_e) {
+        // Fallback to localStorage only
+        try {
+          const lsKey = `weekly_completed_${quizId}_${fid}`;
+          const localDone = typeof window !== 'undefined' ? !!localStorage.getItem(lsKey) : false;
+          if (!cancelled) setWeeklyUserCompleted(localDone);
+        } catch (_e2) {
+          if (!cancelled) setWeeklyUserCompleted(false);
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [context?.user?.fid, _weeklyQuizState, currentWeeklyQuiz.id]);
 
   // Auto-prompt to add the mini app if not yet added (once per session)
   useEffect(() => {
@@ -335,7 +369,7 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
               } catch (_e) {}
               onStartWeeklyQuiz();
             }}
-            userCompleted={false} // This would need to be tracked per user
+            userCompleted={weeklyUserCompleted}
           />
 
           <QuizStartButton
@@ -380,7 +414,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onR
   const fetchLeaderboard = useCallback(async () => {
     console.log('🔍 Fetching leaderboard...');
     try {
-      const response = await fetch('/api/leaderboard?mode=CLASSIC');
+      const response = await fetch(`/api/leaderboard?mode=CLASSIC&quizId=${currentWeeklyQuiz.id}`);
       const data = await response.json();
       console.log('📥 Leaderboard response:', data);
       
@@ -428,7 +462,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onR
         score: score,
         time: totalTime,
         mode: 'CLASSIC',
-        quizId: '2025-11-05', // Use current weekly quiz ID
+        quizId: currentWeeklyQuiz.id,
       };
 
       console.log('📤 Sending payload:', payload);
@@ -448,6 +482,13 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onR
         console.log('✅ Score submitted successfully');
         setLeaderboard(data.leaderboard || []);
         setSubmitted(true);
+        try {
+          const quizId = currentWeeklyQuiz.id;
+          const fid = context.user.fid;
+          if (quizId && fid && typeof window !== 'undefined') {
+            localStorage.setItem(`weekly_completed_${quizId}_${fid}`, '1');
+          }
+        } catch (_e) {}
       } else {
         console.warn('❌ Score submission failed:', data.error);
         // Still mark as submitted to prevent retries
@@ -634,6 +675,7 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
   const [correctCount, setCorrectCount] = useState(0);
   const [totalAnswered, setTotalAnswered] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showResults, setShowResults] = useState(false);
   const [timeLeaderboard, setTimeLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -737,11 +779,11 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
     return () => clearTimeout(t);
   }, [started, timeLeft]);
 
-  // auto submit on end
+  // auto submit on end (guarded to run once)
   useEffect(() => {
     if (!started) return;
     if (timeLeft > 0) return;
-    if (submitting) return;
+    if (submitting || hasSubmitted) return;
     setSubmitting(true);
     const run = async () => {
       try {
@@ -760,10 +802,13 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
         fetchTimeLeaderboard();
       } catch (_e) {}
       setSubmitting(false);
+      setHasSubmitted(true);
       setShowResults(true);
+      // stop any further game-side effects
+      setStarted(false);
     };
     run();
-  }, [started, timeLeft, submitting, correctCount, totalAnswered, context?.user]);
+  }, [started, timeLeft, submitting, hasSubmitted, correctCount, totalAnswered, context?.user]);
 
   const handleAnswer = useCallback((idx: number) => {
     const q = questions[qIndex];
