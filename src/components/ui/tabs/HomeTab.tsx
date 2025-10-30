@@ -293,7 +293,7 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
             <img
               src={APP_TITLE_IMAGE_URL}
               alt="Quiz Trivia"
-              className="mx-auto w-56 h-56 md:w-64 md:h-64 object-contain drop-shadow-lg"
+              className="mx-auto w-64 h-64 md:w-80 md:h-80 object-contain drop-shadow-lg"
             />
           ) : (
             <h3 className="text-5xl md:text-7xl font-black text-yellow-400 uppercase tracking-wider relative" style={{
