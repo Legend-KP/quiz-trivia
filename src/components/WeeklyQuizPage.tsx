@@ -32,8 +32,8 @@
     const handleAnswerSubmit = useCallback((answerIndex: number | null) => {
       const question = config.questions[currentQuestion];
       const isCorrect = answerIndex === question.correct;
-      // Weekly mode scoring: +1 for correct, -1 for wrong, 0 for unanswered/missed
-      const newScore = isCorrect ? score + 1 : (answerIndex === null ? score : score - 1);
+      // Weekly mode scoring: +1 for correct, -0.5 for wrong, 0 for unanswered/missed
+      const newScore = isCorrect ? score + 1 : (answerIndex === null ? score : score - 0.5);
       
       setAnswers([...answers, {
         questionId: question.id,
@@ -120,7 +120,7 @@
               <p>📋 The quiz has <strong>10 questions</strong> with <strong>10-second intervals</strong> between each question.</p>
               <p>⏳ You&apos;ll get <strong>45 seconds</strong> per question — so think fast!</p>
               <p>✅ Correct answer = +1 point</p>
-              <p>❌ Wrong answer = -1 point</p>
+              <p>❌ Wrong answer = -0.5 point</p>
               <p>⏰ Missed/No answer = 0 points</p>
               <p>🏆 Top 10 winners get QT token rewards!</p>
               <p>🎯 Topic: <strong>{config.topic}</strong></p>
@@ -226,7 +226,7 @@
                   <p className={`font-semibold ${
                     selectedAnswer === question.correct ? 'text-green-600' : selectedAnswer === null ? 'text-gray-600' : 'text-red-600'
                   }`}>
-                    {selectedAnswer === question.correct ? '✅ Correct! (+1 point)' : selectedAnswer === null ? '⏰ Time&apos;s up! (0 points)' : '❌ Wrong! (-1 point)'}
+                    {selectedAnswer === question.correct ? '✅ Correct! (+1 point)' : selectedAnswer === null ? '⏰ Time\'s up! (0 points)' : '❌ Wrong! (-0.5 point)'}
                   </p>
                 </div>
                 

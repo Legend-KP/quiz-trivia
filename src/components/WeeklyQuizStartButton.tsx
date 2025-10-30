@@ -293,10 +293,10 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                   <div className="font-semibold text-yellow-800 mb-1.5 text-sm">
                     🔥 Rewards — 15M $QT Tokens
                   </div>
-                  <p className="text-xs text-yellow-700 mb-1">🥇 1st Place: 4.0M QT</p>
-                  <p className="text-xs text-yellow-700 mb-1">🥈 2nd Place: 2.5M QT</p>
-                  <p className="text-xs text-yellow-700 mb-1">🥉 3rd Place: 1.5M QT</p>
-                  <p className="text-xs text-yellow-700">4th-10th: 1.0M QT each</p>
+                  <p className="text-xs text-yellow-700 mb-1">🥇 1st Place: 4.0M $QT</p>
+                  <p className="text-xs text-yellow-700 mb-1">🥈 2nd Place: 2.5M $QT</p>
+                  <p className="text-xs text-yellow-700 mb-1">🥉 3rd Place: 1.5M $QT</p>
+                  <p className="text-xs text-yellow-700">4th-10th: 1.0M $QT each</p>
                 </div>
 
                 {/* Scoring Rules */}
@@ -308,7 +308,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                     +1 for correct answers
                   </p>
                   <p className="text-xs text-green-700 mb-1">
-                    -1 for wrong answers
+                    -0.5 for wrong answers
                   </p>
                   <p className="text-xs text-green-700">
                     0 for missed/no answer

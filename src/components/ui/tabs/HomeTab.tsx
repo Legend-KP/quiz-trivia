@@ -233,7 +233,7 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
           
           <div className="flex items-start space-x-3">
             <span className="text-blue-500 font-bold">4️⃣</span>
-            <p>Wrong answer = -1 point</p>
+            <p>Wrong answer = -0.5 point</p>
           </div>
           
           <div className="flex items-start space-x-3">
