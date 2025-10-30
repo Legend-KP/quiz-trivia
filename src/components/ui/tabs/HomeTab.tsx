@@ -285,15 +285,15 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
       </div>
 
       {/* Content Container */}
-      <div className="relative z-10 flex flex-col items-center h-full px-6 text-center pt-8 md:pt-12 gap-3">
+      <div className="relative z-10 flex flex-col items-center h-full px-6 text-center pt-4 md:pt-6 gap-2">
 
         {/* QUIZ TRIVIA - New Font and Enhanced 3D Effect */}
-        <div className="relative mb-4 md:mb-6">
+        <div className="relative mb-2 md:mb-4">
           {APP_TITLE_IMAGE_URL ? (
             <img
               src={APP_TITLE_IMAGE_URL}
               alt="Quiz Trivia"
-              className="mx-auto w-64 h-64 md:w-80 md:h-80 object-contain drop-shadow-lg"
+              className="mx-auto w-72 h-72 md:w-96 md:h-96 object-contain drop-shadow-lg"
             />
           ) : (
             <h3 className="text-5xl md:text-7xl font-black text-yellow-400 uppercase tracking-wider relative" style={{
