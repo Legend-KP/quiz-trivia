@@ -75,7 +75,7 @@ export async function getFarcasterDomainManifest(): Promise<Manifest> {
   const manifest: Manifest = {
     miniapp: {
       version: '1',
-      name: APP_NAME ?? 'Neynar Starter Kit',
+      name: APP_NAME ?? 'Quiz Trivia',
       homeUrl: APP_URL,
       iconUrl: APP_ICON_URL,
       imageUrl: APP_OG_IMAGE_URL,
