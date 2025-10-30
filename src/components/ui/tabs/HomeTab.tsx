@@ -7,7 +7,7 @@ import SpinWheel from '~/components/SpinWheel';
 import { QuizMode } from '~/lib/wallet';
 import { useQTClaim } from '~/hooks/useQTClaim';
 import WeeklyQuizPage from '~/components/WeeklyQuizPage';
-import { QTTokenBar } from '~/components/QTTokenBar';
+import QTTokenButton from '~/components/QTTokenButton';
 import WeeklyQuizStartButton from '~/components/WeeklyQuizStartButton';
 import { currentWeeklyQuiz } from '~/lib/weeklyQuiz';
 import { useQuizState } from '~/hooks/useWeeklyQuiz';
@@ -311,6 +311,9 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
             modeName="Challenge Mode"
             onQuizStart={onStartChallenge}
           />
+
+          {/* QT Token Button */}
+          <QTTokenButton />
         </div>
 
         {/* Enhanced depth styling */}
@@ -1183,18 +1186,14 @@ export default function QuizTriviaApp() {
   return (
     <div className="w-full h-screen">
       {currentScreen === 'home' && (
-        <>
-          <HomePage 
-            balance={balance}
-            onStartTimeMode={handleStartTime}
-            onStartChallenge={() => setCurrentScreen('challenge')}
-            onShowRules={handleShowRules}
-            onSpinWheel={handleSpinWheel}
-            onStartWeeklyQuiz={handleStartWeeklyQuiz}
-          />
-          <div className="h-20" />
-          <QTTokenBar />
-        </>
+        <HomePage 
+          balance={balance}
+          onStartTimeMode={handleStartTime}
+          onStartChallenge={() => setCurrentScreen('challenge')}
+          onShowRules={handleShowRules}
+          onSpinWheel={handleSpinWheel}
+          onStartWeeklyQuiz={handleStartWeeklyQuiz}
+        />
       )}
 
       {/* Spin Wheel Modal */}
