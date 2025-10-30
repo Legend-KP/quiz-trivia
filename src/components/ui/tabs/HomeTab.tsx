@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Clock, Trophy, Star, X } from 'lucide-react';
 import { useMiniApp } from '@neynar/react';
-import { APP_URL } from '~/lib/constants';
+import { APP_URL, APP_TITLE_IMAGE_URL } from '~/lib/constants';
 import QuizStartButton from '~/components/QuizStartButton';
 import SpinWheel from '~/components/SpinWheel';
 import { QuizMode } from '~/lib/wallet';
@@ -285,29 +285,36 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
       </div>
 
       {/* Content Container */}
-      <div className="relative z-10 flex flex-col items-center justify-center h-full px-6 text-center">
+      <div className="relative z-10 flex flex-col items-center h-full px-6 text-center pt-16 md:pt-24 gap-4">
 
         {/* QUIZ TRIVIA - New Font and Enhanced 3D Effect */}
-        <div className="relative mb-12">
-          <h3 className="text-5xl md:text-7xl font-black text-yellow-400 uppercase tracking-wider relative" style={{
-            fontFamily: 'Impact, Arial Black, sans-serif',
-            textShadow: '2px 2px 0px rgba(0,0,0,0.8), 4px 4px 0px rgba(0,0,0,0.6)'
-          }}>
-            {/* Multiple layers for enhanced 3D effect */}
-            <span className="absolute inset-0 transform translate-x-2 translate-y-2 text-yellow-600 opacity-40">QUIZ TRIVIA</span>
-            <span className="absolute inset-0 transform translate-x-1 translate-y-1 text-yellow-500 opacity-70">QUIZ TRIVIA</span>
-            <span className="relative z-10 drop-shadow-lg">QUIZ TRIVIA</span>
-          </h3>
+        <div className="relative mb-6 md:mb-10">
+          {APP_TITLE_IMAGE_URL ? (
+            <img
+              src={APP_TITLE_IMAGE_URL}
+              alt="Quiz Trivia"
+              className="mx-auto w-48 h-48 md:w-56 md:h-56 object-contain drop-shadow-lg"
+            />
+          ) : (
+            <h3 className="text-5xl md:text-7xl font-black text-yellow-400 uppercase tracking-wider relative" style={{
+              fontFamily: 'Impact, Arial Black, sans-serif',
+              textShadow: '2px 2px 0px rgba(0,0,0,0.8), 4px 4px 0px rgba(0,0,0,0.6)'
+            }}>
+              <span className="absolute inset-0 transform translate-x-2 translate-y-2 text-yellow-600 opacity-40">QUIZ TRIVIA</span>
+              <span className="absolute inset-0 transform translate-x-1 translate-y-1 text-yellow-500 opacity-70">QUIZ TRIVIA</span>
+              <span className="relative z-10 drop-shadow-lg">QUIZ TRIVIA</span>
+            </h3>
+          )}
         </div>
 
         {/* Balance + Spin Wheel Button */}
-        <div className="mb-6 text-white text-sm flex items-center gap-3">
+        <div className="mb-8 text-white text-sm flex items-center gap-3">
           <span className="px-3 py-1 rounded-full bg-black/30 border border-white/20">Coins: {balance ?? '—'}</span>
           <button onClick={onSpinWheel} className="px-3 py-1 rounded-full bg-yellow-500 text-yellow-900 font-semibold hover:bg-yellow-400 transition">🎰 Spin the Wheel!</button>
         </div>
 
         {/* Mode Buttons */}
-        <div className="space-y-4 w-full max-w-xs">
+        <div className="space-y-5 w-full max-w-sm">
           <WeeklyQuizStartButton
             quizState={_weeklyQuizState}
             onQuizStart={async () => {

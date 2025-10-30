@@ -107,6 +107,12 @@ export const APP_ACCOUNT_ASSOCIATION: AccountAssociation | undefined =
  */
 export const APP_BUTTON_TEXT: string = 'Test Your Knowledge';
 
+/**
+ * Optional URL for a logo image to replace the big title text on the home page.
+ * Provide a square PNG/SVG. Leave empty to keep the text heading.
+ */
+export const APP_TITLE_IMAGE_URL: string = process.env.NEXT_PUBLIC_TITLE_IMAGE_URL || 'https://i.ibb.co/TN8gpbZ/Untitled-design-removebg-preview.png';
+
 // --- Integration Configuration ---
 /**
  * Webhook URL for receiving events from Neynar.
