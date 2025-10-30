@@ -256,6 +256,7 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
 // Home Page Component
 const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartChallenge, onSpinWheel, onStartWeeklyQuiz }) => {
   const _weeklyQuizState = useQuizState(currentWeeklyQuiz);
+  const { actions, added } = useMiniApp();
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {/* Gradient Background - Full Frame */}
@@ -271,7 +272,21 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
       {/* Content Container */}
       <div className="relative z-10 flex flex-col items-center justify-center h-full px-6 text-center">
         
-
+        {/* Add to Farcaster CTA (only if not added yet) */}
+        {!added && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[90%] max-w-md">
+            <button
+              onClick={async () => {
+                try {
+                  await actions.addMiniApp();
+                } catch (_e) {}
+              }}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg hover:from-purple-700 hover:to-pink-700 active:scale-[0.99] transition"
+            >
+              ➕ Add to Farcaster
+            </button>
+          </div>
+        )}
 
         {/* QUIZ TRIVIA - New Font and Enhanced 3D Effect */}
         <div className="relative mb-12">
