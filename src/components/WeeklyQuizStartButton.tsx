@@ -228,7 +228,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
           animation: 'glow-pulse 2s ease-in-out infinite'
         } : {}}
       >
-        {getButtonText()} {canStartQuiz ? '• 15 coins' : ''}
+        {getButtonText()}
         {isModalOpen && (
           <span className="ml-2">
             {transactionState === TransactionState.CONNECTING && '🔗'}
@@ -282,9 +282,6 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                   </div>
                   <p className="text-xs text-blue-700 mb-1">
                     • 10 questions and 45 seconds per question
-                  </p>
-                  <p className="text-xs text-blue-700 mb-1">
-                    • Entry cost: 15 coins
                   </p>
                   <p className="text-xs text-blue-700">
                     • Runs every Tuesday & Friday, 6 PM – 6 AM UTC
