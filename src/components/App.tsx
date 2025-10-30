@@ -109,11 +109,8 @@ export default function App(
         </div>
       )}
 
-      {/* Main content */}
-      <div className="container py-2">
-        {/* Main title */}
-        <h1 className="text-2xl font-bold text-center mb-4">{title}</h1>
-
+      {/* Main content - full width to allow edge-to-edge backgrounds */}
+      <div className="py-2">
         {/* Tab content rendering */}
         <HomeTab />
       </div>
