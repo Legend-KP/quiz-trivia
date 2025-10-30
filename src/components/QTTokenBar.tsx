@@ -58,7 +58,7 @@ export function QTTokenBar() {
         }
       }}
     >
-      <div className="container mx-auto px-4 py-3">
+      <div className="container mx-auto px-4 py-2">
         <div className="flex items-center justify-between gap-3">
           {/* Left side: Logo and Token Info */}
           <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -67,7 +67,7 @@ export function QTTokenBar() {
               <img
                 src={TOKEN_LOGO_URL}
                 alt={`${TOKEN_NAME} logo`}
-                className="w-10 h-10 rounded-full object-cover border-2 border-white/30 bg-white/10"
+                className="w-8 h-8 rounded-full object-cover border-2 border-white/30 bg-white/10"
                 onError={(e) => {
                   // Fallback if image fails to load
                   (e.target as HTMLImageElement).style.display = "none";
@@ -78,7 +78,7 @@ export function QTTokenBar() {
             {/* Token Details */}
             <div className="flex flex-col min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-lg truncate">{TOKEN_SYMBOL}</span>
+                <span className="font-bold text-base truncate">{TOKEN_SYMBOL}</span>
                 {isLoading && (
                   <span className="text-xs animate-pulse">Opening...</span>
                 )}
@@ -89,10 +89,10 @@ export function QTTokenBar() {
 
           {/* Right side: Buy/View Button */}
           <div className="flex-shrink-0">
-            <div className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg font-semibold text-sm transition-colors duration-200 border border-white/30">
+            <div className="bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-md font-semibold text-xs transition-colors duration-200 border border-white/30">
               {isLoading ? (
                 <span className="flex items-center gap-2 whitespace-nowrap">
-                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
