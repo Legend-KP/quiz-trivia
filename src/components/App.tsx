@@ -73,7 +73,14 @@ export default function App(
   if (!isSDKLoaded) {
     return (
       <div className="flex items-center justify-center h-screen relative">
-        <div className="fixed inset-0 -z-10 bg-gradient-to-r from-blue-900 via-purple-800 to-orange-500" />
+        <div
+          className="fixed inset-0 -z-10"
+          style={{
+            backgroundImage: "url('https://i.ibb.co/Y4spLcxx/Untitled-design-1.png')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        />
         <div className="text-center">
           <div className="spinner h-8 w-8 mx-auto mb-4"></div>
           <p>Loading SDK...</p>
@@ -92,7 +99,14 @@ export default function App(
         paddingRight: context?.client.safeAreaInsets?.right ?? 0,
       }}
     >
-      <div className="fixed inset-0 -z-10 bg-gradient-to-r from-blue-900 via-purple-800 to-orange-500" />
+      <div
+        className="fixed inset-0 -z-10"
+        style={{
+          backgroundImage: "url('https://i.ibb.co/Y4spLcxx/Untitled-design-1.png')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      />
       {/* User Profile in Top Right Corner */}
       {context?.user && (
         <div className="absolute top-4 right-4 z-50">
