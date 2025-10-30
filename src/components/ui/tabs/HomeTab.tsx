@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Clock, Trophy, Star, X } from 'lucide-react';
 import { useMiniApp } from '@neynar/react';
-import { APP_URL, APP_TITLE_IMAGE_URL } from '~/lib/constants';
+import { APP_URL, APP_TITLE_IMAGE_URL, SHOW_CHALLENGE_MODE } from '~/lib/constants';
 import QuizStartButton from '~/components/QuizStartButton';
 import SpinWheel from '~/components/SpinWheel';
 import { QuizMode } from '~/lib/wallet';
@@ -378,11 +378,13 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
             onQuizStart={onStartTimeMode}
           />
 
-          <QuizStartButton
-            mode={QuizMode.CHALLENGE}
-            modeName="Challenge Mode"
-            onQuizStart={onStartChallenge}
-          />
+          {SHOW_CHALLENGE_MODE && (
+            <QuizStartButton
+              mode={QuizMode.CHALLENGE}
+              modeName="Challenge Mode"
+              onQuizStart={onStartChallenge}
+            />
+          )}
         </div>
 
         {/* Enhanced depth styling */}
