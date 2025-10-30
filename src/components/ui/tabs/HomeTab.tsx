@@ -256,7 +256,7 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
 // Home Page Component
 const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartChallenge, onSpinWheel, onStartWeeklyQuiz }) => {
   const _weeklyQuizState = useQuizState(currentWeeklyQuiz);
-  const { actions, added } = useMiniApp();
+  const { actions, added, context } = useMiniApp();
   const attemptedAddRef = useRef(false);
 
   // Auto-prompt to add the mini app if not yet added (once per session)
@@ -310,7 +310,24 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
         <div className="space-y-4 w-full max-w-xs">
           <WeeklyQuizStartButton
             quizState={_weeklyQuizState}
-            onQuizStart={onStartWeeklyQuiz}
+            onQuizStart={async () => {
+              try {
+                const fid = context?.user?.fid;
+                if (fid) {
+                  const res = await fetch('/api/currency/spend', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fid, amount: 15, reason: 'weekly_entry' }),
+                  });
+                  if (!res.ok) {
+                    const d = await res.json().catch(() => ({}));
+                    alert(d?.error || 'Insufficient balance');
+                    return;
+                  }
+                }
+              } catch (_e) {}
+              onStartWeeklyQuiz();
+            }}
             userCompleted={false} // This would need to be tracked per user
           />
 
