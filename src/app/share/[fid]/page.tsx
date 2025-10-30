@@ -24,6 +24,7 @@ export async function generateMetadata({
     },
     other: {
       "fc:frame": JSON.stringify(getMiniAppEmbedMetadata(imageUrl)),
+      "fc:miniapp": JSON.stringify(getMiniAppEmbedMetadata(imageUrl)),
     },
   };
 }

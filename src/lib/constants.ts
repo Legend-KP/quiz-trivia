@@ -78,7 +78,7 @@ export const APP_ICON_URL: string = `${APP_URL}/icon.png`;
  * URL for the app's Open Graph image.
  * Used for social media sharing and previews.
  */
-export const APP_OG_IMAGE_URL: string = `${APP_URL}/api/opengraph-image`;
+export const APP_OG_IMAGE_URL: string = `https://i.ibb.co/GvvGpqZc/Untitled-design.png`;
 
 /**
  * URL for the app's splash screen image.
