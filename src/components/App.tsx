@@ -91,6 +91,7 @@ export default function App(
         paddingRight: context?.client.safeAreaInsets?.right ?? 0,
       }}
     >
+      <div className="fixed inset-0 -z-10 bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700" />
       {/* User Profile in Top Right Corner */}
       {context?.user && (
         <div className="absolute top-4 right-4 z-50">
