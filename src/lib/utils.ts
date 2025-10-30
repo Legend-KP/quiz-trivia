@@ -79,7 +79,7 @@ export async function getFarcasterDomainManifest(): Promise<Manifest> {
       homeUrl: APP_URL,
       iconUrl: APP_ICON_URL,
       imageUrl: APP_OG_IMAGE_URL,
-      buttonTitle: APP_BUTTON_TEXT ?? 'Launch Mini App',
+      buttonTitle: APP_BUTTON_TEXT ?? 'Test Your Knowledge',
       splashImageUrl: APP_SPLASH_URL,
       splashBackgroundColor: APP_SPLASH_BACKGROUND_COLOR,
       webhookUrl: APP_WEBHOOK_URL,
