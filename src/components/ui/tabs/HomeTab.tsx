@@ -285,15 +285,15 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
       </div>
 
       {/* Content Container */}
-      <div className="relative z-10 flex flex-col items-center h-full px-6 text-center pt-4 md:pt-6 gap-2">
+      <div className="relative z-10 flex flex-col items-center h-full px-6 text-center pt-2 md:pt-4 gap-1">
 
         {/* QUIZ TRIVIA - New Font and Enhanced 3D Effect */}
-        <div className="relative mb-2 md:mb-4">
+        <div className="relative mb-1 md:mb-3">
           {APP_TITLE_IMAGE_URL ? (
             <img
               src={APP_TITLE_IMAGE_URL}
               alt="Quiz Trivia"
-              className="mx-auto w-72 h-72 md:w-96 md:h-96 object-contain drop-shadow-lg"
+              className="mx-auto w-80 h-80 md:w-[28rem] md:h-[28rem] object-contain drop-shadow-lg"
             />
           ) : (
             <h3 className="text-5xl md:text-7xl font-black text-yellow-400 uppercase tracking-wider relative" style={{
@@ -308,13 +308,13 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
         </div>
 
         {/* Balance + Spin Wheel Button */}
-        <div className="mb-8 text-white text-sm flex items-center gap-3">
+        <div className="mb-6 text-white text-sm flex items-center gap-3">
           <span className="px-3 py-1 rounded-full bg-black/30 border border-white/20">Coins: {balance ?? '—'}</span>
           <button onClick={onSpinWheel} className="px-3 py-1 rounded-full bg-yellow-500 text-yellow-900 font-semibold hover:bg-yellow-400 transition">🎰 Spin the Wheel!</button>
         </div>
 
         {/* Mode Buttons */}
-        <div className="space-y-5 w-full max-w-sm">
+        <div className="space-y-4 w-full max-w-sm">
           <WeeklyQuizStartButton
             quizState={_weeklyQuizState}
             onQuizStart={async () => {
