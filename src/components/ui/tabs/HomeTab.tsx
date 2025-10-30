@@ -7,6 +7,7 @@ import SpinWheel from '~/components/SpinWheel';
 import { QuizMode } from '~/lib/wallet';
 import { useQTClaim } from '~/hooks/useQTClaim';
 import WeeklyQuizPage from '~/components/WeeklyQuizPage';
+import { QTTokenBar } from '~/components/QTTokenBar';
 import WeeklyQuizStartButton from '~/components/WeeklyQuizStartButton';
 import { currentWeeklyQuiz } from '~/lib/weeklyQuiz';
 import { useQuizState } from '~/hooks/useWeeklyQuiz';
@@ -1182,14 +1183,18 @@ export default function QuizTriviaApp() {
   return (
     <div className="w-full h-screen">
       {currentScreen === 'home' && (
-        <HomePage 
-          balance={balance}
-          onStartTimeMode={handleStartTime}
-          onStartChallenge={() => setCurrentScreen('challenge')}
-          onShowRules={handleShowRules}
-          onSpinWheel={handleSpinWheel}
-          onStartWeeklyQuiz={handleStartWeeklyQuiz}
-        />
+        <>
+          <HomePage 
+            balance={balance}
+            onStartTimeMode={handleStartTime}
+            onStartChallenge={() => setCurrentScreen('challenge')}
+            onShowRules={handleShowRules}
+            onSpinWheel={handleSpinWheel}
+            onStartWeeklyQuiz={handleStartWeeklyQuiz}
+          />
+          <div className="h-20" />
+          <QTTokenBar />
+        </>
       )}
 
       {/* Spin Wheel Modal */}

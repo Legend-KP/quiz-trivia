@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useMiniApp } from "@neynar/react";
 import { HomeTab } from "~/components/ui/tabs";
-import { QTTokenBar } from "~/components/QTTokenBar";
 
 // --- Types ---
 export enum Tab {
@@ -111,16 +110,13 @@ export default function App(
       )}
 
       {/* Main content */}
-      <div className="container py-2 pb-20">
+      <div className="container py-2">
         {/* Main title */}
         <h1 className="text-2xl font-bold text-center mb-4">{title}</h1>
 
         {/* Tab content rendering */}
         <HomeTab />
       </div>
-
-      {/* QT Token Bottom Bar */}
-      <QTTokenBar />
     </div>
   );
 }
