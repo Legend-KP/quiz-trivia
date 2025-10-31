@@ -20,74 +20,91 @@ export interface WeeklyQuizConfig {
 
 export type QuizState = 'upcoming' | 'live' | 'ended';
 
-// TESTING MODE: 1 min wait → 5 min live → 1 min wait → repeat
-// Synchronized cycle for all users (based on fixed epoch time)
-// This ensures everyone sees the same quiz state at the same time
-//
-// SYNCHRONIZATION GUARANTEE:
-// - If User A checks at 14:32:15 UTC → calculates countdown from synchronized cycle
-// - If User B checks at 14:32:15 UTC → calculates SAME countdown (same moment, same result)
-// - If User B checks at 14:33:59 UTC → calculates different countdown (different moment, correct)
-// 
-// All users calculate from the same epoch reference point, so:
-// - Same moment checked = Same countdown displayed ✓
-// - Different moments checked = Different countdowns displayed (correct behavior) ✓
-export function getTestingQuizTimes() {
-  const now = Date.now();
-  const cycleDuration = 6 * 60 * 1000; // 6 minutes total (1 min wait + 5 min live)
-  const waitDuration = 1 * 60 * 1000; // 1 minute wait
-  const liveDuration = 5 * 60 * 1000; // 5 minutes live
+// Get current or next Tuesday/Friday at 6 PM UTC
+// Returns the quiz that is currently live, or the next upcoming quiz
+// Quiz windows: Tuesday 6PM-6AM (Wed), Friday 6PM-6AM (Sat)
+function getCurrentOrNextQuizDate(): Date {
+  const now = new Date();
+  const currentDay = now.getUTCDay(); // 0 = Sunday, 2 = Tuesday, 3 = Wednesday, 5 = Friday, 6 = Saturday
+  const currentHour = now.getUTCHours();
   
-  // Use a fixed epoch time (Jan 1, 2025 00:00:00 UTC) as reference for synchronization
-  // This ensures all users are synchronized to the same cycle
-  const epochTime = new Date('2025-01-01T00:00:00Z').getTime();
-  const timeSinceEpoch = now - epochTime;
+  // Check if we're in an active quiz window
+  // Tuesday 6PM - Wednesday 6AM: Tuesday quiz is live
+  // Friday 6PM - Saturday 6AM: Friday quiz is live
   
-  // Calculate position in current cycle (synchronized for all users)
-  const cyclePosition = timeSinceEpoch % cycleDuration;
-  
-  // Calculate the start of the current cycle (same for all users)
-  const currentCycleStart = epochTime + (timeSinceEpoch - cyclePosition);
-  
-  // Calculate quiz times based on current cycle (synchronized)
-  let startTime: Date;
-  let endTime: Date;
-  
-  if (cyclePosition < waitDuration) {
-    // Currently in wait period (upcoming state)
-    // Quiz starts at the end of wait period
-    startTime = new Date(currentCycleStart + waitDuration);
-    endTime = new Date(startTime.getTime() + liveDuration);
-  } else {
-    // Currently in live period (live state)
-    // Quiz started at the end of wait period, ends after live duration
-    startTime = new Date(currentCycleStart + waitDuration);
-    endTime = new Date(startTime.getTime() + liveDuration);
+  if (currentDay === 2 && currentHour >= 18) {
+    // Tuesday after 6 PM - quiz starts now
+    const quizDate = new Date(now);
+    quizDate.setUTCHours(18, 0, 0, 0);
+    return quizDate;
   }
   
-  return {
-    startTime: startTime.toISOString(),
-    endTime: endTime.toISOString(),
-    id: startTime.toISOString().split('T')[0]
-  };
+  if (currentDay === 3 && currentHour < 6) {
+    // Wednesday before 6 AM - Tuesday quiz is still live
+    const quizDate = new Date(now);
+    quizDate.setUTCDate(now.getUTCDate() - 1); // Yesterday (Tuesday)
+    quizDate.setUTCHours(18, 0, 0, 0);
+    return quizDate;
+  }
+  
+  if (currentDay === 5 && currentHour >= 18) {
+    // Friday after 6 PM - quiz starts now
+    const quizDate = new Date(now);
+    quizDate.setUTCHours(18, 0, 0, 0);
+    return quizDate;
+  }
+  
+  if (currentDay === 6 && currentHour < 6) {
+    // Saturday before 6 AM - Friday quiz is still live
+    const quizDate = new Date(now);
+    quizDate.setUTCDate(now.getUTCDate() - 1); // Yesterday (Friday)
+    quizDate.setUTCHours(18, 0, 0, 0);
+    return quizDate;
+  }
+  
+  // Quiz is not live - find next quiz
+  let daysToAdd = 0;
+  
+  if (currentDay === 2 && currentHour < 18) {
+    // Tuesday before 6 PM - quiz is today
+    daysToAdd = 0;
+  } else if (currentDay === 5 && currentHour < 18) {
+    // Friday before 6 PM - quiz is today
+    daysToAdd = 0;
+  } else if (currentDay === 0 || currentDay === 1) {
+    // Sunday or Monday → next is Tuesday
+    daysToAdd = (2 - currentDay + 7) % 7;
+  } else if (currentDay === 3 || currentDay === 4) {
+    // Wednesday or Thursday → next is Friday
+    daysToAdd = (5 - currentDay + 7) % 7;
+  } else if (currentDay === 6 && currentHour >= 6) {
+    // Saturday after 6 AM → next is Tuesday (3 days)
+    daysToAdd = 3;
+  } else if (currentDay === 3 && currentHour >= 6) {
+    // Wednesday after 6 AM → next is Friday (2 days)
+    daysToAdd = 2;
+  }
+  
+  const quizDate = new Date(now);
+  quizDate.setUTCDate(now.getUTCDate() + daysToAdd);
+  quizDate.setUTCHours(18, 0, 0, 0); // 6 PM UTC
+  
+  return quizDate;
 }
 
 // Current Weekly Quiz Configuration
-// TESTING MODE: Creates a repeating 6-minute cycle
-//   - 1 minute wait (upcoming state)
-//   - 5 minutes live (live state)  
-//   - Then repeats (1 min wait again)
-// Cycle: Wait 1min → Live 5min → Wait 1min → Live 5min...
-// NOTE: Times are calculated once when module loads. For continuous testing beyond 6 minutes, 
-//       refresh the page to recalculate times. One full cycle (6 min) should be enough to test the flow.
-// To disable testing mode, comment out getTestingQuizTimes() and use static dates
+// PRODUCTION MODE: Runs on Tuesday & Friday at 6 PM - 6 AM UTC (12-hour windows)
 function getCurrentWeeklyQuiz(): WeeklyQuizConfig {
-  const testingTimes = getTestingQuizTimes();
+  const startDate = getCurrentOrNextQuizDate();
+  const endDate = new Date(startDate);
+  endDate.setUTCHours(6, 0, 0, 0); // 6 AM UTC (next day)
+  endDate.setUTCDate(endDate.getUTCDate() + 1); // Next day
+  
   return {
-    id: testingTimes.id,
+    id: getQuizIdFromDate(startDate),
     topic: "DeFi Protocols", // Update this topic for each quiz
-    startTime: testingTimes.startTime, // Calculated based on testing cycle
-    endTime: testingTimes.endTime, // 5 minutes after startTime
+    startTime: startDate.toISOString(), // Tuesday or Friday 6 PM UTC
+    endTime: endDate.toISOString(), // Next day 6 AM UTC (12-hour window)
     questions: [
     {
       id: 1,
@@ -173,7 +190,7 @@ function getCurrentWeeklyQuiz(): WeeklyQuizConfig {
   };
 }
 
-// Export current quiz (recalculated on each access for testing cycle)
+// Export current quiz (recalculated on each access for production schedule)
 export const currentWeeklyQuiz: WeeklyQuizConfig = getCurrentWeeklyQuiz();
 
 // Calculate quiz state based on current time
@@ -192,29 +209,8 @@ export function calculateQuizState(config: WeeklyQuizConfig): QuizState {
 }
 
 // Get next quiz start time
-// In TESTING MODE: Returns next cycle start (synchronized for all users)
-// In PRODUCTION: Returns next Tuesday or Friday at 6 PM UTC
+// Returns next Tuesday or Friday at 6 PM UTC
 export function getNextQuizStartTime(): Date {
-  // TESTING MODE: Calculate next cycle start time (synchronized)
-  const now = Date.now();
-  const cycleDuration = 6 * 60 * 1000; // 6 minutes total
-  const waitDuration = 1 * 60 * 1000; // 1 minute wait
-  
-  // Use same epoch time for synchronization
-  const epochTime = new Date('2025-01-01T00:00:00Z').getTime();
-  const timeSinceEpoch = now - epochTime;
-  
-  // Calculate position in current cycle (synchronized)
-  const cyclePosition = timeSinceEpoch % cycleDuration;
-  
-  // Find next cycle start (beginning of next wait period)
-  const currentCycleStart = epochTime + (timeSinceEpoch - cyclePosition);
-  const nextCycleStart = currentCycleStart + cycleDuration;
-  
-  return new Date(nextCycleStart);
-  
-  // PRODUCTION CODE (commented out for testing):
-  /*
   const now = new Date();
   const currentDay = now.getUTCDay(); // 0 = Sunday, 2 = Tuesday, 5 = Friday
   const currentHour = now.getUTCHours();
@@ -227,8 +223,9 @@ export function getNextQuizStartTime(): Date {
       // After 6 PM UTC, next quiz is Friday
       daysToAdd = 3;
     } else {
-      // Before 6 PM UTC, quiz is today
-      daysToAdd = 0;
+      // Before 6 PM UTC, quiz is today (already started or starting soon)
+      // Next quiz is Friday
+      daysToAdd = 3;
     }
   } else if (currentDay === 5) {
     // Today is Friday
@@ -236,8 +233,9 @@ export function getNextQuizStartTime(): Date {
       // After 6 PM UTC, next quiz is Tuesday (4 days)
       daysToAdd = 4;
     } else {
-      // Before 6 PM UTC, quiz is today
-      daysToAdd = 0;
+      // Before 6 PM UTC, quiz is today (already started or starting soon)
+      // Next quiz is Tuesday
+      daysToAdd = 4;
     }
   } else if (currentDay === 0 || currentDay === 1) {
     // Sunday (0) or Monday (1) → next is Tuesday
@@ -255,7 +253,6 @@ export function getNextQuizStartTime(): Date {
   nextQuizDate.setUTCHours(18, 0, 0, 0); // 6 PM UTC
   
   return nextQuizDate;
-  */
 }
 
 // Format countdown timer
