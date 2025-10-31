@@ -260,77 +260,6 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
   const { actions, added, context } = useMiniApp();
   const attemptedAddRef = useRef(false);
 
-  // ==== Time Mode Schedule: Tue & Fri 18:00–06:00 UTC ====
-  const [isTimeModeLive, setIsTimeModeLive] = useState(false);
-  const [timeModeCountdown, setTimeModeCountdown] = useState<string>('');
-
-  const getNextTimeModeWindowStart = () => {
-    const now = new Date();
-    const day = now.getUTCDay(); // 0=Sun ... 2=Tue, 5=Fri
-    const hour = now.getUTCHours();
-
-    // Helper to make a date at specific UTC day/hour
-    const makeAt = (base: Date, targetDay: number, hourUTC: number) => {
-      const d = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate(), 0, 0, 0));
-      const delta = (targetDay - d.getUTCDay() + 7) % 7;
-      d.setUTCDate(d.getUTCDate() + delta);
-      d.setUTCHours(hourUTC, 0, 0, 0);
-      return d;
-    };
-
-    // Determine if currently inside a window
-    const isTue = day === 2; // Tue
-    const isFri = day === 5; // Fri
-    const isWedMorning = day === 3 && hour < 6; // After Tue night
-    const isSatMorning = day === 6 && hour < 6; // After Fri night
-
-    const inWindow = (isTue && hour >= 18) || (isWedMorning) || (isFri && hour >= 18) || (isSatMorning);
-    if (inWindow) {
-      // Return current window end for countdown label (ends at 06:00 UTC next day)
-      const end = new Date(now);
-      // if after 18:00 on Tue/Fri → end next day 06:00; if Wed/Sat morning → end today 06:00
-      if (isWedMorning || isSatMorning) {
-        end.setUTCHours(6, 0, 0, 0);
-      } else {
-        const tmp = new Date(now);
-        tmp.setUTCDate(tmp.getUTCDate() + 1);
-        tmp.setUTCHours(6, 0, 0, 0);
-        return { live: true, target: tmp, label: 'Ends in' };
-      }
-      return { live: true, target: end, label: 'Ends in' };
-    }
-
-    // Not in window → next start: Tue 18:00 or Fri 18:00
-    const nextTue = makeAt(now, 2, 18);
-    const nextFri = makeAt(now, 5, 18);
-    const candidates = [nextTue, nextFri].filter(d => d.getTime() > now.getTime());
-    const next = candidates.length ? new Date(Math.min(...candidates.map(d => d.getTime()))) : nextTue; // fallback
-    return { live: false, target: next, label: 'Starts in' };
-  };
-
-  useEffect(() => {
-    const tick = () => {
-      const { live, target, label } = getNextTimeModeWindowStart();
-      setIsTimeModeLive(live);
-      const diff = target.getTime() - Date.now();
-      if (diff <= 0) {
-        setTimeModeCountdown(`${label} 0s`);
-        return;
-      }
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-      const parts: string[] = [];
-      if (hours > 0) parts.push(`${hours}h`);
-      if (minutes > 0 || hours > 0) parts.push(`${minutes}m`);
-      parts.push(`${seconds}s`);
-      setTimeModeCountdown(`${label} ${parts.join(' ')}`);
-    };
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
-
   // Determine if current user has already completed the current weekly quiz (single attempt enforcement)
   useEffect(() => {
     const fid = context?.user?.fid;
@@ -443,27 +372,11 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
             userCompleted={weeklyUserCompleted}
           />
 
-          <div className="relative">
-            {!isTimeModeLive && (
-              <span className="absolute -top-2 right-3 text-xs font-semibold bg-black/50 text-white px-2 py-0.5 rounded-md backdrop-blur">
-                {timeModeCountdown}
-              </span>
-            )}
-            {isTimeModeLive && (
-              <span className="absolute -top-2 right-3 text-xs font-semibold bg-green-600 text-white px-2 py-0.5 rounded-md">
-                LIVE
-              </span>
-            )}
-            <QuizStartButton
-              mode={QuizMode.TIME_MODE}
-              modeName="Time Mode"
-              onQuizStart={() => {
-                if (!isTimeModeLive) return;
-                onStartTimeMode();
-              }}
-              className={!isTimeModeLive ? 'pointer-events-none opacity-60' : ''}
-            />
-          </div>
+          <QuizStartButton
+            mode={QuizMode.TIME_MODE}
+            modeName="Time Mode"
+            onQuizStart={onStartTimeMode}
+          />
 
           <div className="relative">
             <span className="absolute -top-2 right-3 text-xs font-semibold bg-black/50 text-white px-2 py-0.5 rounded-md backdrop-blur">
