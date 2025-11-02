@@ -21,7 +21,16 @@ interface LeaderboardEntry {
 export default function PublicLeaderboard() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedMode, setSelectedMode] = useState<'ALL' | 'CLASSIC' | 'TIME_MODE' | 'CHALLENGE'>('ALL');
+  // Check URL params for mode parameter
+  const getInitialMode = (): 'ALL' | 'CLASSIC' | 'TIME_MODE' | 'CHALLENGE' => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const mode = params.get('mode');
+      if (mode === 'CLASSIC') return 'CLASSIC';
+    }
+    return 'ALL';
+  };
+  const [selectedMode, setSelectedMode] = useState<'ALL' | 'CLASSIC' | 'TIME_MODE' | 'CHALLENGE'>(getInitialMode());
   const [stats, setStats] = useState({
     totalParticipants: 0,
     lastUpdated: ''

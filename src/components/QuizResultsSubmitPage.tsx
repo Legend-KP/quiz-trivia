@@ -81,16 +81,15 @@ const QuizResultsSubmitPage: React.FC<QuizResultsSubmitPageProps> = ({
     } catch (err) {
       console.error('Score submission error:', err);
       
-      // Close modal on error - show inline error instead
+      // Close modal immediately on error - show inline error instead
       setIsModalOpen(false);
+      setTransactionState(TransactionState.ERROR);
       
       if (err instanceof WalletError) {
         setError(formatWalletError(err));
       } else {
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
       }
-      
-      setTransactionState(TransactionState.ERROR);
     }
   };
 
@@ -189,8 +188,8 @@ const QuizResultsSubmitPage: React.FC<QuizResultsSubmitPageProps> = ({
         </div>
       </div>
 
-      {/* Only show modal for connecting, confirming, and success states - not for errors */}
-      {transactionState !== TransactionState.ERROR && (
+      {/* Only show modal for connecting, confirming, and success states - never for errors */}
+      {isModalOpen && transactionState !== TransactionState.ERROR && (
         <TransactionModal
           isOpen={isModalOpen}
           state={transactionState}

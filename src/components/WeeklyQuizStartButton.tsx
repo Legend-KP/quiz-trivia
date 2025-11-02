@@ -257,30 +257,28 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
             </div>
 
             {/* Fixed Footer with Buttons */}
-            <div className="flex-shrink-0 pt-3 mt-3 border-t border-gray-200 flex gap-2">
+            <div className="flex-shrink-0 pt-3 mt-3 border-t border-gray-200 flex gap-2 flex-wrap">
                 <button
                   onClick={() => setIsDetailsModalOpen(false)}
-                  className="flex-1 px-3 py-2 bg-gray-200 text-gray-800 font-semibold text-sm rounded-lg hover:bg-gray-300 transition"
+                  className="flex-1 px-3 py-2 bg-gray-200 text-gray-800 font-semibold text-sm rounded-lg hover:bg-gray-300 transition min-w-[80px]"
                 >
                   Close
                 </button>
                 
-                {quizState === 'ended' && (
-                  <button
-                    onClick={() => {
-                      setIsDetailsModalOpen(false);
-                      window.location.href = '/leaderboard';
-                    }}
-                    className="flex-1 px-3 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold text-sm rounded-lg hover:from-blue-600 hover:to-purple-700 transition"
-                  >
-                    📊 View Leaderboard
-                  </button>
-                )}
+                <button
+                  onClick={() => {
+                    setIsDetailsModalOpen(false);
+                    window.location.href = '/leaderboard?mode=CLASSIC';
+                  }}
+                  className="flex-1 px-3 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold text-sm rounded-lg hover:from-blue-600 hover:to-purple-700 transition min-w-[140px]"
+                >
+                  📊 View Leaderboard
+                </button>
                 
                 {canStartQuiz && (
                   <button
                     onClick={handleStartQuizConfirmed}
-                    className="flex-1 px-3 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold text-sm rounded-lg hover:from-green-600 hover:to-blue-700 transition"
+                    className="flex-1 px-3 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold text-sm rounded-lg hover:from-green-600 hover:to-blue-700 transition min-w-[120px]"
                   >
                     Start Quiz 🚀
                   </button>
