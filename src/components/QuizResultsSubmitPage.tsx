@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { QuizMode, TransactionState, startQuizTransactionWithWagmi, formatWalletError, WalletError } from '~/lib/wallet';
+import { QuizMode, TransactionState, startQuizTransactionWithWagmi, WalletError } from '~/lib/wallet';
 import { useConfig } from 'wagmi';
 import TransactionModal from './TransactionModal';
 
@@ -22,7 +22,6 @@ const QuizResultsSubmitPage: React.FC<QuizResultsSubmitPageProps> = ({
 }) => {
   const [transactionState, setTransactionState] = useState<TransactionState>(TransactionState.IDLE);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [error, setError] = useState<string>('');
   const [transactionHash, setTransactionHash] = useState<string>('');
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const config = useConfig();
@@ -58,7 +57,6 @@ const QuizResultsSubmitPage: React.FC<QuizResultsSubmitPageProps> = ({
     }
 
     try {
-      setError('');
       setIsModalOpen(true);
       setTransactionState(TransactionState.CONNECTING);
       
@@ -81,15 +79,12 @@ const QuizResultsSubmitPage: React.FC<QuizResultsSubmitPageProps> = ({
     } catch (err) {
       console.error('Score submission error:', err);
       
-      // Close modal immediately on error - show inline error instead
+      // On error, directly redirect to leaderboard
       setIsModalOpen(false);
       setTransactionState(TransactionState.ERROR);
       
-      if (err instanceof WalletError) {
-        setError(formatWalletError(err));
-      } else {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      }
+      // Redirect to leaderboard immediately
+      onViewLeaderboard();
     }
   };
 
@@ -101,15 +96,8 @@ const QuizResultsSubmitPage: React.FC<QuizResultsSubmitPageProps> = ({
     
     setIsModalOpen(false);
     setTransactionState(TransactionState.IDLE);
-    setError('');
   };
 
-  const handleRetry = () => {
-    setError('');
-    setTransactionState(TransactionState.IDLE);
-    setIsModalOpen(false);
-    handleSubmitScore();
-  };
 
   return (
     <>
@@ -145,30 +133,6 @@ const QuizResultsSubmitPage: React.FC<QuizResultsSubmitPageProps> = ({
               </button>
             )}
 
-            {/* Error State - Show Retry and Leaderboard buttons */}
-            {transactionState === TransactionState.ERROR && !hasSubmitted && (
-              <div className="mt-4 space-y-3">
-                {error && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm mb-3">
-                    {error}
-                  </div>
-                )}
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleRetry}
-                    className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-6 rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all"
-                  >
-                    🔄 Retry
-                  </button>
-                  <button
-                    onClick={onViewLeaderboard}
-                    className="flex-1 bg-gray-500 text-white font-bold py-3 px-6 rounded-xl hover:bg-gray-600 transition-all"
-                  >
-                    📊 Leaderboard
-                  </button>
-                </div>
-              </div>
-            )}
 
             {/* Success State - Already submitted */}
             {hasSubmitted && (
@@ -193,7 +157,6 @@ const QuizResultsSubmitPage: React.FC<QuizResultsSubmitPageProps> = ({
         <TransactionModal
           isOpen={isModalOpen}
           state={transactionState}
-          error={error}
           onClose={handleCloseModal}
           transactionHash={transactionHash}
         />
