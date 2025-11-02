@@ -1,5 +1,5 @@
 import React from 'react';
-import { TransactionState } from '@/lib/wallet';
+import { TransactionState } from '~/lib/wallet';
 
 interface TransactionModalProps {
   isOpen: boolean;
@@ -24,7 +24,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
         return {
           title: 'Connecting Your Wallet',
           icon: '🔗',
-          message: 'Hang tight! We're getting your wallet ready to submit your score...',
+          message: "Hang tight! We're getting your wallet ready to submit your score...",
           showSpinner: true
         };
       
@@ -57,7 +57,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
         return {
           title: 'Processing',
           icon: '⏳',
-          message: 'Just a sec... we’re getting things ready.',
+          message: "Just a sec... we're getting things ready.",
           showSpinner: true
         };
     }
