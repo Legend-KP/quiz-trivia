@@ -24,23 +24,23 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
         return {
           title: 'Connecting Your Wallet',
           icon: '🔗',
-          message: 'Hang tight! We’re getting your wallet ready to start the quiz...',
+          message: 'Hang tight! We're getting your wallet ready to submit your score...',
           showSpinner: true
         };
       
       case TransactionState.CONFIRMING:
         return {
-          title: 'Sign Your Entry',
+          title: 'Submitting Score',
           icon: '✍️',
-          message: 'Almost there! Please sign the message to verify your quiz entry (no payment required).',
+          message: 'Almost there! Please sign the message to submit your quiz score (no payment required).',
           showSpinner: true
         };
       
       case TransactionState.SUCCESS:
         return {
-          title: 'You’re In! 🎉',
+          title: 'Score Submitted! 🎉',
           icon: '✅',
-          message: 'Your quiz entry is live — get ready to play and test your knowledge!',
+          message: 'Your score has been successfully submitted to the leaderboard!',
           showSpinner: false,
           showTxHash: true
         };
@@ -49,7 +49,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
         return {
           title: 'Oops! Something Went Wrong',
           icon: '❌',
-          message: error || 'Please try again — looks like something didn’t go through.',
+          message: error || 'Failed to submit your score. Please try again.',
           showSpinner: false
         };
       
@@ -122,7 +122,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
               onClick={onClose}
               className="flex-1 bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200"
             >
-              Start Quiz! 🚀
+              View Leaderboard! 📊
             </button>
           ) : isError ? (
             <>
@@ -153,7 +153,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
         {state === TransactionState.CONFIRMING && (
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-xs text-blue-800">
-              💡 <strong>Tip:</strong> This signature creates a permanent record of your quiz participation on the blockchain - no payment required!
+              💡 <strong>Tip:</strong> This signature creates a permanent record of your quiz score on the blockchain - no payment required!
             </p>
           </div>
         )}

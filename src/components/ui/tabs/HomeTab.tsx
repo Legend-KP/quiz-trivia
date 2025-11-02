@@ -11,6 +11,7 @@ import { QTTokenBar } from '~/components/QTTokenBar';
 import WeeklyQuizStartButton from '~/components/WeeklyQuizStartButton';
 import { currentWeeklyQuiz } from '~/lib/weeklyQuiz';
 import { useQuizState } from '~/hooks/useWeeklyQuiz';
+import QuizResultsSubmitPage from '~/components/QuizResultsSubmitPage';
 
 // Type definitions
 interface QuizQuestion {
@@ -67,6 +68,7 @@ interface ResultsPageProps {
 
 interface TimeModePageProps {
   onExit: () => void;
+  onComplete?: (score: number, totalQuestions: number) => void;
   context?: any;
 }
 
@@ -672,7 +674,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onR
 
 // Time Mode (45s) Component
 // Time Mode (45s) Component with Question Shuffling
-const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
+const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context }) => {
   const [_sessionId] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(45);
   const [started, setStarted] = useState(false);
@@ -683,9 +685,6 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
   const [submitting, setSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showResults, setShowResults] = useState(false);
-  const [timeLeaderboard, setTimeLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
   const { actions } = useMiniApp();
 
   // Utility function to shuffle an array using Fisher-Yates algorithm
@@ -698,26 +697,6 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
     return shuffled;
   }, []);
 
-  const fetchTimeLeaderboard = useCallback(async () => {
-    try {
-      setLoadingLeaderboard(true);
-      const response = await fetch('/api/leaderboard?mode=TIME_MODE');
-      const data = await response.json();
-      if (data.leaderboard) {
-        setTimeLeaderboard(data.leaderboard);
-      }
-    } catch (_e) {}
-    finally {
-      setLoadingLeaderboard(false);
-    }
-  }, []);
-
-  // Fetch Time Mode leaderboard when viewing results (no auto-refresh)
-  useEffect(() => {
-    if (!showResults) return;
-    // Initial fetch on entering results only
-    fetchTimeLeaderboard();
-  }, [showResults]);
 
   const fetchMoreQuestions = useCallback(async () => {
     try {
@@ -804,17 +783,18 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
           pfpUrl: context?.user?.pfpUrl,
         };
         await fetch('/api/time/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        // Fetch updated leaderboard after submission
-        fetchTimeLeaderboard();
       } catch (_e) {}
       setSubmitting(false);
       setHasSubmitted(true);
-      setShowResults(true);
       // stop any further game-side effects
       setStarted(false);
+      // Call onComplete to show results-submit page
+      if (onComplete) {
+        onComplete(correctCount, totalAnswered || 1); // Use totalAnswered, or 1 as fallback
+      }
     };
     run();
-  }, [started, timeLeft, submitting, hasSubmitted, correctCount, totalAnswered, context?.user]);
+  }, [started, timeLeft, submitting, hasSubmitted, correctCount, totalAnswered, context?.user, onComplete]);
 
   const handleAnswer = useCallback((idx: number) => {
     const q = questions[qIndex];
@@ -834,176 +814,6 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
 
   const q = questions[qIndex];
 
-  // Time Mode Results Screen
-  if (showResults) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4">
-        <div className="max-w-4xl mx-auto pt-6">
-          {/* Top bar with back */}
-          <div className="flex items-center justify-between mb-4 text-white">
-            <button onClick={onExit} className="px-3 py-1 rounded bg-white/10 hover:bg-white/20">← Back to Home</button>
-            <div className="text-lg font-bold">Time Mode Results</div>
-          </div>
-
-          {/* Results Summary */}
-          <div className="bg-white rounded-2xl p-8 shadow-2xl text-center mb-6">
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">Time&apos;s Up! ⏱️</h2>
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-green-50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-green-600">{correctCount}</div>
-                <div className="text-sm text-green-800">Correct Answers</div>
-              </div>
-              <div className="bg-blue-50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-blue-600">{totalAnswered}</div>
-                <div className="text-sm text-blue-800">Total Answered</div>
-              </div>
-            </div>
-            <div className="text-lg text-gray-600">
-              Accuracy: {totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0}%
-            </div>
-          </div>
-
-          {/* Time Mode Leaderboard */}
-          <div className="bg-white rounded-2xl p-8 shadow-2xl">
-            <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">🏆 Time Mode Leaderboard</h3>
-              <p className="text-gray-600">Ranked by correct answers in 45 seconds</p>
-              {!loadingLeaderboard && (
-                <div className="mt-2 text-sm text-gray-500">
-                  {timeLeaderboard.length} participants • Last updated: {new Date().toLocaleString()}
-                </div>
-              )}
-            </div>
-
-            {loadingLeaderboard ? (
-              <div className="text-center py-8">
-                <div className="spinner h-8 w-8 mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading leaderboard...</p>
-              </div>
-            ) : timeLeaderboard.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No scores yet. Be the first to play Time Mode!</p>
-              </div>
-            ) : (
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {timeLeaderboard.slice(0, 10).map((player, index) => (
-                  <div
-                    key={player.fid}
-                    className={`flex items-center justify-between p-4 rounded-lg border-2 ${
-                      index < 3
-                        ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-300'
-                        : 'bg-gray-50 border-gray-200'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                        player.rank === 1 ? 'bg-yellow-500 text-yellow-900' :
-                        player.rank === 2 ? 'bg-gray-400 text-gray-900' :
-                        player.rank === 3 ? 'bg-orange-500 text-orange-900' :
-                        'bg-blue-500 text-blue-900'
-                      }`}>
-                        {player.rank === 1 ? '🥇' : 
-                         player.rank === 2 ? '🥈' : 
-                         player.rank === 3 ? '🥉' : player.rank}
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        {player.pfpUrl && (
-                          <img 
-                            src={player.pfpUrl} 
-                            alt="Profile" 
-                            className="w-8 h-8 rounded-full"
-                          />
-                        )}
-                        <div>
-                          <div className="font-semibold text-white">
-                            {player.displayName || player.username}
-                          </div>
-                          <div className="text-sm text-gray-300">@{player.username}</div>
-                          <div className="text-xs text-gray-400">
-                            {new Date(player.completedAt).toLocaleDateString()}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-xl font-bold text-blue-600">{player.score}</div>
-                      <div className="text-xs text-gray-500">correct</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Current Player Position */}
-            {context?.user?.fid && (
-              <div className="mt-6 p-4 bg-blue-50 border-2 border-blue-300 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    {context.user.pfpUrl && (
-                      <img 
-                        src={context.user.pfpUrl} 
-                        alt="Your Profile" 
-                        className="w-8 h-8 rounded-full"
-                      />
-                    )}
-                    <div>
-                      <div className="font-semibold text-white">
-                        {context.user.displayName || context.user.username}
-                      </div>
-                      <div className="text-sm text-blue-300">Your Score</div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xl font-bold text-blue-600">{correctCount}</div>
-                    <div className="text-xs text-blue-500">correct</div>
-                    {submitting && <div className="text-xs text-blue-500">Submitting...</div>}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="mt-6 flex flex-col items-center space-y-4">
-              <button
-                onClick={async () => {
-                  try {
-                    await actions.composeCast({
-                      text: `I just played Quiz Trivia Time Mode! ⏱️ I scored ${correctCount} correct answers in 45 seconds. Come try it:`,
-                      embeds: [
-                        context?.user?.fid
-                          ? `${APP_URL}/share/${context.user.fid}`
-                          : `${APP_URL}`,
-                      ],
-                    });
-                  } catch (err) {
-                    console.error('Failed to open Farcaster composer:', err);
-                    const text = encodeURIComponent(`I just played Quiz Trivia Time Mode! ⏱️ I scored ${correctCount} correct answers in 45 seconds. Come try it:`);
-                    const url = encodeURIComponent(
-                      context?.user?.fid ? `${APP_URL}/share/${context.user.fid}` : `${APP_URL}`
-                    );
-                    const warpcastUrl = `https://warpcast.com/~/compose?text=${text}%20${url}`;
-                    if (typeof window !== 'undefined') {
-                      window.open(warpcastUrl, '_blank', 'noopener,noreferrer');
-                    }
-                  }
-                }}
-                className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200"
-              >
-                📣 Share on Farcaster
-              </button>
-              <button
-                onClick={onExit}
-                className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200"
-              >
-                🏠 Back to Home
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4">
       <div className="max-w-2xl mx-auto pt-6">
@@ -1022,12 +832,6 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, context }) => {
             <p className="text-gray-600 mb-6">Answer as many as you can. Costs 10 coins to start.</p>
             {error && <div className="mb-4 text-red-600 font-semibold">{error}</div>}
             <button onClick={startRun} className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700">Start</button>
-          </div>
-        ) : timeLeft <= 0 ? (
-          <div className="bg-white rounded-2xl p-8 shadow-2xl text-center">
-            <h3 className="text-2xl font-bold text-gray-800 mb-3">Time&apos;s up! ⏱️</h3>
-            <p className="text-gray-700 mb-6">You answered {correctCount} correct out of {totalAnswered}.</p>
-            <button onClick={onExit} className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold py-3 px-6 rounded-xl">Back to Home</button>
           </div>
         ) : !q ? (
           <div className="text-center text-white">Loading questions…</div>
@@ -1177,12 +981,14 @@ const ChallengeModePage: React.FC<ChallengeModePageProps> = ({ onExit, context }
 // Main App Component
 export default function QuizTriviaApp() {
   const { } = useMiniApp();
-  const [currentScreen, setCurrentScreen] = useState<'home' | 'results' | 'time' | 'challenge' | 'weekly-quiz'>('home');
+  const [currentScreen, setCurrentScreen] = useState<'home' | 'results' | 'results-submit' | 'time' | 'challenge' | 'weekly-quiz'>('home');
   const [showRules, setShowRules] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
   const [finalAnswers, setFinalAnswers] = useState<Answer[]>([]);
   const [finalTime, setFinalTime] = useState<string>('0:00');
   const [balance, setBalance] = useState<number | null>(null);
+  const [quizMode, setQuizMode] = useState<QuizMode>(QuizMode.CLASSIC);
+  const [totalQuestions, setTotalQuestions] = useState(10);
 
   // Get Farcaster context
   const { context } = useMiniApp();
@@ -1209,6 +1015,18 @@ export default function QuizTriviaApp() {
     setFinalScore(score);
     setFinalAnswers(answers);
     setFinalTime(time);
+    setQuizMode(QuizMode.CLASSIC); // Weekly mode uses CLASSIC
+    setTotalQuestions(10); // Weekly mode has 10 questions
+    setCurrentScreen('results-submit');
+  };
+
+  const handleScoreSubmitted = () => {
+    // After blockchain transaction success, show leaderboard
+    setCurrentScreen('results');
+  };
+
+  const handleViewLeaderboard = () => {
+    // Go directly to leaderboard (skip submission if error)
     setCurrentScreen('results');
   };
 
@@ -1317,6 +1135,12 @@ export default function QuizTriviaApp() {
       {currentScreen === 'time' && (
         <TimeModePage 
           onExit={() => setCurrentScreen('home')}
+          onComplete={(score: number, totalQuestions: number) => {
+            setFinalScore(score);
+            setQuizMode(QuizMode.TIME_MODE);
+            setTotalQuestions(totalQuestions);
+            setCurrentScreen('results-submit');
+          }}
           context={context}
         />
       )}
@@ -1333,6 +1157,16 @@ export default function QuizTriviaApp() {
           config={currentWeeklyQuiz}
           onComplete={handleQuizComplete}
           context={context}
+        />
+      )}
+
+      {currentScreen === 'results-submit' && (
+        <QuizResultsSubmitPage 
+          score={finalScore}
+          totalQuestions={totalQuestions}
+          mode={quizMode}
+          onSubmit={handleScoreSubmitted}
+          onViewLeaderboard={handleViewLeaderboard}
         />
       )}
 

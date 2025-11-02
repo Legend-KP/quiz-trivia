@@ -1,7 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { QuizMode, TransactionState, startQuizTransactionWithWagmi, formatWalletError, WalletError } from '@/lib/wallet';
-import { useConfig } from 'wagmi';
-import TransactionModal from './TransactionModal';
+import React from 'react';
+import { QuizMode } from '@/lib/wallet';
 
 interface QuizStartButtonProps {
   mode: QuizMode;
@@ -16,77 +14,9 @@ const QuizStartButton: React.FC<QuizStartButtonProps> = ({
   onQuizStart,
   className = ""
 }) => {
-  const [transactionState, setTransactionState] = useState<TransactionState>(TransactionState.IDLE);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [error, setError] = useState<string>('');
-  const [transactionHash, setTransactionHash] = useState<string>('');
-  const config = useConfig();
-
-  // Handle Farcaster frame transaction confirmations
-  useEffect(() => {
-    const handleFrameTransaction = (event: MessageEvent) => {
-      const data = event.data;
-      if (typeof data === "object" && data !== null && "type" in data && data.type === "farcaster:frame-transaction") {
-        console.log("✅ Frame Wallet transaction confirmed");
-        setTransactionState(TransactionState.SUCCESS);
-        
-        // Wait a moment to show success state
-        setTimeout(() => {
-          setIsModalOpen(false);
-          setTransactionState(TransactionState.IDLE);
-          // Start the actual quiz
-          onQuizStart();
-        }, 2000);
-      }
-    };
-
-    window.addEventListener("message", handleFrameTransaction);
-    return () => window.removeEventListener("message", handleFrameTransaction);
-  }, [onQuizStart]);
-
-  const handleStartQuiz = async () => {
-    try {
-      setError('');
-      setIsModalOpen(true);
-      setTransactionState(TransactionState.CONNECTING);
-      
-      // Start the quiz with signature-based authentication (NO PAYMENT REQUIRED)
-      const txHash = await startQuizTransactionWithWagmi(mode, config, (state) => {
-        setTransactionState(state);
-      });
-      
-      setTransactionHash(txHash);
-      
-      // Wait a moment to show success state
-      setTimeout(() => {
-        setIsModalOpen(false);
-        setTransactionState(TransactionState.IDLE);
-        // Start the actual quiz
-        onQuizStart();
-      }, 2000);
-      
-    } catch (err) {
-      console.error('Quiz start error:', err);
-      
-      if (err instanceof WalletError) {
-        setError(formatWalletError(err));
-      } else {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      }
-      
-      setTransactionState(TransactionState.ERROR);
-    }
-  };
-
-  const handleCloseModal = () => {
-    if (transactionState === TransactionState.SUCCESS) {
-      // Don't close on success, let the timeout handle it
-      return;
-    }
-    
-    setIsModalOpen(false);
-    setTransactionState(TransactionState.IDLE);
-    setError('');
+  const handleStartQuiz = () => {
+    // Start the quiz directly (currency deduction happens in TimeModePage)
+    onQuizStart();
   };
 
   const getButtonText = () => {
@@ -116,31 +46,12 @@ const QuizStartButton: React.FC<QuizStartButtonProps> = ({
   };
 
   return (
-    <>
-      <button
-        onClick={handleStartQuiz}
-        disabled={isModalOpen}
-        className={`w-full bg-gradient-to-r ${getButtonGradient()} text-white font-bold py-4 px-8 rounded-xl text-xl transform hover:scale-105 transition-all duration-200 shadow-2xl disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none ${className}`}
-      >
-        {getButtonText()}
-        {isModalOpen && (
-          <span className="ml-2">
-            {transactionState === TransactionState.CONNECTING && '🔗'}
-            {transactionState === TransactionState.CONFIRMING && '⏳'}
-            {transactionState === TransactionState.SUCCESS && '✅'}
-            {transactionState === TransactionState.ERROR && '❌'}
-          </span>
-        )}
-      </button>
-
-      <TransactionModal
-        isOpen={isModalOpen}
-        state={transactionState}
-        error={error}
-        onClose={handleCloseModal}
-        transactionHash={transactionHash}
-      />
-    </>
+    <button
+      onClick={handleStartQuiz}
+      className={`w-full bg-gradient-to-r ${getButtonGradient()} text-white font-bold py-4 px-8 rounded-xl text-xl transform hover:scale-105 transition-all duration-200 shadow-2xl ${className}`}
+    >
+      {getButtonText()}
+    </button>
   );
 };
 
