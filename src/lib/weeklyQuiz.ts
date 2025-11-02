@@ -102,89 +102,89 @@ function getCurrentWeeklyQuiz(): WeeklyQuizConfig {
   
   return {
     id: getQuizIdFromDate(startDate),
-    topic: "DeFi Protocols", // Update this topic for each quiz
+    topic: "Zero Knowledge Proof", // Update this topic for each quiz
     startTime: startDate.toISOString(), // Tuesday or Friday 6 PM UTC
     endTime: endDate.toISOString(), // Next day 6 AM UTC (12-hour window)
     questions: [
     {
       id: 1,
-      question: "What does TVL stand for in DeFi?",
-      options: ["Total Value Locked", "Token Value Limit", "Trading Volume Limit", "Transaction Value Lock"],
+      question: "What does a Zero-Knowledge Proof allow a prover to demonstrate?",
+      options: ["Knowledge of a value without revealing the value itself", "The speed of blockchain consensus", "The ownership of all private keys", "That the transaction fee is zero"],
       correct: 0,
       timeLimit: 45,
-      explanation: "TVL measures the total value of assets locked in DeFi protocols, indicating protocol usage and liquidity."
+      explanation: "ZKPs let one party prove knowledge of a fact or value without revealing the underlying information."
     },
     {
       id: 2,
-      question: "Which DeFi protocol pioneered automated market making?",
-      options: ["Compound", "Uniswap", "MakerDAO", "Aave"],
-      correct: 1,
+      question: "Which of the following is a key property of Zero-Knowledge Proofs?",
+      options: ["Integrity, Decentralization, and Transparency", "Privacy, Speed, and Scalability", "Confidentiality, Accuracy, and Cost-efficiency", "Completeness, Soundness, and Zero-Knowledge"],
+      correct: 3,
       timeLimit: 45,
-      explanation: "Uniswap introduced the constant product formula (x*y=k) for automated market making in DeFi."
+      explanation: "ZKPs are defined by three core properties: completeness, soundness, and zero-knowledge."
     },
     {
       id: 3,
-      question: "What is impermanent loss in DeFi?",
-      options: ["Loss from smart contract bugs", "Loss from providing liquidity to AMMs", "Loss from high gas fees", "Loss from token price volatility"],
-      correct: 1,
+      question: "Which blockchain uses zk-SNARKs to provide private transactions?",
+      options: ["Zcash", "Bitcoin", "Ethereum", "Polygon PoS"],
+      correct: 0,
       timeLimit: 45,
-      explanation: "Impermanent loss occurs when providing liquidity to AMMs due to price divergence between paired assets."
+      explanation: "Zcash pioneered zk-SNARKs to enable shielded transactions that hide sender, receiver, and amount."
     },
     {
       id: 4,
-      question: "Which token is used for governance in Uniswap?",
-      options: ["UNI", "USDC", "ETH", "WETH"],
-      correct: 0,
+      question: "What does the term \"zero-knowledge\" specifically refer to in ZKPs?",
+      options: ["That the prover has no private data", "That no computation occurs during verification", "That the verifier learns nothing beyond the validity of the claim", "That the proof is always probabilistic"],
+      correct: 2,
       timeLimit: 45,
-      explanation: "UNI is Uniswap's governance token, allowing holders to vote on protocol upgrades and parameters."
+      explanation: "The \"zero-knowledge\" aspect ensures no information is leaked other than the fact that the statement is true."
     },
     {
       id: 5,
-      question: "What is a flash loan in DeFi?",
-      options: ["A loan that must be repaid within one transaction", "A loan with no collateral", "A loan with instant approval", "A loan for emergency situations"],
+      question: "In zk-SNARK, what does the \"SNARK\" stand for?",
+      options: ["Succinct Non-Interactive Argument of Knowledge", "Secure Non-Automated Reasoning Kernel", "Simple Non-Analytical Random Key", "Symmetric Non-Advanced Recursive Knowledge"],
       correct: 0,
       timeLimit: 45,
-      explanation: "Flash loans allow borrowing assets without collateral, but must be repaid within the same transaction block."
+      explanation: "zk-SNARK means a succinct, non-interactive argument of knowledge — proofs are compact and verifiable quickly."
     },
     {
       id: 6,
-      question: "Which DeFi protocol focuses on lending and borrowing?",
-      options: ["Uniswap", "Compound", "SushiSwap", "Balancer"],
-      correct: 1,
+      question: "What makes zk-STARKs different from zk-SNARKs?",
+      options: ["They don't require a trusted setup and are post-quantum secure", "They are slower and less transparent", "They use elliptic curve pairings", "They require private keys from validators"],
+      correct: 0,
       timeLimit: 45,
-      explanation: "Compound is a lending protocol where users can supply assets to earn interest or borrow against collateral."
+      explanation: "zk-STARKs remove the need for trusted setup and are quantum-resistant, using hash-based cryptography."
     },
     {
       id: 7,
-      question: "What is yield farming in DeFi?",
-      options: ["Growing crops on blockchain", "Earning rewards by providing liquidity", "Mining cryptocurrency", "Trading tokens for profit"],
-      correct: 1,
+      question: "Which statement best explains the \"soundness\" property in ZKPs?",
+      options: ["Only the prover learns the verification result", "Proofs always execute faster than traditional verifications", "Dishonest prover cannot convince the verifier of a false statement", "Soundness ensures public verifiability of all proofs"],
+      correct: 2,
       timeLimit: 45,
-      explanation: "Yield farming involves providing liquidity to DeFi protocols to earn rewards, often in the form of additional tokens."
+      explanation: "Soundness guarantees that false claims cannot be proven true, maintaining trust in the proof system."
     },
     {
       id: 8,
-      question: "Which stablecoin is backed by crypto collateral?",
-      options: ["USDC", "USDT", "DAI", "BUSD"],
-      correct: 2,
+      question: "Which Zero-Knowledge proof system scales best for large computations?",
+      options: ["zk-SNARK", "zk-STARK", "Bulletproofs", "zk-Rollups"],
+      correct: 1,
       timeLimit: 45,
-      explanation: "DAI is a decentralized stablecoin backed by crypto collateral through MakerDAO's CDP system."
+      explanation: "zk-STARKs are highly scalable due to transparent setup and proof sizes that grow logarithmically with computation size."
     },
     {
       id: 9,
-      question: "What is MEV in DeFi context?",
-      options: ["Maximum Extractable Value", "Minimum Exchange Value", "Market Efficiency Variable", "Maximum Expected Volatility"],
-      correct: 0,
+      question: "Why are zk-STARKs considered post-quantum secure while zk-SNARKs are not?",
+      options: ["zk-STARKs rely on lattice-based assumptions", "zk-STARKs require smaller keys", "zk-SNARKs use symmetric encryption", "zk-STARKs use hash-based security, resistant to Shor's algorithm"],
+      correct: 3,
       timeLimit: 45,
-      explanation: "MEV refers to profits that can be extracted by reordering, including, or excluding transactions in a block."
+      explanation: "zk-STARKs rely on collision-resistant hash functions, which are believed to be safe from quantum attacks."
     },
     {
       id: 10,
-      question: "Which DeFi protocol enables cross-chain asset transfers?",
-      options: ["Uniswap", "Compound", "Chainlink", "Wormhole"],
-      correct: 3,
+      question: "What role do ZKPs play in blockchain scalability solutions like zk-Rollups?",
+      options: ["They replace consensus algorithms", "Compress many transactions into one proof", "They manage wallet private keys", "They remove the need for nodes"],
+      correct: 1,
       timeLimit: 45,
-      explanation: "Wormhole is a cross-chain bridge protocol that enables asset transfers between different blockchain networks."
+      explanation: "zk-Rollups batch multiple off-chain transactions and post a ZKP on-chain to prove their validity efficiently."
     }
   ]
   };
