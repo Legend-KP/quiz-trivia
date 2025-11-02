@@ -108,22 +108,23 @@ export default function App(
         }}
       />
       {/* User Profile in Top Right Corner */}
-      {context?.user && (
-        <div className="absolute top-4 right-4 z-50">
-          <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {context.user.displayName || context.user.username}
-            </span>
-            {context.user.pfpUrl && (
-              <img 
-                src={context.user.pfpUrl} 
-                alt="Profile" 
-                className="w-8 h-8 rounded-full border-2 border-primary"
-              />
-            )}
-          </div>
-        </div>
+{context?.user && (
+  <div className="absolute top-4 right-4 z-50">
+    <div className="flex items-center space-x-2">
+      <span className="text-sm font-medium text-white">
+        {context.user.displayName || context.user.username}
+      </span>
+      {context.user.pfpUrl && (
+        <img 
+          src={context.user.pfpUrl} 
+          alt="Profile" 
+          className="w-8 h-8 rounded-full border-2 border-primary"
+        />
       )}
+    </div>
+  </div>
+)}
+
 
       {/* Main content - full width to allow edge-to-edge backgrounds */}
       <div className="py-2">

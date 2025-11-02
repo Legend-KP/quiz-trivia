@@ -593,7 +593,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onR
                         />
                       )}
                       <div>
-                        <div className="font-semibold text-white">
+                        <div className="font-semibold text-black">
                           {player.displayName || player.username}
                         </div>
                         <div className="text-sm text-gray-300">@{player.username}</div>
