@@ -72,18 +72,10 @@ export default function App(
   // --- Early Returns ---
   if (!isSDKLoaded) {
     return (
-      <div className="flex items-center justify-center h-screen relative">
-        <div
-          className="fixed inset-0 -z-10"
-          style={{
-            backgroundImage: "url('https://i.ibb.co/Y4spLcxx/Untitled-design-1.png')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        />
+      <div className="flex items-center justify-center h-screen relative bg-white">
         <div className="text-center">
-          <div className="animate-spin rounded-full border-2 border-white/30 border-t-white h-8 w-8 mx-auto mb-4"></div>
-          <p className="text-white">Loading SDK...</p>
+          <div className="animate-spin rounded-full border-2 border-gray-300 border-t-primary h-8 w-8 mx-auto mb-4"></div>
+          <p className="text-gray-800">Loading SDK...</p>
         </div>
       </div>
     );
