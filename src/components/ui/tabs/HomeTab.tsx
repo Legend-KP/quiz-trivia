@@ -344,6 +344,11 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
         }}></div>
       </div>
 
+      {/* Coins Panel - Top Left */}
+      <div className="absolute top-4 left-4 z-50">
+        <span className="px-3 py-1 rounded-full bg-black/30 border border-white/20 text-white text-sm">Coins: {balance ?? '—'}</span>
+      </div>
+
       {/* Content Container */}
       <div className="relative z-10 flex flex-col items-center h-full px-6 text-center pt-1 md:pt-2 gap-1">
 
@@ -367,9 +372,8 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
           )}
         </div>
 
-        {/* Balance + Spin Wheel Button */}
-        <div className="mb-4 text-white text-sm flex items-center gap-3 flex-wrap justify-center">
-          <span className="px-3 py-1 rounded-full bg-black/30 border border-white/20">Coins: {balance ?? '—'}</span>
+        {/* Spin Wheel Button */}
+        <div className="mb-4 flex items-center justify-center">
           <button 
             onClick={onSpinWheel} 
             className="px-6 py-3 rounded-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-black font-bold text-base shadow-2xl hover:from-yellow-300 hover:via-yellow-400 hover:to-yellow-500 hover:scale-105 transition-all duration-300 border-2 border-yellow-300 animate-pulse hover:animate-none"
