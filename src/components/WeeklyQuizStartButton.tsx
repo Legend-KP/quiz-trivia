@@ -150,18 +150,18 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
       )}
       <button
         onClick={handleStartQuiz}
-        disabled={userCompleted || quizState !== 'live'}
+        disabled={quizState !== 'live'}
         className={`w-full bg-gradient-to-r ${getButtonGradient()} text-white font-bold py-4 px-8 rounded-xl text-xl transition-all duration-200 shadow-2xl ${className} ${
-          (userCompleted || quizState !== 'live') 
+          quizState !== 'live' 
             ? 'opacity-60 cursor-not-allowed' 
             : 'transform hover:scale-105'
         }`}
-        style={quizState === 'live' && !userCompleted ? {
+        style={quizState === 'live' ? {
           animation: 'glow-pulse 2s ease-in-out infinite'
         } : {}}
       >
         {getButtonText()}
-        {quizState === 'live' && !userCompleted && (
+        {quizState === 'live' && (
           <span className="ml-2 animate-pulse">🚀</span>
         )}
       </button>
@@ -280,20 +280,17 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                   📊 View Leaderboard
                 </button>
                 
-                {canStartQuiz && !userCompleted && (
+                {canStartQuiz && (
                   <button
                     onClick={handleStartQuizConfirmed}
-                    className="flex-1 px-3 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold text-sm rounded-lg hover:from-green-600 hover:to-blue-700 transition min-w-[120px]"
+                    disabled={userCompleted}
+                    className={`flex-1 px-3 py-2 text-white font-bold text-sm rounded-lg transition min-w-[120px] ${
+                      userCompleted
+                        ? 'bg-gray-400 cursor-not-allowed opacity-60'
+                        : 'bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700'
+                    }`}
                   >
-                    Start Quiz 🚀
-                  </button>
-                )}
-                {userCompleted && (
-                  <button
-                    disabled
-                    className="flex-1 px-3 py-2 bg-gray-400 text-white font-bold text-sm rounded-lg cursor-not-allowed opacity-60 min-w-[120px]"
-                  >
-                    Already Completed ✓
+                    {userCompleted ? 'Already Completed ✓' : 'Start Quiz 🚀'}
                   </button>
                 )}
               </div>
