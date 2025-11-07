@@ -82,8 +82,8 @@ export default function App(
           }}
         />
         <div className="text-center">
-          <div className="spinner h-8 w-8 mx-auto mb-4"></div>
-          <p>Loading SDK...</p>
+          <div className="animate-spin rounded-full border-2 border-white/30 border-t-white h-8 w-8 mx-auto mb-4"></div>
+          <p className="text-white">Loading SDK...</p>
         </div>
       </div>
     );
