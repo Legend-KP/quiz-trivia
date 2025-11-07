@@ -27,7 +27,7 @@
     const [answers, setAnswers] = useState<Answer[]>([]);
     const [waitingForNext, setWaitingForNext] = useState(false);
     const [nextQuestionTime, setNextQuestionTime] = useState<number | null>(null);
-    const [startTime] = useState<number>(Date.now());
+    const [startTime, setStartTime] = useState<number | null>(null);
 
     const handleAnswerSubmit = useCallback((answerIndex: number | null) => {
       const question = config.questions[currentQuestion];
@@ -50,8 +50,14 @@
       if (currentQuestion === config.questions.length - 1) {
         // Complete the quiz after showing result
         setTimeout(() => {
-          const totalTime = Math.floor((Date.now() - startTime) / 1000);
-          const timeString = `${Math.floor(totalTime / 60)}:${(totalTime % 60).toString().padStart(2, '0')}`;
+          if (!startTime) {
+            console.error('Start time not set, using current time');
+            setStartTime(Date.now());
+          }
+          const totalTime = Math.floor((Date.now() - (startTime || Date.now())) / 1000);
+          // Ensure minimum time of 1 second to avoid 0:00
+          const safeTotalTime = Math.max(totalTime, 1);
+          const timeString = `${Math.floor(safeTotalTime / 60)}:${(safeTotalTime % 60).toString().padStart(2, '0')}`;
           onComplete(newScore, [...answers, {
             questionId: question.id,
             selectedAnswer: answerIndex,
@@ -126,7 +132,10 @@
               <p>🎯 Topic: <strong>{config.topic}</strong></p>
             </div>
             <button
-              onClick={() => setStarted(true)}
+              onClick={() => {
+                setStartTime(Date.now()); // Set start time when quiz actually starts
+                setStarted(true);
+              }}
               className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all"
             >
               Start Weekly Quiz

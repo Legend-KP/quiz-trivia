@@ -27,9 +27,26 @@ export async function GET(request: Request) {
     const collection = await getLeaderboardCollection();
     const query: any = {};
     if (mode) query.mode = mode;
-    if (quizId) query.quizId = quizId;
+    if (quizId) {
+      query.quizId = quizId;
+      // Enforce that quizId entries must be CLASSIC mode (Weekly Quiz)
+      query.mode = 'CLASSIC';
+    }
     
-    const leaderboard = await collection.find(query).toArray();
+    let leaderboard = await collection.find(query).toArray();
+
+    // Filter out invalid entries for Weekly Quiz (quizId present)
+    if (quizId) {
+      leaderboard = leaderboard.filter((entry: LeaderboardEntry) => {
+        // Remove entries with invalid scores (>10 or <-10)
+        if (entry.score > 10 || entry.score < -10) return false;
+        // Remove entries with invalid time (0:00 or missing)
+        if (!entry.time || entry.time === '0:00' || (entry.timeInSeconds || 0) === 0) return false;
+        // Remove entries without quizId (old entries)
+        if (!entry.quizId) return false;
+        return true;
+      });
+    }
 
     const sortedLeaderboard = leaderboard.sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
       if (a.score !== b.score) return b.score - a.score;
@@ -76,12 +93,33 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields: fid, username, score, mode' }, { status: 400 });
     }
 
+    // Validation: If quizId is provided, mode MUST be CLASSIC (Weekly Quiz)
+    if (quizId && mode !== 'CLASSIC') {
+      return NextResponse.json({ error: 'Invalid mode: quizId can only be used with CLASSIC mode (Weekly Quiz)' }, { status: 400 });
+    }
+
+    // Validation: Weekly Quiz (CLASSIC with quizId) scores must be between -10 and +10
+    if (quizId && mode === 'CLASSIC') {
+      const numScore = Number(score);
+      if (isNaN(numScore) || numScore < -10 || numScore > 10) {
+        return NextResponse.json({ error: `Invalid score for Weekly Quiz: ${score}. Score must be between -10 and +10.` }, { status: 400 });
+      }
+    }
+
+    // Validation: Time must be valid and not 0:00 for Weekly Quiz
+    if (quizId && mode === 'CLASSIC') {
+      const timeInSec = timeStringToSeconds(time);
+      if (!time || time === '0:00' || timeInSec === 0) {
+        return NextResponse.json({ error: 'Invalid completion time: time cannot be 0:00 for Weekly Quiz' }, { status: 400 });
+      }
+    }
+
     const newEntry: LeaderboardEntry = {
       fid,
       username,
       displayName,
       pfpUrl,
-      score,
+      score: Number(score), // Ensure score is a number
       time,
       timeInSeconds: timeStringToSeconds(time),
       completedAt: Date.now(),
