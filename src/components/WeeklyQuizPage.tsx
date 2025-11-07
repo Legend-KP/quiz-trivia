@@ -28,6 +28,8 @@
     const [waitingForNext, setWaitingForNext] = useState(false);
     const [nextQuestionTime, setNextQuestionTime] = useState<number | null>(null);
     const [startTime, setStartTime] = useState<number | null>(null);
+    const [pausedTime, setPausedTime] = useState<number>(0); // Track total paused time
+    const [pauseStartTime, setPauseStartTime] = useState<number | null>(null); // When pause started
 
     const handleAnswerSubmit = useCallback((answerIndex: number | null) => {
       const question = config.questions[currentQuestion];
@@ -45,6 +47,11 @@
       setScore(newScore);
       setSelectedAnswer(answerIndex);
       setShowResult(true);
+      
+      // Pause timer when showing result (3 seconds)
+      if (pauseStartTime === null) {
+        setPauseStartTime(Date.now());
+      }
 
       // Check if this is the last question
       if (currentQuestion === config.questions.length - 1) {
@@ -54,7 +61,15 @@
             console.error('Start time not set, using current time');
             setStartTime(Date.now());
           }
-          const totalTime = Math.floor((Date.now() - (startTime || Date.now())) / 1000);
+          
+          // Calculate paused time (result displays + waits)
+          let totalPaused = pausedTime;
+          if (pauseStartTime) {
+            totalPaused += (Date.now() - pauseStartTime) / 1000; // Add current pause
+          }
+          
+          // Total time minus paused time (only count active answering time)
+          const totalTime = Math.floor((Date.now() - (startTime || Date.now())) / 1000 - totalPaused);
           // Ensure minimum time of 1 second to avoid 0:00
           const safeTotalTime = Math.max(totalTime, 1);
           const timeString = `${Math.floor(safeTotalTime / 60)}:${(safeTotalTime % 60).toString().padStart(2, '0')}`;
@@ -68,11 +83,18 @@
       } else {
         // Countdown for next question (10 seconds)
         setTimeout(() => {
+          // Resume timer after result display, then pause again for wait
+          if (pauseStartTime) {
+            setPausedTime(prev => prev + (Date.now() - pauseStartTime) / 1000);
+            setPauseStartTime(null);
+          }
           setWaitingForNext(true);
           setNextQuestionTime(10);
+          // Pause timer during wait
+          setPauseStartTime(Date.now());
         }, 3000);
       }
-    }, [currentQuestion, score, answers, startTime, onComplete, config.questions]);
+    }, [currentQuestion, score, answers, startTime, pausedTime, pauseStartTime, onComplete, config.questions]);
 
     const handleTimeUp = useCallback(() => {
       handleAnswerSubmit(null);
@@ -93,6 +115,11 @@
         const timer = setTimeout(() => setNextQuestionTime(nextQuestionTime - 1), 1000);
         return () => clearTimeout(timer);
       } else if (nextQuestionTime === 0) {
+        // Resume timer when starting next question
+        if (pauseStartTime) {
+          setPausedTime(prev => prev + (Date.now() - pauseStartTime) / 1000);
+          setPauseStartTime(null);
+        }
         setCurrentQuestion(currentQuestion + 1);
         setTimeLeft(config.questions[currentQuestion + 1].timeLimit);
         setSelectedAnswer(null);
@@ -100,7 +127,7 @@
         setWaitingForNext(false);
         setNextQuestionTime(null);
       }
-    }, [nextQuestionTime, currentQuestion, config.questions]);
+    }, [nextQuestionTime, currentQuestion, pauseStartTime, config.questions]);
 
     const formatTime = (seconds: number): string => {
       const mins = Math.floor(seconds / 60);
