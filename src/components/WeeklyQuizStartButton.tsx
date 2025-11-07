@@ -17,6 +17,9 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
 }) => {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   
+  // Test mode: allows testing the weekly quiz regardless of time restrictions
+  const TEST_MODE = process.env.NEXT_PUBLIC_WEEKLY_QUIZ_TEST_MODE === 'true';
+  
   // Get correct countdown based on quiz state
   const nextQuizTime = React.useMemo(() => {
     if (quizState === 'live') {
@@ -39,9 +42,12 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
   };
 
   const handleStartQuizConfirmed = () => {
-    if (quizState !== 'live' || userCompleted) {
+    // In test mode, allow starting even if completed
+    const canStart = TEST_MODE ? quizState === 'live' : (quizState === 'live' && !userCompleted);
+    
+    if (!canStart) {
       setIsDetailsModalOpen(false);
-      return; // Don't start if not live or already completed
+      return; // Don't start if conditions not met
     }
 
     setIsDetailsModalOpen(false);
@@ -130,7 +136,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
     }
   };
 
-  const canStartQuiz = quizState === 'live' && !userCompleted;
+  const canStartQuiz = TEST_MODE ? quizState === 'live' : (quizState === 'live' && !userCompleted);
   const stateInfo = getStateInfo();
 
   return (
