@@ -51,6 +51,7 @@ interface HomePageProps {
   balance: number | null;
   onStartTimeMode: () => void;
   onStartChallenge: () => void;
+  onStartClassic: () => void;
   onShowRules: () => void;
   onSpinWheel: () => void;
   onStartWeeklyQuiz: () => void;
@@ -280,7 +281,7 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
 };
 
 // Home Page Component
-const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartChallenge, onSpinWheel, onStartWeeklyQuiz }) => {
+const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartChallenge, onStartClassic, onSpinWheel, onStartWeeklyQuiz }) => {
   const _weeklyQuizState = useQuizState(currentWeeklyQuiz);
   const [weeklyUserCompleted, setWeeklyUserCompleted] = useState(false);
   const { actions, added, context } = useMiniApp();
@@ -405,6 +406,13 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
               onStartWeeklyQuiz();
             }}
             userCompleted={weeklyUserCompleted}
+          />
+
+          {/* Classic Mode - Temporary for Testing */}
+          <QuizStartButton
+            mode={QuizMode.CLASSIC}
+            modeName="Classic Mode (Test)"
+            onQuizStart={onStartClassic}
           />
 
           <QuizStartButton
@@ -887,6 +895,170 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context
   );
 };
 
+// Classic Mode Component (No Timer - For Testing)
+interface ClassicModePageProps {
+  onExit: () => void;
+  onComplete: (score: number, totalQuestions: number) => void;
+  context?: any;
+}
+
+const ClassicModePage: React.FC<ClassicModePageProps> = ({ onExit, onComplete, context }) => {
+  const [started, setStarted] = useState(false);
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [qIndex, setQIndex] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [showResult, setShowResult] = useState(false);
+
+  // Utility function to shuffle an array using Fisher-Yates algorithm
+  const shuffleArray = useCallback((array: QuizQuestion[]): QuizQuestion[] => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }, []);
+
+  const fetchQuestions = useCallback(async () => {
+    try {
+      const res = await fetch('/api/questions/random?limit=10');
+      const d = await res.json();
+      if (Array.isArray(d.questions) && d.questions.length > 0) {
+        const normalized = d.questions.map((q: any, idx: number) => ({
+          id: Number(q.id ?? idx),
+          question: String(q.question ?? q.text ?? ''),
+          options: Array.isArray(q.options) ? q.options.map(String) : [],
+          correct: typeof q.correct === 'number' ? q.correct : (typeof q.correctIndex === 'number' ? q.correctIndex : 0),
+          timeLimit: 0, // No timer
+          explanation: String(q.explanation ?? ''),
+        } as QuizQuestion)).filter((q: QuizQuestion) => q.question && q.options.length >= 2);
+        
+        if (normalized.length > 0) {
+          const shuffledQuestions = shuffleArray(normalized);
+          setQuestions(shuffledQuestions.slice(0, 10)); // Take 10 questions
+          return;
+        }
+      }
+      // Fallback to local questions
+      const shuffledFallback = shuffleArray(TIME_MODE_FALLBACK_QUESTIONS);
+      setQuestions(shuffledFallback.slice(0, 10));
+    } catch (_e) {
+      // On error, use shuffled fallback questions
+      const shuffledFallback = shuffleArray(TIME_MODE_FALLBACK_QUESTIONS);
+      setQuestions(shuffledFallback.slice(0, 10));
+    }
+  }, [shuffleArray]);
+
+  const startQuiz = useCallback(async () => {
+    await fetchQuestions();
+    setStarted(true);
+    setQIndex(0);
+    setCorrectCount(0);
+    setSelectedAnswer(null);
+    setShowResult(false);
+  }, [fetchQuestions]);
+
+  const handleAnswer = useCallback((idx: number) => {
+    if (showResult) return;
+    const q = questions[qIndex];
+    if (!q) return;
+    
+    setSelectedAnswer(idx);
+    setShowResult(true);
+    
+    if (idx === q.correct) {
+      setCorrectCount((n) => n + 1);
+    }
+  }, [questions, qIndex, showResult]);
+
+  const handleNext = useCallback(() => {
+    if (qIndex < questions.length - 1) {
+      setQIndex((n) => n + 1);
+      setSelectedAnswer(null);
+      setShowResult(false);
+    } else {
+      // Quiz complete
+      onComplete(correctCount + (selectedAnswer === questions[qIndex]?.correct ? 1 : 0), questions.length);
+    }
+  }, [qIndex, questions.length, correctCount, selectedAnswer, questions, onComplete]);
+
+  const q = questions[qIndex];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4">
+      <div className="max-w-2xl mx-auto pt-6">
+        <div className="flex items-center justify-between mb-4 text-white">
+          <button onClick={onExit} className="px-3 py-1 rounded bg-white/10 hover:bg-white/20">← Back</button>
+          <div className="font-bold">Score: {correctCount} / {qIndex}</div>
+        </div>
+
+        {!started ? (
+          <div className="bg-white rounded-2xl p-8 shadow-2xl text-center">
+            <h2 className="text-2xl font-bold mb-2 text-gray-800">Classic Mode</h2>
+            <p className="text-gray-600 mb-6">10 questions • No time limit • Take your time!</p>
+            <button onClick={startQuiz} className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold py-3 px-6 rounded-xl hover:from-purple-600 hover:to-pink-700">Start Quiz</button>
+          </div>
+        ) : !q ? (
+          <div className="text-center text-white">Loading questions…</div>
+        ) : (
+          <div className="bg-white rounded-2xl p-8 shadow-2xl">
+            <div className="text-gray-500 mb-2">Question {qIndex + 1} of {questions.length}</div>
+            <h2 className="text-xl font-bold text-black mb-6">{q.question}</h2>
+            <div className="space-y-3">
+              {q.options.map((opt, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleAnswer(i)}
+                  disabled={showResult}
+                  className={`w-full p-4 text-left rounded-lg border-2 transition-all duration-200 ${
+                    showResult
+                      ? i === q.correct
+                        ? 'bg-green-100 border-green-500 text-green-800'
+                        : selectedAnswer === i
+                        ? 'bg-red-100 border-red-500 text-red-800'
+                        : 'bg-gray-100 border-gray-300 text-gray-500'
+                      : 'bg-gray-50 border-gray-300 hover:border-blue-500 hover:bg-blue-50 text-black'
+                  }`}
+                >
+                  <span className="font-semibold mr-3">{String.fromCharCode(65 + i)}.</span>
+                  <span>{opt}</span>
+                </button>
+              ))}
+            </div>
+
+            {showResult && (
+              <div className="mt-6 space-y-4">
+                <div className="p-4 rounded-lg bg-gray-100">
+                  <p className={`font-semibold ${
+                    selectedAnswer === q.correct ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {selectedAnswer === q.correct ? '✅ Correct!' : '❌ Wrong!'}
+                  </p>
+                </div>
+                
+                {q.explanation && (
+                  <div className="p-4 rounded-lg bg-blue-50 border-l-4 border-blue-500">
+                    <h4 className="font-semibold text-blue-800 mb-2">💡 Explanation:</h4>
+                    <p className="text-blue-700">{q.explanation}</p>
+                  </div>
+                )}
+
+                <button
+                  onClick={handleNext}
+                  className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold py-3 px-6 rounded-xl hover:from-purple-600 hover:to-pink-700"
+                >
+                  {qIndex < questions.length - 1 ? 'Next Question' : 'View Results'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 interface ChallengeModePageProps {
   onExit: () => void;
   context?: any;
@@ -1014,7 +1186,7 @@ const ChallengeModePage: React.FC<ChallengeModePageProps> = ({ onExit, context }
 // Main App Component
 export default function QuizTriviaApp() {
   const { } = useMiniApp();
-  const [currentScreen, setCurrentScreen] = useState<'home' | 'results' | 'results-submit' | 'time' | 'challenge' | 'weekly-quiz'>('home');
+  const [currentScreen, setCurrentScreen] = useState<'home' | 'results' | 'results-submit' | 'time' | 'challenge' | 'weekly-quiz' | 'classic'>('home');
   const [showRules, setShowRules] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
   const [finalAnswers, setFinalAnswers] = useState<Answer[]>([]);
@@ -1030,6 +1202,10 @@ export default function QuizTriviaApp() {
 
   const handleStartTime = () => {
     setCurrentScreen('time');
+  };
+
+  const handleStartClassic = () => {
+    setCurrentScreen('classic');
   };
 
   const handleStartWeeklyQuiz = () => {
@@ -1128,6 +1304,7 @@ export default function QuizTriviaApp() {
             balance={balance}
             onStartTimeMode={handleStartTime}
             onStartChallenge={() => setCurrentScreen('challenge')}
+            onStartClassic={handleStartClassic}
             onShowRules={handleShowRules}
             onSpinWheel={handleSpinWheel}
             onStartWeeklyQuiz={handleStartWeeklyQuiz}
@@ -1135,6 +1312,19 @@ export default function QuizTriviaApp() {
           <div className="h-20" />
           <QTTokenBar />
         </>
+      )}
+
+      {currentScreen === 'classic' && (
+        <ClassicModePage 
+          onExit={() => setCurrentScreen('home')}
+          onComplete={(score: number, totalQuestions: number) => {
+            setFinalScore(score);
+            setQuizMode(QuizMode.CLASSIC);
+            setTotalQuestions(totalQuestions);
+            setCurrentScreen('results-submit');
+          }}
+          context={context}
+        />
       )}
 
       {/* Spin Wheel Modal */}
