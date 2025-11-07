@@ -189,7 +189,7 @@
 
           {/* Question Card */}
           <div className="bg-white rounded-2xl p-8 shadow-2xl">
-            <h2 className="text-xl font-bold text-gray-800 mb-6">{question.question}</h2>
+            <h2 className="text-xl font-bold text-black mb-6">{question.question}</h2>
 
             <div className="space-y-3">
               {question.options.map((option, index) => (
@@ -204,7 +204,7 @@
                         : selectedAnswer === index
                         ? 'bg-red-100 border-red-500 text-red-800'
                         : 'bg-gray-100 border-gray-300 text-gray-500'
-                      : 'bg-gray-50 border-gray-300 hover:border-blue-500 hover:bg-blue-50'
+                      : 'bg-gray-50 border-gray-300 hover:border-blue-500 hover:bg-blue-50 text-black'
                   }`}
                 >
                   <div className="flex items-center">
