@@ -40,7 +40,15 @@ export async function POST(request: Request) {
       mode: 'TIME_MODE' as const,
     };
 
-    await leaderboard.updateOne({ fid: nfid, mode: 'TIME_MODE' }, { $set: entry }, { upsert: true });
+    // Ensure quizId is not set for TIME_MODE entries (explicitly unset it if it exists)
+    await leaderboard.updateOne(
+      { fid: nfid, mode: 'TIME_MODE' }, 
+      { 
+        $set: entry,
+        $unset: { quizId: "" } // Remove quizId if it exists (TIME_MODE should never have quizId)
+      }, 
+      { upsert: true }
+    );
 
     return NextResponse.json({ success: true });
   } catch (_error) {

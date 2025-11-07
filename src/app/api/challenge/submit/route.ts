@@ -57,7 +57,15 @@ export async function POST(request: Request) {
         completedAt: now,
         mode: 'CHALLENGE' as const,
       };
-      await leaderboard.updateOne({ fid: fresh.challengerFid, mode: 'CHALLENGE' }, { $set: challengerEntry }, { upsert: true });
+      // Ensure quizId is not set for CHALLENGE entries
+      await leaderboard.updateOne(
+        { fid: fresh.challengerFid, mode: 'CHALLENGE' }, 
+        { 
+          $set: challengerEntry,
+          $unset: { quizId: "" } // Remove quizId if it exists (CHALLENGE should never have quizId)
+        }, 
+        { upsert: true }
+      );
 
       // Update opponent leaderboard entry
       const opponentEntry = {
@@ -71,7 +79,15 @@ export async function POST(request: Request) {
         completedAt: now,
         mode: 'CHALLENGE' as const,
       };
-      await leaderboard.updateOne({ fid: fresh.opponentFid!, mode: 'CHALLENGE' }, { $set: opponentEntry }, { upsert: true });
+      // Ensure quizId is not set for CHALLENGE entries
+      await leaderboard.updateOne(
+        { fid: fresh.opponentFid!, mode: 'CHALLENGE' }, 
+        { 
+          $set: opponentEntry,
+          $unset: { quizId: "" } // Remove quizId if it exists (CHALLENGE should never have quizId)
+        }, 
+        { upsert: true }
+      );
     }
 
     return NextResponse.json({ success: true });

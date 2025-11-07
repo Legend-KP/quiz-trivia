@@ -26,11 +26,17 @@ export async function GET(request: Request) {
     // Try MongoDB first
     const collection = await getLeaderboardCollection();
     const query: any = {};
-    if (mode) query.mode = mode;
+    
     if (quizId) {
+      // Weekly Quiz (CLASSIC mode with quizId)
       query.quizId = quizId;
-      // Enforce that quizId entries must be CLASSIC mode (Weekly Quiz)
       query.mode = 'CLASSIC';
+    } else if (mode) {
+      // For TIME_MODE and CHALLENGE, ensure we exclude any entries with quizId
+      // and strictly filter by mode
+      query.mode = mode;
+      // Exclude entries with quizId (those are CLASSIC Weekly Quiz entries)
+      query.quizId = { $exists: false };
     }
     
     let leaderboard = await collection.find(query).toArray();
@@ -44,6 +50,17 @@ export async function GET(request: Request) {
         if (!entry.time || entry.time === '0:00' || (entry.timeInSeconds || 0) === 0) return false;
         // Remove entries without quizId (old entries)
         if (!entry.quizId) return false;
+        // Ensure mode is CLASSIC
+        if (entry.mode !== 'CLASSIC') return false;
+        return true;
+      });
+    } else if (mode) {
+      // For TIME_MODE and CHALLENGE, ensure strict filtering
+      leaderboard = leaderboard.filter((entry: LeaderboardEntry) => {
+        // Remove any entries with quizId (those belong to CLASSIC Weekly Quiz)
+        if (entry.quizId) return false;
+        // Ensure mode matches exactly
+        if (entry.mode !== mode) return false;
         return true;
       });
     }
