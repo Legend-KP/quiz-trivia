@@ -193,17 +193,8 @@ function getCurrentWeeklyQuiz(): WeeklyQuizConfig {
 // Export current quiz (recalculated on each access for production schedule)
 export const currentWeeklyQuiz: WeeklyQuizConfig = getCurrentWeeklyQuiz();
 
-// Test mode: Set to true to allow testing the weekly quiz regardless of time
-// Set via environment variable: NEXT_PUBLIC_WEEKLY_QUIZ_TEST_MODE=true
-const TEST_MODE = process.env.NEXT_PUBLIC_WEEKLY_QUIZ_TEST_MODE === 'true';
-
 // Calculate quiz state based on current time
 export function calculateQuizState(config: WeeklyQuizConfig): QuizState {
-  // In test mode, always return 'live' to allow testing
-  if (TEST_MODE) {
-    return 'live';
-  }
-  
   const now = Date.now();
   const start = new Date(config.startTime).getTime();
   const end = new Date(config.endTime).getTime();

@@ -167,10 +167,11 @@
                 <Trophy className="text-yellow-400" size={20} />
                 <span>Score: {score}</span>
               </div>
-              <div className="flex items-center space-x-2">
+              {/* Timer hidden for testing */}
+              {/* <div className="flex items-center space-x-2">
                 <Clock className="text-blue-400" size={20} />
                 <span className={timeLeft < 60 ? 'text-red-400 font-bold' : ''}>{formatTime(timeLeft)}</span>
-              </div>
+              </div> */}
             </div>
           </div>
 
