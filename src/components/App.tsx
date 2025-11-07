@@ -38,12 +38,7 @@ export interface AppProps {
  * - Loading states for async operations
  * 
  * @param props - Component props
- * @param props.title - Optional title for the mini app (defaults to "Neynar Starter Kit")
- * 
- * @example
- * ```tsx
- * <App title="My Mini App" />
- * ```
+ * @param props.title - Optional title for the mini app (defaults to "Quiz Trivia")
  */
 export default function App(
   { title }: AppProps = { title: "Quiz Trivia" }
