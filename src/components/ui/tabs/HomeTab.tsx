@@ -368,9 +368,14 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
         </div>
 
         {/* Balance + Spin Wheel Button */}
-        <div className="mb-4 text-white text-sm flex items-center gap-3">
+        <div className="mb-4 text-white text-sm flex items-center gap-3 flex-wrap justify-center">
           <span className="px-3 py-1 rounded-full bg-black/30 border border-white/20">Coins: {balance ?? '—'}</span>
-          <button onClick={onSpinWheel} className="px-3 py-1 rounded-full bg-yellow-500 text-yellow-900 font-semibold hover:bg-yellow-400 transition">🎰 Spin the Wheel!</button>
+          <button 
+            onClick={onSpinWheel} 
+            className="px-6 py-3 rounded-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-black font-bold text-base shadow-2xl hover:from-yellow-300 hover:via-yellow-400 hover:to-yellow-500 hover:scale-105 transition-all duration-300 border-2 border-yellow-300 animate-pulse hover:animate-none"
+          >
+            🎰 Spin the Wheel!
+          </button>
         </div>
 
         {/* Mode Buttons */}
