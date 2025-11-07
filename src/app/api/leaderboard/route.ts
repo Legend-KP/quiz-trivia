@@ -53,14 +53,22 @@ export async function GET(request: Request) {
       return (a.timeInSeconds || 0) - (b.timeInSeconds || 0);
     });
 
-    const rankedLeaderboard = sortedLeaderboard.map((entry: LeaderboardEntry, index: number) => ({
+    // Limit Time Mode to top 100, but show all for Weekly Quiz (quizId present)
+    let limitedLeaderboard = sortedLeaderboard;
+    if (mode === 'TIME_MODE' && !quizId) {
+      limitedLeaderboard = sortedLeaderboard.slice(0, 100);
+    }
+    // Weekly Quiz (quizId present) shows all participants - no limit
+
+    const rankedLeaderboard = limitedLeaderboard.map((entry: LeaderboardEntry, index: number) => ({
       ...entry,
       rank: index + 1,
     }));
 
     return NextResponse.json({
       leaderboard: rankedLeaderboard,
-      totalParticipants: rankedLeaderboard.length,
+      totalParticipants: sortedLeaderboard.length, // Total before limiting
+      displayedParticipants: rankedLeaderboard.length, // Actually displayed count
       lastUpdated: new Date().toISOString(),
       storage: 'mongodb',
       mode: mode || 'ALL',

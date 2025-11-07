@@ -389,19 +389,38 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
             onQuizStart={async () => {
               try {
                 const fid = context?.user?.fid;
-                if (fid) {
-                  const res = await fetch('/api/currency/spend', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fid, amount: 15, reason: 'weekly_entry' }),
-                  });
-                  if (!res.ok) {
-                    const d = await res.json().catch(() => ({}));
-                    alert(d?.error || 'Insufficient balance');
-                    return;
-                  }
+                const quizId = currentWeeklyQuiz.id;
+                
+                if (!fid || !quizId) {
+                  alert('User not authenticated');
+                  return;
                 }
-              } catch (_e) {}
+
+                // Server-side check: Verify user hasn't already completed this quiz
+                const checkRes = await fetch(`/api/leaderboard/check?fid=${fid}&quizId=${quizId}`);
+                const checkData = await checkRes.json();
+                
+                if (checkData.completed) {
+                  alert('You have already completed this quiz. Each user can only take the quiz once per session.');
+                  setWeeklyUserCompleted(true);
+                  return;
+                }
+
+                // Deduct coins
+                const res = await fetch('/api/currency/spend', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ fid, amount: 15, reason: 'weekly_entry' }),
+                });
+                if (!res.ok) {
+                  const d = await res.json().catch(() => ({}));
+                  alert(d?.error || 'Insufficient balance');
+                  return;
+                }
+              } catch (_e) {
+                alert('Failed to start quiz. Please try again.');
+                return;
+              }
               onStartWeeklyQuiz();
             }}
             userCompleted={weeklyUserCompleted}
@@ -582,7 +601,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onR
               <p className="text-gray-500">No participants yet. Be the first to complete the quiz!</p>
             </div>
           ) : (
-            <div className="space-y-3 max-h-96 overflow-y-auto">
+            <div className="space-y-3 max-h-[70vh] overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 transparent' }}>
               {leaderboard.map((player, index) => (
                 <div
                   key={player.fid}

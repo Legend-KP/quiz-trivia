@@ -1,4 +1,4 @@
-  import React, { useState, useEffect, useCallback } from 'react';
+  import React, { useState, useEffect, useCallback, useRef } from 'react';
   import { Clock, Trophy, Star } from 'lucide-react';
   import { WeeklyQuizConfig } from '~/lib/weeklyQuiz';
 
@@ -17,7 +17,7 @@
   }
 
   // Weekly Quiz Component
-  const WeeklyQuizPage: React.FC<WeeklyQuizPageProps> = ({ config, onComplete, context: _context }) => {
+  const WeeklyQuizPage: React.FC<WeeklyQuizPageProps> = ({ config, onComplete, context }) => {
     const [started, setStarted] = useState(false);
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [score, setScore] = useState(0);
@@ -30,21 +30,74 @@
     const [startTime, setStartTime] = useState<number | null>(null);
     const [pausedTime, setPausedTime] = useState<number>(0); // Track total paused time
     const [pauseStartTime, setPauseStartTime] = useState<number | null>(null); // When pause started
+    const pausedTimeRef = useRef<number>(0); // Ref to track paused time for closure access
+    const pauseStartTimeRef = useRef<number | null>(null); // Ref to track pause start for closure access
+    const startTimeRef = useRef<number | null>(null); // Ref to track start time for closure access
+    const [alreadyCompleted, setAlreadyCompleted] = useState(false);
+    const [checkingCompletion, setCheckingCompletion] = useState(true);
+
+    // Sync refs with state
+    useEffect(() => {
+      pausedTimeRef.current = pausedTime;
+    }, [pausedTime]);
+
+    useEffect(() => {
+      pauseStartTimeRef.current = pauseStartTime;
+    }, [pauseStartTime]);
+
+    useEffect(() => {
+      startTimeRef.current = startTime;
+    }, [startTime]);
+
+    // Check if user has already completed this quiz (server-side check)
+    useEffect(() => {
+      const checkCompletion = async () => {
+        const fid = context?.user?.fid;
+        const quizId = config.id;
+        
+        if (!fid || !quizId) {
+          setCheckingCompletion(false);
+          return;
+        }
+
+        try {
+          const res = await fetch(`/api/leaderboard/check?fid=${fid}&quizId=${quizId}`);
+          const data = await res.json();
+          
+          if (data.completed) {
+            setAlreadyCompleted(true);
+            // Show alert and prevent quiz start
+            alert('You have already completed this quiz. Each user can only take the quiz once per session.');
+          }
+        } catch (error) {
+          console.error('Failed to check completion status:', error);
+        } finally {
+          setCheckingCompletion(false);
+        }
+      };
+
+      checkCompletion();
+    }, [context?.user?.fid, config.id]);
 
     const handleAnswerSubmit = useCallback((answerIndex: number | null) => {
       const question = config.questions[currentQuestion];
+      if (!question) return; // Safety check
+      
       const isCorrect = answerIndex === question.correct;
       // Weekly mode scoring: +1 for correct, -0.5 for wrong, 0 for unanswered/missed
-      const newScore = isCorrect ? score + 1 : (answerIndex === null ? score : score - 0.5);
+      // Use functional update to avoid stale closure issues
+      setScore(prevScore => {
+        const newScore = isCorrect ? prevScore + 1 : (answerIndex === null ? prevScore : prevScore - 0.5);
+        return newScore;
+      });
       
-      setAnswers([...answers, {
+      setAnswers(prevAnswers => [...prevAnswers, {
         questionId: question.id,
         selectedAnswer: answerIndex,
         correct: question.correct,
         isCorrect
       }]);
       
-      setScore(newScore);
       setSelectedAnswer(answerIndex);
       setShowResult(true);
       
@@ -62,23 +115,34 @@
             setStartTime(Date.now());
           }
           
-          // Calculate paused time (result displays + waits)
-          let totalPaused = pausedTime;
-          if (pauseStartTime) {
-            totalPaused += (Date.now() - pauseStartTime) / 1000; // Add current pause
-          }
-          
-          // Total time minus paused time (only count active answering time)
-          const totalTime = Math.floor((Date.now() - (startTime || Date.now())) / 1000 - totalPaused);
-          // Ensure minimum time of 1 second to avoid 0:00
-          const safeTotalTime = Math.max(totalTime, 1);
-          const timeString = `${Math.floor(safeTotalTime / 60)}:${(safeTotalTime % 60).toString().padStart(2, '0')}`;
-          onComplete(newScore, [...answers, {
-            questionId: question.id,
-            selectedAnswer: answerIndex,
-            correct: question.correct,
-            isCorrect
-          }], timeString);
+          // Use functional updates to get latest state values
+          setScore(currentScore => {
+            // Calculate paused time (result displays + waits) - use refs to get latest values
+            let totalPaused = pausedTimeRef.current;
+            if (pauseStartTimeRef.current) {
+              totalPaused += (Date.now() - pauseStartTimeRef.current) / 1000; // Add current pause
+            }
+            
+            // Total time minus paused time (only count active answering time) - use ref for startTime
+            const actualStartTime = startTimeRef.current || Date.now();
+            const totalTime = Math.floor((Date.now() - actualStartTime) / 1000 - totalPaused);
+            // Ensure minimum time of 1 second to avoid 0:00
+            const safeTotalTime = Math.max(totalTime, 1);
+            const timeString = `${Math.floor(safeTotalTime / 60)}:${(safeTotalTime % 60).toString().padStart(2, '0')}`;
+            
+            // Get latest answers state
+            setAnswers(currentAnswers => {
+              onComplete(currentScore, [...currentAnswers, {
+                questionId: question.id,
+                selectedAnswer: answerIndex,
+                correct: question.correct,
+                isCorrect
+              }], timeString);
+              return currentAnswers;
+            });
+            
+            return currentScore;
+          });
         }, 3000);
       } else {
         // Countdown for next question (10 seconds)
@@ -145,6 +209,36 @@
 
     // Start screen before quiz begins
     if (!started) {
+      if (checkingCompletion) {
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4 flex items-center justify-center">
+            <div className="bg-white rounded-2xl p-8 shadow-2xl text-center max-w-md w-full">
+              <div className="spinner h-8 w-8 mx-auto mb-4"></div>
+              <p className="text-gray-600">Checking completion status...</p>
+            </div>
+          </div>
+        );
+      }
+
+      if (alreadyCompleted) {
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4 flex items-center justify-center">
+            <div className="bg-white rounded-2xl p-8 shadow-2xl text-center max-w-md w-full">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">Already Completed ✓</h2>
+              <p className="text-gray-700 mb-6">
+                You have already completed this Weekly Quiz. Each user can only take the quiz once per session.
+              </p>
+              <button
+                onClick={() => window.location.href = '/'}
+                className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all"
+              >
+                Back to Home
+              </button>
+            </div>
+          </div>
+        );
+      }
+
       return (
         <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4 flex items-center justify-center">
           <div className="bg-white rounded-2xl p-8 shadow-2xl text-center max-w-md w-full">

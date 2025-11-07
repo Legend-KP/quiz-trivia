@@ -204,7 +204,7 @@ export default function PublicLeaderboard() {
               </Link>
             </div>
           ) : (
-            <div className="space-y-3 max-h-96 overflow-y-auto">
+            <div className="space-y-3 max-h-[70vh] overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 transparent' }}>
               {leaderboard.map((player) => (
                 <div
                   key={player.fid}

@@ -150,7 +150,12 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
       )}
       <button
         onClick={handleStartQuiz}
-        className={`w-full bg-gradient-to-r ${getButtonGradient()} text-white font-bold py-4 px-8 rounded-xl text-xl transform hover:scale-105 transition-all duration-200 shadow-2xl ${className}`}
+        disabled={userCompleted || quizState !== 'live'}
+        className={`w-full bg-gradient-to-r ${getButtonGradient()} text-white font-bold py-4 px-8 rounded-xl text-xl transition-all duration-200 shadow-2xl ${className} ${
+          (userCompleted || quizState !== 'live') 
+            ? 'opacity-60 cursor-not-allowed' 
+            : 'transform hover:scale-105'
+        }`}
         style={quizState === 'live' && !userCompleted ? {
           animation: 'glow-pulse 2s ease-in-out infinite'
         } : {}}
@@ -275,12 +280,20 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                   📊 View Leaderboard
                 </button>
                 
-                {canStartQuiz && (
+                {canStartQuiz && !userCompleted && (
                   <button
                     onClick={handleStartQuizConfirmed}
                     className="flex-1 px-3 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold text-sm rounded-lg hover:from-green-600 hover:to-blue-700 transition min-w-[120px]"
                   >
                     Start Quiz 🚀
+                  </button>
+                )}
+                {userCompleted && (
+                  <button
+                    disabled
+                    className="flex-1 px-3 py-2 bg-gray-400 text-white font-bold text-sm rounded-lg cursor-not-allowed opacity-60 min-w-[120px]"
+                  >
+                    Already Completed ✓
                   </button>
                 )}
               </div>
