@@ -72,10 +72,20 @@ export default function App(
   // --- Early Returns ---
   if (!isSDKLoaded) {
     return (
-      <div className="flex items-center justify-center h-screen relative bg-white">
+      <div className="flex items-center justify-center h-screen bg-white">
         <div className="text-center">
-          <div className="animate-spin rounded-full border-2 border-gray-300 border-t-primary h-8 w-8 mx-auto mb-4"></div>
-          <p className="text-gray-800">Loading SDK...</p>
+          {/* Spinner */}
+          <div className="relative inline-block mb-6">
+            <div className="animate-spin rounded-full border-4 border-gray-200 border-t-blue-600 h-16 w-16"></div>
+          </div>
+          
+          {/* Loading Text */}
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            Loading Quiz Trivia
+          </h2>
+          <p className="text-gray-600 animate-pulse">
+            Preparing your experience...
+          </p>
         </div>
       </div>
     );
@@ -99,24 +109,24 @@ export default function App(
           backgroundPosition: 'center',
         }}
       />
+      
       {/* User Profile in Top Right Corner */}
-{context?.user && (
-  <div className="absolute top-4 right-4 z-50">
-    <div className="flex items-center space-x-2">
-      <span className="text-sm font-medium text-white">
-        {context.user.displayName || context.user.username}
-      </span>
-      {context.user.pfpUrl && (
-        <img 
-          src={context.user.pfpUrl} 
-          alt="Profile" 
-          className="w-8 h-8 rounded-full border-2 border-primary"
-        />
+      {context?.user && (
+        <div className="absolute top-4 right-4 z-50">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-white">
+              {context.user.displayName || context.user.username}
+            </span>
+            {context.user.pfpUrl && (
+              <img 
+                src={context.user.pfpUrl} 
+                alt="Profile" 
+                className="w-8 h-8 rounded-full border-2 border-primary"
+              />
+            )}
+          </div>
+        </div>
       )}
-    </div>
-  </div>
-)}
-
 
       {/* Main content - full width to allow edge-to-edge backgrounds */}
       <div className="py-2">
@@ -126,4 +136,3 @@ export default function App(
     </div>
   );
 }
-
