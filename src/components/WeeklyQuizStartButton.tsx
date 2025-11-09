@@ -150,11 +150,10 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
       )}
       <button
         onClick={handleStartQuiz}
-        disabled={quizState !== 'live'}
         className={`w-full bg-gradient-to-r ${getButtonGradient()} text-white font-bold py-4 px-8 rounded-xl text-xl transition-all duration-200 shadow-2xl ${className} ${
-          quizState !== 'live' 
-            ? 'opacity-60 cursor-not-allowed' 
-            : 'transform hover:scale-105'
+          quizState === 'live' 
+            ? 'transform hover:scale-105' 
+            : ''
         }`}
         style={quizState === 'live' ? {
           animation: 'glow-pulse 2s ease-in-out infinite'
