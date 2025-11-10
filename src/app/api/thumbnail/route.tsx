@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
+import React from "react";
 import { APP_NAME } from "~/lib/constants";
 import { getNeynarUser } from "~/lib/neynar";
 
@@ -143,7 +144,7 @@ export async function GET(request: NextRequest) {
   });
 
   const modeLabel = formatMode(modeParam);
-  const stats: JSX.Element[] = [];
+  const stats: React.ReactElement[] = [];
   const scoreValue =
     scoreParam && scoreParam.trim().length > 0 ? scoreParam.trim() : null;
   const timeValue = timeParam ?? null;
