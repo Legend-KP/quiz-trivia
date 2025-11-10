@@ -183,7 +183,7 @@ export default function PublicLeaderboard() {
             </p>
             {!loading && (
               <div className="mt-2 text-sm text-gray-500">
-                {leaderboard.length} participants • Last updated: {new Date().toLocaleString()}
+                {stats.totalParticipants || leaderboard.length} participants • Last updated: {new Date().toLocaleString()}
               </div>
             )}
           </div>

@@ -61,6 +61,15 @@ export async function GET(request: Request) {
         if (entry.quizId) return false;
         // Ensure mode matches exactly
         if (entry.mode !== mode) return false;
+        // Ensure mode field exists
+        if (!entry.mode) return false;
+        return true;
+      });
+    } else {
+      // ALL mode - show all entries but still filter out invalid ones
+      leaderboard = leaderboard.filter((entry: LeaderboardEntry) => {
+        // Ensure mode field exists
+        if (!entry.mode) return false;
         return true;
       });
     }
@@ -70,22 +79,17 @@ export async function GET(request: Request) {
       return (a.timeInSeconds || 0) - (b.timeInSeconds || 0);
     });
 
-    // Limit Time Mode to top 100, but show all for Weekly Quiz (quizId present)
-    let limitedLeaderboard = sortedLeaderboard;
-    if (mode === 'TIME_MODE' && !quizId) {
-      limitedLeaderboard = sortedLeaderboard.slice(0, 100);
-    }
-    // Weekly Quiz (quizId present) shows all participants - no limit
-
-    const rankedLeaderboard = limitedLeaderboard.map((entry: LeaderboardEntry, index: number) => ({
+    // Show all participants for all modes - no limit
+    // (Previously TIME_MODE was limited to top 100, but now showing all)
+    const rankedLeaderboard = sortedLeaderboard.map((entry: LeaderboardEntry, index: number) => ({
       ...entry,
       rank: index + 1,
     }));
 
     return NextResponse.json({
       leaderboard: rankedLeaderboard,
-      totalParticipants: sortedLeaderboard.length, // Total before limiting
-      displayedParticipants: rankedLeaderboard.length, // Actually displayed count
+      totalParticipants: rankedLeaderboard.length, // Total participants
+      displayedParticipants: rankedLeaderboard.length, // All participants are displayed
       lastUpdated: new Date().toISOString(),
       storage: 'mongodb',
       mode: mode || 'ALL',
@@ -165,8 +169,16 @@ export async function POST(request: Request) {
       await collection.updateOne({ fid, mode }, { $set: newEntry }, { upsert: true });
     }
 
-    // Get leaderboard for the specific mode
-    const leaderboard = await collection.find(quizId ? { mode, quizId } : { mode }).toArray();
+    // Get leaderboard for the specific mode (matching GET endpoint logic)
+    let query: any = {};
+    if (quizId) {
+      query.quizId = quizId;
+      query.mode = 'CLASSIC';
+    } else {
+      query.mode = mode;
+      query.quizId = { $exists: false }; // Exclude entries with quizId
+    }
+    const leaderboard = await collection.find(query).toArray();
     const sortedLeaderboard = leaderboard.sort((a: LeaderboardEntry, b: LeaderboardEntry) => {
       if (a.score !== b.score) return b.score - a.score;
       return (a.timeInSeconds || 0) - (b.timeInSeconds || 0);
