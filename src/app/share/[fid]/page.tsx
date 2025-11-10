@@ -6,7 +6,7 @@ import { getMiniAppEmbedMetadata } from "~/lib/utils";
 export const revalidate = 300;
 
 type GenerateMetadataParams = {
-  params: Promise<{ fid: string }> | { fid: string };
+  params: Promise<{ fid: string }>;
   searchParams?:
     | Promise<Record<string, string | string[] | undefined>>
     | Record<string, string | string[] | undefined>
@@ -47,7 +47,7 @@ export async function generateMetadata({
   params,
   searchParams,
 }: GenerateMetadataParams): Promise<Metadata> {
-  const resolvedParams = params instanceof Promise ? await params : params;
+  const resolvedParams = await params;
   const resolvedSearch = (await resolveRecord(
     searchParams,
   )) as Record<
