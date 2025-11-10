@@ -3,12 +3,13 @@ import { NextRequest } from "next/server";
 import React from "react";
 import { APP_NAME } from "~/lib/constants";
 import { getNeynarUser } from "~/lib/neynar";
+import { getLeaderboardCollection, type LeaderboardEntry } from "~/lib/mongodb";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const WIDTH = 1200;
-const HEIGHT = 630;
+const HEIGHT = 800;
 
 function formatMode(mode?: string | null) {
   if (!mode) return "Quiz Trivia";
@@ -143,6 +144,28 @@ export async function GET(request: NextRequest) {
     return null;
   });
 
+  // Fetch recent TIME_MODE players (excluding current user)
+  let recentPlayers: LeaderboardEntry[] = [];
+  if (modeParam && (modeParam.toLowerCase() === "time" || modeParam.toLowerCase() === "timed" || modeParam.toLowerCase() === "time_mode" || modeParam.toLowerCase() === "time-mode")) {
+    try {
+      const collection = await getLeaderboardCollection();
+      const timeModeEntries = await collection
+        .find({
+          mode: "TIME_MODE",
+          fid: { $ne: fid }, // Exclude current user
+          quizId: { $exists: false }, // Ensure no quizId
+        })
+        .sort({ completedAt: -1 }) // Most recent first
+        .limit(5)
+        .toArray();
+      
+      recentPlayers = timeModeEntries as LeaderboardEntry[];
+    } catch (error) {
+      console.error("thumbnail:fetchRecentPlayers", error);
+      // Continue without recent players if fetch fails
+    }
+  }
+
   const modeLabel = formatMode(modeParam);
   const stats: React.ReactElement[] = [];
   const scoreValue =
@@ -179,7 +202,7 @@ export async function GET(request: NextRequest) {
           flexDirection: "column",
           background:
             "linear-gradient(130deg, rgba(30,64,175,1) 0%, rgba(76,29,149,1) 45%, rgba(185,28,28,1) 100%)",
-          padding: "70px",
+          padding: "80px",
           color: "white",
           position: "relative",
         }}
@@ -261,8 +284,8 @@ export async function GET(request: NextRequest) {
                 gap: "12px",
               }}
             >
-              <span>🚀</span>
-              <span>Ready to topple the leaderboard?</span>
+              <span>🎯</span>
+              <span>Think you can beat this? I challenge you!</span>
             </div>
           </div>
         </div>
@@ -271,7 +294,7 @@ export async function GET(request: NextRequest) {
           <div
             style={{
               position: "relative",
-              marginTop: "60px",
+              marginTop: "80px",
               display: "flex",
               gap: "24px",
             }}
@@ -283,8 +306,8 @@ export async function GET(request: NextRequest) {
         <div
           style={{
             position: "absolute",
-            bottom: "64px",
-            right: "70px",
+            bottom: "80px",
+            right: "80px",
             fontSize: "28px",
             letterSpacing: "0.2em",
             textTransform: "uppercase",
@@ -293,6 +316,69 @@ export async function GET(request: NextRequest) {
         >
           {APP_NAME}
         </div>
+
+        {/* Recent TIME_MODE Players - Bottom Left */}
+        {recentPlayers.length > 0 && (
+          <div
+            style={{
+              position: "absolute",
+              bottom: "80px",
+              left: "80px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "20px",
+                fontWeight: 600,
+                color: "rgba(255,255,255,0.8)",
+                marginBottom: "8px",
+              }}
+            >
+              Recent Players
+            </div>
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                alignItems: "center",
+              }}
+            >
+              {recentPlayers.slice(0, 5).map((player) => (
+                <div
+                  key={player.fid}
+                  style={{
+                    position: "relative",
+                    width: "56px",
+                    height: "56px",
+                    borderRadius: "12px",
+                    overflow: "hidden",
+                    border: "2px solid rgba(255,255,255,0.3)",
+                    background: "rgba(17, 24, 39, 0.6)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "24px",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {player.pfpUrl ? (
+                    <img
+                      src={player.pfpUrl}
+                      alt={player.displayName || player.username || "Player"}
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  ) : (
+                    (player.username?.[0] || "?").toUpperCase()
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     ),
     {
