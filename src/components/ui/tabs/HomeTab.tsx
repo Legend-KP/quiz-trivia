@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Clock, Trophy, Star, X } from 'lucide-react';
 import { useMiniApp } from '@neynar/react';
-import { APP_URL, APP_TITLE_IMAGE_URL } from '~/lib/constants';
+import { APP_URL, APP_TITLE_IMAGE_URL, APP_NAME } from '~/lib/constants';
 import QuizStartButton from '~/components/QuizStartButton';
 import SpinWheel from '~/components/SpinWheel';
 import { QuizMode } from '~/lib/wallet';
@@ -64,6 +64,8 @@ interface ResultsPageProps {
   time: string;
   onRestart: () => void;
   context?: any;
+  mode: QuizMode;
+  totalQuestions: number;
 }
 
 interface TimeModePageProps {
@@ -458,7 +460,15 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
 
 
 // Results Component
-const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onRestart: _onRestart, context, time }) => {
+const ResultsPage: React.FC<ResultsPageProps> = ({
+  score,
+  answers: _answers,
+  onRestart: _onRestart,
+  context,
+  time,
+  mode,
+  totalQuestions,
+}) => {
   const { actions } = useMiniApp();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -470,6 +480,10 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onR
 
   // Use the actual completion time passed from the quiz
   const totalTime = time || "0:00";
+  const modeSlug =
+    mode === QuizMode.TIME_MODE ? "time" : mode === QuizMode.CLASSIC ? "weekly" : "classic";
+  const accuracyPercent =
+    totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : null;
 
   const fetchLeaderboard = useCallback(async () => {
     console.log('🔍 Fetching leaderboard...');
@@ -686,21 +700,54 @@ const ResultsPage: React.FC<ResultsPageProps> = ({ score, answers: _answers, onR
           <div className="mt-6 flex flex-col items-center space-y-4">
             <button
               onClick={async () => {
+                const fid = context?.user?.fid;
+                const formatScoreValue = (value: number) =>
+                  Number.isInteger(value) ? `${value}` : value.toFixed(1);
+                const buildShareUrl = () => {
+                  const base = fid
+                    ? new URL(`${APP_URL}/share/${fid}`)
+                    : new URL(APP_URL);
+                  base.searchParams.set("mode", modeSlug);
+
+                  if (mode === QuizMode.TIME_MODE) {
+                    base.searchParams.set("score", formatScoreValue(score));
+                    if (totalQuestions > 0) {
+                      base.searchParams.set("questions", totalQuestions.toString());
+                    }
+                    if (accuracyPercent !== null && !Number.isNaN(accuracyPercent)) {
+                      base.searchParams.set("accuracy", `${accuracyPercent}%`);
+                    }
+                  } else {
+                    base.searchParams.set(
+                      "score",
+                      `${formatScoreValue(score)}/${totalQuestions}`,
+                    );
+                    if (totalTime) {
+                      base.searchParams.set("time", totalTime);
+                    }
+                  }
+
+                  return base.toString();
+                };
+
+                const shareText =
+                  mode === QuizMode.TIME_MODE
+                    ? `I just smashed Time Mode in ${APP_NAME}! ⚡️ Scored ${score} correct.`
+                    : `I just finished the Weekly Challenge on ${APP_NAME}! 🧠 Scored ${formatScoreValue(
+                        score,
+                      )}/${totalQuestions}.`;
+
                 try {
                   await actions.composeCast({
-                    text: `I just played Quiz Trivia! 🎉 I scored ${score}. Come try it:`,
+                    text: `${shareText} Come try it:`,
                     embeds: [
-                      context?.user?.fid
-                        ? `${APP_URL}/share/${context.user.fid}`
-                        : `${APP_URL}`,
+                      buildShareUrl(),
                     ],
                   });
                 } catch (err) {
                   console.error('Failed to open Farcaster composer:', err);
-                  const text = encodeURIComponent(`I just played Quiz Trivia! 🎉 I scored ${score}. Come try it:`);
-                  const url = encodeURIComponent(
-                    context?.user?.fid ? `${APP_URL}/share/${context.user.fid}` : `${APP_URL}`
-                  );
+                  const text = encodeURIComponent(`${shareText} Come try it:`);
+                  const url = encodeURIComponent(buildShareUrl());
                   const warpcastUrl = `https://warpcast.com/~/compose?text=${text}%20${url}`;
                   if (typeof window !== 'undefined') {
                     window.open(warpcastUrl, '_blank', 'noopener,noreferrer');
@@ -1227,6 +1274,8 @@ export default function QuizTriviaApp() {
           score={finalScore}
           answers={finalAnswers}
           time={finalTime}
+          mode={quizMode}
+          totalQuestions={totalQuestions}
           onRestart={handleRestart}
           context={context}
         />

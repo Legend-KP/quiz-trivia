@@ -1,4 +1,2 @@
 User-agent: *
-Allow: /api/opengraph-image*
-
-
+Allow: /api/thumbnail*

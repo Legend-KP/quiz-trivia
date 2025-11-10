@@ -15,7 +15,7 @@ export function getNeynarClient() {
   return neynarClient;
 }
 
-// Get user information from Neynar (needed for opengraph-image)
+// Get user information from Neynar (needed for thumbnail generation)
 export async function getNeynarUser(fid: number) {
   try {
     const client = getNeynarClient();
