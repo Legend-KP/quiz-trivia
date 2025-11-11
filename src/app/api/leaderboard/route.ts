@@ -170,7 +170,7 @@ export async function POST(request: Request) {
     }
 
     // Get leaderboard for the specific mode (matching GET endpoint logic)
-    let query: any = {};
+    const query: any = {};
     if (quizId) {
       query.quizId = quizId;
       query.mode = 'CLASSIC';
