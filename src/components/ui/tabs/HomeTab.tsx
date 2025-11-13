@@ -369,7 +369,7 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
         </div>
 
         {/* Mode Buttons */}
-        <div className="space-y-3 w-full max-w-xs md:max-w-sm">
+        <div className="space-y-4 w-full max-w-sm md:max-w-md">
           <WeeklyQuizStartButton
             quizState={_weeklyQuizState}
             onQuizStart={async () => {
