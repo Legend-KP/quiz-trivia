@@ -8,7 +8,17 @@ import { useQTClaim } from '~/hooks/useQTClaim';
 export function RewardsTab() {
   const { context } = useMiniApp();
   const [balance, setBalance] = useState<number | null>(null);
-  const { claimQTReward, address } = useQTClaim();
+  const { 
+    claimQTReward, 
+    address, 
+    canClaim, 
+    rewardAmount, 
+    isProcessing, 
+    error, 
+    isConfirmed,
+    refetchCanClaim 
+  } = useQTClaim();
+  const [claimSuccess, setClaimSuccess] = useState(false);
 
   // Fetch balance
   useEffect(() => {
@@ -47,6 +57,49 @@ export function RewardsTab() {
     return await claimQTReward(userAddress);
   };
 
+  const handleDailyClaim = async () => {
+    if (!address) {
+      alert('Please connect your wallet first');
+      return;
+    }
+
+    if (!canClaim) {
+      alert('You have already claimed your daily reward today. Come back tomorrow!');
+      return;
+    }
+
+    setClaimSuccess(false);
+    const result = await claimQTReward(address);
+    
+    if (result.success) {
+      setClaimSuccess(true);
+      // Refetch claim status after a delay
+      setTimeout(() => {
+        refetchCanClaim();
+      }, 2000);
+    }
+  };
+
+  // Reset success message when claim status changes
+  useEffect(() => {
+    if (isConfirmed) {
+      setClaimSuccess(true);
+      setTimeout(() => {
+        refetchCanClaim();
+        setClaimSuccess(false);
+      }, 3000);
+    }
+  }, [isConfirmed, refetchCanClaim]);
+
+  const formatRewardAmount = (amount: number) => {
+    if (amount >= 1000000) {
+      return `${(amount / 1000000).toFixed(2)}M`;
+    } else if (amount >= 1000) {
+      return `${(amount / 1000).toFixed(2)}K`;
+    }
+    return amount.toLocaleString();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 flex flex-col items-center justify-center">
       {/* Coins Panel - Top Left */}
@@ -57,7 +110,82 @@ export function RewardsTab() {
       </div>
 
       {/* Rewards Content */}
-      <div className="w-full max-w-md mx-auto">
+      <div className="w-full max-w-md mx-auto space-y-4">
+        {/* Daily Claim Section */}
+        <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-2xl">
+          <h2 className="text-2xl font-bold text-center mb-2 text-gray-800">
+            🎁 Daily Reward
+          </h2>
+          <p className="text-center text-gray-600 mb-4 text-sm">
+            Claim your daily QT token reward!
+          </p>
+          
+          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 mb-4 border-2 border-yellow-200">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-yellow-800 mb-1">
+                {formatRewardAmount(rewardAmount)} QT
+              </div>
+              <div className="text-sm text-yellow-700">
+                Available Daily
+              </div>
+            </div>
+          </div>
+
+          {claimSuccess && (
+            <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg text-center text-sm">
+              ✅ Successfully claimed! Check your wallet for QT tokens.
+            </div>
+          )}
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-center text-sm">
+              ❌ {error}
+            </div>
+          )}
+
+          {!address ? (
+            <button
+              disabled
+              className="w-full bg-gray-300 text-gray-500 font-bold py-3 px-6 rounded-xl cursor-not-allowed"
+            >
+              Connect Wallet to Claim
+            </button>
+          ) : !canClaim ? (
+            <button
+              disabled
+              className="w-full bg-gray-300 text-gray-500 font-bold py-3 px-6 rounded-xl cursor-not-allowed"
+            >
+              ✅ Already Claimed Today
+            </button>
+          ) : (
+            <button
+              onClick={handleDailyClaim}
+              disabled={isProcessing}
+              className={`w-full font-bold py-3 px-6 rounded-xl transition-all duration-200 ${
+                isProcessing
+                  ? 'bg-gray-400 text-white cursor-wait'
+                  : 'bg-gradient-to-r from-green-500 to-blue-600 text-white hover:from-green-600 hover:to-blue-700 transform hover:scale-105'
+              }`}
+            >
+              {isProcessing ? (
+                <span className="flex items-center justify-center">
+                  <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></span>
+                  Processing...
+                </span>
+              ) : (
+                '🎁 Claim Daily Reward'
+              )}
+            </button>
+          )}
+
+          {canClaim && address && (
+            <p className="text-center text-xs text-gray-500 mt-3">
+              You can claim once per day. Come back tomorrow for more!
+            </p>
+          )}
+        </div>
+
+        {/* Spin Wheel Section */}
         <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-2xl">
           <h2 className="text-2xl font-bold text-center mb-4 text-gray-800">
             🎰 Spin the Wheel

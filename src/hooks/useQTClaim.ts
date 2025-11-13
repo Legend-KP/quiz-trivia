@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { useAccount, useConnect, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useAccount, useConnect, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 
 // QT Reward Distributor Contract Configuration
 const QT_DISTRIBUTOR_ADDRESS = process.env.NEXT_PUBLIC_QT_DISTRIBUTOR_ADDRESS as `0x${string}` || '0xb8AD9216A88E2f9a24c7e2207dE4e69101031f02';
@@ -25,6 +25,13 @@ const QT_DISTRIBUTOR_ABI = [
     "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
     "stateMutability": "view",
     "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "REWARD_AMOUNT",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
   }
 ] as const;
 
@@ -38,6 +45,25 @@ export function useQTClaim() {
   const { writeContract, data: hash, isPending, error: writeError } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
+  });
+
+  // Check if user can claim today
+  const { data: canClaim, refetch: refetchCanClaim } = useReadContract({
+    address: address ? QT_DISTRIBUTOR_ADDRESS : undefined,
+    abi: QT_DISTRIBUTOR_ABI,
+    functionName: 'canClaimToday',
+    args: address ? [address] : undefined,
+    query: {
+      enabled: !!address,
+      refetchInterval: 60000, // Refetch every minute
+    },
+  });
+
+  // Get reward amount
+  const { data: rewardAmount } = useReadContract({
+    address: QT_DISTRIBUTOR_ADDRESS,
+    abi: QT_DISTRIBUTOR_ABI,
+    functionName: 'REWARD_AMOUNT',
   });
 
   // Update processing state based on Wagmi states
@@ -62,6 +88,14 @@ export function useQTClaim() {
       setError(writeError.message || 'Transaction failed');
     }
   }, [writeError]);
+
+  // Refetch claim status after successful transaction
+  useEffect(() => {
+    if (isConfirmed) {
+      refetchCanClaim();
+      setError(null);
+    }
+  }, [isConfirmed, refetchCanClaim]);
 
   const claimQTReward = async (userAddress: string): Promise<{ success: boolean; txHash?: string; error?: string }> => {
     try {
@@ -112,6 +146,9 @@ export function useQTClaim() {
     isConnected,
     address,
     txHash: hash || txHash,
-    isConfirmed
+    isConfirmed,
+    canClaim: canClaim ?? false,
+    rewardAmount: rewardAmount ? Number(rewardAmount) / 1e18 : 1000, // Default to 1,000 QT if not available
+    refetchCanClaim
   };
 }

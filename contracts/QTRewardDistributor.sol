@@ -13,8 +13,8 @@ contract QTRewardDistributor {
     // Owner of the contract
     address public owner;
     
-    // Reward amount (10,000 QT tokens with 18 decimals)
-    uint256 public constant REWARD_AMOUNT = 10000 * 10**18;
+    // Reward amount (1,000 QT tokens with 18 decimals)
+    uint256 public constant REWARD_AMOUNT = 1000 * 10**18;
     
     // Track daily claims per user
     mapping(address => uint256) public lastClaimDate;
