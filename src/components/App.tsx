@@ -71,7 +71,7 @@ export default function App(
   // --- Early Returns ---
   if (!isSDKLoaded) {
     return (
-      <div className="flex items-center justify-center h-screen w-full bg-white">
+      <div className="flex items-center justify-center h-screen relative bg-white">
         <div className="text-center">
           <div className="animate-spin rounded-full border-2 border-gray-300 border-t-primary h-8 w-8 mx-auto mb-4"></div>
           <p className="text-gray-800">Loading SDK...</p>
