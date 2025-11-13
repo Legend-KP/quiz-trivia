@@ -2,19 +2,19 @@
 pragma solidity ^0.8.19;
 
 /**
- * @title QTRewardDistributor
- * @dev Smart contract for distributing QT tokens as rewards
- * @notice Users can claim QT token rewards through this contract
+ * @title DailyRewardDistributor
+ * @dev Smart contract for distributing QT tokens as daily rewards
+ * @notice Users can claim 1,000 QT tokens once per day
  */
-contract QTRewardDistributor {
+contract DailyRewardDistributor {
     // QT Token contract
     address public qtToken;
     
     // Owner of the contract
     address public owner;
     
-    // Reward amount (10,000 QT tokens with 18 decimals)
-    uint256 public constant REWARD_AMOUNT = 10000 * 10**18;
+    // Reward amount (1,000 QT tokens with 18 decimals)
+    uint256 public constant REWARD_AMOUNT = 1000 * 10**18;
     
     // Track daily claims per user
     mapping(address => uint256) public lastClaimDate;
@@ -159,3 +159,4 @@ contract QTRewardDistributor {
         return success && (data.length == 0 || abi.decode(data, (bool)));
     }
 }
+
