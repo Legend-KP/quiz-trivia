@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useMiniApp } from "@neynar/react";
 import { HomeTab } from "~/components/ui/tabs";
+import { BottomNavigation } from "~/components/ui/BottomNavigation";
 
 // --- Types ---
 export enum Tab {
@@ -49,6 +50,8 @@ export default function App(
     context,
     setInitialTab,
   } = useMiniApp();
+  
+  const [activeTab, setActiveTab] = useState<"home" | "qt" | "rewards">("home");
 
   // --- Effects ---
   /**
@@ -114,10 +117,23 @@ export default function App(
 
 
       {/* Main content - full width to allow edge-to-edge backgrounds */}
-      <div className="py-2">
+      <div className="py-2 pb-20">
         {/* Tab content rendering */}
         <HomeTab />
       </div>
+      
+      {/* Bottom Navigation */}
+      <BottomNavigation
+        activeTab={activeTab}
+        onHomeClick={() => {
+          setActiveTab("home");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+        onRewardsClick={() => {
+          setActiveTab("rewards");
+          window.location.href = "/leaderboard";
+        }}
+      />
     </div>
   );
 }
