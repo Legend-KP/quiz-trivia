@@ -1,25 +1,46 @@
 const { ethers } = require("hardhat");
+require("dotenv").config();
 
 async function main() {
-  console.log("🚀 Deploying Daily Reward Distributor Contract...");
+  console.log("🚀 Deploying Daily Reward Distributor Contract...\n");
   
-  // Get the contract factory
-  const DailyRewardDistributor = await ethers.getContractFactory("DailyRewardDistributor");
-  
-  // QT Token address (you'll need to provide this)
+  // Check environment variables
   const QT_TOKEN_ADDRESS = process.env.QT_TOKEN_ADDRESS;
   
   if (!QT_TOKEN_ADDRESS) {
-    throw new Error("QT_TOKEN_ADDRESS environment variable is required");
+    console.error("❌ Error: QT_TOKEN_ADDRESS environment variable is required");
+    console.log("\n💡 Please add to your .env file:");
+    console.log("   QT_TOKEN_ADDRESS=0x541529ADB3f344128aa87917fd2926E7D240FB07");
+    process.exit(1);
   }
   
+  if (!process.env.PRIVATE_KEY) {
+    console.error("❌ Error: PRIVATE_KEY environment variable is required");
+    console.log("\n💡 Please add to your .env file:");
+    console.log("   PRIVATE_KEY=your_wallet_private_key");
+    process.exit(1);
+  }
+  
+  console.log("📋 Environment Check:");
+  console.log("  ✅ QT_TOKEN_ADDRESS:", QT_TOKEN_ADDRESS);
+  console.log("  ✅ PRIVATE_KEY: Set");
+  console.log("");
+  
+  // Get the contract factory
+  console.log("📦 Loading contract factory...");
+  const DailyRewardDistributor = await ethers.getContractFactory("DailyRewardDistributor");
+  console.log("✅ Contract factory loaded!\n");
+  
   console.log("📋 Contract Details:");
-  console.log("- QT Token Address:", QT_TOKEN_ADDRESS);
-  console.log("- Reward Amount: 1,000 QT tokens per day");
-  console.log("- Network: Base Mainnet");
+  console.log("  QT Token Address:", QT_TOKEN_ADDRESS);
+  console.log("  Reward Amount: 1,000 QT tokens per day");
+  console.log("  Network: Base Mainnet");
+  console.log("");
   
   // Deploy the contract
+  console.log("🚀 Deploying contract...");
   const dailyRewardDistributor = await DailyRewardDistributor.deploy(QT_TOKEN_ADDRESS);
+  console.log("⏳ Waiting for deployment confirmation...");
   await dailyRewardDistributor.waitForDeployment();
   
   const contractAddress = await dailyRewardDistributor.getAddress();

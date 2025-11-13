@@ -37,8 +37,8 @@
       ]
     },
     "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\QTRewardDistributor.sol": {
-      "lastModificationDate": 1760785554885,
-      "contentHash": "0e35e8eecc20ce966e661e56ac06058b",
+      "lastModificationDate": 1763025521439,
+      "contentHash": "3da9ff8b32f8762c217678596b9e3f8a",
       "sourceName": "contracts/QTRewardDistributor.sol",
       "solcConfig": {
         "version": "0.8.19",
@@ -104,6 +104,41 @@
       ],
       "artifacts": [
         "QuizTriviaSignature"
+      ]
+    },
+    "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\DailyRewardDistributor.sol": {
+      "lastModificationDate": 1763025572927,
+      "contentHash": "a5844a2afa3ebf99d1f5e3d2fb6daec6",
+      "sourceName": "contracts/DailyRewardDistributor.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "DailyRewardDistributor"
       ]
     }
   }
