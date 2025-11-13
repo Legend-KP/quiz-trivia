@@ -348,7 +348,7 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
       </div>
 
       {/* Content Container */}
-      <div className="relative z-10 flex flex-col items-center justify-center h-full px-6 text-center gap-4">
+      <div className="relative z-10 flex flex-col items-center justify-start h-full px-6 text-center gap-4 pt-8 sm:pt-12 md:pt-16">
 
         {/* QUIZ TRIVIA - Title Image Only */}
         <div className="relative mb-2">
