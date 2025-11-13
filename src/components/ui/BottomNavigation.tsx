@@ -52,9 +52,6 @@ export function BottomNavigation({
   const handleRewardsClick = () => {
     if (onRewardsClick) {
       onRewardsClick();
-    } else {
-      // Default: could navigate to leaderboard or rewards page
-      window.location.href = "/leaderboard";
     }
   };
 

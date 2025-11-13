@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useMiniApp } from "@neynar/react";
 import { HomeTab } from "~/components/ui/tabs";
+import { RewardsTab } from "~/components/ui/tabs/RewardsTab";
 import { BottomNavigation } from "~/components/ui/BottomNavigation";
 
 // --- Types ---
@@ -117,9 +118,10 @@ export default function App(
 
 
       {/* Main content - full width to allow edge-to-edge backgrounds */}
-      <div className="py-2 pb-20">
+      <div className="py-2 pb-20 min-h-screen">
         {/* Tab content rendering */}
-        <HomeTab />
+        {activeTab === "home" && <HomeTab />}
+        {activeTab === "rewards" && <RewardsTab />}
       </div>
       
       {/* Bottom Navigation */}
@@ -131,7 +133,6 @@ export default function App(
         }}
         onRewardsClick={() => {
           setActiveTab("rewards");
-          window.location.href = "/leaderboard";
         }}
       />
     </div>

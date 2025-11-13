@@ -3,9 +3,7 @@ import { Clock, Trophy, Star, X } from 'lucide-react';
 import { useMiniApp } from '@neynar/react';
 import { APP_URL, APP_TITLE_IMAGE_URL, APP_NAME } from '~/lib/constants';
 import QuizStartButton from '~/components/QuizStartButton';
-import SpinWheel from '~/components/SpinWheel';
 import { QuizMode } from '~/lib/wallet';
-import { useQTClaim } from '~/hooks/useQTClaim';
 import WeeklyQuizPage from '~/components/WeeklyQuizPage';
 import { QTTokenBar } from '~/components/QTTokenBar';
 import WeeklyQuizStartButton from '~/components/WeeklyQuizStartButton';
@@ -52,7 +50,6 @@ interface HomePageProps {
   onStartTimeMode: () => void;
   onStartChallenge: () => void;
   onShowRules: () => void;
-  onSpinWheel: () => void;
   onStartWeeklyQuiz: () => void;
 }
 
@@ -282,7 +279,7 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
 };
 
 // Home Page Component
-const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartChallenge, onSpinWheel, onStartWeeklyQuiz }) => {
+const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartChallenge, onStartWeeklyQuiz }) => {
   const _weeklyQuizState = useQuizState(currentWeeklyQuiz);
   const [weeklyUserCompleted, setWeeklyUserCompleted] = useState(false);
   const { actions, added, context } = useMiniApp();
@@ -352,36 +349,24 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
       </div>
 
       {/* Content Container */}
-      <div className="relative z-10 flex flex-col items-center h-full px-6 text-center pt-1 md:pt-2 gap-1">
+      <div className="relative z-10 flex flex-col items-center justify-center h-full px-6 text-center gap-4">
 
-        {/* QUIZ TRIVIA - New Font and Enhanced 3D Effect */}
-        <div className="relative mb-1 md:mb-2">
+        {/* QUIZ TRIVIA - Title Image Only */}
+        <div className="relative mb-2">
           {APP_TITLE_IMAGE_URL ? (
             <img
               src={APP_TITLE_IMAGE_URL}
               alt="Quiz Trivia"
-              className="mx-auto w-72 h-72 sm:w-80 sm:h-80 md:w-96 md:h-96 lg:w-[30rem] lg:h-[30rem] object-contain drop-shadow-lg"
+              className="mx-auto w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 object-contain drop-shadow-lg"
             />
           ) : (
-            <h3 className="text-5xl md:text-7xl font-black text-yellow-400 uppercase tracking-wider relative" style={{
+            <h3 className="text-4xl md:text-5xl font-black text-yellow-400 uppercase tracking-wider" style={{
               fontFamily: 'Impact, Arial Black, sans-serif',
-              textShadow: '2px 2px 0px rgba(0,0,0,0.8), 4px 4px 0px rgba(0,0,0,0.6)'
+              textShadow: '2px 2px 0px rgba(0,0,0,0.8)'
             }}>
-              <span className="absolute inset-0 transform translate-x-2 translate-y-2 text-yellow-600 opacity-40">QUIZ TRIVIA</span>
-              <span className="absolute inset-0 transform translate-x-1 translate-y-1 text-yellow-500 opacity-70">QUIZ TRIVIA</span>
-              <span className="relative z-10 drop-shadow-lg">QUIZ TRIVIA</span>
+              QUIZ TRIVIA
             </h3>
           )}
-        </div>
-
-        {/* Spin Wheel Button */}
-        <div className="mb-4 flex items-center justify-center">
-          <button 
-            onClick={onSpinWheel} 
-            className="px-6 py-3 rounded-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-black font-bold text-base shadow-2xl hover:from-yellow-300 hover:via-yellow-400 hover:to-yellow-500 hover:scale-105 transition-all duration-300 border-2 border-yellow-300 animate-pulse hover:animate-none"
-          >
-            🎰 Spin the Wheel!
-          </button>
         </div>
 
         {/* Mode Buttons */}
@@ -445,11 +430,6 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
               className="pointer-events-none opacity-60"
             />
           </div>
-        </div>
-
-        {/* Enhanced depth styling */}
-        <div className="mt-8">
-          <div className="w-40 h-1 bg-gradient-to-r from-transparent via-yellow-400 to-transparent mx-auto rounded-full opacity-80"></div>
         </div>
       </div>
     </div>
@@ -1146,45 +1126,6 @@ export default function QuizTriviaApp() {
       .catch(() => {});
   }, [context?.user?.fid]);
 
-  const [showSpinWheel, setShowSpinWheel] = useState(false);
-
-  const handleSpinWheel = () => {
-    setShowSpinWheel(true);
-  };
-
-  const handleSpinWheelClose = () => {
-    setShowSpinWheel(false);
-  };
-
-  const handleSpinWheelSpin = async () => {
-    const fid = context?.user?.fid;
-    if (!fid) return { success: false, error: 'No user ID' };
-    
-    try {
-      const res = await fetch('/api/currency/claim-daily', { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ fid }) 
-      });
-      const data = await res.json();
-      
-      if (data?.balance !== undefined) {
-        setBalance(data.balance);
-      }
-      
-      return data;
-    } catch (error) {
-      console.error('Spin wheel error:', error);
-      return { success: false, error: 'Failed to spin wheel' };
-    }
-  };
-
-  // Use the QT claim hook
-  const { claimQTReward, address } = useQTClaim();
-
-  const handleQTTokenWin = async (userAddress: string) => {
-    return await claimQTReward(userAddress);
-  };
 
   return (
     <div className="w-full h-screen">
@@ -1195,7 +1136,6 @@ export default function QuizTriviaApp() {
             onStartTimeMode={handleStartTime}
             onStartChallenge={() => setCurrentScreen('challenge')}
             onShowRules={handleShowRules}
-            onSpinWheel={handleSpinWheel}
             onStartWeeklyQuiz={handleStartWeeklyQuiz}
           />
           <div className="h-20" />
@@ -1203,34 +1143,6 @@ export default function QuizTriviaApp() {
         </>
       )}
 
-      {/* Spin Wheel Modal */}
-      {showSpinWheel && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-          onClick={handleSpinWheelClose}
-        >
-          <div 
-            className="bg-white rounded-2xl p-6 max-w-md mx-4 relative"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close button (×) */}
-            <button
-              onClick={handleSpinWheelClose}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl font-bold"
-            >
-              ×
-            </button>
-            
-            <SpinWheel 
-              onSpin={handleSpinWheelSpin} 
-              onQTTokenWin={handleQTTokenWin}
-              userAddress={address || "0x0000000000000000000000000000000000000000"}
-            />
-          </div>
-        </div>
-      )}
-      
-      
       {currentScreen === 'time' && (
         <TimeModePage 
           onExit={() => setCurrentScreen('home')}
