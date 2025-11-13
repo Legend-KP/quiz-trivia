@@ -3,13 +3,64 @@ import { useState, useEffect } from 'react';
 import { useAccount, useConnect, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 
 // QT Reward Distributor Contract Configuration
-const QT_DISTRIBUTOR_ADDRESS = process.env.NEXT_PUBLIC_QT_DISTRIBUTOR_ADDRESS as `0x${string}` || '0xb8AD9216A88E2f9a24c7e2207dE4e69101031f02';
+// Daily Reward Contract (1,000 QT per day)
+// Always use the new 1K QT contract - override old 10K contract if set
+const OLD_10K_CONTRACT = '0xb8AD9216A88E2f9a24c7e2207dE4e69101031f02';
+const NEW_1K_CONTRACT = '0x6DE14656a37D659ede5A928E371A298F880E194d';
+const envAddress = process.env.NEXT_PUBLIC_QT_DISTRIBUTOR_ADDRESS as `0x${string}`;
+const QT_DISTRIBUTOR_ADDRESS = (
+  envAddress && envAddress.toLowerCase() !== OLD_10K_CONTRACT.toLowerCase()
+    ? envAddress
+    : NEW_1K_CONTRACT
+) as `0x${string}`;
 const QT_DISTRIBUTOR_ABI = [
   {
-    "inputs": [],
-    "name": "claimQTReward",
-    "outputs": [],
+    "inputs": [{"internalType": "address", "name": "_qtTokenAddress", "type": "address"}],
     "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "address", "name": "previousOwner", "type": "address"},
+      {"indexed": true, "internalType": "address", "name": "newOwner", "type": "address"}
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "address", "name": "user", "type": "address"},
+      {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"},
+      {"indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256"}
+    ],
+    "name": "QTRewardClaimed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"},
+      {"indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256"}
+    ],
+    "name": "QTTokensDeposited",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"},
+      {"indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256"}
+    ],
+    "name": "QTTokensWithdrawn",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "REWARD_AMOUNT",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -21,16 +72,75 @@ const QT_DISTRIBUTOR_ABI = [
   },
   {
     "inputs": [],
+    "name": "claimQTReward",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "address", "name": "userAddress", "type": "address"}],
+    "name": "claimQTRewardForUser",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "uint256", "name": "amount", "type": "uint256"}],
+    "name": "depositQTTokens",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "getQTBalance",
     "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
     "stateMutability": "view",
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "REWARD_AMOUNT",
+    "inputs": [{"internalType": "address", "name": "user", "type": "address"}],
+    "name": "getUserClaimStatus",
+    "outputs": [
+      {"internalType": "uint256", "name": "lastClaim", "type": "uint256"},
+      {"internalType": "bool", "name": "canClaim", "type": "bool"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "address", "name": "", "type": "address"}],
+    "name": "lastClaimDate",
     "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "qtToken",
+    "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "address", "name": "newOwner", "type": "address"}],
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType": "uint256", "name": "amount", "type": "uint256"}],
+    "name": "withdrawQTTokens",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   }
 ] as const;
