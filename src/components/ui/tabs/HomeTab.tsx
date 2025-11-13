@@ -5,7 +5,6 @@ import { APP_URL, APP_TITLE_IMAGE_URL, APP_NAME } from '~/lib/constants';
 import QuizStartButton from '~/components/QuizStartButton';
 import { QuizMode } from '~/lib/wallet';
 import WeeklyQuizPage from '~/components/WeeklyQuizPage';
-import { QTTokenBar } from '~/components/QTTokenBar';
 import WeeklyQuizStartButton from '~/components/WeeklyQuizStartButton';
 import { currentWeeklyQuiz } from '~/lib/weeklyQuiz';
 import { useQuizState } from '~/hooks/useWeeklyQuiz';
@@ -357,10 +356,10 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
             <img
               src={APP_TITLE_IMAGE_URL}
               alt="Quiz Trivia"
-              className="mx-auto w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 object-contain drop-shadow-lg"
+              className="mx-auto w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 lg:w-96 lg:h-96 object-contain drop-shadow-lg"
             />
           ) : (
-            <h3 className="text-4xl md:text-5xl font-black text-yellow-400 uppercase tracking-wider" style={{
+            <h3 className="text-5xl md:text-6xl lg:text-7xl font-black text-yellow-400 uppercase tracking-wider" style={{
               fontFamily: 'Impact, Arial Black, sans-serif',
               textShadow: '2px 2px 0px rgba(0,0,0,0.8)'
             }}>
@@ -1138,8 +1137,6 @@ export default function QuizTriviaApp() {
             onShowRules={handleShowRules}
             onStartWeeklyQuiz={handleStartWeeklyQuiz}
           />
-          <div className="h-20" />
-          <QTTokenBar />
         </>
       )}
 
