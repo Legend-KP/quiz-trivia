@@ -92,12 +92,17 @@ export function RewardsTab() {
   }, [isConfirmed, refetchCanClaim]);
 
   const formatRewardAmount = (amount: number) => {
-    if (amount >= 1000000) {
-      return `${(amount / 1000000).toFixed(2)}M`;
-    } else if (amount >= 1000) {
-      return `${(amount / 1000).toFixed(2)}K`;
+    // For daily reward, always show as "1000 $QT" format
+    if (amount === 1000) {
+      return '1000 $QT';
     }
-    return amount.toLocaleString();
+    // Fallback for other amounts
+    if (amount >= 1000000) {
+      return `${(amount / 1000000).toFixed(2)}M $QT`;
+    } else if (amount >= 1000) {
+      return `${(amount / 1000).toFixed(2)}K $QT`;
+    }
+    return `${amount.toLocaleString()} $QT`;
   };
 
   return (
@@ -123,7 +128,7 @@ export function RewardsTab() {
           <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 mb-4 border-2 border-yellow-200">
             <div className="text-center">
               <div className="text-3xl font-bold text-yellow-800 mb-1">
-                {formatRewardAmount(rewardAmount)} QT
+                {formatRewardAmount(rewardAmount)}
               </div>
               <div className="text-sm text-yellow-700">
                 Available Daily
