@@ -83,6 +83,7 @@ export default function App(
   // --- Render ---
   return (
     <div
+      className="relative h-screen overflow-hidden"
       style={{
         paddingTop: context?.client.safeAreaInsets?.top ?? 0,
         paddingBottom: context?.client.safeAreaInsets?.bottom ?? 0,
@@ -90,27 +91,36 @@ export default function App(
         paddingRight: context?.client.safeAreaInsets?.right ?? 0,
       }}
     >
-      {/* User Profile in Top Right Corner */}
-{context?.user && (
-  <div className="absolute top-4 right-4 z-50">
-    <div className="flex items-center space-x-2">
-      <span className="text-sm font-medium text-white">
-        {context.user.displayName || context.user.username}
-      </span>
-      {context.user.pfpUrl && (
-        <img 
-          src={context.user.pfpUrl} 
-          alt="Profile" 
-          className="w-8 h-8 rounded-full border-2 border-primary"
-        />
-      )}
-    </div>
-  </div>
-)}
+      {/* Gradient Background - Full Frame */}
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-900 via-purple-800 to-orange-500"></div>
+      
+      {/* Grainy Texture Overlay */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="w-full h-full" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+        }}></div>
+      </div>
 
+      {/* User Profile in Top Right Corner */}
+      {context?.user && (
+        <div className="absolute top-4 right-4 z-50">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium text-white">
+              {context.user.displayName || context.user.username}
+            </span>
+            {context.user.pfpUrl && (
+              <img 
+                src={context.user.pfpUrl} 
+                alt="Profile" 
+                className="w-8 h-8 rounded-full border-2 border-primary"
+              />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Main content - full width to allow edge-to-edge backgrounds */}
-      <div className="py-2 pb-20 min-h-screen">
+      <div className="relative z-10 h-full">
         {/* Tab content rendering */}
         {activeTab === "home" && <HomeTab />}
         {activeTab === "rewards" && <RewardsTab />}
