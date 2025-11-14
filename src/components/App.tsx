@@ -90,14 +90,6 @@ export default function App(
         paddingRight: context?.client.safeAreaInsets?.right ?? 0,
       }}
     >
-      <div
-        className="fixed inset-0 -z-10"
-        style={{
-          backgroundImage: "url('https://i.ibb.co/Y4spLcxx/Untitled-design-1.png')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      />
       {/* User Profile in Top Right Corner */}
 {context?.user && (
   <div className="absolute top-4 right-4 z-50">

@@ -222,22 +222,6 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                   <p className="text-xs text-yellow-700">4th-10th: 1.0M $QT each</p>
                 </div>
 
-                {/* Scoring Rules */}
-                <div className="bg-green-50 rounded-lg p-3">
-                  <div className="font-semibold text-green-800 mb-1.5 text-sm">
-                    ✅ Scoring Rules
-                  </div>
-                  <p className="text-xs text-green-700 mb-1">
-                    +1 for correct answers
-                  </p>
-                  <p className="text-xs text-green-700 mb-1">
-                    -0.5 for wrong answers
-                  </p>
-                  <p className="text-xs text-green-700">
-                    0 for missed/no answer
-                  </p>
-                </div>
-
                 {/* State-specific Section */}
                 <div className={`${stateInfo.bgColor} rounded-lg p-3`}>
                   <div className={`font-semibold ${stateInfo.textColor} mb-1.5 text-sm`}>
