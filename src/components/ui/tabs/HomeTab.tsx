@@ -464,10 +464,14 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
   const accuracyPercent =
     totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : null;
 
-  const fetchLeaderboard = useCallback(async () => {
-    console.log('🔍 Fetching leaderboard...');
+  // Track the quizId when the component mounts (the quiz the user just completed)
+  const [currentQuizId, setCurrentQuizId] = useState<string>(currentWeeklyQuiz.id);
+
+  const fetchLeaderboard = useCallback(async (quizId?: string) => {
+    const quizIdToUse = quizId || currentQuizId;
+    console.log('🔍 Fetching leaderboard for quizId:', quizIdToUse);
     try {
-      const response = await fetch(`/api/leaderboard?mode=CLASSIC&quizId=${currentWeeklyQuiz.id}`);
+      const response = await fetch(`/api/leaderboard?mode=CLASSIC&quizId=${quizIdToUse}`);
       const data = await response.json();
       console.log('📥 Leaderboard response:', data);
       
@@ -485,7 +489,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentQuizId]);
 
   const submitScore = useCallback(async () => {
     if (!context?.user?.fid || submitted) {
@@ -515,7 +519,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
         score: score,
         time: totalTime,
         mode: 'CLASSIC',
-        quizId: currentWeeklyQuiz.id,
+        quizId: currentQuizId, // Use the tracked quizId (the quiz user just completed)
       };
 
       console.log('📤 Sending payload:', payload);
@@ -536,10 +540,9 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
         setLeaderboard(data.leaderboard || []);
         setSubmitted(true);
         try {
-          const quizId = currentWeeklyQuiz.id;
           const fid = context.user.fid;
-          if (quizId && fid && typeof window !== 'undefined') {
-            localStorage.setItem(`weekly_completed_${quizId}_${fid}`, '1');
+          if (currentQuizId && fid && typeof window !== 'undefined') {
+            localStorage.setItem(`weekly_completed_${currentQuizId}_${fid}`, '1');
           }
         } catch (_e) {}
       } else {
@@ -554,11 +557,28 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
     } finally {
       setSubmitting(false);
     }
-  }, [context?.user, submitted, score, totalTime]);
+  }, [context?.user, submitted, score, totalTime, currentQuizId]);
 
+  // Fetch leaderboard on mount
   useEffect(() => {
     fetchLeaderboard();
   }, [fetchLeaderboard]);
+
+  // Monitor quizId changes - refresh leaderboard when new weekly quiz starts
+  useEffect(() => {
+    const checkQuizId = () => {
+      const newQuizId = currentWeeklyQuiz.id;
+      if (newQuizId !== currentQuizId) {
+        console.log('🔄 New weekly quiz started! Refreshing leaderboard...', newQuizId);
+        setCurrentQuizId(newQuizId);
+        fetchLeaderboard(newQuizId);
+      }
+    };
+    
+    // Check every 5 seconds for quizId changes (when new quiz starts)
+    const interval = setInterval(checkQuizId, 5000);
+    return () => clearInterval(interval);
+  }, [currentQuizId, fetchLeaderboard]);
 
   // Auto-submit score when component mounts if user is authenticated
   useEffect(() => {
