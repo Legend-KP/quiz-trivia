@@ -68,10 +68,10 @@ export function BottomNavigation({
           <button
             onClick={handleQTClick}
             disabled={isLoadingQT}
-            className={`flex flex-col items-center justify-center flex-1 h-full transition-all duration-200 rounded-lg text-white ${
+            className={`flex flex-col items-center justify-center flex-1 h-full transition-all duration-200 rounded-lg text-gray-800 ${
               activeTab === "qt"
-                ? "bg-primary/30"
-                : "bg-gray-800/80 hover:bg-gray-700/80"
+                ? "bg-white shadow-md"
+                : "bg-white hover:bg-gray-50"
             } ${isLoadingQT ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <div className="relative">
@@ -79,7 +79,7 @@ export function BottomNavigation({
               {isLoadingQT && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <svg
-                    className="animate-spin h-4 w-4 text-white"
+                    className="animate-spin h-4 w-4 text-gray-800"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
