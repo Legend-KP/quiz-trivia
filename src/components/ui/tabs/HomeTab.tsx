@@ -465,13 +465,31 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
     totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : null;
 
   // Track the quizId when the component mounts (the quiz the user just completed)
-  const [currentQuizId, setCurrentQuizId] = useState<string>(currentWeeklyQuiz.id);
+  // Only track quizId for CLASSIC mode (Weekly Quiz)
+  const [currentQuizId, setCurrentQuizId] = useState<string | null>(
+    mode === QuizMode.CLASSIC ? currentWeeklyQuiz.id : null
+  );
 
-  const fetchLeaderboard = useCallback(async (quizId?: string) => {
-    const quizIdToUse = quizId || currentQuizId;
-    console.log('🔍 Fetching leaderboard for quizId:', quizIdToUse);
+  const fetchLeaderboard = useCallback(async (quizId?: string | null) => {
+    let url: string;
+    
+    if (mode === QuizMode.CLASSIC) {
+      // Weekly Quiz: use quizId
+      const quizIdToUse = quizId || currentQuizId || currentWeeklyQuiz.id;
+      url = `/api/leaderboard?mode=CLASSIC&quizId=${quizIdToUse}`;
+      console.log('🔍 Fetching CLASSIC leaderboard for quizId:', quizIdToUse);
+    } else if (mode === QuizMode.TIME_MODE) {
+      // Time Mode: no quizId
+      url = `/api/leaderboard?mode=TIME_MODE`;
+      console.log('🔍 Fetching TIME_MODE leaderboard');
+    } else {
+      // Challenge mode or other
+      url = `/api/leaderboard?mode=${mode}`;
+      console.log('🔍 Fetching leaderboard for mode:', mode);
+    }
+    
     try {
-      const response = await fetch(`/api/leaderboard?mode=CLASSIC&quizId=${quizIdToUse}`);
+      const response = await fetch(url);
       const data = await response.json();
       console.log('📥 Leaderboard response:', data);
       
@@ -489,9 +507,16 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [currentQuizId]);
+  }, [mode, currentQuizId]);
 
   const submitScore = useCallback(async () => {
+    // Time Mode submits via /api/time/submit, not here
+    if (mode === QuizMode.TIME_MODE) {
+      console.log('🚫 Skipping score submission for TIME_MODE (already submitted via /api/time/submit)');
+      setSubmitted(true);
+      return;
+    }
+    
     if (!context?.user?.fid || submitted) {
       console.log('🚫 Skipping score submission:', { 
         hasFid: !!context?.user?.fid, 
@@ -506,21 +531,26 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
       username: context.user.username,
       displayName: context.user.displayName,
       score,
-      totalTime
+      totalTime,
+      mode
     });
 
     setSubmitting(true);
     try {
-      const payload = {
+      const payload: any = {
         fid: context.user.fid,
         username: context.user.username,
         displayName: context.user.displayName,
         pfpUrl: context.user.pfpUrl,
         score: score,
         time: totalTime,
-        mode: 'CLASSIC',
-        quizId: currentQuizId, // Use the tracked quizId (the quiz user just completed)
+        mode: mode === QuizMode.CLASSIC ? 'CLASSIC' : mode === QuizMode.TIME_MODE ? 'TIME_MODE' : 'CHALLENGE',
       };
+
+      // Only add quizId for CLASSIC mode (Weekly Quiz)
+      if (mode === QuizMode.CLASSIC && currentQuizId) {
+        payload.quizId = currentQuizId;
+      }
 
       console.log('📤 Sending payload:', payload);
 
@@ -541,7 +571,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
         setSubmitted(true);
         try {
           const fid = context.user.fid;
-          if (currentQuizId && fid && typeof window !== 'undefined') {
+          if (mode === QuizMode.CLASSIC && currentQuizId && fid && typeof window !== 'undefined') {
             localStorage.setItem(`weekly_completed_${currentQuizId}_${fid}`, '1');
           }
         } catch (_e) {}
@@ -557,15 +587,17 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
     } finally {
       setSubmitting(false);
     }
-  }, [context?.user, submitted, score, totalTime, currentQuizId]);
+  }, [context?.user, submitted, score, totalTime, mode, currentQuizId]);
 
   // Fetch leaderboard on mount
   useEffect(() => {
     fetchLeaderboard();
   }, [fetchLeaderboard]);
 
-  // Monitor quizId changes - refresh leaderboard when new weekly quiz starts
+  // Monitor quizId changes - refresh leaderboard when new weekly quiz starts (only for CLASSIC mode)
   useEffect(() => {
+    if (mode !== QuizMode.CLASSIC) return; // Only monitor for Weekly Quiz
+    
     const checkQuizId = () => {
       const newQuizId = currentWeeklyQuiz.id;
       if (newQuizId !== currentQuizId) {
@@ -578,7 +610,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
     // Check every 5 seconds for quizId changes (when new quiz starts)
     const interval = setInterval(checkQuizId, 5000);
     return () => clearInterval(interval);
-  }, [currentQuizId, fetchLeaderboard]);
+  }, [mode, currentQuizId, fetchLeaderboard]);
 
   // Auto-submit score when component mounts if user is authenticated
   useEffect(() => {
@@ -596,7 +628,13 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
         <div className="bg-white rounded-2xl p-8 shadow-2xl">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-gray-800 mb-2">🏆 Public Leaderboard</h2>
-            <p className="text-gray-600">All Quiz Trivia Participants</p>
+            <p className="text-gray-600">
+              {mode === QuizMode.CLASSIC 
+                ? 'Weekly Quiz Challenge Participants' 
+                : mode === QuizMode.TIME_MODE 
+                ? 'Time Mode Participants' 
+                : 'All Quiz Trivia Participants'}
+            </p>
             {!loading && (
               <div className="mt-2 text-sm text-gray-500">
                 {leaderboard.length} participants • Last updated: {new Date().toLocaleString()}
