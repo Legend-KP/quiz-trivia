@@ -62,7 +62,7 @@ export function BottomNavigation({
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
       }}
     >
-      <div className="bg-gray-100/95 dark:bg-gray-800/95 backdrop-blur-md border-t-2 border-gray-300 dark:border-gray-600 shadow-xl">
+      <div className="bg-white backdrop-blur-md border-t-2 border-gray-200 shadow-xl">
         <div className="flex items-center justify-around h-16 px-4">
           {/* Left: $QT */}
           <button
