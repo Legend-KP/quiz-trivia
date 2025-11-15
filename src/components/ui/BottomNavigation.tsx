@@ -68,10 +68,10 @@ export function BottomNavigation({
           <button
             onClick={handleQTClick}
             disabled={isLoadingQT}
-            className={`flex flex-col items-center justify-center flex-1 h-full transition-all duration-200 rounded-lg ${
+            className={`flex flex-col items-center justify-center flex-1 h-full transition-all duration-200 rounded-lg text-white ${
               activeTab === "qt"
-                ? "text-primary bg-primary/10"
-                : "text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary-light"
+                ? "bg-primary/30"
+                : "bg-gray-800/80 hover:bg-gray-700/80"
             } ${isLoadingQT ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <div className="relative">
@@ -79,7 +79,7 @@ export function BottomNavigation({
               {isLoadingQT && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <svg
-                    className="animate-spin h-4 w-4 text-primary"
+                    className="animate-spin h-4 w-4 text-white"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
@@ -101,7 +101,7 @@ export function BottomNavigation({
                 </div>
               )}
             </div>
-            <span className="text-xs mt-0.5 font-medium">$QT</span>
+            <span className="text-xs mt-0.5 font-medium">Quiz Trivia Token</span>
           </button>
 
           {/* Center: Home */}
