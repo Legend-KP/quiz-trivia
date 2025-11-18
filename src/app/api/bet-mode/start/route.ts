@@ -110,6 +110,7 @@ export async function POST(req: NextRequest) {
       questionText: q.text,
       options: q.options,
       correctIndex: q.correctIndex,
+      explanation: q.explanation,
     }));
 
     await games.insertOne({

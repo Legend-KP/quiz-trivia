@@ -193,6 +193,7 @@ export interface BetModeGameDocument {
     questionText: string;
     options: string[];
     correctIndex: number;
+    explanation?: string;
     userAnswer?: number;
     isCorrect?: boolean;
     answeredAt?: number;

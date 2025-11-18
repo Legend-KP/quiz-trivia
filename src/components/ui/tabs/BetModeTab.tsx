@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useMiniApp } from '@neynar/react';
 import { Clock, CheckCircle, XCircle } from 'lucide-react';
 import {
-  getBetModeWindowState,
   formatQT,
   BET_MODE_MULTIPLIERS,
   MIN_BET,
@@ -88,7 +87,7 @@ export function BetModeTab() {
     } catch (err) {
       console.error('Failed to fetch status:', err);
     }
-  }, [context?.user?.fid]);
+  }, [context?.user?.fid, loadGameState]);
 
   useEffect(() => {
     fetchStatus();
