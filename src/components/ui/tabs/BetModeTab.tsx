@@ -95,6 +95,58 @@ export function BetModeTab() {
     return () => clearInterval(interval);
   }, [fetchStatus]);
 
+  const handleAnswer = useCallback(async (answerIndex: number | null) => {
+    if (!currentGame) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch('/api/bet-mode/answer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gameId: currentGame.gameId,
+          fid: context?.user?.fid,
+          answerIndex: answerIndex ?? -1, // -1 for timeout
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to process answer');
+      }
+
+      if (data.result === 'lost') {
+        setGameResult({ type: 'loss', ...data });
+        setScreen('loss');
+      } else if (data.result === 'won') {
+        setGameResult({ type: 'win', ...data });
+        setScreen('cash-out');
+      } else if (data.result === 'correct') {
+        // Continue to next question
+        if (data.nextQuestion) {
+          setCurrentQuestion(data.nextQuestion);
+          setTimeRemaining(30);
+          setSelectedAnswer(null);
+          setCurrentGame((prev) => ({
+            ...prev,
+            currentQuestion: data.nextQuestion.questionNumber,
+          }));
+        } else {
+          // No next question - game complete (shouldn't happen, but handle it)
+          setGameResult({ type: 'win', ...data });
+          setScreen('cash-out');
+        }
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to process answer');
+    } finally {
+      setLoading(false);
+    }
+  }, [currentGame, context?.user?.fid]);
+
   // Timer for questions
   useEffect(() => {
     if (screen === 'game' && timeRemaining > 0 && !gameResult) {
@@ -152,58 +204,6 @@ export function BetModeTab() {
       setLoading(false);
     }
   };
-
-  const handleAnswer = useCallback(async (answerIndex: number | null) => {
-    if (!currentGame) return;
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const res = await fetch('/api/bet-mode/answer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          gameId: currentGame.gameId,
-          fid: context?.user?.fid,
-          answerIndex: answerIndex ?? -1, // -1 for timeout
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to process answer');
-      }
-
-      if (data.result === 'lost') {
-        setGameResult({ type: 'loss', ...data });
-        setScreen('loss');
-      } else if (data.result === 'won') {
-        setGameResult({ type: 'win', ...data });
-        setScreen('cash-out');
-      } else if (data.result === 'correct') {
-        // Continue to next question
-        if (data.nextQuestion) {
-          setCurrentQuestion(data.nextQuestion);
-          setTimeRemaining(30);
-          setSelectedAnswer(null);
-          setCurrentGame((prev) => ({
-            ...prev,
-            currentQuestion: data.nextQuestion.questionNumber,
-          }));
-        } else {
-          // No next question - game complete (shouldn't happen, but handle it)
-          setGameResult({ type: 'win', ...data });
-          setScreen('cash-out');
-        }
-      }
-    } catch (err: any) {
-      setError(err.message || 'Failed to process answer');
-    } finally {
-      setLoading(false);
-    }
-  }, [currentGame, context?.user?.fid]);
 
   const handleCashOut = async () => {
     if (!currentGame) return;
