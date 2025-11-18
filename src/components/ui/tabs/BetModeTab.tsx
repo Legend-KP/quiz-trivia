@@ -130,7 +130,7 @@ export function BetModeTab() {
           setCurrentQuestion(data.nextQuestion);
           setTimeRemaining(30);
           setSelectedAnswer(null);
-          setCurrentGame((prev) => ({
+          setCurrentGame((prev: any) => ({
             ...prev,
             currentQuestion: data.nextQuestion.questionNumber,
           }));
