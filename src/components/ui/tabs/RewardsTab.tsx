@@ -97,7 +97,7 @@ export function RewardsTab() {
       return '1000 $QT';
     }
     // Fallback for other amounts
-    if (amount >= 1000000) {
+      if (amount >= 1000000) {
       return `${(amount / 1000000).toFixed(2)}M $QT`;
     } else if (amount >= 1000) {
       return `${(amount / 1000).toFixed(2)}K $QT`;

@@ -12,15 +12,17 @@ import sdk from "@farcaster/miniapp-sdk";
  * - Right: Rewards
  */
 interface BottomNavigationProps {
-  activeTab?: "home" | "qt" | "rewards";
+  activeTab?: "home" | "qt" | "rewards" | "bet-mode";
   onHomeClick?: () => void;
   onRewardsClick?: () => void;
+  onBetModeClick?: () => void;
 }
 
 export function BottomNavigation({ 
   activeTab = "home",
   onHomeClick,
-  onRewardsClick 
+  onRewardsClick,
+  onBetModeClick
 }: BottomNavigationProps) {
   const [isLoadingQT, setIsLoadingQT] = useState(false);
 
@@ -63,7 +65,7 @@ export function BottomNavigation({
       }}
     >
       <div className="bg-white backdrop-blur-md border-t-2 border-gray-200 shadow-xl">
-        <div className="flex items-center justify-around h-16 px-4">
+        <div className="flex items-center justify-around h-16 px-2">
           {/* Left: $QT */}
           <button
             onClick={handleQTClick}
@@ -75,7 +77,7 @@ export function BottomNavigation({
             } ${isLoadingQT ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <div className="relative">
-              <span className="text-xl font-bold">$QT</span>
+              <span className="text-lg font-bold">$QT</span>
               {isLoadingQT && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <svg
@@ -101,10 +103,10 @@ export function BottomNavigation({
                 </div>
               )}
             </div>
-            <span className="text-xs mt-0.5 font-medium">Quiz Trivia Token</span>
+            <span className="text-[10px] mt-0.5 font-medium">Token</span>
           </button>
 
-          {/* Center: Home */}
+          {/* Home */}
           <button
             onClick={handleHomeClick}
             className={`flex flex-col items-center justify-center flex-1 h-full transition-all duration-200 rounded-lg ${
@@ -113,11 +115,24 @@ export function BottomNavigation({
                 : "text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary-light"
             }`}
           >
-            <span className="text-2xl">🏠</span>
-            <span className="text-xs mt-0.5 font-medium">Home</span>
+            <span className="text-xl">🏠</span>
+            <span className="text-[10px] mt-0.5 font-medium">Home</span>
           </button>
 
-          {/* Right: Rewards */}
+          {/* Bet Mode */}
+          <button
+            onClick={onBetModeClick}
+            className={`flex flex-col items-center justify-center flex-1 h-full transition-all duration-200 rounded-lg ${
+              activeTab === "bet-mode"
+                ? "text-primary bg-primary/10"
+                : "text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary-light"
+            }`}
+          >
+            <span className="text-xl">🎰</span>
+            <span className="text-[10px] mt-0.5 font-medium">Bet</span>
+          </button>
+
+          {/* Rewards */}
           <button
             onClick={handleRewardsClick}
             className={`flex flex-col items-center justify-center flex-1 h-full transition-all duration-200 rounded-lg ${
@@ -126,8 +141,8 @@ export function BottomNavigation({
                 : "text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary-light"
             }`}
           >
-            <span className="text-2xl">🏆</span>
-            <span className="text-xs mt-0.5 font-medium">Rewards</span>
+            <span className="text-xl">🏆</span>
+            <span className="text-[10px] mt-0.5 font-medium">Rewards</span>
           </button>
         </div>
       </div>

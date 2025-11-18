@@ -1,5 +1,19 @@
 {
   "buildCommand": "npm install --legacy-peer-deps && next build",
   "framework": "nextjs",
-  "installCommand": "npm install --legacy-peer-deps"
+  "installCommand": "npm install --legacy-peer-deps",
+  "crons": [
+    {
+      "path": "/api/cron/snapshot",
+      "schedule": "0 11 * * 5"
+    },
+    {
+      "path": "/api/cron/lottery-draw",
+      "schedule": "0 14 * * 5"
+    },
+    {
+      "path": "/api/cron/burn",
+      "schedule": "30 14 * * 5"
+    }
+  ]
 } 
