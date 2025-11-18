@@ -124,7 +124,7 @@ For proper game flow, ensure you have:
 
 ## ⚙️ Vercel Cron Setup
 
-Cron jobs are configured in `vercel.json`:
+Cron jobs are configured in `vercel.json` (combined to fit within 2-cron limit):
 
 ```json
 {
@@ -134,18 +134,17 @@ Cron jobs are configured in `vercel.json`:
       "schedule": "0 11 * * 5"  // Friday 11 AM UTC
     },
     {
-      "path": "/api/cron/lottery-draw",
-      "schedule": "0 14 * * 5"  // Friday 2 PM UTC
-    },
-    {
-      "path": "/api/cron/burn",
-      "schedule": "30 14 * * 5"  // Friday 2:30 PM UTC
+      "path": "/api/cron/lottery-draw-and-burn",
+      "schedule": "0 14 * * 5"  // Friday 2 PM UTC (runs draw, then burn 30s later)
     }
   ]
 }
 ```
 
-**Important**: After deploying to Vercel, verify cron jobs are active in the Vercel dashboard.
+**Important**: 
+- After deploying to Vercel, verify cron jobs are active in the Vercel dashboard
+- The combined job runs lottery draw first, waits 30 seconds, then executes burn
+- This keeps us within Vercel's 2-cron limit for free/hobby plans
 
 ## 🔐 Manual Trigger Endpoints
 
@@ -156,11 +155,14 @@ If cron fails, you can manually trigger:
 curl -X POST https://your-domain.com/api/admin/trigger-snapshot \
   -H "x-admin-key: your_admin_api_key"
 
-# Lottery Draw
+# Lottery Draw and Burn (combined)
+curl -X POST https://your-domain.com/api/admin/trigger-lottery-draw-and-burn \
+  -H "x-admin-key: your_admin_api_key"
+
+# Individual triggers (if needed)
 curl -X POST https://your-domain.com/api/admin/trigger-lottery-draw \
   -H "x-admin-key: your_admin_api_key"
 
-# Burn
 curl -X POST https://your-domain.com/api/admin/trigger-burn \
   -H "x-admin-key: your_admin_api_key"
 ```
