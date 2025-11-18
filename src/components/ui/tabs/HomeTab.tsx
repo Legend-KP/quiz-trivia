@@ -537,6 +537,15 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
 
     setSubmitting(true);
     try {
+      let modeString: 'CLASSIC' | 'TIME_MODE' | 'CHALLENGE';
+      if (mode === QuizMode.CLASSIC) {
+        modeString = 'CLASSIC';
+      } else if (mode === QuizMode.TIME_MODE) {
+        modeString = 'TIME_MODE';
+      } else {
+        modeString = 'CHALLENGE';
+      }
+
       const payload: any = {
         fid: context.user.fid,
         username: context.user.username,
@@ -544,7 +553,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
         pfpUrl: context.user.pfpUrl,
         score: score,
         time: totalTime,
-        mode: mode === QuizMode.CLASSIC ? 'CLASSIC' : mode === QuizMode.TIME_MODE ? 'TIME_MODE' : 'CHALLENGE',
+        mode: modeString,
       };
 
       // Only add quizId for CLASSIC mode (Weekly Quiz)
