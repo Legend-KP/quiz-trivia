@@ -29,14 +29,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid fid or betAmount' }, { status: 400 });
     }
 
-    // Check if window is open
-    const windowState = getBetModeWindowState();
-    if (!windowState.isOpen) {
-      return NextResponse.json(
-        { error: 'Bet Mode is currently closed. Window opens Wednesday 11 AM UTC.' },
-        { status: 400 }
-      );
-    }
+    // Bet Mode is always open (24/7)
+    // Window check removed - always available
 
     // Validate bet amount
     const accounts = await getCurrencyAccountsCollection();

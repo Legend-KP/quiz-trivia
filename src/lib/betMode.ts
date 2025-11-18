@@ -63,6 +63,7 @@ export function getCurrentWeekId(): string {
 
 /**
  * Get the current Bet Mode window state
+ * Bet Mode is now available 24/7, with weekly lottery draws
  */
 export function getBetModeWindowState(): {
   isOpen: boolean;
@@ -85,28 +86,35 @@ export function getBetModeWindowState(): {
     now.getUTCSeconds()
   ));
 
-  // Find next Wednesday 11 AM UTC
+  // Game window is always open (24/7)
+  // Set window start to a week ago (for display purposes)
   const windowStart = new Date(nowUTC);
-  windowStart.setUTCDate(windowStart.getUTCDate() + ((WINDOW_START_DAY + 7 - windowStart.getUTCDay()) % 7));
+  windowStart.setUTCDate(windowStart.getUTCDate() - 7);
   windowStart.setUTCHours(WINDOW_START_HOUR, 0, 0, 0);
 
-  // If we're past Wednesday 11 AM this week, move to next week
-  if (nowUTC >= windowStart) {
-    windowStart.setUTCDate(windowStart.getUTCDate() + 7);
+  // Window never closes (always open)
+  const windowEnd = new Date(nowUTC);
+  windowEnd.setUTCFullYear(2099, 11, 31); // Far future date
+
+  // Find next weekly lottery draw (Friday 2 PM UTC)
+  const nextDraw = new Date(nowUTC);
+  nextDraw.setUTCDate(nextDraw.getUTCDate() + ((WINDOW_START_DAY + 7 - nextDraw.getUTCDay()) % 7));
+  nextDraw.setUTCHours(WINDOW_START_HOUR + SNAPSHOT_DELAY_HOURS, 0, 0, 0);
+  
+  // If we're past Friday 2 PM this week, move to next week
+  if (nowUTC >= nextDraw) {
+    nextDraw.setUTCDate(nextDraw.getUTCDate() + 7);
   }
 
-  // Window ends 48 hours later (Friday 11 AM UTC)
-  const windowEnd = new Date(windowStart);
-  windowEnd.setUTCHours(windowEnd.getUTCHours() + WINDOW_DURATION_HOURS);
+  // Snapshot is 3 hours before draw (Friday 11 AM UTC)
+  const snapshotTime = new Date(nextDraw);
+  snapshotTime.setUTCHours(snapshotTime.getUTCHours() - SNAPSHOT_DELAY_HOURS);
 
-  // Snapshot is at window end (Friday 11 AM UTC)
-  const snapshotTime = new Date(windowEnd);
+  // Draw time
+  const drawTime = new Date(nextDraw);
 
-  // Draw is 3 hours after snapshot (Friday 2 PM UTC)
-  const drawTime = new Date(snapshotTime);
-  drawTime.setUTCHours(drawTime.getUTCHours() + SNAPSHOT_DELAY_HOURS);
-
-  const isOpen = nowUTC >= windowStart && nowUTC < windowEnd;
+  // Always open
+  const isOpen = true;
 
   return {
     isOpen,
@@ -114,8 +122,8 @@ export function getBetModeWindowState(): {
     windowEnd,
     snapshotTime,
     drawTime,
-    timeUntilOpen: isOpen ? undefined : Math.max(0, windowStart.getTime() - nowUTC.getTime()),
-    timeUntilClose: isOpen ? Math.max(0, windowEnd.getTime() - nowUTC.getTime()) : undefined,
+    timeUntilOpen: undefined, // Always open
+    timeUntilClose: undefined, // Never closes
     timeUntilSnapshot: nowUTC < snapshotTime ? Math.max(0, snapshotTime.getTime() - nowUTC.getTime()) : undefined,
     timeUntilDraw: nowUTC < drawTime ? Math.max(0, drawTime.getTime() - nowUTC.getTime()) : undefined,
   };

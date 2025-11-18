@@ -79,9 +79,8 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
       setStatus(data);
 
       // Determine screen based on status
-      if (!data.window.isOpen) {
-        setScreen('closed');
-      } else if (data.activeGame) {
+      // Bet Mode is always open (24/7), so skip closed check
+      if (data.activeGame) {
         setScreen('game');
         // Load game state
         await loadGameState(data.activeGame.gameId);
@@ -281,24 +280,24 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
             )}
             <div className="text-6xl mb-4">🎰</div>
             <h2 className="text-2xl font-bold mb-2 text-gray-800">Bet Mode</h2>
-            <p className="text-gray-600 mb-6">⏸️ Currently Closed</p>
+            <p className="text-gray-600 mb-6">🔴 Available 24/7</p>
 
             <div className="bg-gray-100 rounded-lg p-4 mb-6">
-              <p className="text-sm text-gray-700 mb-2">⏰ NEXT ROUND OPENS IN:</p>
+              <p className="text-sm text-gray-700 mb-2">⏰ NEXT LOTTERY DRAW:</p>
               <p className="text-2xl font-bold text-gray-900">
-                {status.window.timeUntilOpen || 'Calculating...'}
+                {status.window.timeUntilDraw || 'Calculating...'}
               </p>
             </div>
 
             <div className="text-left bg-gray-50 rounded-lg p-4 mb-6">
               <p className="text-sm text-gray-600 mb-2">
-                Opens: Wednesday 11:00 AM UTC
+                🎮 Game Mode: Always Open (24/7)
               </p>
               <p className="text-sm text-gray-600 mb-2">
-                Closes: Friday 11:00 AM UTC
+                🎰 Lottery Draw: Weekly (Friday 2:00 PM UTC)
               </p>
               <p className="text-sm text-gray-600">
-                Draw: Friday 2:00 PM UTC
+                🔥 Token Burn: Weekly (Friday 2:30 PM UTC)
               </p>
             </div>
           </div>
@@ -326,10 +325,10 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
             <div className="text-center mb-6">
               <div className="text-5xl mb-2">🎰</div>
               <h2 className="text-2xl font-bold text-gray-800">BET MODE</h2>
-              <p className="text-sm text-green-600 font-semibold mt-1">🔴 LIVE NOW!</p>
-              {status.window.timeUntilClose && (
+              <p className="text-sm text-green-600 font-semibold mt-1">🔴 LIVE 24/7!</p>
+              {status.window.timeUntilDraw && (
                 <p className="text-xs text-gray-600 mt-2">
-                  Closes in: {status.window.timeUntilClose}
+                  Next lottery draw: {status.window.timeUntilDraw}
                 </p>
               )}
             </div>
