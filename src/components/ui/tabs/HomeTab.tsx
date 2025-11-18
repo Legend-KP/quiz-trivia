@@ -537,14 +537,9 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
 
     setSubmitting(true);
     try {
-      let modeString: 'CLASSIC' | 'TIME_MODE' | 'CHALLENGE';
-      if (mode === QuizMode.CLASSIC) {
-        modeString = 'CLASSIC';
-      } else if (mode === QuizMode.TIME_MODE) {
-        modeString = 'TIME_MODE';
-      } else {
-        modeString = 'CHALLENGE';
-      }
+      // At this point, mode can only be CLASSIC or CHALLENGE (TIME_MODE returned early)
+      const modeString: 'CLASSIC' | 'TIME_MODE' | 'CHALLENGE' = 
+        mode === QuizMode.CLASSIC ? 'CLASSIC' : 'CHALLENGE';
 
       const payload: any = {
         fid: context.user.fid,
