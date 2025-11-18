@@ -12,17 +12,15 @@ import sdk from "@farcaster/miniapp-sdk";
  * - Right: Rewards
  */
 interface BottomNavigationProps {
-  activeTab?: "home" | "qt" | "rewards" | "bet-mode";
+  activeTab?: "home" | "qt" | "rewards";
   onHomeClick?: () => void;
   onRewardsClick?: () => void;
-  onBetModeClick?: () => void;
 }
 
 export function BottomNavigation({ 
   activeTab = "home",
   onHomeClick,
-  onRewardsClick,
-  onBetModeClick
+  onRewardsClick
 }: BottomNavigationProps) {
   const [isLoadingQT, setIsLoadingQT] = useState(false);
 
@@ -117,19 +115,6 @@ export function BottomNavigation({
           >
             <span className="text-xl">🏠</span>
             <span className="text-[10px] mt-0.5 font-medium">Home</span>
-          </button>
-
-          {/* Bet Mode */}
-          <button
-            onClick={onBetModeClick}
-            className={`flex flex-col items-center justify-center flex-1 h-full transition-all duration-200 rounded-lg ${
-              activeTab === "bet-mode"
-                ? "text-primary bg-primary/10"
-                : "text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary-light"
-            }`}
-          >
-            <span className="text-xl">🎰</span>
-            <span className="text-[10px] mt-0.5 font-medium">Bet</span>
           </button>
 
           {/* Rewards */}

@@ -9,6 +9,7 @@ import WeeklyQuizStartButton from '~/components/WeeklyQuizStartButton';
 import { currentWeeklyQuiz } from '~/lib/weeklyQuiz';
 import { useQuizState } from '~/hooks/useWeeklyQuiz';
 import QuizResultsSubmitPage from '~/components/QuizResultsSubmitPage';
+import { BetModeTab } from './BetModeTab';
 
 // Type definitions
 interface QuizQuestion {
@@ -50,6 +51,7 @@ interface HomePageProps {
   onStartChallenge: () => void;
   onShowRules: () => void;
   onStartWeeklyQuiz: () => void;
+  onStartBetMode: () => void;
 }
 
 // QuizPageProps removed - Classic mode is now replaced by Weekly Quiz mode
@@ -278,7 +280,7 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
 };
 
 // Home Page Component
-const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartChallenge, onStartWeeklyQuiz }) => {
+const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartChallenge, onStartWeeklyQuiz, onStartBetMode }) => {
   const _weeklyQuizState = useQuizState(currentWeeklyQuiz);
   const [weeklyUserCompleted, setWeeklyUserCompleted] = useState(false);
   const { actions, added, context } = useMiniApp();
@@ -417,6 +419,13 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
             modeName="Time Mode"
             onQuizStart={onStartTimeMode}
           />
+
+          <button
+            onClick={onStartBetMode}
+            className="w-full bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white font-bold py-6 px-10 rounded-xl text-2xl transform hover:scale-105 transition-all duration-200 shadow-2xl"
+          >
+            🎰 Bet Mode
+          </button>
 
           <div className="relative">
             <span className="absolute -top-2 right-3 text-xs font-semibold bg-black/50 text-white px-2 py-0.5 rounded-md backdrop-blur">
@@ -1121,7 +1130,7 @@ const ChallengeModePage: React.FC<ChallengeModePageProps> = ({ onExit, context }
 // Main App Component
 export default function QuizTriviaApp() {
   const { } = useMiniApp();
-  const [currentScreen, setCurrentScreen] = useState<'home' | 'results' | 'results-submit' | 'time' | 'challenge' | 'weekly-quiz'>('home');
+  const [currentScreen, setCurrentScreen] = useState<'home' | 'results' | 'results-submit' | 'time' | 'challenge' | 'weekly-quiz' | 'bet-mode'>('home');
   const [showRules, setShowRules] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
   const [finalAnswers, setFinalAnswers] = useState<Answer[]>([]);
@@ -1141,6 +1150,10 @@ export default function QuizTriviaApp() {
 
   const handleStartWeeklyQuiz = () => {
     setCurrentScreen('weekly-quiz');
+  };
+
+  const handleStartBetMode = () => {
+    setCurrentScreen('bet-mode');
   };
 
   const handleShowRules = () => {
@@ -1198,6 +1211,7 @@ export default function QuizTriviaApp() {
             onStartChallenge={() => setCurrentScreen('challenge')}
             onShowRules={handleShowRules}
             onStartWeeklyQuiz={handleStartWeeklyQuiz}
+            onStartBetMode={handleStartBetMode}
           />
         </>
       )}
@@ -1228,6 +1242,10 @@ export default function QuizTriviaApp() {
           onComplete={handleQuizComplete}
           context={context}
         />
+      )}
+
+      {currentScreen === 'bet-mode' && (
+        <BetModeTab onExit={() => setCurrentScreen('home')} />
       )}
 
       {currentScreen === 'results-submit' && (

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useMiniApp } from '@neynar/react';
-import { Clock, CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle } from 'lucide-react';
 import {
   formatQT,
   BET_MODE_MULTIPLIERS,
@@ -43,7 +43,11 @@ interface BetModeStatus {
   };
 }
 
-export function BetModeTab() {
+interface BetModeTabProps {
+  onExit?: () => void;
+}
+
+export function BetModeTab({ onExit }: BetModeTabProps = {}) {
   const { context } = useMiniApp();
   const [screen, setScreen] = useState<BetModeScreen>('entry');
   const [status, setStatus] = useState<BetModeStatus | null>(null);
@@ -56,7 +60,7 @@ export function BetModeTab() {
   const [currentGame, setCurrentGame] = useState<any>(null);
   const [currentQuestion, setCurrentQuestion] = useState<any>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [timeRemaining, setTimeRemaining] = useState<number>(30);
+  // const [timeRemaining, setTimeRemaining] = useState<number>(30); // Timer removed for testing
   const [gameResult, setGameResult] = useState<any>(null);
 
   const loadGameState = useCallback(async (_gameId: string) => {
@@ -128,7 +132,7 @@ export function BetModeTab() {
         // Continue to next question
         if (data.nextQuestion) {
           setCurrentQuestion(data.nextQuestion);
-          setTimeRemaining(30);
+          // setTimeRemaining(30); // Timer removed for testing
           setSelectedAnswer(null);
           setCurrentGame((prev: any) => ({
             ...prev,
@@ -147,22 +151,22 @@ export function BetModeTab() {
     }
   }, [currentGame, context?.user?.fid]);
 
-  // Timer for questions
-  useEffect(() => {
-    if (screen === 'game' && timeRemaining > 0 && !gameResult) {
-      const timer = setInterval(() => {
-        setTimeRemaining((prev) => {
-          if (prev <= 1) {
-            // Timeout - auto-submit null answer
-            handleAnswer(null);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-      return () => clearInterval(timer);
-    }
-  }, [screen, timeRemaining, gameResult, handleAnswer]);
+  // Timer removed for testing - can be re-enabled later
+  // useEffect(() => {
+  //   if (screen === 'game' && timeRemaining > 0 && !gameResult) {
+  //     const timer = setInterval(() => {
+  //       setTimeRemaining((prev) => {
+  //         if (prev <= 1) {
+  //           // Timeout - auto-submit null answer
+  //           handleAnswer(null);
+  //           return 0;
+  //         }
+  //         return prev - 1;
+  //       }, 1000);
+  //       return () => clearInterval(timer);
+  //     }
+  //   }
+  // }, [screen, timeRemaining, gameResult, handleAnswer]);
 
   const handleStartGame = async () => {
     const fid = context?.user?.fid;
@@ -196,7 +200,7 @@ export function BetModeTab() {
 
       setCurrentGame(data);
       setCurrentQuestion(data.question);
-      setTimeRemaining(30);
+      // setTimeRemaining(30); // Timer removed for testing
       setScreen('game');
     } catch (err: any) {
       setError(err.message || 'Failed to start game');
@@ -267,6 +271,14 @@ export function BetModeTab() {
       <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4">
         <div className="max-w-md mx-auto mt-20">
           <div className="bg-white rounded-2xl p-6 shadow-2xl text-center">
+            {onExit && (
+              <button
+                onClick={onExit}
+                className="mb-4 px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium float-left"
+              >
+                ← Back
+              </button>
+            )}
             <div className="text-6xl mb-4">🎰</div>
             <h2 className="text-2xl font-bold mb-2 text-gray-800">Bet Mode</h2>
             <p className="text-gray-600 mb-6">⏸️ Currently Closed</p>
@@ -303,6 +315,14 @@ export function BetModeTab() {
       <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4">
         <div className="max-w-md mx-auto mt-10">
           <div className="bg-white rounded-2xl p-6 shadow-2xl">
+            {onExit && (
+              <button
+                onClick={onExit}
+                className="mb-4 px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium"
+              >
+                ← Back
+              </button>
+            )}
             <div className="text-center mb-6">
               <div className="text-5xl mb-2">🎰</div>
               <h2 className="text-2xl font-bold text-gray-800">BET MODE</h2>
@@ -425,10 +445,7 @@ export function BetModeTab() {
               <span className="text-sm font-semibold text-gray-700">
                 Question {questionNum} of 10
               </span>
-              <div className="flex items-center text-sm text-gray-600">
-                <Clock className="w-4 h-4 mr-1" />
-                {timeRemaining}s
-              </div>
+              {/* Timer removed for testing */}
             </div>
 
             <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 mb-6 border-2 border-yellow-200">

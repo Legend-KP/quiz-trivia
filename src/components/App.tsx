@@ -53,7 +53,7 @@ export default function App(
     setInitialTab,
   } = useMiniApp();
   
-  const [activeTab, setActiveTab] = useState<"home" | "qt" | "rewards" | "bet-mode">("home");
+  const [activeTab, setActiveTab] = useState<"home" | "qt" | "rewards">("home");
 
   // --- Effects ---
   /**
@@ -125,7 +125,6 @@ export default function App(
         {/* Tab content rendering */}
         {activeTab === "home" && <HomeTab />}
         {activeTab === "rewards" && <RewardsTab />}
-        {activeTab === "bet-mode" && <BetModeTab />}
       </div>
       
       {/* Bottom Navigation */}
@@ -137,9 +136,6 @@ export default function App(
         }}
         onRewardsClick={() => {
           setActiveTab("rewards");
-        }}
-        onBetModeClick={() => {
-          setActiveTab("bet-mode");
         }}
       />
     </div>
