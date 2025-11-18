@@ -30,7 +30,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Bet Mode is always open (24/7)
-    // Window check removed - always available
+    // Get window state for dates (but don't check isOpen)
+    const windowState = getBetModeWindowState();
 
     // Validate bet amount
     const accounts = await getCurrencyAccountsCollection();

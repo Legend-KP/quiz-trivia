@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useMiniApp } from "@neynar/react";
 import { HomeTab } from "~/components/ui/tabs";
 import { RewardsTab } from "~/components/ui/tabs/RewardsTab";
-import { BetModeTab } from "~/components/ui/tabs/BetModeTab";
 import { BottomNavigation } from "~/components/ui/BottomNavigation";
 
 // --- Types ---
