@@ -70,11 +70,11 @@ export async function GET(req: NextRequest) {
     const blockNumber = await provider.getBlockNumber();
     const block = await provider.getBlock(blockNumber);
 
-    if (!block) {
+    if (!block || !block.hash) {
       return NextResponse.json({ error: 'Failed to get block' }, { status: 500 });
     }
 
-    const blockHash = block.hash;
+    const blockHash: string = block.hash;
     const seedData = `${weekId}-${blockHash}-${now}`;
     const seed = ethers.keccak256(ethers.toUtf8Bytes(seedData));
 
