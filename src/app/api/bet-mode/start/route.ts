@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
     const gameId = `bet_${numFid}_${Date.now()}`;
     const now = Date.now();
 
-    const gameQuestions = selectedQuestions.map((q, index) => ({
+    const gameQuestions = selectedQuestions.map((q) => ({
       questionId: q.id || q._id.toString(),
       questionText: q.text,
       options: q.options,

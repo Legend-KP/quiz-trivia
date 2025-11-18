@@ -13,7 +13,6 @@ import {
   getStreakMultiplier,
   calculateConsecutiveDays,
   getTodayDateString,
-  BET_MODE_MULTIPLIERS,
 } from '~/lib/betMode';
 
 export const runtime = 'nodejs';

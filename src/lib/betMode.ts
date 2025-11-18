@@ -86,7 +86,7 @@ export function getBetModeWindowState(): {
   ));
 
   // Find next Wednesday 11 AM UTC
-  let windowStart = new Date(nowUTC);
+  const windowStart = new Date(nowUTC);
   windowStart.setUTCDate(windowStart.getUTCDate() + ((WINDOW_START_DAY + 7 - windowStart.getUTCDay()) % 7));
   windowStart.setUTCHours(WINDOW_START_HOUR, 0, 0, 0);
 

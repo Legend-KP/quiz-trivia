@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useMiniApp } from '@neynar/react';
-import { Clock, Trophy, Coins, TrendingUp, X, CheckCircle, XCircle } from 'lucide-react';
+import { Clock, CheckCircle, XCircle } from 'lucide-react';
 import {
   getBetModeWindowState,
-  formatTimeRemaining,
   formatQT,
   BET_MODE_MULTIPLIERS,
   MIN_BET,
@@ -61,8 +60,13 @@ export function BetModeTab() {
   const [timeRemaining, setTimeRemaining] = useState<number>(30);
   const [gameResult, setGameResult] = useState<any>(null);
 
+  const loadGameState = useCallback(async (_gameId: string) => {
+    // In a real implementation, you'd fetch the current question
+    // For now, we'll handle it through the answer flow
+  }, []);
+
   // Fetch status
-  const fetchStatus = async () => {
+  const fetchStatus = useCallback(async () => {
     const fid = context?.user?.fid;
     if (!fid) return;
 
@@ -84,13 +88,13 @@ export function BetModeTab() {
     } catch (err) {
       console.error('Failed to fetch status:', err);
     }
-  };
+  }, [context?.user?.fid]);
 
   useEffect(() => {
     fetchStatus();
     const interval = setInterval(fetchStatus, 10000); // Refresh every 10s
     return () => clearInterval(interval);
-  }, [context?.user?.fid]);
+  }, [fetchStatus]);
 
   // Timer for questions
   useEffect(() => {
@@ -107,12 +111,7 @@ export function BetModeTab() {
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [screen, timeRemaining, gameResult]);
-
-  const loadGameState = async (gameId: string) => {
-    // In a real implementation, you'd fetch the current question
-    // For now, we'll handle it through the answer flow
-  };
+  }, [screen, timeRemaining, gameResult, handleAnswer]);
 
   const handleStartGame = async () => {
     const fid = context?.user?.fid;
@@ -155,7 +154,7 @@ export function BetModeTab() {
     }
   };
 
-  const handleAnswer = async (answerIndex: number | null) => {
+  const handleAnswer = useCallback(async (answerIndex: number | null) => {
     if (!currentGame) return;
 
     setLoading(true);
@@ -205,7 +204,7 @@ export function BetModeTab() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentGame, context?.user?.fid]);
 
   const handleCashOut = async () => {
     if (!currentGame) return;
@@ -299,7 +298,6 @@ export function BetModeTab() {
 
   // Entry screen
   if (screen === 'entry') {
-    const windowState = getBetModeWindowState();
     const canBet = status.balance.availableBalance >= MIN_BET;
 
     return (
@@ -594,7 +592,7 @@ export function BetModeTab() {
           <div className="bg-white rounded-2xl p-6 shadow-2xl">
             <div className="text-center mb-6">
               <div className="text-5xl mb-2">🎰</div>
-              <h2 className="text-2xl font-bold text-gray-800">THIS WEEK'S LOTTERY</h2>
+              <h2 className="text-2xl font-bold text-gray-800">THIS WEEK&apos;S LOTTERY</h2>
               {status.window.timeUntilSnapshot && (
                 <p className="text-sm text-gray-600 mt-2">
                   Snapshot in: {status.window.timeUntilSnapshot}
