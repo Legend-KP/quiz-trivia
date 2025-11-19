@@ -76,8 +76,10 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
 
     try {
       // Get user's wallet address from Farcaster context if available
-      const walletAddress = context?.user?.verified_addresses?.primary?.eth_address || 
-                           context?.user?.verified_addresses?.eth_addresses?.[0] ||
+      // Note: verified_addresses may exist at runtime but isn't in TypeScript types
+      const userAny = context?.user as any;
+      const walletAddress = userAny?.verified_addresses?.primary?.eth_address || 
+                           userAny?.verified_addresses?.eth_addresses?.[0] ||
                            null;
       
       // Build status URL with optional wallet address
@@ -104,8 +106,6 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
     }
   }, [
     context?.user?.fid,
-    context?.user?.verified_addresses?.primary?.eth_address,
-    context?.user?.verified_addresses?.eth_addresses,
     loadGameState,
   ]);
 

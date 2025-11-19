@@ -39,3 +39,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+BET_MODE_COMPLETE_DOCUMENTATION.md
