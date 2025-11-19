@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useMiniApp } from '@neynar/react';
+import { useAccount, useReadContract } from 'wagmi';
 import { CheckCircle, XCircle } from 'lucide-react';
+import { formatUnits } from 'viem';
 import {
   formatQT,
   BET_MODE_MULTIPLIERS,
@@ -10,6 +12,17 @@ import {
   MAX_BET,
   calculatePayout,
 } from '~/lib/betMode';
+
+// ERC20 ABI for balanceOf
+const ERC20_ABI = [
+  {
+    inputs: [{ name: 'owner', type: 'address' }],
+    name: 'balanceOf',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+] as const;
 
 type BetModeScreen = 'entry' | 'game' | 'cash-out' | 'loss' | 'lottery' | 'closed';
 
@@ -50,6 +63,28 @@ interface BetModeTabProps {
 
 export function BetModeTab({ onExit }: BetModeTabProps = {}) {
   const { context } = useMiniApp();
+  const { address, isConnected } = useAccount();
+  
+  // Get QT token address from environment (client-side safe)
+  // Fallback to hardcoded address if env var not set
+  const QT_TOKEN_ADDRESS = "0x541529ADB3f344128aa87917fd2926E7D240FB07";
+  const qtTokenAddress = process.env.NEXT_PUBLIC_QT_TOKEN_ADDRESS || QT_TOKEN_ADDRESS;
+  
+  // Read QT token balance from wallet
+  const { data: walletBalanceRaw, refetch: refetchWalletBalance } = useReadContract({
+    address: qtTokenAddress as `0x${string}` | undefined,
+    abi: ERC20_ABI,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    query: {
+      enabled: !!address && !!qtTokenAddress && isConnected,
+      refetchInterval: 10000, // Refetch every 10 seconds
+    },
+  });
+  
+  // Convert balance from wei to QT (18 decimals)
+  const walletBalance = walletBalanceRaw ? parseFloat(formatUnits(walletBalanceRaw, 18)) : 0;
+  
   const [screen, setScreen] = useState<BetModeScreen>('entry');
   const [status, setStatus] = useState<BetModeStatus | null>(null);
   const [betAmount, setBetAmount] = useState<number>(MIN_BET);
@@ -75,21 +110,18 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
     if (!fid) return;
 
     try {
-      // Get user's wallet address from Farcaster context if available
-      // Note: verified_addresses may exist at runtime but isn't in TypeScript types
-      const userAny = context?.user as any;
-      const walletAddress = userAny?.verified_addresses?.primary?.eth_address || 
-                           userAny?.verified_addresses?.eth_addresses?.[0] ||
-                           null;
+      // Build status URL - wallet balance is now fetched client-side via Wagmi
+      const res = await fetch(`/api/bet-mode/status?fid=${fid}`);
+      const data = await res.json();
       
-      // Build status URL with optional wallet address
-      let statusUrl = `/api/bet-mode/status?fid=${fid}`;
-      if (walletAddress) {
-        statusUrl += `&walletAddress=${encodeURIComponent(walletAddress)}`;
+      // Merge wallet balance from Wagmi into status
+      if (isConnected && address) {
+        data.balance = {
+          ...data.balance,
+          walletBalance, // Add wallet balance from Wagmi
+        };
       }
       
-      const res = await fetch(statusUrl);
-      const data = await res.json();
       setStatus(data);
 
       // Determine screen based on status
@@ -107,6 +139,9 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
   }, [
     context?.user?.fid,
     loadGameState,
+    isConnected,
+    address,
+    walletBalance,
   ]);
 
   useEffect(() => {
@@ -405,10 +440,10 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
                 <span className="text-gray-600">💰 Your Balance:</span>
                 <span className="font-semibold">{formatQT(status.balance.availableBalance)}</span>
               </div>
-              {status.balance.walletBalance !== undefined && status.balance.walletBalance > 0 && (
+              {isConnected && address && (
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-gray-600">💼 Wallet Balance:</span>
-                  <span className="font-semibold">{formatQT(status.balance.walletBalance)}</span>
+                  <span className="font-semibold">{formatQT(walletBalance)}</span>
                 </div>
               )}
               <div className="flex justify-between text-sm mb-2">
