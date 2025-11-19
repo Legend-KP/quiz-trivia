@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ethers } from 'ethers';
 import {
   getCurrencyAccountsCollection,
   getBetModeGamesCollection,
@@ -9,10 +10,43 @@ import { getBetModeWindowState, getCurrentWeekId, formatTimeRemaining } from '~/
 
 export const runtime = 'nodejs';
 
+/**
+ * Check user's on-chain QT token balance
+ */
+async function getWalletQTBalance(walletAddress: string): Promise<number> {
+  try {
+    const rpcUrl = process.env.BASE_RPC_URL || 'https://mainnet.base.org';
+    const qtTokenAddress = process.env.QT_TOKEN_ADDRESS;
+
+    if (!qtTokenAddress) {
+      console.warn('QT_TOKEN_ADDRESS not configured');
+      return 0;
+    }
+
+    if (!ethers.isAddress(walletAddress)) {
+      return 0;
+    }
+
+    const provider = new ethers.JsonRpcProvider(rpcUrl);
+    
+    // ERC20 token contract ABI (minimal - just balanceOf)
+    const tokenAbi = ['function balanceOf(address owner) view returns (uint256)'];
+    const tokenContract = new ethers.Contract(qtTokenAddress, tokenAbi, provider);
+
+    const balance = await tokenContract.balanceOf(walletAddress);
+    // QT token has 18 decimals
+    return parseFloat(ethers.formatUnits(balance, 18));
+  } catch (error) {
+    console.error('Error fetching wallet QT balance:', error);
+    return 0;
+  }
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const fidParam = searchParams.get('fid');
+    const walletAddressParam = searchParams.get('walletAddress'); // Optional wallet address
 
     if (!fidParam) {
       return NextResponse.json({ error: 'Missing fid' }, { status: 400 });
@@ -33,6 +67,12 @@ export async function GET(req: NextRequest) {
     const qtBalance = account?.qtBalance || 0;
     const qtLockedBalance = account?.qtLockedBalance || 0;
     const availableBalance = qtBalance - qtLockedBalance;
+
+    // Check on-chain wallet balance if wallet address is provided
+    let walletBalance = 0;
+    if (walletAddressParam && ethers.isAddress(walletAddressParam)) {
+      walletBalance = await getWalletQTBalance(walletAddressParam);
+    }
 
     // Get active game
     const games = await getBetModeGamesCollection();
@@ -66,9 +106,10 @@ export async function GET(req: NextRequest) {
         drawTime: windowState.drawTime.toISOString(),
       },
       balance: {
-        qtBalance,
+        qtBalance, // Internal balance (deposited to platform)
         qtLockedBalance,
         availableBalance,
+        walletBalance, // On-chain wallet balance (if walletAddress provided)
         totalDeposited: account?.qtTotalDeposited || 0,
         totalWithdrawn: account?.qtTotalWithdrawn || 0,
         totalWagered: account?.qtTotalWagered || 0,

@@ -25,6 +25,7 @@ interface BetModeStatus {
     qtBalance: number;
     qtLockedBalance: number;
     availableBalance: number;
+    walletBalance?: number; // On-chain wallet balance
   };
   activeGame: {
     gameId: string;
@@ -74,7 +75,18 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
     if (!fid) return;
 
     try {
-      const res = await fetch(`/api/bet-mode/status?fid=${fid}`);
+      // Get user's wallet address from Farcaster context if available
+      const walletAddress = context?.user?.verified_addresses?.primary?.eth_address || 
+                           context?.user?.verified_addresses?.eth_addresses?.[0] ||
+                           null;
+      
+      // Build status URL with optional wallet address
+      let statusUrl = `/api/bet-mode/status?fid=${fid}`;
+      if (walletAddress) {
+        statusUrl += `&walletAddress=${encodeURIComponent(walletAddress)}`;
+      }
+      
+      const res = await fetch(statusUrl);
       const data = await res.json();
       setStatus(data);
 
@@ -90,7 +102,12 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
     } catch (err) {
       console.error('Failed to fetch status:', err);
     }
-  }, [context?.user?.fid, loadGameState]);
+  }, [
+    context?.user?.fid,
+    context?.user?.verified_addresses?.primary?.eth_address,
+    context?.user?.verified_addresses?.eth_addresses,
+    loadGameState,
+  ]);
 
   useEffect(() => {
     fetchStatus();
@@ -386,8 +403,14 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
             <div className="bg-gray-50 rounded-lg p-4 mb-6">
               <div className="flex justify-between text-sm mb-2">
                 <span className="text-gray-600">💰 Your Balance:</span>
-                <span className="font-semibold">{formatQT(status.balance.qtBalance)}</span>
+                <span className="font-semibold">{formatQT(status.balance.availableBalance)}</span>
               </div>
+              {status.balance.walletBalance !== undefined && status.balance.walletBalance > 0 && (
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-gray-600">💼 Wallet Balance:</span>
+                  <span className="font-semibold">{formatQT(status.balance.walletBalance)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-sm mb-2">
                 <span className="text-gray-600">🎟️ Your Tickets:</span>
                 <span className="font-semibold">{status.lottery.userTickets.toFixed(1)}</span>
