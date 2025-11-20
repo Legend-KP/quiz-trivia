@@ -144,7 +144,7 @@ export function RewardsTab() {
 
           {error && (
             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-center text-sm">
-              ⚠️ Oops! Something went wrong. Don't worry, your reward is safe. Try again in a moment!
+              ⚠️ Oops! Something went wrong. Don&apos;t worry, your reward is safe. Try again in a moment!
             </div>
           )}
 
@@ -160,7 +160,7 @@ export function RewardsTab() {
               disabled
               className="w-full bg-gray-300 text-gray-500 font-bold py-3 px-6 rounded-xl cursor-not-allowed"
             >
-              ✅ You've Already Claimed Today! See You Tomorrow! 🌟
+              ✅ You&apos;ve Already Claimed Today! See You Tomorrow! 🌟
             </button>
           ) : (
             <button
