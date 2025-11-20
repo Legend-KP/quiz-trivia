@@ -59,12 +59,12 @@ export function RewardsTab() {
 
   const handleDailyClaim = async () => {
     if (!address) {
-      alert('Please connect your wallet first');
+      alert('🔗 Connect your wallet first to unlock your daily treasure!');
       return;
     }
 
     if (!canClaim) {
-      alert('You have already claimed your daily reward today. Come back tomorrow!');
+      alert('🌟 You\'ve already claimed your reward today! Come back tomorrow for another surprise! 🎁');
       return;
     }
 
@@ -119,10 +119,10 @@ export function RewardsTab() {
         {/* Daily Claim Section */}
         <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-2xl">
           <h2 className="text-2xl font-bold text-center mb-2 text-gray-800">
-            🎁 Daily Reward
+            🎁 Daily Treasure Chest
           </h2>
           <p className="text-center text-gray-600 mb-4 text-sm">
-            Claim your daily QT token reward!
+            Your daily dose of QT tokens is waiting! 🚀
           </p>
           
           <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 mb-4 border-2 border-yellow-200">
@@ -130,21 +130,21 @@ export function RewardsTab() {
               <div className="text-3xl font-bold text-yellow-800 mb-1">
                 {formatRewardAmount(rewardAmount)}
               </div>
-              <div className="text-sm text-yellow-700">
-                Available Daily
+              <div className="text-sm text-yellow-700 font-semibold">
+                💰 Free Daily Bonus
               </div>
             </div>
           </div>
 
           {claimSuccess && (
-            <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg text-center text-sm">
-              ✅ Successfully claimed! Check your wallet for QT tokens.
+            <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg text-center text-sm animate-pulse">
+              🎉 <span className="font-bold">Awesome!</span> Your QT tokens are on their way to your wallet! Check it out! 💰✨
             </div>
           )}
 
           {error && (
             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-center text-sm">
-              ❌ {error}
+              ⚠️ Oops! Something went wrong. Don't worry, your reward is safe. Try again in a moment!
             </div>
           )}
 
@@ -153,39 +153,39 @@ export function RewardsTab() {
               disabled
               className="w-full bg-gray-300 text-gray-500 font-bold py-3 px-6 rounded-xl cursor-not-allowed"
             >
-              Connect Wallet to Claim
+              🔗 Connect Your Wallet to Unlock Rewards
             </button>
           ) : !canClaim ? (
             <button
               disabled
               className="w-full bg-gray-300 text-gray-500 font-bold py-3 px-6 rounded-xl cursor-not-allowed"
             >
-              ✅ Already Claimed Today
+              ✅ You've Already Claimed Today! See You Tomorrow! 🌟
             </button>
           ) : (
             <button
               onClick={handleDailyClaim}
               disabled={isProcessing}
-              className={`w-full font-bold py-3 px-6 rounded-xl transition-all duration-200 ${
+              className={`w-full font-bold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg ${
                 isProcessing
                   ? 'bg-gray-400 text-white cursor-wait'
-                  : 'bg-gradient-to-r from-green-500 to-blue-600 text-white hover:from-green-600 hover:to-blue-700 transform hover:scale-105'
+                  : 'bg-gradient-to-r from-green-500 to-blue-600 text-white hover:from-green-600 hover:to-blue-700 transform hover:scale-105 hover:shadow-xl'
               }`}
             >
               {isProcessing ? (
                 <span className="flex items-center justify-center">
                   <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></span>
-                  Processing...
+                  🎁 Claiming Your Reward...
                 </span>
               ) : (
-                '🎁 Claim Daily Reward'
+                '🎁 Claim My Daily Treasure!'
               )}
             </button>
           )}
 
           {canClaim && address && (
             <p className="text-center text-xs text-gray-500 mt-3">
-              You can claim once per day. Come back tomorrow for more!
+              ⏰ One claim per day! Set a reminder and come back tomorrow for another surprise! 🎯
             </p>
           )}
         </div>
