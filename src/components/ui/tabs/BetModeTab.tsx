@@ -68,22 +68,37 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
   // Get QT token address from environment (client-side safe)
   // Fallback to hardcoded address if env var not set
   const QT_TOKEN_ADDRESS = "0x541529ADB3f344128aa87917fd2926E7D240FB07";
-  const qtTokenAddress = process.env.NEXT_PUBLIC_QT_TOKEN_ADDRESS || QT_TOKEN_ADDRESS;
+  const qtTokenAddress = (process.env.NEXT_PUBLIC_QT_TOKEN_ADDRESS || QT_TOKEN_ADDRESS) as `0x${string}`;
   
   // Read QT token balance from wallet
-  const { data: walletBalanceRaw, refetch: refetchWalletBalance } = useReadContract({
-    address: qtTokenAddress as `0x${string}` | undefined,
+  // Only enable if we have a valid address and token address
+  const { data: walletBalanceRaw, error: balanceError } = useReadContract({
+    address: qtTokenAddress,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
     query: {
-      enabled: !!address && !!qtTokenAddress && isConnected,
+      enabled: !!address && !!qtTokenAddress && isConnected && typeof address === 'string',
       refetchInterval: 10000, // Refetch every 10 seconds
     },
   });
   
   // Convert balance from wei to QT (18 decimals)
-  const walletBalance = walletBalanceRaw ? parseFloat(formatUnits(walletBalanceRaw, 18)) : 0;
+  // Handle errors gracefully
+  let walletBalance = 0;
+  try {
+    if (walletBalanceRaw) {
+      walletBalance = parseFloat(formatUnits(walletBalanceRaw, 18));
+    }
+  } catch (err) {
+    console.warn('Error parsing wallet balance:', err);
+    walletBalance = 0;
+  }
+  
+  // Log balance errors for debugging (but don't crash)
+  if (balanceError) {
+    console.warn('Error reading wallet balance:', balanceError);
+  }
   
   const [screen, setScreen] = useState<BetModeScreen>('entry');
   const [status, setStatus] = useState<BetModeStatus | null>(null);
@@ -360,7 +375,16 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
 
   // Entry screen
   if (screen === 'entry') {
-    const canBet = status.balance.availableBalance >= MIN_BET;
+    // Show loading state if status hasn't loaded yet
+    if (!status) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 flex items-center justify-center">
+          <div className="text-white text-xl">Loading Bet Mode...</div>
+        </div>
+      );
+    }
+    
+    const canBet = status?.balance?.availableBalance >= MIN_BET;
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4">
@@ -435,28 +459,30 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
               </div>
             </div>
 
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-600">💰 Your Balance:</span>
-                <span className="font-semibold">{formatQT(status.balance.availableBalance)}</span>
-              </div>
-              {isConnected && address && (
+            {status && (
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
                 <div className="flex justify-between text-sm mb-2">
-                  <span className="text-gray-600">💼 Wallet Balance:</span>
-                  <span className="font-semibold">{formatQT(walletBalance)}</span>
+                  <span className="text-gray-600">💰 Your Balance:</span>
+                  <span className="font-semibold">{formatQT(status.balance?.availableBalance || 0)}</span>
                 </div>
-              )}
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-600">🎟️ Your Tickets:</span>
-                <span className="font-semibold">{status.lottery.userTickets.toFixed(1)}</span>
+                {isConnected && address && (
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-gray-600">💼 Wallet Balance:</span>
+                    <span className="font-semibold">{formatQT(walletBalance)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-gray-600">🎟️ Your Tickets:</span>
+                  <span className="font-semibold">{(status.lottery?.userTickets || 0).toFixed(1)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">📊 Pool:</span>
+                  <span className="font-semibold">
+                    {formatQT(status.weeklyPool?.lotteryPool || 0)}
+                  </span>
+                </div>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">📊 Pool:</span>
-                <span className="font-semibold">
-                  {formatQT(status.weeklyPool?.lotteryPool || 0)}
-                </span>
-              </div>
-            </div>
+            )}
 
             <button
               onClick={handleStartGame}
@@ -659,6 +685,15 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
 
   // Lottery screen
   if (screen === 'lottery') {
+    // Show loading state if status hasn't loaded yet
+    if (!status) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 flex items-center justify-center">
+          <div className="text-white text-xl">Loading Bet Mode...</div>
+        </div>
+      );
+    }
+    
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4">
         <div className="max-w-md mx-auto mt-10">
@@ -666,7 +701,7 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
             <div className="text-center mb-6">
               <div className="text-5xl mb-2">🎰</div>
               <h2 className="text-2xl font-bold text-gray-800">THIS WEEK&apos;S LOTTERY</h2>
-              {status.window.timeUntilSnapshot && (
+              {status?.window?.timeUntilSnapshot && (
                 <p className="text-sm text-gray-600 mt-2">
                   Snapshot in: {status.window.timeUntilSnapshot}
                 </p>
@@ -687,16 +722,16 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">🎟️ Your Tickets:</span>
-                  <span className="font-semibold">{status.lottery.userTickets.toFixed(1)}</span>
+                  <span className="font-semibold">{(status.lottery?.userTickets || 0).toFixed(1)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">📊 Your Share:</span>
-                  <span className="font-semibold">{status.lottery.userShare}%</span>
+                  <span className="font-semibold">{status.lottery?.userShare || 0}%</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">🎯 Win Probability:</span>
                   <span className="font-semibold">
-                    {((parseFloat(status.lottery.userShare) / 100) * 31).toFixed(1)}%
+                    {((parseFloat(String(status.lottery?.userShare || 0)) / 100) * 31).toFixed(1)}%
                   </span>
                 </div>
               </div>
