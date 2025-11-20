@@ -440,8 +440,8 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
   // Closed screen
   if (screen === 'closed') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4">
-        <div className="max-w-md mx-auto mt-20">
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
+        <div className="max-w-md mx-auto mt-20 mb-10">
           <div className="bg-white rounded-2xl p-6 shadow-2xl text-center">
             {onExit && (
               <button
@@ -490,11 +490,13 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
       );
     }
     
-    const canBet = status?.balance?.availableBalance >= MIN_BET;
+    // Check if user has enough balance: need 2x the bet amount (MIN_BALANCE_MULTIPLIER)
+    const requiredBalance = betAmount * 2; // MIN_BALANCE_MULTIPLIER = 2
+    const canBet = (status?.balance?.availableBalance || 0) >= requiredBalance;
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4">
-        <div className="max-w-md mx-auto mt-10">
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
+        <div className="max-w-md mx-auto mt-10 mb-10">
           <div className="bg-white rounded-2xl p-6 shadow-2xl">
             {onExit && (
               <button
@@ -599,6 +601,17 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
               </button>
             )}
             
+            {!canBet && (
+              <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-xs text-yellow-800 text-center">
+                  ⚠️ Minimum requirement: {formatQT(requiredBalance)} (2x your bet amount)
+                </p>
+                <p className="text-xs text-yellow-700 text-center mt-1">
+                  Your balance: {formatQT(status?.balance?.availableBalance || 0)}
+                </p>
+              </div>
+            )}
+            
             <button
               onClick={handleStartGame}
               disabled={loading || !canBet}
@@ -620,8 +633,8 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
             
             {/* Deposit Modal */}
             {showDepositModal && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+                <div className="bg-white rounded-2xl p-6 max-w-md w-full my-4 max-h-[90vh] overflow-y-auto">
                   <h3 className="text-xl font-bold mb-4">Deposit QT Tokens</h3>
                   
                   {error && (
@@ -709,8 +722,8 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
     const canCashOut = questionNum >= 5;
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4">
-        <div className="max-w-md mx-auto mt-10">
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
+        <div className="max-w-md mx-auto mt-10 mb-10">
           <div className="bg-white rounded-2xl p-6 shadow-2xl">
             <div className="flex justify-between items-center mb-4">
               <span className="text-sm font-semibold text-gray-700">
@@ -733,9 +746,9 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
               </div>
             </div>
 
-            <div className="mb-6">
+            <div className="mb-6 max-h-[400px] overflow-y-auto">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">{currentQuestion.text}</h3>
-              <div className="space-y-3">
+              <div className="space-y-3 pr-2">
                 {currentQuestion.options.map((option: string, index: number) => (
                   <button
                     key={index}
@@ -790,8 +803,8 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
     const profitPercent = betAmount > 0 ? ((profit / betAmount) * 100).toFixed(0) : '0';
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4">
-        <div className="max-w-md mx-auto mt-20">
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
+        <div className="max-w-md mx-auto mt-20 mb-10">
           <div className="bg-white rounded-2xl p-6 shadow-2xl text-center">
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold mb-2 text-gray-800">
@@ -827,8 +840,8 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
   if (screen === 'loss' && gameResult) {
     const betAmount = currentGame?.betAmount || 0;
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4">
-        <div className="max-w-md mx-auto mt-20">
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
+        <div className="max-w-md mx-auto mt-20 mb-10">
           <div className="bg-white rounded-2xl p-6 shadow-2xl text-center">
             <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold mb-2 text-gray-800">❌ WRONG ANSWER</h2>
@@ -883,8 +896,8 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
     }
     
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4">
-        <div className="max-w-md mx-auto mt-10">
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
+        <div className="max-w-md mx-auto mt-10 mb-10">
           <div className="bg-white rounded-2xl p-6 shadow-2xl">
             <div className="text-center mb-6">
               <div className="text-5xl mb-2">🎰</div>
@@ -925,9 +938,9 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
               </div>
             </div>
 
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            <div className="bg-gray-50 rounded-lg p-4 mb-6 max-h-[300px] overflow-y-auto">
               <h3 className="font-semibold text-gray-800 mb-2">🏆 PRIZE STRUCTURE:</h3>
-              <div className="text-xs text-gray-700 space-y-1">
+              <div className="text-xs text-gray-700 space-y-1 pr-2">
                 <div>Tier 1: ~{formatQT((status.weeklyPool?.lotteryPool || 0) * 0.25)} (25%)</div>
                 <div>Tier 2: ~{formatQT((status.weeklyPool?.lotteryPool || 0) * 0.1)} each (10%)</div>
                 <div>Tier 3: ~{formatQT((status.weeklyPool?.lotteryPool || 0) * 0.06)} each (6%)</div>
