@@ -40,3 +40,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 BET_MODE_COMPLETE_DOCUMENTATION.md
+ENV_SETUP_GUIDE.md
+*.md

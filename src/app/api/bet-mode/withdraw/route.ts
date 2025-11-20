@@ -47,7 +47,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Cannot withdraw during active game' }, { status: 400 });
     }
 
-    const privateKey = process.env.WALLET_PRIVATE_KEY;
+    // Support both WALLET_PRIVATE_KEY and PRIVATE_KEY for backward compatibility
+    const privateKey = process.env.WALLET_PRIVATE_KEY || process.env.PRIVATE_KEY;
     const rpcUrl = process.env.BASE_RPC_URL || 'https://mainnet.base.org';
     const qtTokenAddress = process.env.QT_TOKEN_ADDRESS;
 

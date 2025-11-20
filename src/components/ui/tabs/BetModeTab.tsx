@@ -619,8 +619,8 @@ const ERC20_ABI = [
 
       return (
         <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
-          <div className="max-w-md mx-auto mt-10 mb-10">
-            <div className="bg-white rounded-2xl p-6 shadow-2xl">
+          <div className="max-w-md mx-auto mt-10 mb-10 pb-20">
+            <div className="bg-white rounded-2xl p-6 shadow-2xl overflow-y-auto max-h-[calc(100vh-5rem)]">
               {onExit && (
                 <button
                   onClick={onExit}
@@ -995,7 +995,7 @@ const ERC20_ABI = [
               </h2>
               <p className="text-gray-600 mb-6">Smart move! You secured:</p>
 
-              <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-6 mb-6 border-2 border-green-200">
+              <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-6 mb-6 border-2 border-green-200 max-h-[30vh] overflow-y-auto">
                 <div className="text-3xl font-bold text-green-800 mb-2">
                   💰 {formatQT(gameResult.payout)}
                 </div>
@@ -1035,7 +1035,7 @@ const ERC20_ABI = [
                 </div>
               )}
 
-              <div className="bg-red-50 rounded-lg p-4 mb-6 border-2 border-red-200">
+              <div className="bg-red-50 rounded-lg p-4 mb-6 border-2 border-red-200 max-h-[30vh] overflow-y-auto">
                 <div className="text-xl font-bold text-red-800 mb-2">
                   Lost: {formatQT(betAmount)}
                 </div>
@@ -1101,7 +1101,7 @@ const ERC20_ABI = [
                 </div>
               </div>
 
-              <div className="mb-6">
+              <div className="mb-6 max-h-[30vh] overflow-y-auto">
                 <h3 className="font-semibold text-gray-800 mb-3">YOUR STATUS:</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
