@@ -14,26 +14,46 @@
     calculatePayout,
   } from '~/lib/betMode';
 
-  // ERC20 ABI for balanceOf and transfer
-  const ERC20_ABI = [
-    {
-      inputs: [{ name: 'owner', type: 'address' }],
-      name: 'balanceOf',
-      outputs: [{ name: '', type: 'uint256' }],
-      stateMutability: 'view',
-      type: 'function',
-    },
-    {
-      inputs: [
-        { name: 'to', type: 'address' },
-        { name: 'amount', type: 'uint256' },
-      ],
-      name: 'transfer',
-      outputs: [{ name: '', type: 'bool' }],
-      stateMutability: 'nonpayable',
-      type: 'function',
-    },
-  ] as const;
+// ERC20 ABI - Complete with all necessary functions
+const ERC20_ABI = [
+  {
+    inputs: [{ name: 'owner', type: 'address' }],
+    name: 'balanceOf',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'to', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+    ],
+    name: 'transfer',
+    outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'spender', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+    ],
+    name: 'approve',
+    outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'owner', type: 'address' },
+      { name: 'spender', type: 'address' },
+    ],
+    name: 'allowance',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+] as const;
 
   type BetModeScreen = 'entry' | 'game' | 'cash-out' | 'loss' | 'lottery' | 'closed';
 
@@ -76,53 +96,57 @@
     const { context } = useMiniApp();
     const { address, isConnected } = useAccount();
     
-    // Get QT token address from environment (client-side safe)
-    // Fallback to hardcoded address if env var not set
-    const QT_TOKEN_ADDRESS = "0x541529ADB3f344128aa87917fd2926E7D240FB07";
-    const qtTokenAddress = (process.env.NEXT_PUBLIC_QT_TOKEN_ADDRESS || QT_TOKEN_ADDRESS) as `0x${string}`;
-    
-    // Read QT token balance from wallet
-    // Only enable if we have a valid address and token address
-    const { data: walletBalanceRaw, error: balanceError } = useReadContract({
-      address: qtTokenAddress,
-      abi: ERC20_ABI,
-      functionName: 'balanceOf',
-      args: address ? [address] : undefined,
-      query: {
-        enabled: !!address && !!qtTokenAddress && isConnected && typeof address === 'string',
-        refetchInterval: 10000, // Refetch every 10 seconds
-      },
-    });
-    
-    // Convert balance from wei to QT (18 decimals)
-    // Handle errors gracefully
-    let walletBalance = 0;
-    try {
-      if (walletBalanceRaw) {
-        walletBalance = parseFloat(formatUnits(walletBalanceRaw, 18));
-      }
-    } catch (err) {
-      console.warn('Error parsing wallet balance:', err);
-      walletBalance = 0;
+  // Get QT token address from environment (client-side safe)
+  // Fallback to hardcoded address if env var not set
+  const QT_TOKEN_ADDRESS = "0x541529ADB3f344128aa87917fd2926E7D240FB07";
+  const qtTokenAddress = (process.env.NEXT_PUBLIC_QT_TOKEN_ADDRESS || QT_TOKEN_ADDRESS) as `0x${string}`;
+  
+  const [screen, setScreen] = useState<BetModeScreen>('entry');
+  const [status, setStatus] = useState<BetModeStatus | null>(null);
+  const [betAmount, setBetAmount] = useState<number>(MIN_BET);
+  const [customBet, setCustomBet] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Deposit state
+  const [showDepositModal, setShowDepositModal] = useState(false);
+  const [depositAmount, setDepositAmount] = useState<string>('');
+  const [depositing, setDepositing] = useState(false);
+  const [platformWallet, setPlatformWallet] = useState<string | null>(null);
+  const [platformWalletError, setPlatformWalletError] = useState<string | null>(null);
+  const [walletBalanceError, setWalletBalanceError] = useState<string | null>(null);
+  
+  // Read QT token balance from wallet
+  // Only enable if we have a valid address and token address
+  const { data: walletBalanceRaw, error: balanceError } = useReadContract({
+    address: qtTokenAddress,
+    abi: ERC20_ABI,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    query: {
+      enabled: !!address && !!qtTokenAddress && isConnected && typeof address === 'string',
+      refetchInterval: 10000, // Refetch every 10 seconds
+    },
+  });
+  
+  // Convert balance from wei to QT (18 decimals)
+  // Handle errors gracefully
+  let walletBalance = 0;
+  try {
+    if (walletBalanceRaw) {
+      walletBalance = parseFloat(formatUnits(walletBalanceRaw, 18));
+      setWalletBalanceError(null);
     }
-    
-    // Log balance errors for debugging (but don't crash)
-    if (balanceError) {
-      console.warn('Error reading wallet balance:', balanceError);
-    }
-    
-    const [screen, setScreen] = useState<BetModeScreen>('entry');
-    const [status, setStatus] = useState<BetModeStatus | null>(null);
-    const [betAmount, setBetAmount] = useState<number>(MIN_BET);
-    const [customBet, setCustomBet] = useState<string>('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    
-    // Deposit state
-    const [showDepositModal, setShowDepositModal] = useState(false);
-    const [depositAmount, setDepositAmount] = useState<string>('');
-    const [depositing, setDepositing] = useState(false);
-    const [platformWallet, setPlatformWallet] = useState<string | null>(null);
+  } catch (err: any) {
+    console.warn('Error parsing wallet balance:', err);
+    setWalletBalanceError('Failed to read wallet balance');
+    walletBalance = 0;
+  }
+  
+  // Log balance errors for debugging
+  if (balanceError) {
+    console.warn('Error reading wallet balance from contract:', balanceError);
+  }
     
   // Wagmi hooks for deposit transaction
   const { writeContract, data: depositTxHash, isPending: isDepositPending, error: writeContractError } = useWriteContract();
@@ -197,56 +221,72 @@
       return () => clearInterval(interval);
     }, [fetchStatus]);
     
-    // Fetch platform wallet address
-    useEffect(() => {
-      fetch('/api/bet-mode/platform-wallet')
-        .then(res => res.json())
-        .then(data => {
-          if (data.address) {
-            setPlatformWallet(data.address);
-          }
-        })
-        .catch(err => console.warn('Failed to fetch platform wallet:', err));
-    }, []);
-    
-    // Handle deposit transaction confirmation
-    useEffect(() => {
-      if (isDepositConfirmed && depositTxHash) {
-        handleDepositVerification(depositTxHash);
-      }
-    }, [isDepositConfirmed, depositTxHash]);
-    
-    const handleDepositVerification = async (txHash: string) => {
-      const fid = context?.user?.fid;
-      if (!fid) return;
-      
-      try {
-        setDepositing(true);
-        const res = await fetch('/api/bet-mode/deposit/verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fid, txHash }),
-        });
-        
-        const data = await res.json();
-        if (data.success) {
-          setError(null);
-          setShowDepositModal(false);
-          setDepositAmount('');
-          await fetchStatus(); // Refresh balance
+  // Fetch platform wallet address
+  useEffect(() => {
+    fetch('/api/bet-mode/platform-wallet')
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch platform wallet');
+        return res.json();
+      })
+      .then(data => {
+        if (data.address) {
+          setPlatformWallet(data.address);
+          setPlatformWalletError(null);
         } else {
-          setError(data.error || 'Failed to verify deposit');
+          throw new Error('No platform wallet address returned');
         }
-      } catch (err: any) {
-        setError(err.message || 'Failed to verify deposit');
-      } finally {
-        setDepositing(false);
+      })
+      .catch(err => {
+        console.error('Failed to fetch platform wallet:', err);
+        setPlatformWalletError(err.message || 'Failed to load platform wallet');
+      });
+  }, []);
+    
+  // Handle deposit verification with useCallback to avoid stale closures
+  const handleDepositVerification = useCallback(async (txHash: string) => {
+    const fid = context?.user?.fid;
+    if (!fid) return;
+    
+    try {
+      setDepositing(true);
+      const res = await fetch('/api/bet-mode/deposit/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fid, txHash }),
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        setError(null);
+        setShowDepositModal(false);
+        setDepositAmount('');
+        await fetchStatus(); // Refresh balance
+      } else {
+        setError(data.error || 'Failed to verify deposit');
       }
-    };
+    } catch (err: any) {
+      setError(err.message || 'Failed to verify deposit');
+    } finally {
+      setDepositing(false);
+    }
+  }, [context?.user?.fid, fetchStatus]);
+  
+  // Handle deposit transaction confirmation
+  useEffect(() => {
+    if (isDepositConfirmed && depositTxHash) {
+      handleDepositVerification(depositTxHash);
+    }
+  }, [isDepositConfirmed, depositTxHash, handleDepositVerification]);
     
     const handleDeposit = async () => {
-      if (!platformWallet || !address) {
-        setError('Platform wallet not configured or wallet not connected');
+      // Validation
+      if (!platformWallet) {
+        setError('Platform wallet not loaded. Please refresh the page.');
+        return;
+      }
+      
+      if (!address) {
+        setError('Please connect your wallet first.');
         return;
       }
       
@@ -261,13 +301,15 @@
         return;
       }
       
-      if (amount < MIN_BET) {
-        setError(`Minimum deposit is ${formatQT(MIN_BET)}`);
+      // Minimum deposit check (can be less than MIN_BET for deposits)
+      const MIN_DEPOSIT = 1000; // 1K QT minimum
+      if (amount < MIN_DEPOSIT) {
+        setError(`Minimum deposit is ${formatQT(MIN_DEPOSIT)} QT`);
         return;
       }
       
       if (amount > walletBalance) {
-        setError('Insufficient wallet balance');
+        setError(`Insufficient wallet balance. You have ${formatQT(walletBalance)} QT.`);
         return;
       }
       
@@ -278,20 +320,36 @@
         // Convert to wei (18 decimals)
         const amountWei = parseUnits(amount.toFixed(18), 18);
         
-        // Send QT tokens to platform wallet
-        writeContract({
+        // Initiate transfer - await the promise
+        await writeContract({
           address: qtTokenAddress,
           abi: ERC20_ABI,
           functionName: 'transfer',
           args: [platformWallet as `0x${string}`, amountWei],
         });
         
-        // Note: The transaction will be handled by useWaitForTransactionReceipt
-        // which will trigger handleDepositVerification when confirmed
-        // Error handling is done via useEffect watching writeContractError
+        // Success - transaction submitted
+        // Confirmation handled by useWaitForTransactionReceipt and useEffect
+        
       } catch (err: any) {
         console.error('Deposit error:', err);
-        setError(err.message || 'Failed to initiate deposit. Please check your wallet connection.');
+        
+        // User-friendly error messages
+        let errorMessage = 'Failed to initiate deposit';
+        
+        if (err.message?.includes('insufficient funds') || err.message?.includes('gas')) {
+          errorMessage = 'Insufficient ETH for gas fees. Please add ETH to your wallet.';
+        } else if (err.message?.includes('User rejected') || err.message?.includes('denied') || err.message?.includes('rejected')) {
+          errorMessage = 'Transaction cancelled by user.';
+        } else if (err.message?.includes('network')) {
+          errorMessage = 'Network error. Please check your connection.';
+        } else if (err.shortMessage) {
+          errorMessage = err.shortMessage;
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+        
+        setError(errorMessage);
         setDepositing(false);
       }
     };
@@ -379,12 +437,12 @@
     //   }
     // }, [screen, timeRemaining, gameResult, handleAnswer]);
 
-    const handleStartGame = async () => {
-      const fid = context?.user?.fid;
-      if (!fid) {
-        setError('Please connect your wallet');
-        return;
-      }
+  const handleStartGame = async () => {
+    const fid = context?.user?.fid;
+    if (!fid) {
+      setError('Farcaster authentication required. Please reload the app.');
+      return;
+    }
 
       const amount = customBet ? Number(customBet) : betAmount;
 
@@ -696,6 +754,18 @@
                     {error && (
                       <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
                         {error}
+                      </div>
+                    )}
+                    
+                    {platformWalletError && (
+                      <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
+                        ⚠️ {platformWalletError}
+                      </div>
+                    )}
+                    
+                    {walletBalanceError && (
+                      <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded-lg text-sm">
+                        ⚠️ {walletBalanceError}
                       </div>
                     )}
                     
@@ -1026,12 +1096,11 @@
               <div className="bg-gray-50 rounded-lg p-4 mb-6 max-h-[300px] overflow-y-auto">
                 <h3 className="font-semibold text-gray-800 mb-2">🏆 PRIZE STRUCTURE:</h3>
                 <div className="text-xs text-gray-700 space-y-1 pr-2">
-                  <div>Tier 1: ~{formatQT((status.weeklyPool?.lotteryPool || 0) * 0.25)} (25%)</div>
-                  <div>Tier 2: ~{formatQT((status.weeklyPool?.lotteryPool || 0) * 0.1)} each (10%)</div>
-                  <div>Tier 3: ~{formatQT((status.weeklyPool?.lotteryPool || 0) * 0.06)} each (6%)</div>
-                  <div>Tier 4: ~{formatQT((status.weeklyPool?.lotteryPool || 0) * 0.03)} each (3%)</div>
-                  <div>Tier 5: ~{formatQT((status.weeklyPool?.lotteryPool || 0) * 0.012)} each (1.2%)</div>
-                  <div>Tier 6: ~{formatQT((status.weeklyPool?.lotteryPool || 0) * 0.01)} each (1%)</div>
+                  <div>Tier 1 (1 winner): {formatQT((status.weeklyPool?.lotteryPool || 0) * 0.40)} (40%)</div>
+                  <div>Tier 2 (2 winners): {formatQT((status.weeklyPool?.lotteryPool || 0) * 0.125)} each (12.5%)</div>
+                  <div>Tier 3 (5 winners): {formatQT((status.weeklyPool?.lotteryPool || 0) * 0.04)} each (4%)</div>
+                  <div>Tier 4 (10 winners): {formatQT((status.weeklyPool?.lotteryPool || 0) * 0.01)} each (1%)</div>
+                  <div>Tier 5 (20 winners): {formatQT((status.weeklyPool?.lotteryPool || 0) * 0.0025)} each (0.25%)</div>
                 </div>
               </div>
 
