@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useMiniApp } from '@neynar/react';
-import { useAccount, useReadContract } from 'wagmi';
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { CheckCircle, XCircle } from 'lucide-react';
-import { formatUnits } from 'viem';
+import { formatUnits, parseUnits } from 'viem';
 import {
   formatQT,
   BET_MODE_MULTIPLIERS,
@@ -13,13 +13,23 @@ import {
   calculatePayout,
 } from '~/lib/betMode';
 
-// ERC20 ABI for balanceOf
+// ERC20 ABI for balanceOf and transfer
 const ERC20_ABI = [
   {
     inputs: [{ name: 'owner', type: 'address' }],
     name: 'balanceOf',
     outputs: [{ name: '', type: 'uint256' }],
     stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { name: 'to', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+    ],
+    name: 'transfer',
+    outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'nonpayable',
     type: 'function',
   },
 ] as const;
@@ -106,6 +116,18 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
   const [customBet, setCustomBet] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Deposit state
+  const [showDepositModal, setShowDepositModal] = useState(false);
+  const [depositAmount, setDepositAmount] = useState<string>('');
+  const [depositing, setDepositing] = useState(false);
+  const [platformWallet, setPlatformWallet] = useState<string | null>(null);
+  
+  // Wagmi hooks for deposit transaction
+  const { writeContract, data: depositTxHash, isPending: isDepositPending } = useWriteContract();
+  const { isLoading: isDepositConfirming, isSuccess: isDepositConfirmed } = useWaitForTransactionReceipt({
+    hash: depositTxHash,
+  });
 
   // Game state
   const [currentGame, setCurrentGame] = useState<any>(null);
@@ -164,6 +186,90 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
     const interval = setInterval(fetchStatus, 10000); // Refresh every 10s
     return () => clearInterval(interval);
   }, [fetchStatus]);
+  
+  // Fetch platform wallet address
+  useEffect(() => {
+    fetch('/api/bet-mode/platform-wallet')
+      .then(res => res.json())
+      .then(data => {
+        if (data.address) {
+          setPlatformWallet(data.address);
+        }
+      })
+      .catch(err => console.warn('Failed to fetch platform wallet:', err));
+  }, []);
+  
+  // Handle deposit transaction confirmation
+  useEffect(() => {
+    if (isDepositConfirmed && depositTxHash) {
+      handleDepositVerification(depositTxHash);
+    }
+  }, [isDepositConfirmed, depositTxHash]);
+  
+  const handleDepositVerification = async (txHash: string) => {
+    const fid = context?.user?.fid;
+    if (!fid) return;
+    
+    try {
+      setDepositing(true);
+      const res = await fetch('/api/bet-mode/deposit/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fid, txHash }),
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        setError(null);
+        setShowDepositModal(false);
+        setDepositAmount('');
+        await fetchStatus(); // Refresh balance
+      } else {
+        setError(data.error || 'Failed to verify deposit');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to verify deposit');
+    } finally {
+      setDepositing(false);
+    }
+  };
+  
+  const handleDeposit = async () => {
+    if (!platformWallet || !address || !depositAmount) {
+      setError('Please enter deposit amount');
+      return;
+    }
+    
+    const amount = parseFloat(depositAmount);
+    if (isNaN(amount) || amount <= 0) {
+      setError('Invalid deposit amount');
+      return;
+    }
+    
+    if (amount > walletBalance) {
+      setError('Insufficient wallet balance');
+      return;
+    }
+    
+    try {
+      setDepositing(true);
+      setError(null);
+      
+      // Convert to wei (18 decimals)
+      const amountWei = parseUnits(depositAmount, 18);
+      
+      // Send QT tokens to platform wallet
+      writeContract({
+        address: qtTokenAddress,
+        abi: ERC20_ABI,
+        functionName: 'transfer',
+        args: [platformWallet as `0x${string}`, amountWei],
+      });
+    } catch (err: any) {
+      setError(err.message || 'Failed to initiate deposit');
+      setDepositing(false);
+    }
+  };
 
   const handleAnswer = useCallback(async (answerIndex: number | null) => {
     if (!currentGame) return;
@@ -484,6 +590,15 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
               </div>
             )}
 
+            {!canBet && walletBalance > 0 && isConnected && (
+              <button
+                onClick={() => setShowDepositModal(true)}
+                className="w-full mb-3 py-3 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all"
+              >
+                💰 Deposit QT Tokens
+              </button>
+            )}
+            
             <button
               onClick={handleStartGame}
               disabled={loading || !canBet}
@@ -502,6 +617,79 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
             >
               View Lottery Info
             </button>
+            
+            {/* Deposit Modal */}
+            {showDepositModal && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+                  <h3 className="text-xl font-bold mb-4">Deposit QT Tokens</h3>
+                  
+                  {error && (
+                    <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
+                      {error}
+                    </div>
+                  )}
+                  
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Amount to Deposit:
+                    </label>
+                    <input
+                      type="number"
+                      value={depositAmount}
+                      onChange={(e) => setDepositAmount(e.target.value)}
+                      placeholder="Enter amount"
+                      className="w-full p-2 border border-gray-300 rounded-lg"
+                      disabled={depositing || isDepositPending || isDepositConfirming}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Wallet Balance: {formatQT(walletBalance)}
+                    </p>
+                  </div>
+                  
+                  {platformWallet && (
+                    <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                      <p className="text-xs text-gray-600 mb-1">Platform Wallet:</p>
+                      <p className="text-xs font-mono break-all">{platformWallet}</p>
+                    </div>
+                  )}
+                  
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setShowDepositModal(false);
+                        setDepositAmount('');
+                        setError(null);
+                      }}
+                      className="flex-1 py-2 px-4 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition-all"
+                      disabled={depositing || isDepositPending || isDepositConfirming}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleDeposit}
+                      disabled={depositing || isDepositPending || isDepositConfirming || !depositAmount}
+                      className="flex-1 py-2 px-4 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {depositing || isDepositPending || isDepositConfirming
+                        ? 'Processing...'
+                        : 'Deposit'}
+                    </button>
+                  </div>
+                  
+                  {(isDepositPending || isDepositConfirming) && depositTxHash && (
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                      <p className="text-xs text-blue-700">
+                        Transaction: {depositTxHash.slice(0, 10)}...{depositTxHash.slice(-8)}
+                      </p>
+                      <p className="text-xs text-blue-600 mt-1">
+                        {isDepositPending ? 'Waiting for confirmation...' : 'Verifying deposit...'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
