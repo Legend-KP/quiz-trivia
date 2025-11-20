@@ -564,17 +564,17 @@ const ERC20_ABI = [
     // Closed screen
     if (screen === 'closed') {
       return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
-          <div className="max-w-md mx-auto mt-20 mb-10">
-            <div className="bg-white rounded-2xl p-6 shadow-2xl text-center">
-              {onExit && (
-                <button
-                  onClick={onExit}
-                  className="mb-4 px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium float-left"
-                >
-                  ← Back
-                </button>
-              )}
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
+        <div className="max-w-md mx-auto mt-20 mb-10 pb-20">
+          <div className="bg-white rounded-2xl p-6 shadow-2xl text-center overflow-y-auto max-h-[calc(100vh-5rem)]">
+            {onExit && (
+              <button
+                onClick={onExit}
+                className="mb-4 px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium float-left"
+              >
+                ← Back
+              </button>
+            )}
               <div className="text-6xl mb-4">🎰</div>
               <h2 className="text-2xl font-bold mb-2 text-gray-800">Bet Mode</h2>
               <p className="text-gray-600 mb-6">🔴 Available 24/7</p>
@@ -904,11 +904,11 @@ const ERC20_ABI = [
           : 0;
       const canCashOut = questionNum >= 5;
 
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
-          <div className="max-w-md mx-auto mt-10 mb-10">
-            <div className="bg-white rounded-2xl p-6 shadow-2xl">
-              <div className="flex justify-between items-center mb-4">
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
+        <div className="max-w-md mx-auto mt-10 mb-10 pb-20">
+          <div className="bg-white rounded-2xl p-6 shadow-2xl overflow-y-auto max-h-[calc(100vh-5rem)]">
+            <div className="flex justify-between items-center mb-4">
                 <span className="text-sm font-semibold text-gray-700">
                   Question {questionNum} of 10
                 </span>
@@ -929,9 +929,9 @@ const ERC20_ABI = [
                 </div>
               </div>
 
-              <div className="mb-6 max-h-[400px] overflow-y-auto">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">{currentQuestion.text}</h3>
-                <div className="space-y-3 pr-2">
+            <div className="mb-6 max-h-[50vh] overflow-y-auto pr-2">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">{currentQuestion.text}</h3>
+              <div className="space-y-3">
                   {currentQuestion.options.map((option: string, index: number) => (
                     <button
                       key={index}
@@ -987,9 +987,9 @@ const ERC20_ABI = [
 
       return (
         <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
-          <div className="max-w-md mx-auto mt-20 mb-10">
-            <div className="bg-white rounded-2xl p-6 shadow-2xl text-center">
-              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+        <div className="max-w-md mx-auto mt-20 mb-10 pb-20">
+          <div className="bg-white rounded-2xl p-6 shadow-2xl text-center overflow-y-auto max-h-[calc(100vh-5rem)]">
+            <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
               <h2 className="text-2xl font-bold mb-2 text-gray-800">
                 {gameResult.type === 'cash-out' ? '✅ CASHED OUT!' : '🎉 YOU WON!'}
               </h2>
@@ -1024,9 +1024,9 @@ const ERC20_ABI = [
       const betAmount = currentGame?.betAmount || 0;
       return (
         <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
-          <div className="max-w-md mx-auto mt-20 mb-10">
-            <div className="bg-white rounded-2xl p-6 shadow-2xl text-center">
-              <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+        <div className="max-w-md mx-auto mt-20 mb-10 pb-20">
+          <div className="bg-white rounded-2xl p-6 shadow-2xl text-center overflow-y-auto max-h-[calc(100vh-5rem)]">
+            <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
               <h2 className="text-2xl font-bold mb-2 text-gray-800">❌ WRONG ANSWER</h2>
 
               {gameResult.explanation && (
@@ -1080,11 +1080,11 @@ const ERC20_ABI = [
       
       return (
         <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
-          <div className="max-w-md mx-auto mt-10 mb-10">
-            <div className="bg-white rounded-2xl p-6 shadow-2xl">
-              <div className="text-center mb-6">
-                <div className="text-5xl mb-2">🎰</div>
-                <h2 className="text-2xl font-bold text-gray-800">THIS WEEK&apos;S LOTTERY</h2>
+        <div className="max-w-md mx-auto mt-10 mb-10 pb-20">
+          <div className="bg-white rounded-2xl p-6 shadow-2xl overflow-y-auto max-h-[calc(100vh-5rem)]">
+            <div className="text-center mb-6">
+              <div className="text-5xl mb-2">🎰</div>
+              <h2 className="text-2xl font-bold text-gray-800">THIS WEEK&apos;S LOTTERY</h2>
                 {status?.window?.timeUntilSnapshot && (
                   <p className="text-sm text-gray-600 mt-2">
                     Snapshot in: {status.window.timeUntilSnapshot}
@@ -1121,7 +1121,7 @@ const ERC20_ABI = [
                 </div>
               </div>
 
-              <div className="bg-gray-50 rounded-lg p-4 mb-6 max-h-[300px] overflow-y-auto">
+              <div className="bg-gray-50 rounded-lg p-4 mb-6 max-h-[40vh] overflow-y-auto">
                 <h3 className="font-semibold text-gray-800 mb-2">🏆 PRIZE STRUCTURE:</h3>
                 <div className="text-xs text-gray-700 space-y-1 pr-2">
                   <div>Tier 1 (1 winner): {formatQT((status.weeklyPool?.lotteryPool || 0) * 0.40)} (40%)</div>
