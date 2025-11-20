@@ -5,6 +5,7 @@ import { useMiniApp } from '@neynar/react';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { CheckCircle, XCircle } from 'lucide-react';
 import { formatUnits, parseUnits } from 'viem';
+import sdk from '@farcaster/miniapp-sdk';
 import {
   formatQT,
   BET_MODE_MULTIPLIERS,
@@ -265,9 +266,27 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
         functionName: 'transfer',
         args: [platformWallet as `0x${string}`, amountWei],
       });
+      
+      // Note: The transaction will be handled by useWaitForTransactionReceipt
+      // which will trigger handleDepositVerification when confirmed
     } catch (err: any) {
-      setError(err.message || 'Failed to initiate deposit');
+      console.error('Deposit error:', err);
+      setError(err.message || 'Failed to initiate deposit. Please check your wallet connection.');
       setDepositing(false);
+    }
+  };
+  
+  const handleBuyQT = async () => {
+    try {
+      const QT_TOKEN_ADDRESS = "0x541529ADB3f344128aa87917fd2926E7D240FB07";
+      const CHAIN_ID = "8453"; // Base Mainnet
+      const TOKEN_ASSET_ID = `eip155:${CHAIN_ID}/erc20:${QT_TOKEN_ADDRESS}`;
+      
+      // Open QT token in Farcaster wallet where user can buy it
+      await sdk.actions.viewToken({ token: TOKEN_ASSET_ID });
+    } catch (err: any) {
+      console.error('Failed to open QT token:', err);
+      setError('Failed to open wallet. Please try again.');
     }
   };
 
@@ -490,9 +509,8 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
       );
     }
     
-    // Check if user has enough balance: need 2x the bet amount (MIN_BALANCE_MULTIPLIER)
-    const requiredBalance = betAmount * 2; // MIN_BALANCE_MULTIPLIER = 2
-    const canBet = (status?.balance?.availableBalance || 0) >= requiredBalance;
+    // Check if user has enough balance (no multiplier - just need bet amount)
+    const canBet = (status?.balance?.availableBalance || 0) >= betAmount;
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
@@ -592,23 +610,41 @@ export function BetModeTab({ onExit }: BetModeTabProps = {}) {
               </div>
             )}
 
-            {!canBet && walletBalance > 0 && isConnected && (
-              <button
-                onClick={() => setShowDepositModal(true)}
-                className="w-full mb-3 py-3 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all"
-              >
-                💰 Deposit QT Tokens
-              </button>
-            )}
-            
             {!canBet && (
-              <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-xs text-yellow-800 text-center">
-                  ⚠️ Minimum requirement: {formatQT(requiredBalance)} (2x your bet amount)
-                </p>
-                <p className="text-xs text-yellow-700 text-center mt-1">
-                  Your balance: {formatQT(status?.balance?.availableBalance || 0)}
-                </p>
+              <div className="mb-3 space-y-2">
+                {walletBalance >= MIN_BET && isConnected ? (
+                  // User has QT in wallet but not deposited - show deposit button
+                  <button
+                    onClick={() => setShowDepositModal(true)}
+                    className="w-full py-3 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all"
+                  >
+                    💰 Deposit QT Tokens ({formatQT(walletBalance)} available)
+                  </button>
+                ) : walletBalance < MIN_BET && isConnected ? (
+                  // User has wallet but not enough QT - show buy button
+                  <button
+                    onClick={handleBuyQT}
+                    className="w-full py-3 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 transition-all"
+                  >
+                    🛒 Buy QT Tokens (Need {formatQT(MIN_BET)} minimum)
+                  </button>
+                ) : (
+                  // User not connected - show connect message
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-xs text-yellow-800 text-center">
+                      ⚠️ Connect your wallet to deposit QT tokens
+                    </p>
+                  </div>
+                )}
+                
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <p className="text-xs text-gray-700 text-center">
+                    💼 Internal Balance: {formatQT(status?.balance?.availableBalance || 0)}
+                  </p>
+                  <p className="text-xs text-gray-600 text-center mt-1">
+                    Minimum bet: {formatQT(MIN_BET)}
+                  </p>
+                </div>
               </div>
             )}
             

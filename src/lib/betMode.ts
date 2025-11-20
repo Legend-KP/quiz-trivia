@@ -20,7 +20,6 @@ export const BET_MODE_MULTIPLIERS = [
 
 // Bet limits
 export const MIN_BET = 10000; // 10K QT
-export const MIN_BALANCE_MULTIPLIER = 2; // Must have 2x bet amount
 export const MAX_BET = 500000; // 500K QT
 
 // Time limits
@@ -283,10 +282,10 @@ export function validateBetAmount(betAmount: number, userBalance: number): {
   if (betAmount > MAX_BET) {
     return { valid: false, error: `Maximum bet is ${formatQT(MAX_BET)}` };
   }
-  if (userBalance < betAmount * MIN_BALANCE_MULTIPLIER) {
+  if (userBalance < betAmount) {
     return {
       valid: false,
-      error: `You need at least ${formatQT(betAmount * MIN_BALANCE_MULTIPLIER)} to bet ${formatQT(betAmount)}`,
+      error: `You need at least ${formatQT(betAmount)} to bet ${formatQT(betAmount)}`,
     };
   }
   return { valid: true };
