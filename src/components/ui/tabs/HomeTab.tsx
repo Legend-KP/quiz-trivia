@@ -333,12 +333,12 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
     }
   }, [added, actions]);
   return (
-    <div className="relative w-full h-screen overflow-hidden">
-      {/* Gradient Background - Full Frame */}
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-900 via-purple-800 to-orange-500"></div>
+    <div className="relative w-full h-screen overflow-y-auto">
+      {/* Gradient Background - Full Frame (Fixed) */}
+      <div className="fixed inset-0 bg-gradient-to-r from-blue-900 via-purple-800 to-orange-500 -z-10"></div>
       
-      {/* Grainy Texture Overlay */}
-      <div className="absolute inset-0 opacity-20">
+      {/* Grainy Texture Overlay (Fixed) */}
+      <div className="fixed inset-0 opacity-20 -z-10">
         <div className="w-full h-full" style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
         }}></div>
@@ -350,7 +350,7 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
       </div>
 
       {/* Content Container */}
-      <div className="relative z-10 flex flex-col items-center justify-start h-full px-6 text-center gap-4 pt-8 sm:pt-12 md:pt-16">
+      <div className="relative z-10 flex flex-col items-center justify-start min-h-full px-6 text-center gap-4 pt-8 sm:pt-12 md:pt-16 pb-24">
 
         {/* QUIZ TRIVIA - Title Image Only */}
         <div className="relative mb-2">
