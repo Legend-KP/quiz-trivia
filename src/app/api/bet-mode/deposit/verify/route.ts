@@ -47,33 +47,47 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Transaction receipt not found' }, { status: 404 });
     }
 
-    // Validate destination
-    if (tx.to?.toLowerCase() !== platformWallet.toLowerCase()) {
-      return NextResponse.json({ error: 'Invalid destination address' }, { status: 400 });
-    }
-
     // Check transaction status
     if (receipt.status !== 1) {
       return NextResponse.json({ error: 'Transaction failed' }, { status: 400 });
     }
 
     // Parse amount (QT token has 18 decimals)
-    // Note: This assumes QT is an ERC20 token. If tx.value is used, it's native ETH.
-    // For ERC20 transfers, we need to parse the transfer event logs.
+    // Note: For ERC20 token transfers, tx.to is the token contract address, not the recipient.
+    // The recipient is in the Transfer event log, so we need to parse that.
     let amountQT = 0;
+    let transferFound = false;
+
+    // Get QT token address from environment
+    const qtTokenAddress = process.env.QT_TOKEN_ADDRESS || process.env.NEXT_PUBLIC_QT_TOKEN_ADDRESS;
+    
+    // For ERC20 transfers, tx.to should be the token contract address
+    // If it's not, this might be a native ETH transfer (which we don't support for deposits)
+    if (qtTokenAddress && tx.to?.toLowerCase() !== qtTokenAddress.toLowerCase()) {
+      // This is not a QT token transfer - might be native ETH or wrong token
+      // We'll check Transfer events anyway, but log a warning
+      console.warn('Transaction to address does not match QT token contract:', {
+        txTo: tx.to,
+        expectedToken: qtTokenAddress,
+      });
+    }
 
     // Try to parse ERC20 Transfer event
     const transferEventSignature = ethers.id('Transfer(address,address,uint256)');
     const transferLog = receipt.logs.find((log) => {
       if (log.topics[0] === transferEventSignature) {
         // Check if it's to platform wallet
+        // Transfer event: topics[0] = event signature, topics[1] = from, topics[2] = to
         const toAddress = ethers.getAddress('0x' + log.topics[2].slice(-40));
-        return toAddress.toLowerCase() === platformWallet.toLowerCase();
+        if (toAddress.toLowerCase() === platformWallet.toLowerCase()) {
+          transferFound = true;
+          return true;
+        }
       }
       return false;
     });
 
-    if (transferLog) {
+    if (transferLog && transferFound) {
       // Parse Transfer event: Transfer(address indexed from, address indexed to, uint256 value)
       const iface = new ethers.Interface([
         'event Transfer(address indexed from, address indexed to, uint256 value)',
@@ -85,9 +99,17 @@ export async function POST(req: NextRequest) {
       if (decoded) {
         amountQT = parseFloat(ethers.formatUnits(decoded.args.value, 18));
       }
-    } else if (tx.value) {
-      // Fallback: if it's a native token transfer
-      amountQT = parseFloat(ethers.formatEther(tx.value));
+    } else {
+      // No valid Transfer event found to platform wallet
+      if (tx.value && tx.value > 0) {
+        // This is a native ETH transfer, not a token transfer
+        return NextResponse.json({ 
+          error: 'This appears to be a native ETH transfer. Please send QT tokens instead.' 
+        }, { status: 400 });
+      }
+      return NextResponse.json({ 
+        error: 'Invalid destination address. No QT token transfer to platform wallet found in transaction.' 
+      }, { status: 400 });
     }
 
     if (amountQT <= 0) {
