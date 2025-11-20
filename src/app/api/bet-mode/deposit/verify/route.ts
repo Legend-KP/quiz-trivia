@@ -150,7 +150,7 @@ export async function POST(req: NextRequest) {
       amount: amountQT,
       txHash,
       fromAddress: tx.from,
-      toAddress: tx.to,
+      toAddress: tx.to || undefined, // Convert null to undefined for TypeScript compatibility
       blockNumber: receipt.blockNumber,
       status: 'completed',
       createdAt: now,
