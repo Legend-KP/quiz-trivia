@@ -129,24 +129,32 @@ const ERC20_ABI = [
     },
   });
   
-  // Convert balance from wei to QT (18 decimals)
-  // Handle errors gracefully
-  let walletBalance = 0;
-  try {
+  // Convert balance from wei to QT (18 decimals) - use useState for walletBalance
+  const [walletBalance, setWalletBalance] = useState<number>(0);
+  
+  // Handle balance parsing in useEffect to avoid calling setState during render
+  useEffect(() => {
     if (walletBalanceRaw) {
-      walletBalance = parseFloat(formatUnits(walletBalanceRaw, 18));
-      setWalletBalanceError(null);
+      try {
+        const balance = parseFloat(formatUnits(walletBalanceRaw, 18));
+        setWalletBalance(balance);
+        setWalletBalanceError(null);
+      } catch (err: any) {
+        console.warn('Error parsing wallet balance:', err);
+        setWalletBalanceError('Failed to read wallet balance');
+        setWalletBalance(0);
+      }
+    } else {
+      setWalletBalance(0);
     }
-  } catch (err: any) {
-    console.warn('Error parsing wallet balance:', err);
-    setWalletBalanceError('Failed to read wallet balance');
-    walletBalance = 0;
-  }
+  }, [walletBalanceRaw]);
   
   // Log balance errors for debugging
-  if (balanceError) {
-    console.warn('Error reading wallet balance from contract:', balanceError);
-  }
+  useEffect(() => {
+    if (balanceError) {
+      console.warn('Error reading wallet balance from contract:', balanceError);
+    }
+  }, [balanceError]);
     
   // Wagmi hooks for deposit transaction
   const { writeContract, data: depositTxHash, isPending: isDepositPending, error: writeContractError } = useWriteContract();
