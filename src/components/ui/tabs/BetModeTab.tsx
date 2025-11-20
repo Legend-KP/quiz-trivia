@@ -231,23 +231,38 @@ const ERC20_ABI = [
     
   // Fetch platform wallet address
   useEffect(() => {
+    let isMounted = true;
+    
     fetch('/api/bet-mode/platform-wallet')
       .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch platform wallet');
+        if (!res.ok) {
+          return res.json().then(errData => {
+            throw new Error(errData.error || 'Failed to fetch platform wallet');
+          });
+        }
         return res.json();
       })
       .then(data => {
+        if (!isMounted) return;
+        
         if (data.address) {
           setPlatformWallet(data.address);
           setPlatformWalletError(null);
+        } else if (data.error) {
+          setPlatformWalletError(data.error);
         } else {
-          throw new Error('No platform wallet address returned');
+          setPlatformWalletError('No platform wallet address returned');
         }
       })
       .catch(err => {
+        if (!isMounted) return;
         console.error('Failed to fetch platform wallet:', err);
         setPlatformWalletError(err.message || 'Failed to load platform wallet');
       });
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
     
   // Handle deposit verification with useCallback to avoid stale closures
@@ -289,7 +304,11 @@ const ERC20_ABI = [
     const handleDeposit = async () => {
       // Validation
       if (!platformWallet) {
-        setError('Platform wallet not loaded. Please refresh the page.');
+        if (platformWalletError) {
+          setError(platformWalletError);
+        } else {
+          setError('Platform wallet is loading. Please wait...');
+        }
         return;
       }
       
@@ -759,15 +778,14 @@ const ERC20_ABI = [
                   <div className="bg-white rounded-2xl p-6 max-w-md w-full my-4 max-h-[90vh] overflow-y-auto">
                     <h3 className="text-xl font-bold mb-4">Deposit QT Tokens</h3>
                     
-                    {error && (
+                    {(error || platformWalletError) && (
                       <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
-                        {error}
-                      </div>
-                    )}
-                    
-                    {platformWalletError && (
-                      <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
-                        ⚠️ {platformWalletError}
+                        {error || platformWalletError}
+                        {platformWalletError && (
+                          <p className="text-xs mt-2 text-red-600">
+                            Note: PLATFORM_WALLET_ADDRESS environment variable needs to be configured on the server.
+                          </p>
+                        )}
                       </div>
                     )}
                     
@@ -844,11 +862,13 @@ const ERC20_ABI = [
                       </button>
                       <button
                         onClick={handleDeposit}
-                        disabled={depositing || isDepositPending || isDepositConfirming || !depositAmount}
+                        disabled={depositing || isDepositPending || isDepositConfirming || !depositAmount || !platformWallet || !!platformWalletError}
                         className="flex-1 py-2 px-4 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {depositing || isDepositPending || isDepositConfirming
                           ? 'Processing...'
+                          : platformWalletError
+                          ? 'Cannot Deposit'
                           : 'Deposit'}
                       </button>
                     </div>
