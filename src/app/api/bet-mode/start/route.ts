@@ -82,6 +82,14 @@ export async function POST(req: NextRequest) {
     const hard = shuffleArray(allQuestions.filter((q) => q.difficulty === 'hard'));
     const expert = shuffleArray(allQuestions.filter((q) => q.difficulty === 'expert'));
 
+    // Log for debugging
+    console.log('Question distribution:', {
+      total: allQuestions.length,
+      easyMedium: easyMedium.length,
+      hard: hard.length,
+      expert: expert.length,
+    });
+
     const selectedQuestions = [
       ...easyMedium.slice(0, 4),
       ...hard.slice(0, 3),
@@ -89,8 +97,22 @@ export async function POST(req: NextRequest) {
     ].slice(0, 10);
 
     if (selectedQuestions.length < 10) {
+      console.error('Not enough questions of required difficulty:', {
+        easyMediumCount: easyMedium.length,
+        hardCount: hard.length,
+        expertCount: expert.length,
+        selectedCount: selectedQuestions.length,
+      });
       return NextResponse.json(
-        { error: 'Not enough questions of required difficulty. Please contact admin.' },
+        { 
+          error: 'Not enough questions of required difficulty. Please contact admin.',
+          details: {
+            easyMedium: easyMedium.length,
+            hard: hard.length,
+            expert: expert.length,
+            total: allQuestions.length,
+          }
+        },
         { status: 500 }
       );
     }
