@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'You already have an active game' }, { status: 400 });
     }
 
-    // Get questions (shuffled)
+    // Get questions (shuffled) - any difficulty is allowed
     const questionsCollection = await getBetModeQuestionsCollection();
     const allQuestions = await questionsCollection
       .find({ isActive: true })
@@ -74,48 +74,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Shuffle and select 10 questions with progressive difficulty
-    // Q1-Q4: Easy/Medium, Q5-Q7: Hard, Q8-Q10: Expert
-    const easyMedium = shuffleArray(
-      allQuestions.filter((q) => q.difficulty === 'easy' || q.difficulty === 'medium')
-    );
-    const hard = shuffleArray(allQuestions.filter((q) => q.difficulty === 'hard'));
-    const expert = shuffleArray(allQuestions.filter((q) => q.difficulty === 'expert'));
-
-    // Log for debugging
-    console.log('Question distribution:', {
-      total: allQuestions.length,
-      easyMedium: easyMedium.length,
-      hard: hard.length,
-      expert: expert.length,
-    });
-
-    const selectedQuestions = [
-      ...easyMedium.slice(0, 4),
-      ...hard.slice(0, 3),
-      ...expert.slice(0, 3),
-    ].slice(0, 10);
-
-    if (selectedQuestions.length < 10) {
-      console.error('Not enough questions of required difficulty:', {
-        easyMediumCount: easyMedium.length,
-        hardCount: hard.length,
-        expertCount: expert.length,
-        selectedCount: selectedQuestions.length,
-      });
-      return NextResponse.json(
-        { 
-          error: 'Not enough questions of required difficulty. Please contact admin.',
-          details: {
-            easyMedium: easyMedium.length,
-            hard: hard.length,
-            expert: expert.length,
-            total: allQuestions.length,
-          }
-        },
-        { status: 500 }
-      );
-    }
+    // Shuffle and select any 10 questions (no difficulty requirement)
+    const shuffledQuestions = shuffleArray(allQuestions);
+    const selectedQuestions = shuffledQuestions.slice(0, 10);
 
     // Create game
     const weekId = getCurrentWeekId();
