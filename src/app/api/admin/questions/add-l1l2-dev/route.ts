@@ -98,7 +98,7 @@ const L1_L2_QUESTIONS = [
       'Fee market layer',
     ],
     correctIndex: 2,
-    difficulty: 'hard' as const,
+    difficulty: 'expert' as const,
     explanation: 'Rollups depend heavily on DA; without DA scaling, L2 fees rise (DA becomes bottleneck).',
     isActive: true,
   },
@@ -112,7 +112,7 @@ const L1_L2_QUESTIONS = [
       'Increase gas limits on L1',
     ],
     correctIndex: 1,
-    difficulty: 'hard' as const,
+    difficulty: 'expert' as const,
     explanation: 'Shared sequencers help coordinate ordering across multiple L2s, enabling interoperability.',
     isActive: true,
   },
@@ -155,16 +155,17 @@ const L1_L2_QUESTIONS = [
  */
 export async function POST(req: NextRequest) {
   try {
-    // Only allow in development (optional safety check)
-    // Remove this check if you want to use it in production (not recommended)
+    // Allow in all environments for now (you can restrict this later)
+    // For production, you may want to add a simple secret check instead
     const isDevelopment = process.env.NODE_ENV === 'development' || 
                          process.env.VERCEL_ENV !== 'production';
     
-    if (!isDevelopment) {
-      console.warn('⚠️  add-l1l2-dev endpoint called in production - this should be disabled!');
-      // Uncomment the line below to block in production:
-      // return NextResponse.json({ error: 'This endpoint is only available in development' }, { status: 403 });
-    }
+    // Optional: Add a simple secret check for production
+    // Uncomment the lines below to add basic protection:
+    // const secret = req.headers.get('x-secret') || req.nextUrl.searchParams.get('secret');
+    // if (!isDevelopment && secret !== process.env.QUESTION_ADD_SECRET) {
+    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // }
 
     const questionsCollection = await getBetModeQuestionsCollection();
     const now = Date.now();
