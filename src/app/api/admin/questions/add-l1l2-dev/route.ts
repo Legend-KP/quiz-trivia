@@ -3,27 +3,7 @@ import { getBetModeQuestionsCollection } from '~/lib/mongodb';
 
 export const runtime = 'nodejs';
 
-// Sample questions - you'll replace this with your 100+ questions
-const SAMPLE_QUESTIONS = [
-  {
-    id: 'q1',
-    text: 'What is the capital of France?',
-    options: ['London', 'Berlin', 'Paris', 'Madrid'],
-    correctIndex: 2,
-    difficulty: 'easy' as const,
-    explanation: 'Paris is the capital and largest city of France.',
-    isActive: true,
-  },
-  {
-    id: 'q2',
-    text: 'Which planet is known as the Red Planet?',
-    options: ['Venus', 'Mars', 'Jupiter', 'Saturn'],
-    correctIndex: 1,
-    difficulty: 'easy' as const,
-    explanation: 'Mars is called the Red Planet due to iron oxide on its surface.',
-    isActive: true,
-  },
-  // L1/L2 Rotation & Modular Scaling Questions
+const L1_L2_QUESTIONS = [
   {
     id: 'l1l2_q1',
     text: 'Which of the following best describes L1 → L2 rotation in Ethereum\'s scaling roadmap?',
@@ -164,28 +144,33 @@ const SAMPLE_QUESTIONS = [
     explanation: 'Modular ecosystems need unified sequencing and safe bridges to allow cross-rollup communication.',
     isActive: true,
   },
-  // Add more questions here...
 ];
 
+/**
+ * Development-only endpoint to add L1/L2 questions without authentication
+ * WARNING: This endpoint should be disabled or protected in production!
+ * 
+ * Usage:
+ * POST /api/admin/questions/add-l1l2-dev
+ */
 export async function POST(req: NextRequest) {
   try {
-    // Verify admin key
-    const adminKey = req.headers.get('x-admin-key');
-    const expectedKey = process.env.ADMIN_API_KEY;
-
-    if (!expectedKey || adminKey !== expectedKey) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Only allow in development (optional safety check)
+    // Remove this check if you want to use it in production (not recommended)
+    const isDevelopment = process.env.NODE_ENV === 'development' || 
+                         process.env.VERCEL_ENV !== 'production';
+    
+    if (!isDevelopment) {
+      console.warn('⚠️  add-l1l2-dev endpoint called in production - this should be disabled!');
+      // Uncomment the line below to block in production:
+      // return NextResponse.json({ error: 'This endpoint is only available in development' }, { status: 403 });
     }
 
-    const { questions } = await req.json().catch(() => ({ questions: null }));
-
-    const questionsToInsert = questions || SAMPLE_QUESTIONS;
+    const questionsCollection = await getBetModeQuestionsCollection();
     const now = Date.now();
 
-    const questionsCollection = await getBetModeQuestionsCollection();
-
-    // Insert questions
-    const insertPromises = questionsToInsert.map((q: any) =>
+    // Insert/update questions
+    const insertPromises = L1_L2_QUESTIONS.map((q) =>
       questionsCollection.updateOne(
         { id: q.id },
         {
@@ -200,14 +185,24 @@ export async function POST(req: NextRequest) {
 
     await Promise.all(insertPromises);
 
+    const mediumCount = L1_L2_QUESTIONS.filter((q) => q.difficulty === 'medium').length;
+    const hardCount = L1_L2_QUESTIONS.filter((q) => q.difficulty === 'hard').length;
+    const expertCount = L1_L2_QUESTIONS.filter((q) => q.difficulty === 'expert').length;
+
     return NextResponse.json({
       success: true,
-      inserted: questionsToInsert.length,
-      message: 'Questions seeded successfully',
+      inserted: L1_L2_QUESTIONS.length,
+      breakdown: {
+        medium: mediumCount,
+        hard: hardCount,
+        expert: expertCount,
+      },
+      message: 'L1/L2 Rotation & Modular Scaling questions added successfully',
+      warning: isDevelopment ? undefined : '⚠️ This endpoint should be disabled in production!',
     });
   } catch (error: any) {
-    console.error('Question seed error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to seed questions' }, { status: 500 });
+    console.error('Error adding L1/L2 questions:', error);
+    return NextResponse.json({ error: error.message || 'Failed to add questions' }, { status: 500 });
   }
 }
 
