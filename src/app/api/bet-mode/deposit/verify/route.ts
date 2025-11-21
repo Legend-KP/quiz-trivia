@@ -136,7 +136,6 @@ export async function POST(req: NextRequest) {
           qtTotalWagered: 0,
           qtTotalWon: 0,
           createdAt: now,
-          updatedAt: now,
         },
         $set: { updatedAt: now },
       },
