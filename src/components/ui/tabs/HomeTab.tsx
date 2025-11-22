@@ -1156,6 +1156,7 @@ export default function QuizTriviaApp() {
   const [balance, setBalance] = useState<number | null>(null);
   const [quizMode, setQuizMode] = useState<QuizMode>(QuizMode.CLASSIC);
   const [totalQuestions, setTotalQuestions] = useState(10);
+  const [betModeAction, setBetModeAction] = useState<'deposit' | 'withdraw' | null>(null);
 
   // Get Farcaster context
   const { context } = useMiniApp();
@@ -1171,6 +1172,17 @@ export default function QuizTriviaApp() {
   };
 
   const handleStartBetMode = () => {
+    setBetModeAction(null);
+    setCurrentScreen('bet-mode');
+  };
+
+  const handleDeposit = () => {
+    setBetModeAction('deposit');
+    setCurrentScreen('bet-mode');
+  };
+
+  const handleWithdraw = () => {
+    setBetModeAction('withdraw');
     setCurrentScreen('bet-mode');
   };
 

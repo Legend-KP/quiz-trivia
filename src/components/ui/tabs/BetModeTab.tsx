@@ -270,6 +270,20 @@ const ERC20_ABI = [
       const interval = setInterval(fetchStatus, 10000); // Refresh every 10s
       return () => clearInterval(interval);
     }, [fetchStatus]);
+
+    // Open deposit modal if requested from homepage
+    useEffect(() => {
+      if (openDepositModal) {
+        setShowDepositModal(true);
+      }
+    }, [openDepositModal]);
+
+    // Open withdraw modal if requested from homepage
+    useEffect(() => {
+      if (openWithdrawModal) {
+        setShowWithdrawModal(true);
+      }
+    }, [openWithdrawModal]);
     
   // Fetch platform wallet address
   useEffect(() => {
