@@ -200,7 +200,6 @@ async function handleWithdrawalEvent(
         toAddress: userAddress, // User's wallet address (receiver)
         txHash,
         blockNumber,
-        nonce: Number(nonce),
         status: 'pending', // Use valid status value
         createdAt: Date.now(),
       });
@@ -236,7 +235,6 @@ async function handleWithdrawalEvent(
       toAddress: userAddress, // User's wallet address (receiver)
       txHash,
       blockNumber,
-      nonce: Number(nonce),
       status: 'completed',
       createdAt: Number(timestamp) * 1000, // Convert to milliseconds timestamp
     });
