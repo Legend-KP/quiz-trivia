@@ -116,6 +116,11 @@ const ERC20_ABI = [
   const [platformWalletError, setPlatformWalletError] = useState<string | null>(null);
   const [walletBalanceError, setWalletBalanceError] = useState<string | null>(null);
   
+  // Withdrawal state
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState<string>('');
+  const [withdrawing, setWithdrawing] = useState(false);
+  
   // Read QT token balance from wallet
   // Only enable if we have a valid address and token address
   const { data: walletBalanceRaw, error: balanceError } = useReadContract({
@@ -550,6 +555,75 @@ const ERC20_ABI = [
       setError(null);
     };
 
+    const handleWithdraw = async () => {
+      if (!address) {
+        setError('Please connect your wallet first.');
+        return;
+      }
+
+      if (!withdrawAmount || withdrawAmount.trim() === '') {
+        setError('Please enter withdrawal amount');
+        return;
+      }
+
+      const amount = parseFloat(withdrawAmount);
+      if (isNaN(amount) || amount <= 0) {
+        setError('Invalid withdrawal amount');
+        return;
+      }
+
+      const availableBalance = status?.balance?.availableBalance || 0;
+      if (amount > availableBalance) {
+        setError(`Insufficient balance. You have ${formatQT(availableBalance)} QT available.`);
+        return;
+      }
+
+      // Minimum withdrawal check
+      const MIN_WITHDRAW = 1000; // 1K QT minimum
+      if (amount < MIN_WITHDRAW) {
+        setError(`Minimum withdrawal is ${formatQT(MIN_WITHDRAW)} QT`);
+        return;
+      }
+
+      try {
+        setWithdrawing(true);
+        setError(null);
+
+        const fid = context?.user?.fid;
+        if (!fid) {
+          throw new Error('Farcaster authentication required');
+        }
+
+        const res = await fetch('/api/bet-mode/withdraw', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fid,
+            amount,
+            toAddress: address,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to process withdrawal');
+        }
+
+        // Success
+        setShowWithdrawModal(false);
+        setWithdrawAmount('');
+        await fetchStatus(); // Refresh balance
+        setError(null);
+        // Show success message
+        alert(`Withdrawal successful! ${formatQT(amount)} QT sent to your wallet.\nTransaction: ${data.txHash}`);
+      } catch (err: any) {
+        setError(err.message || 'Failed to process withdrawal');
+      } finally {
+        setWithdrawing(false);
+      }
+    };
+
     if (!status) {
       return (
         <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 flex items-center justify-center">
@@ -765,12 +839,136 @@ const ERC20_ABI = [
                 {loading ? 'Starting...' : canBet ? 'START GAME' : 'INSUFFICIENT BALANCE'}
               </button>
 
+              {/* Withdraw button - show if user has balance */}
+              {(status?.balance?.availableBalance || 0) > 0 && (
+                <button
+                  onClick={() => setShowWithdrawModal(true)}
+                  className="w-full mt-3 py-2 px-4 rounded-lg bg-orange-100 text-orange-700 font-semibold hover:bg-orange-200 transition-all"
+                >
+                  💸 Withdraw QT Tokens
+                </button>
+              )}
+
               <button
                 onClick={() => setScreen('lottery')}
                 className="w-full mt-3 py-2 px-4 rounded-lg bg-purple-100 text-purple-700 font-semibold hover:bg-purple-200 transition-all"
               >
                 View Lottery Info
               </button>
+              
+              {/* Withdrawal Modal */}
+              {showWithdrawModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+                  <div className="bg-white rounded-2xl p-6 max-w-md w-full my-4 max-h-[90vh] overflow-y-auto">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-xl font-bold">Withdraw QT Tokens</h3>
+                      <button
+                        onClick={() => {
+                          setShowWithdrawModal(false);
+                          setWithdrawAmount('');
+                          setError(null);
+                        }}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    
+                    {error && (
+                      <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
+                        {error}
+                      </div>
+                    )}
+                    
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Withdrawal Amount
+                      </label>
+                      <div className="flex gap-2 mb-2">
+                        {[
+                          Math.min(10000, status?.balance?.availableBalance || 0),
+                          Math.min(50000, status?.balance?.availableBalance || 0),
+                          Math.min(100000, status?.balance?.availableBalance || 0),
+                        ]
+                          .filter((amt) => amt > 0)
+                          .map((amount) => (
+                            <button
+                              key={amount}
+                              onClick={() => setWithdrawAmount(amount.toString())}
+                              className="flex-1 py-2 px-3 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm font-medium"
+                            >
+                              {formatQT(amount)}
+                            </button>
+                          ))}
+                      </div>
+                      <input
+                        type="number"
+                        placeholder="Enter amount"
+                        value={withdrawAmount}
+                        onChange={(e) => {
+                          setWithdrawAmount(e.target.value);
+                          setError(null);
+                        }}
+                        className="w-full p-3 border border-gray-300 rounded-lg"
+                        min={1000}
+                        max={status?.balance?.availableBalance || 0}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Available: {formatQT(status?.balance?.availableBalance || 0)} QT
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Min: {formatQT(1000)} QT
+                      </p>
+                    </div>
+
+                    {address && (
+                      <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                        <p className="text-xs text-gray-600 mb-1">Withdrawing to:</p>
+                        <p className="text-sm font-mono text-gray-800 break-all">
+                          {address}
+                        </p>
+                      </div>
+                    )}
+
+                    {!address && (
+                      <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p className="text-xs text-yellow-800">
+                          ⚠️ Please connect your wallet to withdraw
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => {
+                          setShowWithdrawModal(false);
+                          setWithdrawAmount('');
+                          setError(null);
+                        }}
+                        className="flex-1 py-3 px-4 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition-all"
+                        disabled={withdrawing}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleWithdraw}
+                        disabled={withdrawing || !address || !withdrawAmount}
+                        className={`flex-1 py-3 px-4 rounded-lg font-semibold text-white transition-all ${
+                          withdrawing || !address || !withdrawAmount
+                            ? 'bg-gray-400 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700'
+                        }`}
+                      >
+                        {withdrawing ? 'Processing...' : 'Withdraw'}
+                      </button>
+                    </div>
+
+                    <p className="text-xs text-gray-500 mt-4 text-center">
+                      Tokens will be sent from the platform wallet to your connected wallet address.
+                    </p>
+                  </div>
+                </div>
+              )}
               
               {/* Deposit Modal */}
               {showDepositModal && (
