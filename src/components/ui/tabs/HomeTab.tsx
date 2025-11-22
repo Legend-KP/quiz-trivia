@@ -1230,6 +1230,8 @@ export default function QuizTriviaApp() {
             onShowRules={handleShowRules}
             onStartWeeklyQuiz={handleStartWeeklyQuiz}
             onStartBetMode={handleStartBetMode}
+            onDeposit={handleDeposit}
+            onWithdraw={handleWithdraw}
           />
         </>
       )}
@@ -1263,7 +1265,14 @@ export default function QuizTriviaApp() {
       )}
 
       {currentScreen === 'bet-mode' && (
-        <BetModeTab onExit={() => setCurrentScreen('home')} />
+        <BetModeTab 
+          onExit={() => {
+            setBetModeAction(null);
+            setCurrentScreen('home');
+          }} 
+          openDepositModal={betModeAction === 'deposit'}
+          openWithdrawModal={betModeAction === 'withdraw'}
+        />
       )}
 
       {currentScreen === 'results-submit' && (
