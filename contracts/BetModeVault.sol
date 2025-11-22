@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 /**
  * @title BetModeVault
@@ -21,6 +22,7 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
  */
 contract BetModeVault is Ownable, Pausable, ReentrancyGuard {
     using ECDSA for bytes32;
+    using MessageHashUtils for bytes32;
 
     // ===== STATE VARIABLES =====
     
@@ -181,8 +183,8 @@ contract BetModeVault is Ownable, Pausable, ReentrancyGuard {
             address(this)
         ));
         
-        bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
-        address signer = ethSignedMessageHash.recover(signature);
+        bytes32 ethSignedMessageHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
+        address signer = ECDSA.recover(ethSignedMessageHash, signature);
         
         if (signer != adminSigner) revert InvalidSignature();
         
