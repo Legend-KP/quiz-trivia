@@ -136,12 +136,13 @@ async function handleDepositEvent(
 
     // Record transaction
     const transactions = await getQTTransactionsCollection();
+    const contractAddress = getBetModeVaultAddress();
     await transactions.insertOne({
       fid,
       type: 'deposit',
       amount: amountInQT,
-      contractAmount: amount.toString(),
-      walletAddress: userAddress,
+      fromAddress: userAddress, // User's wallet address (sender)
+      toAddress: contractAddress, // Contract address (receiver)
       txHash,
       blockNumber,
       status: 'completed',
