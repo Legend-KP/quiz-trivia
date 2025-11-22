@@ -120,6 +120,10 @@ const ERC20_ABI = [
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState<string>('');
   const [withdrawing, setWithdrawing] = useState(false);
+  const [withdrawalSuccess, setWithdrawalSuccess] = useState<{
+    amount: number;
+    txHash: string;
+  } | null>(null);
   
   // Read QT token balance from wallet
   // Only enable if we have a valid address and token address
@@ -616,7 +620,10 @@ const ERC20_ABI = [
         await fetchStatus(); // Refresh balance
         setError(null);
         // Show success message
-        alert(`Withdrawal successful! ${formatQT(amount)} QT sent to your wallet.\nTransaction: ${data.txHash}`);
+        setWithdrawalSuccess({
+          amount,
+          txHash: data.txHash,
+        });
       } catch (err: any) {
         setError(err.message || 'Failed to process withdrawal');
       } finally {
@@ -640,34 +647,34 @@ const ERC20_ABI = [
       return (
       <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
         <div className="max-w-md mx-auto mt-20 mb-10 pb-20">
-          <div className="bg-white rounded-2xl p-6 shadow-2xl text-center overflow-y-auto max-h-[calc(100vh-5rem)]">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-2xl text-center overflow-y-auto max-h-[calc(100vh-5rem)]">
             {onExit && (
               <button
                 onClick={onExit}
-                className="mb-4 px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium float-left"
+                className="mb-4 px-3 py-1 rounded bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium float-left"
               >
                 ← Back
               </button>
             )}
               <div className="text-6xl mb-4">🎰</div>
-              <h2 className="text-2xl font-bold mb-2 text-gray-800">Bet Mode</h2>
-              <p className="text-gray-600 mb-6">🔴 Available 24/7</p>
+              <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100">Bet Mode</h2>
+              <p className="text-gray-700 dark:text-gray-300 mb-6">🔴 Available 24/7</p>
 
-              <div className="bg-gray-100 rounded-lg p-4 mb-6">
-                <p className="text-sm text-gray-700 mb-2">⏰ NEXT LOTTERY DRAW:</p>
-                <p className="text-2xl font-bold text-gray-900">
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 mb-6">
+                <p className="text-sm text-gray-900 dark:text-gray-100 mb-2">⏰ NEXT LOTTERY DRAW:</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                   {status.window.timeUntilDraw || 'Calculating...'}
                 </p>
               </div>
 
-              <div className="text-left bg-gray-50 rounded-lg p-4 mb-6">
-                <p className="text-sm text-gray-600 mb-2">
+              <div className="text-left bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-6">
+                <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
                   🎮 Game Mode: Always Open (24/7)
                 </p>
-                <p className="text-sm text-gray-600 mb-2">
+                <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
                   🎰 Lottery Draw: Weekly (Friday 2:00 PM UTC)
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-700 dark:text-gray-300">
                   🔥 Token Burn: Weekly (Friday 2:30 PM UTC)
                 </p>
               </div>
@@ -694,21 +701,21 @@ const ERC20_ABI = [
       return (
         <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
           <div className="max-w-md mx-auto mt-10 mb-10 pb-20">
-            <div className="bg-white rounded-2xl p-6 shadow-2xl overflow-y-auto max-h-[calc(100vh-5rem)]">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-2xl overflow-y-auto max-h-[calc(100vh-5rem)]">
               {onExit && (
                 <button
                   onClick={onExit}
-                  className="mb-4 px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium"
+                  className="mb-4 px-3 py-1 rounded bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium"
                 >
                   ← Back
                 </button>
               )}
               <div className="text-center mb-6">
                 <div className="text-5xl mb-2">🎰</div>
-                <h2 className="text-2xl font-bold text-gray-800">BET MODE</h2>
-                <p className="text-sm text-green-600 font-semibold mt-1">🔴 LIVE 24/7!</p>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">BET MODE</h2>
+                <p className="text-sm text-green-600 dark:text-green-400 font-semibold mt-1">🔴 LIVE 24/7!</p>
                 {status.window.timeUntilDraw && (
-                  <p className="text-xs text-gray-600 mt-2">
+                  <p className="text-xs text-gray-700 dark:text-gray-300 mt-2">
                     Next lottery draw: {status.window.timeUntilDraw}
                   </p>
                 )}
@@ -721,7 +728,7 @@ const ERC20_ABI = [
               )}
 
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
                   Choose your bet:
                 </label>
                 <div className="grid grid-cols-2 gap-2 mb-3">
@@ -738,8 +745,8 @@ const ERC20_ABI = [
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
-                      <div className="font-semibold">{formatQT(amount)}</div>
-                      <div className="text-xs text-gray-600">
+                      <div className="font-semibold text-gray-900 dark:text-gray-100">{formatQT(amount)}</div>
+                      <div className="text-xs text-gray-700 dark:text-gray-300">
                         Win up to {formatQT(amount * BET_MODE_MULTIPLIERS[10])}
                       </div>
                     </button>
@@ -754,35 +761,35 @@ const ERC20_ABI = [
                       setCustomBet(e.target.value);
                       if (e.target.value) setBetAmount(Number(e.target.value));
                     }}
-                    className="w-full p-2 border border-gray-300 rounded-lg"
+                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                     min={MIN_BET}
                     max={MAX_BET}
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                     Min: {formatQT(MIN_BET)} | Max: {formatQT(MAX_BET)}
                   </p>
                 </div>
               </div>
 
               {status && (
-                <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-6">
                   <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-600">💰 Your Balance:</span>
-                    <span className="font-semibold">{formatQT(status.balance?.availableBalance || 0)}</span>
+                    <span className="text-gray-700 dark:text-gray-300">💰 Your Balance:</span>
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">{formatQT(status.balance?.availableBalance || 0)}</span>
                   </div>
                   {isConnected && address && (
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-gray-600">💼 Wallet Balance:</span>
-                      <span className="font-semibold">{formatQT(walletBalance)}</span>
+                      <span className="text-gray-700 dark:text-gray-300">💼 Wallet Balance:</span>
+                      <span className="font-semibold text-gray-900 dark:text-gray-100">{formatQT(walletBalance)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-600">🎟️ Your Tickets:</span>
-                    <span className="font-semibold">{(status.lottery?.userTickets || 0).toFixed(1)}</span>
+                    <span className="text-gray-700 dark:text-gray-300">🎟️ Your Tickets:</span>
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">{(status.lottery?.userTickets || 0).toFixed(1)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">📊 Pool:</span>
-                    <span className="font-semibold">
+                    <span className="text-gray-700 dark:text-gray-300">📊 Pool:</span>
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">
                       {formatQT(status.weeklyPool?.lotteryPool || 0)}
                     </span>
                   </div>
@@ -816,11 +823,11 @@ const ERC20_ABI = [
                     </div>
                   )}
                   
-                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                    <p className="text-xs text-gray-700 text-center">
+                  <div className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                    <p className="text-xs text-gray-900 dark:text-gray-100 text-center">
                       💼 Internal Balance: {formatQT(status?.balance?.availableBalance || 0)}
                     </p>
-                    <p className="text-xs text-gray-600 text-center mt-1">
+                    <p className="text-xs text-gray-700 dark:text-gray-300 text-center mt-1">
                       Minimum bet: {formatQT(MIN_BET)}
                     </p>
                   </div>
@@ -843,7 +850,7 @@ const ERC20_ABI = [
               {(status?.balance?.availableBalance || 0) > 0 && (
                 <button
                   onClick={() => setShowWithdrawModal(true)}
-                  className="w-full mt-3 py-2 px-4 rounded-lg bg-orange-100 text-orange-700 font-semibold hover:bg-orange-200 transition-all"
+                  className="w-full mt-3 py-2 px-4 rounded-lg bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-200 font-semibold hover:bg-orange-200 dark:hover:bg-orange-800 transition-all"
                 >
                   💸 Withdraw QT Tokens
                 </button>
@@ -851,7 +858,7 @@ const ERC20_ABI = [
 
               <button
                 onClick={() => setScreen('lottery')}
-                className="w-full mt-3 py-2 px-4 rounded-lg bg-purple-100 text-purple-700 font-semibold hover:bg-purple-200 transition-all"
+                className="w-full mt-3 py-2 px-4 rounded-lg bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-200 font-semibold hover:bg-purple-200 dark:hover:bg-purple-800 transition-all"
               >
                 View Lottery Info
               </button>
@@ -859,16 +866,16 @@ const ERC20_ABI = [
               {/* Withdrawal Modal */}
               {showWithdrawModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-                  <div className="bg-white rounded-2xl p-6 max-w-md w-full my-4 max-h-[90vh] overflow-y-auto">
+                  <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-md w-full my-4 max-h-[90vh] overflow-y-auto">
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-xl font-bold">Withdraw QT Tokens</h3>
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Withdraw QT Tokens</h3>
                       <button
                         onClick={() => {
                           setShowWithdrawModal(false);
                           setWithdrawAmount('');
                           setError(null);
                         }}
-                        className="text-gray-500 hover:text-gray-700"
+                        className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                       >
                         ✕
                       </button>
@@ -881,7 +888,7 @@ const ERC20_ABI = [
                     )}
                     
                     <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
                         Withdrawal Amount
                       </label>
                       <div className="flex gap-2 mb-2">
@@ -895,44 +902,58 @@ const ERC20_ABI = [
                             <button
                               key={amount}
                               onClick={() => setWithdrawAmount(amount.toString())}
-                              className="flex-1 py-2 px-3 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm font-medium"
+                              className="flex-1 py-2 px-3 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-sm font-medium text-gray-900 dark:text-gray-100"
                             >
                               {formatQT(amount)}
                             </button>
                           ))}
                       </div>
-                      <input
-                        type="number"
-                        placeholder="Enter amount"
-                        value={withdrawAmount}
-                        onChange={(e) => {
-                          setWithdrawAmount(e.target.value);
-                          setError(null);
-                        }}
-                        className="w-full p-3 border border-gray-300 rounded-lg"
-                        min={1000}
-                        max={status?.balance?.availableBalance || 0}
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
+                      <div className="relative">
+                        <input
+                          type="number"
+                          placeholder="Enter amount"
+                          value={withdrawAmount}
+                          onChange={(e) => {
+                            setWithdrawAmount(e.target.value);
+                            setError(null);
+                          }}
+                          className="w-full p-3 pr-20 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                          min={1000}
+                          max={status?.balance?.availableBalance || 0}
+                        />
+                        <button
+                          onClick={() => {
+                            const maxAmount = status?.balance?.availableBalance || 0;
+                            if (maxAmount > 0) {
+                              setWithdrawAmount(maxAmount.toString());
+                              setError(null);
+                            }
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900 hover:bg-blue-100 dark:hover:bg-blue-800 rounded-md transition-all"
+                        >
+                          Max
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                         Available: {formatQT(status?.balance?.availableBalance || 0)} QT
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
                         Min: {formatQT(1000)} QT
                       </p>
                     </div>
 
                     {address && (
-                      <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                        <p className="text-xs text-gray-600 mb-1">Withdrawing to:</p>
-                        <p className="text-sm font-mono text-gray-800 break-all">
+                      <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <p className="text-xs text-gray-700 dark:text-gray-300 mb-1">Withdrawing to:</p>
+                        <p className="text-sm font-mono text-gray-900 dark:text-gray-100 break-all">
                           {address}
                         </p>
                       </div>
                     )}
 
                     {!address && (
-                      <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <p className="text-xs text-yellow-800">
+                      <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+                        <p className="text-xs text-yellow-800 dark:text-yellow-200">
                           ⚠️ Please connect your wallet to withdraw
                         </p>
                       </div>
@@ -963,9 +984,62 @@ const ERC20_ABI = [
                       </button>
                     </div>
 
-                    <p className="text-xs text-gray-500 mt-4 text-center">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-4 text-center">
                       Tokens will be sent from the platform wallet to your connected wallet address.
                     </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Withdrawal Success Modal */}
+              {withdrawalSuccess && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                  <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+                    <div className="text-center">
+                      <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                        <svg
+                          className="h-8 w-8 text-green-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                        Withdrawal Successful! 🎉
+                      </h3>
+                      <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">
+                        {formatQT(withdrawalSuccess.amount)} QT has been sent to your wallet
+                      </p>
+                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-4">
+                        <p className="text-xs text-gray-700 dark:text-gray-300 mb-1">Transaction Hash:</p>
+                        <p className="text-sm font-mono text-gray-900 dark:text-gray-100 break-all">
+                          {withdrawalSuccess.txHash}
+                        </p>
+                        <a
+                          href={`https://basescan.org/tx/${withdrawalSuccess.txHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 mt-2 inline-block"
+                        >
+                          View on BaseScan →
+                        </a>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setWithdrawalSuccess(null);
+                        }}
+                        className="w-full py-3 px-4 rounded-lg bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-semibold transition-all"
+                      >
+                        Done
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -973,7 +1047,7 @@ const ERC20_ABI = [
               {/* Deposit Modal */}
               {showDepositModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-                  <div className="bg-white rounded-2xl p-6 max-w-md w-full my-4 max-h-[90vh] overflow-y-auto">
+                  <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-md w-full my-4 max-h-[90vh] overflow-y-auto">
                     <h3 className="text-xl font-bold mb-4">Deposit QT Tokens</h3>
                     
                     {(error || platformWalletError) && (
@@ -1009,11 +1083,11 @@ const ERC20_ABI = [
                               setError(null);
                             }}
                             disabled={depositing || isDepositPending || isDepositConfirming || amount > walletBalance}
-                            className={`p-2 rounded-lg text-xs font-semibold transition-all ${
-                              amount > walletBalance
-                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-                            }`}
+                             className={`p-2 rounded-lg text-xs font-semibold transition-all ${
+                               amount > walletBalance
+                                 ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                                 : 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-800'
+                             }`}
                           >
                             {formatQT(amount)}
                           </button>
@@ -1030,19 +1104,19 @@ const ERC20_ABI = [
                         placeholder={`Min: ${formatQT(MIN_BET)}`}
                         min={MIN_BET}
                         max={walletBalance}
-                        className="w-full p-2 border border-gray-300 rounded-lg"
+                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                         disabled={depositing || isDepositPending || isDepositConfirming}
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mt-1">
                         <span>Min: {formatQT(MIN_BET)}</span>
                         <span>Available: {formatQT(walletBalance)}</span>
                       </div>
                     </div>
                     
                     {platformWallet && (
-                      <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                        <p className="text-xs text-gray-600 mb-1">Platform Wallet:</p>
-                        <p className="text-xs font-mono break-all">{platformWallet}</p>
+                      <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <p className="text-xs text-gray-700 dark:text-gray-300 mb-1">Platform Wallet:</p>
+                        <p className="text-xs font-mono break-all text-gray-900 dark:text-gray-100">{platformWallet}</p>
                       </div>
                     )}
                     
@@ -1072,11 +1146,11 @@ const ERC20_ABI = [
                     </div>
                     
                     {(isDepositPending || isDepositConfirming) && depositTxHash && (
-                      <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                        <p className="text-xs text-blue-700">
+                      <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                        <p className="text-xs text-blue-700 dark:text-blue-200">
                           Transaction: {depositTxHash.slice(0, 10)}...{depositTxHash.slice(-8)}
                         </p>
-                        <p className="text-xs text-blue-600 mt-1">
+                        <p className="text-xs text-blue-600 dark:text-blue-300 mt-1">
                           {isDepositPending ? 'Waiting for confirmation...' : 'Verifying deposit...'}
                         </p>
                       </div>
@@ -1105,22 +1179,22 @@ const ERC20_ABI = [
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
         <div className="max-w-md mx-auto mt-10 mb-10 pb-20">
-          <div className="bg-white rounded-2xl p-6 shadow-2xl overflow-y-auto max-h-[calc(100vh-5rem)]">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-2xl overflow-y-auto max-h-[calc(100vh-5rem)]">
             <div className="flex justify-between items-center mb-4">
-                <span className="text-sm font-semibold text-gray-700">
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                   Question {questionNum} of 10
                 </span>
                 {/* Timer removed for testing */}
               </div>
 
-              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 mb-6 border-2 border-yellow-200">
+              <div className="bg-gradient-to-r from-yellow-50 dark:from-yellow-900 to-orange-50 dark:to-orange-900 rounded-lg p-4 mb-6 border-2 border-yellow-200 dark:border-yellow-700">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-yellow-800 mb-1">
+                  <div className="text-2xl font-bold text-yellow-800 dark:text-yellow-200 mb-1">
                     💰 {formatQT(currentPayout)}
                   </div>
-                  <div className="text-sm text-yellow-700">Current Value</div>
+                  <div className="text-sm text-yellow-700 dark:text-yellow-300">Current Value</div>
                   {nextPayout > 0 && (
-                    <div className="text-xs text-yellow-600 mt-1">
+                    <div className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
                       Next: {formatQT(nextPayout)}
                     </div>
                   )}
@@ -1128,7 +1202,7 @@ const ERC20_ABI = [
               </div>
 
             <div className="mb-6 max-h-[50vh] overflow-y-auto pr-2">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">{currentQuestion.text}</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">{currentQuestion.text}</h3>
               <div className="space-y-3">
                   {currentQuestion.options.map((option: string, index: number) => (
                     <button
@@ -1140,9 +1214,9 @@ const ERC20_ABI = [
                       disabled={loading || selectedAnswer !== null}
                       className={`w-full p-4 rounded-lg border-2 text-left transition-all ${
                         selectedAnswer === index
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      } ${loading || selectedAnswer !== null ? 'opacity-50' : ''}`}
+                          ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                      } ${loading || selectedAnswer !== null ? 'opacity-50' : ''} text-gray-900 dark:text-gray-100`}
                     >
                       <span className="font-semibold mr-2">{String.fromCharCode(65 + index)})</span>
                       {option}
@@ -1186,21 +1260,21 @@ const ERC20_ABI = [
       return (
         <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
         <div className="max-w-md mx-auto mt-20 mb-10 pb-20">
-          <div className="bg-white rounded-2xl p-6 shadow-2xl text-center overflow-y-auto max-h-[calc(100vh-5rem)]">
-            <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold mb-2 text-gray-800">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-2xl text-center overflow-y-auto max-h-[calc(100vh-5rem)]">
+            <CheckCircle className="w-16 h-16 text-green-500 dark:text-green-400 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100">
                 {gameResult.type === 'cash-out' ? '✅ CASHED OUT!' : '🎉 YOU WON!'}
               </h2>
-              <p className="text-gray-600 mb-6">Smart move! You secured:</p>
+              <p className="text-gray-700 dark:text-gray-300 mb-6">Smart move! You secured:</p>
 
-              <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-6 mb-6 border-2 border-green-200 max-h-[30vh] overflow-y-auto">
-                <div className="text-3xl font-bold text-green-800 mb-2">
+              <div className="bg-gradient-to-r from-green-50 dark:from-green-900 to-blue-50 dark:to-blue-900 rounded-lg p-6 mb-6 border-2 border-green-200 dark:border-green-700 max-h-[30vh] overflow-y-auto">
+                <div className="text-3xl font-bold text-green-800 dark:text-green-200 mb-2">
                   💰 {formatQT(gameResult.payout)}
                 </div>
-                <div className="text-lg text-green-700">
+                <div className="text-lg text-green-700 dark:text-green-300">
                   Profit: +{formatQT(profit)} ({profitPercent}%)
                 </div>
-                <div className="text-sm text-gray-600 mt-2">
+                <div className="text-sm text-gray-700 dark:text-gray-300 mt-2">
                   🎟️ Tickets earned: {gameResult.ticketsEarned || 0}
                 </div>
               </div>
@@ -1223,21 +1297,21 @@ const ERC20_ABI = [
       return (
         <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
         <div className="max-w-md mx-auto mt-20 mb-10 pb-20">
-          <div className="bg-white rounded-2xl p-6 shadow-2xl text-center overflow-y-auto max-h-[calc(100vh-5rem)]">
-            <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold mb-2 text-gray-800">❌ WRONG ANSWER</h2>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-2xl text-center overflow-y-auto max-h-[calc(100vh-5rem)]">
+            <XCircle className="w-16 h-16 text-red-500 dark:text-red-400 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100">❌ WRONG ANSWER</h2>
 
               {gameResult.explanation && (
-                <div className="bg-blue-50 rounded-lg p-3 mb-4 border border-blue-200">
-                  <p className="text-sm text-blue-800">{gameResult.explanation}</p>
+                <div className="bg-blue-50 dark:bg-blue-900 rounded-lg p-3 mb-4 border border-blue-200 dark:border-blue-700">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">{gameResult.explanation}</p>
                 </div>
               )}
 
-              <div className="bg-red-50 rounded-lg p-4 mb-6 border-2 border-red-200 max-h-[30vh] overflow-y-auto">
-                <div className="text-xl font-bold text-red-800 mb-2">
+              <div className="bg-red-50 dark:bg-red-900 rounded-lg p-4 mb-6 border-2 border-red-200 dark:border-red-700 max-h-[30vh] overflow-y-auto">
+                <div className="text-xl font-bold text-red-800 dark:text-red-200 mb-2">
                   Lost: {formatQT(betAmount)}
                 </div>
-                <div className="text-sm text-red-700">
+                <div className="text-sm text-red-700 dark:text-red-300">
                   But your loss contributes to:
                   <div className="mt-2 text-left">
                     <div>• {formatQT(gameResult.lossDistribution?.toBurn || 0)} burned 🔥</div>
@@ -1247,8 +1321,8 @@ const ERC20_ABI = [
                 </div>
               </div>
 
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                <div className="text-sm text-gray-700">
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-6">
+                <div className="text-sm text-gray-700 dark:text-gray-300">
                   🎟️ You earned {gameResult.ticketsEarned || 0} lottery tickets!
                 </div>
               </div>
@@ -1279,49 +1353,49 @@ const ERC20_ABI = [
       return (
         <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
         <div className="max-w-md mx-auto mt-10 mb-10 pb-20">
-          <div className="bg-white rounded-2xl p-6 shadow-2xl overflow-y-auto max-h-[calc(100vh-5rem)]">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-2xl overflow-y-auto max-h-[calc(100vh-5rem)]">
             <div className="text-center mb-6">
               <div className="text-5xl mb-2">🎰</div>
-              <h2 className="text-2xl font-bold text-gray-800">THIS WEEK&apos;S LOTTERY</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">THIS WEEK&apos;S LOTTERY</h2>
                 {status?.window?.timeUntilSnapshot && (
-                  <p className="text-sm text-gray-600 mt-2">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">
                     Snapshot in: {status.window.timeUntilSnapshot}
                   </p>
                 )}
               </div>
 
-              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 mb-6 border-2 border-purple-200">
+              <div className="bg-gradient-to-r from-purple-50 dark:from-purple-900 to-pink-50 dark:to-pink-900 rounded-lg p-4 mb-6 border-2 border-purple-200 dark:border-purple-700">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-800 mb-1">
+                  <div className="text-2xl font-bold text-purple-800 dark:text-purple-200 mb-1">
                     💰 {formatQT(status.weeklyPool?.lotteryPool || 0)}
                   </div>
-                  <div className="text-sm text-purple-700">Current Pool</div>
+                  <div className="text-sm text-purple-700 dark:text-purple-300">Current Pool</div>
                 </div>
               </div>
 
               <div className="mb-6 max-h-[30vh] overflow-y-auto">
-                <h3 className="font-semibold text-gray-800 mb-3">YOUR STATUS:</h3>
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">YOUR STATUS:</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">🎟️ Your Tickets:</span>
-                    <span className="font-semibold">{(status.lottery?.userTickets || 0).toFixed(1)}</span>
+                    <span className="text-gray-700 dark:text-gray-300">🎟️ Your Tickets:</span>
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">{(status.lottery?.userTickets || 0).toFixed(1)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">📊 Your Share:</span>
-                    <span className="font-semibold">{status.lottery?.userShare || 0}%</span>
+                    <span className="text-gray-700 dark:text-gray-300">📊 Your Share:</span>
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">{status.lottery?.userShare || 0}%</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">🎯 Win Probability:</span>
-                    <span className="font-semibold">
+                    <span className="text-gray-700 dark:text-gray-300">🎯 Win Probability:</span>
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">
                       {((parseFloat(String(status.lottery?.userShare || 0)) / 100) * 31).toFixed(1)}%
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gray-50 rounded-lg p-4 mb-6 max-h-[40vh] overflow-y-auto">
-                <h3 className="font-semibold text-gray-800 mb-2">🏆 PRIZE STRUCTURE:</h3>
-                <div className="text-xs text-gray-700 space-y-1 pr-2">
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-6 max-h-[40vh] overflow-y-auto">
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">🏆 PRIZE STRUCTURE:</h3>
+                <div className="text-xs text-gray-700 dark:text-gray-300 space-y-1 pr-2">
                   <div>Tier 1 (1 winner): {formatQT((status.weeklyPool?.lotteryPool || 0) * 0.40)} (40%)</div>
                   <div>Tier 2 (2 winners): {formatQT((status.weeklyPool?.lotteryPool || 0) * 0.125)} each (12.5%)</div>
                   <div>Tier 3 (5 winners): {formatQT((status.weeklyPool?.lotteryPool || 0) * 0.04)} each (4%)</div>
