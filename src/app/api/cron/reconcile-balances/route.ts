@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ethers } from 'ethers';
 import {
   getCurrencyAccountsCollection,
+  getDb,
 } from '~/lib/mongodb';
 import { BET_MODE_VAULT_ABI, getBetModeVaultAddress } from '~/lib/betModeVault';
 
@@ -32,7 +33,6 @@ export async function POST(req: NextRequest) {
     const contract = new ethers.Contract(contractAddress, BET_MODE_VAULT_ABI, provider);
 
     // Get all users with wallet addresses from users collection
-    const { getDb } = await import('~/lib/mongodb');
     const db = await getDb();
     const usersCollection = db.collection('users');
     const accountsCollection = await getCurrencyAccountsCollection();

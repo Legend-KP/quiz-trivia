@@ -125,7 +125,7 @@ export interface ChallengeDocument {
   opponent?: { correct: number; total: number; durationSec: number; accuracy: number };
 }
 
-async function getDb(): Promise<Db> {
+export async function getDb(): Promise<Db> {
   if (!uri) {
     throw new Error('MONGODB_URI environment variable is not set');
   }
