@@ -10,7 +10,7 @@ import {
   getCurrencyAccountsCollection,
   getQTTransactionsCollection,
 } from '~/lib/mongodb';
-import { BET_MODE_VAULT_ABI } from './betModeVault';
+import { BET_MODE_VAULT_ABI, getBetModeVaultAddress } from './betModeVault';
 
 // Contract configuration
 const CONTRACT_ADDRESS = process.env.BET_MODE_VAULT_ADDRESS;
@@ -87,18 +87,20 @@ async function handleDepositEvent(
 
     if (!userDoc) {
       console.warn('⚠️ User not found for address:', userAddress);
-      // Still log the transaction for manual reconciliation
+      // Log the transaction for manual reconciliation with pending status
+      // Use fid: 0 as a placeholder for unknown users
       const transactions = await getQTTransactionsCollection();
+      const contractAddress = getBetModeVaultAddress();
       await transactions.insertOne({
+        fid: 0, // Placeholder for unknown user
         type: 'deposit',
-        walletAddress: userAddress,
         amount: amountInQT,
-        contractAmount: amount.toString(),
+        fromAddress: userAddress, // User's wallet address (sender)
+        toAddress: contractAddress, // Contract address (receiver)
         txHash,
         blockNumber,
-        status: 'pending_user_lookup',
-        createdAt: new Date(Number(timestamp) * 1000),
-        processedAt: new Date(),
+        status: 'pending', // Use valid status value
+        createdAt: Date.now(),
       });
       return;
     }
@@ -143,8 +145,7 @@ async function handleDepositEvent(
       txHash,
       blockNumber,
       status: 'completed',
-      createdAt: new Date(Number(timestamp) * 1000),
-      processedAt: new Date(),
+      createdAt: Number(timestamp) * 1000, // Convert to milliseconds timestamp
     });
 
     console.log(`✅ Deposit processed for user ${fid}: ${amountInQT} QT`);
@@ -186,19 +187,21 @@ async function handleWithdrawalEvent(
 
     if (!userDoc) {
       console.warn('⚠️ User not found for address:', userAddress);
-      // Still log the transaction
+      // Log the transaction for manual reconciliation with pending status
+      // Use fid: 0 as a placeholder for unknown users
       const transactions = await getQTTransactionsCollection();
+      const contractAddress = getBetModeVaultAddress();
       await transactions.insertOne({
+        fid: 0, // Placeholder for unknown user
         type: 'withdrawal',
-        walletAddress: userAddress,
         amount: -amountInQT,
-        contractAmount: amount.toString(),
+        fromAddress: contractAddress, // Contract address (sender)
+        toAddress: userAddress, // User's wallet address (receiver)
         txHash,
         blockNumber,
         nonce: Number(nonce),
-        status: 'pending_user_lookup',
-        createdAt: new Date(Number(timestamp) * 1000),
-        processedAt: new Date(),
+        status: 'pending', // Use valid status value
+        createdAt: Date.now(),
       });
       return;
     }
@@ -223,18 +226,18 @@ async function handleWithdrawalEvent(
 
     // Record transaction
     const transactions = await getQTTransactionsCollection();
+    const contractAddress = getBetModeVaultAddress();
     await transactions.insertOne({
       fid,
       type: 'withdrawal',
       amount: -amountInQT,
-      contractAmount: amount.toString(),
-      walletAddress: userAddress,
+      fromAddress: contractAddress, // Contract address (sender)
+      toAddress: userAddress, // User's wallet address (receiver)
       txHash,
       blockNumber,
       nonce: Number(nonce),
       status: 'completed',
-      createdAt: new Date(Number(timestamp) * 1000),
-      processedAt: new Date(),
+      createdAt: Number(timestamp) * 1000, // Convert to milliseconds timestamp
     });
 
     console.log(`✅ Withdrawal processed for user ${fid}: ${amountInQT} QT`);
