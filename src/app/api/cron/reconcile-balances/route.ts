@@ -31,10 +31,19 @@ export async function POST(req: NextRequest) {
     const provider = new ethers.JsonRpcProvider(rpcUrl);
     const contract = new ethers.Contract(contractAddress, BET_MODE_VAULT_ABI, provider);
 
-    // Get all users with wallet addresses
-    const accounts = await getCurrencyAccountsCollection();
-    const users = await accounts.find({
-      walletAddress: { $exists: true, $ne: null },
+    // Get all users with wallet addresses from users collection
+    const { getDb } = await import('~/lib/mongodb');
+    const db = await getDb();
+    const usersCollection = db.collection('users');
+    const accountsCollection = await getCurrencyAccountsCollection();
+    
+    // Find users with wallet addresses
+    const users = await usersCollection.find({
+      $or: [
+        { walletAddress: { $exists: true, $ne: null } },
+        { 'verified_addresses.primary.eth_address': { $exists: true, $ne: null } },
+        { 'verified_addresses.eth_addresses': { $exists: true, $ne: [] } },
+      ],
     }).toArray();
 
     let mismatches = 0;
@@ -46,10 +55,32 @@ export async function POST(req: NextRequest) {
       difference: number;
     }> = [];
 
-    for (const account of users) {
+    for (const user of users) {
       try {
-        const walletAddress = account.walletAddress;
+        // Extract wallet address from user document
+        let walletAddress: string | null = null;
+        
+        if (user.walletAddress) {
+          walletAddress = user.walletAddress;
+        } else if (user.verified_addresses?.primary?.eth_address) {
+          walletAddress = user.verified_addresses.primary.eth_address;
+        } else if (user.verified_addresses?.eth_addresses && user.verified_addresses.eth_addresses.length > 0) {
+          walletAddress = user.verified_addresses.eth_addresses[0];
+        }
+        
         if (!walletAddress || !ethers.isAddress(walletAddress)) {
+          continue;
+        }
+        
+        // Get user's fid
+        const fid = user.fid;
+        if (!fid) {
+          continue;
+        }
+        
+        // Get user's account from currency_accounts
+        const account = await accountsCollection.findOne({ fid });
+        if (!account) {
           continue;
         }
 
@@ -73,14 +104,14 @@ export async function POST(req: NextRequest) {
           mismatches++;
 
           mismatchLog.push({
-            fid: account.fid,
+            fid,
             walletAddress,
             contractBalance,
             dbBalance,
             difference: balanceDifference,
           });
 
-          console.error(`❌ Balance mismatch for user ${account.fid}:`, {
+          console.error(`❌ Balance mismatch for user ${fid}:`, {
             contract: {
               balance: contractBalance,
               deposits: contractDeposits,
@@ -94,10 +125,8 @@ export async function POST(req: NextRequest) {
           });
 
           // Log mismatch for investigation
-          const { getDb } = await import('~/lib/mongodb');
-          const db = await getDb();
           await db.collection('reconciliation_logs').insertOne({
-            fid: account.fid,
+            fid,
             walletAddress,
             contractBalance,
             contractDeposits,
@@ -118,7 +147,7 @@ export async function POST(req: NextRequest) {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 content: `🚨 **Balance Mismatch Detected**\n` +
-                  `User: ${account.fid}\n` +
+                  `User: ${fid}\n` +
                   `Contract Balance: ${contractBalance} QT\n` +
                   `Database Balance: ${dbBalance} QT\n` +
                   `Difference: ${balanceDifference} QT`,
@@ -127,7 +156,7 @@ export async function POST(req: NextRequest) {
           }
         }
       } catch (error) {
-        console.error(`Error reconciling user ${account.fid}:`, error);
+        console.error(`Error reconciling user ${user.fid || 'unknown'}:`, error);
       }
     }
 

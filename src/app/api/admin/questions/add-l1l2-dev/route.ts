@@ -153,7 +153,7 @@ const L1_L2_QUESTIONS = [
  * Usage:
  * POST /api/admin/questions/add-l1l2-dev
  */
-export async function POST(req: NextRequest) {
+export async function POST(_req: NextRequest) {
   try {
     // Allow in all environments for now (you can restrict this later)
     // For production, you may want to add a simple secret check instead

@@ -13,7 +13,7 @@
     MAX_BET,
     calculatePayout,
   } from '~/lib/betMode';
-  import { BET_MODE_VAULT_ABI, getBetModeVaultAddress, MIN_DEPOSIT_VAULT, MIN_WITHDRAWAL_VAULT } from '~/lib/betModeVault';
+  import { BET_MODE_VAULT_ABI, getBetModeVaultAddress } from '~/lib/betModeVault';
 
 // ERC20 ABI - Complete with all necessary functions
 const ERC20_ABI = [
@@ -184,8 +184,8 @@ const ERC20_ABI = [
   });
   
   // Wagmi hooks for withdrawal transaction
-  const { writeContract: writeWithdrawContract, data: withdrawTxHash, isPending: isWithdrawPending, error: writeWithdrawError } = useWriteContract();
-  const { isLoading: isWithdrawConfirming, isSuccess: isWithdrawConfirmed } = useWaitForTransactionReceipt({
+  const { writeContract: writeWithdrawContract, data: withdrawTxHash } = useWriteContract();
+  const { isSuccess: isWithdrawConfirmed } = useWaitForTransactionReceipt({
     hash: withdrawTxHash,
   });
   
