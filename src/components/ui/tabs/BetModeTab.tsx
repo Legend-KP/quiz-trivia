@@ -2,7 +2,7 @@
 
   import React, { useState, useEffect, useCallback } from 'react';
   import { useMiniApp } from '@neynar/react';
-  import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+  import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useConnect } from 'wagmi';
   import { CheckCircle, XCircle } from 'lucide-react';
   import { formatUnits, parseUnits } from 'viem';
   import sdk from '@farcaster/miniapp-sdk';
@@ -91,11 +91,14 @@ const ERC20_ABI = [
 
   interface BetModeTabProps {
     onExit?: () => void;
+    openDepositModal?: boolean;
+    openWithdrawModal?: boolean;
   }
 
-  export function BetModeTab({ onExit }: BetModeTabProps = {}) {
+  export function BetModeTab({ onExit, openDepositModal, openWithdrawModal }: BetModeTabProps = {}) {
     const { context } = useMiniApp();
     const { address, isConnected } = useAccount();
+    const { connect, connectors } = useConnect();
     
   // Get QT token address from environment (client-side safe)
   // Fallback to hardcoded address if env var not set
@@ -1199,9 +1202,17 @@ const ERC20_ABI = [
 
                     {!address && (
                       <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg">
-                        <p className="text-xs text-yellow-800 dark:text-yellow-200">
+                        <p className="text-xs text-yellow-800 dark:text-yellow-200 mb-2">
                           ⚠️ Please connect your wallet to withdraw
                         </p>
+                        {connectors.length > 0 && (
+                          <button
+                            onClick={() => connect({ connector: connectors[0] })}
+                            className="w-full mt-2 py-2 px-4 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-all text-sm"
+                          >
+                            Connect Wallet
+                          </button>
+                        )}
                       </div>
                     )}
 

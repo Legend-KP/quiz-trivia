@@ -52,6 +52,8 @@ interface HomePageProps {
   onShowRules: () => void;
   onStartWeeklyQuiz: () => void;
   onStartBetMode: () => void;
+  onDeposit?: () => void;
+  onWithdraw?: () => void;
 }
 
 // QuizPageProps removed - Classic mode is now replaced by Weekly Quiz mode
@@ -280,7 +282,7 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
 };
 
 // Home Page Component
-const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartChallenge, onStartWeeklyQuiz, onStartBetMode }) => {
+const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartChallenge, onStartWeeklyQuiz, onStartBetMode, onDeposit, onWithdraw }) => {
   const _weeklyQuizState = useQuizState(currentWeeklyQuiz);
   const [weeklyUserCompleted, setWeeklyUserCompleted] = useState(false);
   const { actions, added, context } = useMiniApp();
@@ -426,6 +428,22 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
           >
             🎰 Bet Mode
           </button>
+
+          {/* Deposit and Withdraw Buttons */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={onDeposit || onStartBetMode}
+              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 px-6 rounded-xl text-lg transform hover:scale-105 transition-all duration-200 shadow-lg"
+            >
+              💰 Deposit QT
+            </button>
+            <button
+              onClick={onWithdraw || onStartBetMode}
+              className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white font-bold py-4 px-6 rounded-xl text-lg transform hover:scale-105 transition-all duration-200 shadow-lg"
+            >
+              💸 Withdraw QT
+            </button>
+          </div>
 
           <div className="relative">
             <span className="absolute -top-2 right-3 text-xs font-semibold bg-black/50 text-white px-2 py-0.5 rounded-md backdrop-blur">
