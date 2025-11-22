@@ -5,7 +5,7 @@
  * This service runs continuously in the background.
  */
 
-import { ethers } from 'ethers';
+import { ethers, EventLog } from 'ethers';
 import {
   getCurrencyAccountsCollection,
   getQTTransactionsCollection,
@@ -351,7 +351,7 @@ export async function processHistoricalEvents(fromBlock: number, toBlock: number
   const depositEvents = await contract.queryFilter(depositFilter, fromBlock, toBlock);
 
   for (const event of depositEvents) {
-    if (event.args) {
+    if (event instanceof EventLog && event.args) {
       await handleDepositEvent(
         event.args.user,
         event.args.amount,
@@ -368,7 +368,7 @@ export async function processHistoricalEvents(fromBlock: number, toBlock: number
   const withdrawEvents = await contract.queryFilter(withdrawFilter, fromBlock, toBlock);
 
   for (const event of withdrawEvents) {
-    if (event.args) {
+    if (event instanceof EventLog && event.args) {
       await handleWithdrawalEvent(
         event.args.user,
         event.args.amount,
