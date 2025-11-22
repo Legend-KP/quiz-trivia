@@ -3,10 +3,21 @@ import { ethers } from 'ethers';
 import {
   getCurrencyAccountsCollection,
   getQTTransactionsCollection,
+  getBetModeGamesCollection,
 } from '~/lib/mongodb';
 
 export const runtime = 'nodejs';
 
+/**
+ * Legacy withdrawal endpoint (kept for backward compatibility)
+ * 
+ * NOTE: With smart contract integration, withdrawals should go through:
+ * 1. POST /api/bet-mode/withdraw/prepare (get signature)
+ * 2. User calls contract.withdraw() on frontend
+ * 3. Event listener updates database
+ * 
+ * This endpoint is kept as fallback but should not be used with contract integration.
+ */
 export async function POST(req: NextRequest) {
   try {
     const { fid, amount, toAddress } = await req.json();
@@ -43,11 +54,28 @@ export async function POST(req: NextRequest) {
     }
 
     // Check for active games
-    if (qtLockedBalance > 0) {
+    const games = await getBetModeGamesCollection();
+    const activeGame = await games.findOne({
+      fid: numFid,
+      status: 'active',
+    });
+
+    if (activeGame) {
       return NextResponse.json({ error: 'Cannot withdraw during active game' }, { status: 400 });
     }
 
-    // Support both WALLET_PRIVATE_KEY and PRIVATE_KEY for backward compatibility
+    // Check if contract integration is enabled
+    const contractAddress = process.env.BET_MODE_VAULT_ADDRESS || process.env.NEXT_PUBLIC_BET_MODE_VAULT_ADDRESS;
+    
+    if (contractAddress) {
+      // Contract integration is enabled - redirect to prepare endpoint
+      return NextResponse.json({
+        error: 'Please use contract-based withdrawal. Call /api/bet-mode/withdraw/prepare first.',
+        useContract: true,
+      }, { status: 400 });
+    }
+
+    // Legacy withdrawal flow (only if contract not configured)
     const privateKey = process.env.WALLET_PRIVATE_KEY || process.env.PRIVATE_KEY;
     const rpcUrl = process.env.BASE_RPC_URL || 'https://mainnet.base.org';
     const qtTokenAddress = process.env.QT_TOKEN_ADDRESS;

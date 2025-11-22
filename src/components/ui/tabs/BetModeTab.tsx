@@ -13,6 +13,7 @@
     MAX_BET,
     calculatePayout,
   } from '~/lib/betMode';
+  import { BET_MODE_VAULT_ABI, getBetModeVaultAddress, MIN_DEPOSIT_VAULT, MIN_WITHDRAWAL_VAULT } from '~/lib/betModeVault';
 
 // ERC20 ABI - Complete with all necessary functions
 const ERC20_ABI = [
@@ -112,6 +113,7 @@ const ERC20_ABI = [
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [depositAmount, setDepositAmount] = useState<string>('');
   const [depositing, setDepositing] = useState(false);
+  const [depositStep, setDepositStep] = useState<'input' | 'approving' | 'depositing' | 'confirming'>('input');
   const [platformWallet, setPlatformWallet] = useState<string | null>(null);
   const [platformWalletError, setPlatformWalletError] = useState<string | null>(null);
   const [walletBalanceError, setWalletBalanceError] = useState<string | null>(null);
@@ -120,10 +122,20 @@ const ERC20_ABI = [
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState<string>('');
   const [withdrawing, setWithdrawing] = useState(false);
+  const [withdrawStep, setWithdrawStep] = useState<'input' | 'preparing' | 'withdrawing' | 'confirming'>('input');
   const [withdrawalSuccess, setWithdrawalSuccess] = useState<{
     amount: number;
     txHash: string;
   } | null>(null);
+  
+  // Contract address (check if contract is configured)
+  const contractAddress = (() => {
+    try {
+      return getBetModeVaultAddress();
+    } catch {
+      return null;
+    }
+  })();
   
   // Read QT token balance from wallet
   // Only enable if we have a valid address and token address
@@ -169,6 +181,24 @@ const ERC20_ABI = [
   const { writeContract, data: depositTxHash, isPending: isDepositPending, error: writeContractError } = useWriteContract();
   const { isLoading: isDepositConfirming, isSuccess: isDepositConfirmed } = useWaitForTransactionReceipt({
     hash: depositTxHash,
+  });
+  
+  // Wagmi hooks for withdrawal transaction
+  const { writeContract: writeWithdrawContract, data: withdrawTxHash, isPending: isWithdrawPending, error: writeWithdrawError } = useWriteContract();
+  const { isLoading: isWithdrawConfirming, isSuccess: isWithdrawConfirmed } = useWaitForTransactionReceipt({
+    hash: withdrawTxHash,
+  });
+  
+  // Read allowance for deposit
+  const { data: allowanceRaw } = useReadContract({
+    address: qtTokenAddress,
+    abi: ERC20_ABI,
+    functionName: 'allowance',
+    args: address && contractAddress ? [address, contractAddress] : undefined,
+    query: {
+      enabled: !!address && !!contractAddress && isConnected,
+      refetchInterval: 5000,
+    },
   });
   
   // Handle writeContract errors
@@ -306,21 +336,113 @@ const ERC20_ABI = [
   // Handle deposit transaction confirmation
   useEffect(() => {
     if (isDepositConfirmed && depositTxHash) {
-      handleDepositVerification(depositTxHash);
+      // If using contract, events will handle DB update automatically
+      // Otherwise, use manual verification
+      if (!contractAddress) {
+        handleDepositVerification(depositTxHash);
+      } else {
+        // Contract deposit - events will sync DB, just refresh status
+        setDepositing(false);
+        setDepositStep('input');
+        setShowDepositModal(false);
+        setDepositAmount('');
+        fetchStatus();
+      }
     }
-  }, [isDepositConfirmed, depositTxHash, handleDepositVerification]);
+  }, [isDepositConfirmed, depositTxHash, handleDepositVerification, contractAddress, fetchStatus]);
+  
+  // Handle withdrawal transaction confirmation
+  useEffect(() => {
+    if (isWithdrawConfirmed && withdrawTxHash) {
+      // Contract withdrawal - events will sync DB, just refresh status
+      setWithdrawing(false);
+      setWithdrawStep('input');
+      setShowWithdrawModal(false);
+      setWithdrawAmount('');
+      fetchStatus();
+      setWithdrawalSuccess({
+        amount: parseFloat(withdrawAmount),
+        txHash: withdrawTxHash,
+      });
+    }
+  }, [isWithdrawConfirmed, withdrawTxHash, withdrawAmount, fetchStatus]);
     
     const handleDeposit = async () => {
-      // Validation
-      if (!platformWallet) {
-        if (platformWalletError) {
-          setError(platformWalletError);
-        } else {
-          setError('Platform wallet is loading. Please wait...');
+      // Check if contract is configured
+      if (!contractAddress) {
+        // Fallback to old deposit method (platform wallet)
+        if (!platformWallet) {
+          if (platformWalletError) {
+            setError(platformWalletError);
+          } else {
+            setError('Platform wallet is loading. Please wait...');
+          }
+          return;
+        }
+        
+        // Use old deposit flow
+        if (!address) {
+          setError('Please connect your wallet first.');
+          return;
+        }
+        
+        if (!depositAmount || depositAmount.trim() === '') {
+          setError('Please enter deposit amount');
+          return;
+        }
+        
+        const amount = parseFloat(depositAmount);
+        if (isNaN(amount) || amount <= 0) {
+          setError('Invalid deposit amount');
+          return;
+        }
+        
+        const MIN_DEPOSIT = 1000;
+        if (amount < MIN_DEPOSIT) {
+          setError(`Minimum deposit is ${formatQT(MIN_DEPOSIT)} QT`);
+          return;
+        }
+        
+        if (amount > walletBalance) {
+          setError(`Insufficient wallet balance. You have ${formatQT(walletBalance)} QT.`);
+          return;
+        }
+        
+        try {
+          setDepositing(true);
+          setError(null);
+          
+          const amountWei = parseUnits(amount.toFixed(18), 18);
+          
+          await writeContract({
+            address: qtTokenAddress,
+            abi: ERC20_ABI,
+            functionName: 'transfer',
+            args: [platformWallet as `0x${string}`, amountWei],
+          });
+        } catch (err: any) {
+          console.error('Deposit error:', err);
+          let errorMessage = 'Failed to initiate deposit';
+          
+          if (err.message?.includes('insufficient funds') || err.message?.includes('gas')) {
+            errorMessage = 'Insufficient ETH for gas fees. Please add ETH to your wallet.';
+          } else if (err.message?.includes('User rejected') || err.message?.includes('denied') || err.message?.includes('rejected')) {
+            errorMessage = 'Transaction cancelled by user.';
+          } else if (err.message?.includes('network')) {
+            errorMessage = 'Network error. Please check your connection.';
+          } else if (err.shortMessage) {
+            errorMessage = err.shortMessage;
+          } else if (err.message) {
+            errorMessage = err.message;
+          }
+          
+          setError(errorMessage);
+          setDepositing(false);
         }
         return;
       }
       
+      // NEW: Contract-based deposit flow
       if (!address) {
         setError('Please connect your wallet first.');
         return;
@@ -337,7 +459,6 @@ const ERC20_ABI = [
         return;
       }
       
-      // Minimum deposit check (can be less than MIN_BET for deposits)
       const MIN_DEPOSIT = 1000; // 1K QT minimum
       if (amount < MIN_DEPOSIT) {
         setError(`Minimum deposit is ${formatQT(MIN_DEPOSIT)} QT`);
@@ -356,21 +477,41 @@ const ERC20_ABI = [
         // Convert to wei (18 decimals)
         const amountWei = parseUnits(amount.toFixed(18), 18);
         
-        // Initiate transfer - await the promise
+        // Step 1: Check and approve if needed
+        const currentAllowance = allowanceRaw || BigInt(0);
+        
+        if (currentAllowance < amountWei) {
+          setDepositStep('approving');
+          console.log('Requesting approval...');
+          
+          await writeContract({
+            address: qtTokenAddress,
+            abi: ERC20_ABI,
+            functionName: 'approve',
+            args: [contractAddress, amountWei],
+          });
+          
+          // Wait for approval confirmation
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+        }
+        
+        // Step 2: Call contract.deposit()
+        setDepositStep('depositing');
+        console.log('Depositing to contract...');
+        
         await writeContract({
-          address: qtTokenAddress,
-          abi: ERC20_ABI,
-          functionName: 'transfer',
-          args: [platformWallet as `0x${string}`, amountWei],
+          address: contractAddress,
+          abi: BET_MODE_VAULT_ABI,
+          functionName: 'deposit',
+          args: [amountWei],
         });
         
-        // Success - transaction submitted
-        // Confirmation handled by useWaitForTransactionReceipt and useEffect
+        // Step 3: Wait for confirmation (handled by useWaitForTransactionReceipt)
+        setDepositStep('confirming');
         
       } catch (err: any) {
         console.error('Deposit error:', err);
         
-        // User-friendly error messages
         let errorMessage = 'Failed to initiate deposit';
         
         if (err.message?.includes('insufficient funds') || err.message?.includes('gas')) {
@@ -387,6 +528,7 @@ const ERC20_ABI = [
         
         setError(errorMessage);
         setDepositing(false);
+        setDepositStep('input');
       }
     };
     
@@ -589,6 +731,51 @@ const ERC20_ABI = [
         return;
       }
 
+      // Check if contract is configured
+      if (!contractAddress) {
+        // Fallback to old withdrawal method
+        try {
+          setWithdrawing(true);
+          setError(null);
+
+          const fid = context?.user?.fid;
+          if (!fid) {
+            throw new Error('Farcaster authentication required');
+          }
+
+          const res = await fetch('/api/bet-mode/withdraw', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fid,
+              amount,
+              toAddress: address,
+            }),
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            throw new Error(data.error || 'Failed to process withdrawal');
+          }
+
+          setShowWithdrawModal(false);
+          setWithdrawAmount('');
+          await fetchStatus();
+          setError(null);
+          setWithdrawalSuccess({
+            amount,
+            txHash: data.txHash,
+          });
+        } catch (err: any) {
+          setError(err.message || 'Failed to process withdrawal');
+        } finally {
+          setWithdrawing(false);
+        }
+        return;
+      }
+
+      // NEW: Contract-based withdrawal flow
       try {
         setWithdrawing(true);
         setError(null);
@@ -598,36 +785,64 @@ const ERC20_ABI = [
           throw new Error('Farcaster authentication required');
         }
 
-        const res = await fetch('/api/bet-mode/withdraw', {
+        // Step 1: Request signature from backend
+        setWithdrawStep('preparing');
+        const res = await fetch('/api/bet-mode/withdraw/prepare', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             fid,
             amount,
-            toAddress: address,
+            walletAddress: address,
           }),
         });
 
         const data = await res.json();
 
         if (!res.ok) {
-          throw new Error(data.error || 'Failed to process withdrawal');
+          throw new Error(data.error || 'Failed to prepare withdrawal');
         }
 
-        // Success
-        setShowWithdrawModal(false);
-        setWithdrawAmount('');
-        await fetchStatus(); // Refresh balance
-        setError(null);
-        // Show success message
-        setWithdrawalSuccess({
-          amount,
-          txHash: data.txHash,
+        const { amount: amountWei, nonce, signature } = data.data;
+
+        // Step 2: Call contract.withdraw()
+        setWithdrawStep('withdrawing');
+        console.log('Withdrawing from contract...');
+
+        await writeWithdrawContract({
+          address: contractAddress,
+          abi: BET_MODE_VAULT_ABI,
+          functionName: 'withdraw',
+          args: [BigInt(amountWei), BigInt(nonce), signature as `0x${string}`],
         });
+
+        // Step 3: Wait for confirmation (handled by useWaitForTransactionReceipt)
+        setWithdrawStep('confirming');
+
       } catch (err: any) {
-        setError(err.message || 'Failed to process withdrawal');
-      } finally {
+        console.error('Withdrawal error:', err);
+        
+        let errorMessage = 'Failed to process withdrawal';
+        
+        if (err.message?.includes('User rejected') || err.message?.includes('denied') || err.message?.includes('rejected')) {
+          errorMessage = 'Transaction cancelled by user.';
+        } else if (err.message?.includes('InvalidSignature')) {
+          errorMessage = 'Invalid signature. Please try again.';
+        } else if (err.message?.includes('InsufficientContractBalance')) {
+          errorMessage = 'Contract has insufficient balance. Please contact support.';
+        } else if (err.message?.includes('InsufficientUserBalance')) {
+          errorMessage = 'Insufficient balance in contract.';
+        } else if (err.message?.includes('InvalidNonce')) {
+          errorMessage = 'Invalid nonce. Please try again.';
+        } else if (err.shortMessage) {
+          errorMessage = err.shortMessage;
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+        
+        setError(errorMessage);
         setWithdrawing(false);
+        setWithdrawStep('input');
       }
     };
 
@@ -950,6 +1165,37 @@ const ERC20_ABI = [
                         </p>
                       </div>
                     )}
+                    
+                    {/* Step indicators for contract withdrawal */}
+                    {contractAddress && (withdrawStep !== 'input' || withdrawing) && (
+                      <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                        {withdrawStep === 'preparing' && (
+                          <p className="text-xs text-blue-700 dark:text-blue-200">
+                            ⏳ Step 1/2: Preparing withdrawal signature...
+                          </p>
+                        )}
+                        {withdrawStep === 'withdrawing' && (
+                          <p className="text-xs text-blue-700 dark:text-blue-200">
+                            ⏳ Step 2/2: Processing withdrawal...
+                          </p>
+                        )}
+                        {withdrawStep === 'confirming' && withdrawTxHash && (
+                          <>
+                            <p className="text-xs text-blue-700 dark:text-blue-200">
+                              ⏳ Waiting for confirmation...
+                            </p>
+                            <a
+                              href={`https://basescan.org/tx/${withdrawTxHash}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 mt-1 inline-block"
+                            >
+                              View on BaseScan →
+                            </a>
+                          </>
+                        )}
+                      </div>
+                    )}
 
                     {!address && (
                       <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg">
@@ -980,7 +1226,13 @@ const ERC20_ABI = [
                             : 'bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700'
                         }`}
                       >
-                        {withdrawing ? 'Processing...' : 'Withdraw'}
+                        {withdrawing 
+                          ? withdrawStep === 'preparing'
+                            ? 'Preparing...'
+                            : withdrawStep === 'withdrawing'
+                            ? 'Withdrawing...'
+                            : 'Processing...'
+                          : 'Withdraw'}
                       </button>
                     </div>
 
@@ -1134,18 +1386,67 @@ const ERC20_ABI = [
                       </button>
                       <button
                         onClick={handleDeposit}
-                        disabled={depositing || isDepositPending || isDepositConfirming || !depositAmount || !platformWallet || !!platformWalletError}
+                        disabled={
+                          depositing || 
+                          isDepositPending || 
+                          isDepositConfirming || 
+                          !depositAmount || 
+                          (contractAddress ? false : (!platformWallet || !!platformWalletError))
+                        }
                         className="flex-1 py-2 px-4 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {depositing || isDepositPending || isDepositConfirming
-                          ? 'Processing...'
+                          ? depositStep === 'approving' 
+                            ? 'Approving...'
+                            : depositStep === 'depositing'
+                            ? 'Depositing...'
+                            : 'Processing...'
+                          : contractAddress
+                          ? 'Deposit'
                           : platformWalletError
                           ? 'Cannot Deposit'
                           : 'Deposit'}
                       </button>
                     </div>
                     
-                    {(isDepositPending || isDepositConfirming) && depositTxHash && (
+                    {/* Step indicators for contract deposit */}
+                    {contractAddress && (depositStep !== 'input' || isDepositPending || isDepositConfirming) && (
+                      <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                        {depositStep === 'approving' && (
+                          <p className="text-xs text-blue-700 dark:text-blue-200">
+                            ⏳ Step 1/2: Approving contract to spend tokens...
+                          </p>
+                        )}
+                        {depositStep === 'depositing' && (
+                          <p className="text-xs text-blue-700 dark:text-blue-200">
+                            ⏳ Step 2/2: Depositing tokens to contract...
+                          </p>
+                        )}
+                        {depositStep === 'confirming' && depositTxHash && (
+                          <>
+                            <p className="text-xs text-blue-700 dark:text-blue-200">
+                              ⏳ Waiting for confirmation...
+                            </p>
+                            <a
+                              href={`https://basescan.org/tx/${depositTxHash}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 mt-1 inline-block"
+                            >
+                              View on BaseScan →
+                            </a>
+                          </>
+                        )}
+                        {depositTxHash && (
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                            TX: {depositTxHash.slice(0, 10)}...{depositTxHash.slice(-8)}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Legacy deposit status */}
+                    {!contractAddress && (isDepositPending || isDepositConfirming) && depositTxHash && (
                       <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
                         <p className="text-xs text-blue-700 dark:text-blue-200">
                           Transaction: {depositTxHash.slice(0, 10)}...{depositTxHash.slice(-8)}
