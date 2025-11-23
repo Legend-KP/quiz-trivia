@@ -325,15 +325,13 @@ export const BET_MODE_VAULT_ABI = [
 
 /**
  * Get BetModeVault contract address from environment
+ * Falls back to deployed contract address if env var not set
  */
 export function getBetModeVaultAddress(): `0x${string}` {
   const address =
     process.env.NEXT_PUBLIC_BET_MODE_VAULT_ADDRESS ||
-    process.env.BET_MODE_VAULT_ADDRESS;
-  
-  if (!address) {
-    throw new Error('BET_MODE_VAULT_ADDRESS not configured');
-  }
+    process.env.BET_MODE_VAULT_ADDRESS ||
+    '0xD9DaF0183265cf600F0e2df6aD2dE4F0334B15B3'; // Fallback to deployed contract address
   
   return address as `0x${string}`;
 }

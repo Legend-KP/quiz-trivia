@@ -1273,7 +1273,26 @@ const ERC20_ABI = [
               {showDepositModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
                   <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-md w-full my-4 max-h-[90vh] overflow-y-auto">
-                    <h3 className="text-xl font-bold mb-4">Deposit QT Tokens</h3>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Deposit QT Tokens</h3>
+                      <button
+                        onClick={() => {
+                          setShowDepositModal(false);
+                          setDepositAmount('');
+                          setError(null);
+                          setDepositStep('input');
+                        }}
+                        className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    
+                    {!contractAddress && (
+                      <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900 border border-yellow-400 dark:border-yellow-700 text-yellow-700 dark:text-yellow-200 rounded-lg text-sm">
+                        ⚠️ Bet Mode Vault contract is not configured. Please contact support or check environment variables.
+                      </div>
+                    )}
                     
                     {error && (
                       <div className="mb-4 p-3 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 rounded-lg text-sm">
@@ -1351,8 +1370,7 @@ const ERC20_ABI = [
                           depositing || 
                           isDepositPending || 
                           isDepositConfirming || 
-                          !depositAmount || 
-                          !contractAddress
+                          !depositAmount
                         }
                         className="flex-1 py-2 px-4 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
