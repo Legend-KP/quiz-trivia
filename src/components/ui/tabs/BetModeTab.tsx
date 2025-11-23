@@ -2,7 +2,7 @@
 
   import React, { useState, useEffect, useCallback } from 'react';
   import { useMiniApp } from '@neynar/react';
-  import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useConnect } from 'wagmi';
+  import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useConnect, useChainId, useSwitchChain } from 'wagmi';
   import { base } from 'wagmi/chains';
   import { CheckCircle, XCircle } from 'lucide-react';
   import { formatUnits, parseUnits } from 'viem';
@@ -98,8 +98,10 @@ const ERC20_ABI = [
 
   export function BetModeTab({ onExit, openDepositModal, openWithdrawModal }: BetModeTabProps = {}) {
     const { context } = useMiniApp();
-    const { address, isConnected } = useAccount();
+    const { address, isConnected, chainId: accountChainId } = useAccount();
     const { connect, connectors } = useConnect();
+    const currentChainId = useChainId();
+    const { switchChain } = useSwitchChain();
     
   // Get QT token address from environment (client-side safe)
   // Fallback to hardcoded address if env var not set
@@ -426,6 +428,22 @@ const ERC20_ABI = [
         setDepositing(true);
         setError(null);
         
+        // Ensure we're on Base chain before proceeding
+        const targetChainId = base.id;
+        if (currentChainId && currentChainId !== targetChainId && switchChain) {
+          try {
+            console.log('Switching to Base chain...');
+            await switchChain({ chainId: targetChainId });
+            // Wait for chain switch to complete
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+          } catch (switchError: any) {
+            // If user rejects or switch fails, continue anyway
+            if (!switchError.message?.includes('User rejected')) {
+              console.warn('Chain switch failed, continuing anyway:', switchError);
+            }
+          }
+        }
+        
         // Convert to wei (18 decimals)
         const amountWei = parseUnits(amount.toFixed(18), 18);
         
@@ -441,7 +459,7 @@ const ERC20_ABI = [
             abi: ERC20_ABI,
             functionName: 'approve',
             args: [contractAddress, amountWei],
-            chainId: base.id,
+            chainId: targetChainId,
           });
           
           // Wait for approval confirmation
@@ -457,7 +475,7 @@ const ERC20_ABI = [
           abi: BET_MODE_VAULT_ABI,
           functionName: 'deposit',
           args: [amountWei],
-          chainId: base.id,
+          chainId: targetChainId,
         });
         
         // Step 3: Wait for confirmation (handled by useWaitForTransactionReceipt)
