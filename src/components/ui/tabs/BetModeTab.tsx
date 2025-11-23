@@ -385,81 +385,13 @@ const ERC20_ABI = [
   }, [isWithdrawConfirmed, withdrawTxHash, withdrawAmount, fetchStatus]);
     
     const handleDeposit = async () => {
-      // Check if contract is configured
+      // Contract-based deposit flow (required)
       if (!contractAddress) {
-        // Fallback to old deposit method (platform wallet)
-        if (!platformWallet) {
-          if (platformWalletError) {
-            setError(platformWalletError);
-          } else {
-            setError('Platform wallet is loading. Please wait...');
-          }
-          return;
-        }
-        
-        // Use old deposit flow
-        if (!address) {
-          setError('Please connect your wallet first.');
-          return;
-        }
-        
-        if (!depositAmount || depositAmount.trim() === '') {
-          setError('Please enter deposit amount');
-          return;
-        }
-        
-        const amount = parseFloat(depositAmount);
-        if (isNaN(amount) || amount <= 0) {
-          setError('Invalid deposit amount');
-          return;
-        }
-        
-        const MIN_DEPOSIT = 1000;
-        if (amount < MIN_DEPOSIT) {
-          setError(`Minimum deposit is ${formatQT(MIN_DEPOSIT)} QT`);
-          return;
-        }
-        
-        if (amount > walletBalance) {
-          setError(`Insufficient wallet balance. You have ${formatQT(walletBalance)} QT.`);
-          return;
-        }
-        
-        try {
-          setDepositing(true);
-          setError(null);
-          
-          const amountWei = parseUnits(amount.toFixed(18), 18);
-          
-          await writeContract({
-            address: qtTokenAddress,
-            abi: ERC20_ABI,
-            functionName: 'transfer',
-            args: [platformWallet as `0x${string}`, amountWei],
-          });
-        } catch (err: any) {
-          console.error('Deposit error:', err);
-          let errorMessage = 'Failed to initiate deposit';
-          
-          if (err.message?.includes('insufficient funds') || err.message?.includes('gas')) {
-            errorMessage = 'Insufficient ETH for gas fees. Please add ETH to your wallet.';
-          } else if (err.message?.includes('User rejected') || err.message?.includes('denied') || err.message?.includes('rejected')) {
-            errorMessage = 'Transaction cancelled by user.';
-          } else if (err.message?.includes('network')) {
-            errorMessage = 'Network error. Please check your connection.';
-          } else if (err.shortMessage) {
-            errorMessage = err.shortMessage;
-          } else if (err.message) {
-            errorMessage = err.message;
-          }
-          
-          setError(errorMessage);
-          setDepositing(false);
-        }
+        setError('Bet Mode Vault contract is not configured. Please contact support.');
         return;
       }
       
-      // NEW: Contract-based deposit flow
+      // Contract-based deposit flow
       if (!address) {
         setError('Please connect your wallet first.');
         return;
@@ -1028,6 +960,22 @@ const ERC20_ABI = [
                 </div>
               )}
 
+              {/* Deposit and Withdraw Buttons */}
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <button
+                  onClick={() => setShowDepositModal(true)}
+                  className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-4 rounded-xl text-sm transform hover:scale-105 transition-all duration-200 shadow-lg"
+                >
+                  💰 Deposit QT
+                </button>
+                <button
+                  onClick={() => setShowWithdrawModal(true)}
+                  className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white font-bold py-3 px-4 rounded-xl text-sm transform hover:scale-105 transition-all duration-200 shadow-lg"
+                >
+                  💸 Withdraw QT
+                </button>
+              </div>
+
               {!canBet && (
                 <div className="mb-3 space-y-2">
                   {walletBalance >= MIN_BET && isConnected ? (
@@ -1327,14 +1275,9 @@ const ERC20_ABI = [
                   <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-md w-full my-4 max-h-[90vh] overflow-y-auto">
                     <h3 className="text-xl font-bold mb-4">Deposit QT Tokens</h3>
                     
-                    {(error || platformWalletError) && (
-                      <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
-                        {error || platformWalletError}
-                        {platformWalletError && (
-                          <p className="text-xs mt-2 text-red-600">
-                            Note: PLATFORM_WALLET_ADDRESS environment variable needs to be configured on the server.
-                          </p>
-                        )}
+                    {error && (
+                      <div className="mb-4 p-3 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 rounded-lg text-sm">
+                        {error}
                       </div>
                     )}
                     
@@ -1390,13 +1333,6 @@ const ERC20_ABI = [
                       </div>
                     </div>
                     
-                    {platformWallet && (
-                      <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <p className="text-xs text-gray-700 dark:text-gray-300 mb-1">Platform Wallet:</p>
-                        <p className="text-xs font-mono break-all text-gray-900 dark:text-gray-100">{platformWallet}</p>
-                      </div>
-                    )}
-                    
                     <div className="flex gap-2">
                       <button
                         onClick={() => {
@@ -1404,7 +1340,7 @@ const ERC20_ABI = [
                           setDepositAmount('');
                           setError(null);
                         }}
-                        className="flex-1 py-2 px-4 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition-all"
+                        className="flex-1 py-2 px-4 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-all"
                         disabled={depositing || isDepositPending || isDepositConfirming}
                       >
                         Cancel
@@ -1416,7 +1352,7 @@ const ERC20_ABI = [
                           isDepositPending || 
                           isDepositConfirming || 
                           !depositAmount || 
-                          (contractAddress ? false : (!platformWallet || !!platformWalletError))
+                          !contractAddress
                         }
                         className="flex-1 py-2 px-4 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
@@ -1426,10 +1362,6 @@ const ERC20_ABI = [
                             : depositStep === 'depositing'
                             ? 'Depositing...'
                             : 'Processing...'
-                          : contractAddress
-                          ? 'Deposit'
-                          : platformWalletError
-                          ? 'Cannot Deposit'
                           : 'Deposit'}
                       </button>
                     </div>
