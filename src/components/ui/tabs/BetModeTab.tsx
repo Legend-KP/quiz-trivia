@@ -103,18 +103,6 @@ const ERC20_ABI = [
     const currentChainId = useChainId();
     const { switchChain } = useSwitchChain();
     
-    // Patch connectors to add getChainId method if missing (workaround for Farcaster connectors)
-    useEffect(() => {
-      if (connectors.length > 0) {
-        connectors.forEach((connector) => {
-          if (connector && typeof (connector as any).getChainId !== 'function') {
-            // Add getChainId method that returns Base chainId (synchronous for wagmi compatibility)
-            (connector as any).getChainId = () => base.id;
-          }
-        });
-      }
-    }, [connectors]);
-    
   // Get QT token address from environment (client-side safe)
   // Fallback to hardcoded address if env var not set
   const QT_TOKEN_ADDRESS = "0x541529ADB3f344128aa87917fd2926E7D240FB07";
