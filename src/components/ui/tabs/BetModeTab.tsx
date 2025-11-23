@@ -3,6 +3,7 @@
   import React, { useState, useEffect, useCallback } from 'react';
   import { useMiniApp } from '@neynar/react';
   import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useConnect } from 'wagmi';
+  import { base } from 'wagmi/chains';
   import { CheckCircle, XCircle } from 'lucide-react';
   import { formatUnits, parseUnits } from 'viem';
   import sdk from '@farcaster/miniapp-sdk';
@@ -438,6 +439,7 @@ const ERC20_ABI = [
             abi: ERC20_ABI,
             functionName: 'approve',
             args: [contractAddress, amountWei],
+            chainId: base.id,
           });
           
           // Wait for approval confirmation
@@ -453,6 +455,7 @@ const ERC20_ABI = [
           abi: BET_MODE_VAULT_ABI,
           functionName: 'deposit',
           args: [amountWei],
+          chainId: base.id,
         });
         
         // Step 3: Wait for confirmation (handled by useWaitForTransactionReceipt)
@@ -763,6 +766,7 @@ const ERC20_ABI = [
           abi: BET_MODE_VAULT_ABI,
           functionName: 'withdraw',
           args: [BigInt(amountWei), BigInt(nonce), signature as `0x${string}`],
+          chainId: base.id,
         });
 
         // Step 3: Wait for confirmation (handled by useWaitForTransactionReceipt)
