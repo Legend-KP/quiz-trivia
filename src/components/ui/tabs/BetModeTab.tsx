@@ -148,6 +148,7 @@ const ERC20_ABI = [
     abi: ERC20_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
+    chainId: base.id,
     query: {
       enabled: !!address && !!qtTokenAddress && isConnected && typeof address === 'string',
       refetchInterval: 10000, // Refetch every 10 seconds
@@ -182,13 +183,17 @@ const ERC20_ABI = [
   }, [balanceError]);
     
   // Wagmi hooks for deposit transaction
-  const { writeContract, data: depositTxHash, isPending: isDepositPending, error: writeContractError } = useWriteContract();
+  const { writeContract, data: depositTxHash, isPending: isDepositPending, error: writeContractError } = useWriteContract({
+    chainId: base.id,
+  });
   const { isLoading: isDepositConfirming, isSuccess: isDepositConfirmed } = useWaitForTransactionReceipt({
     hash: depositTxHash,
   });
   
   // Wagmi hooks for withdrawal transaction
-  const { writeContract: writeWithdrawContract, data: withdrawTxHash } = useWriteContract();
+  const { writeContract: writeWithdrawContract, data: withdrawTxHash } = useWriteContract({
+    chainId: base.id,
+  });
   const { isSuccess: isWithdrawConfirmed } = useWaitForTransactionReceipt({
     hash: withdrawTxHash,
   });
@@ -199,6 +204,7 @@ const ERC20_ABI = [
     abi: ERC20_ABI,
     functionName: 'allowance',
     args: address && contractAddress ? [address, contractAddress] : undefined,
+    chainId: base.id,
     query: {
       enabled: !!address && !!contractAddress && isConnected,
       refetchInterval: 5000,

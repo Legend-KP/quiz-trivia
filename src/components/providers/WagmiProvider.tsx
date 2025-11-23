@@ -41,7 +41,10 @@ function useFarcasterMiniAppAutoConnect() {
     // Auto-connect if in Farcaster Mini App and not already connected
     if (isFarcasterMiniApp && !isConnected && connectors.length > 0) {
       // Try Farcaster Mini App connector first (index 0)
-      connect({ connector: connectors[0] });
+      connect({ 
+        connector: connectors[0],
+        chainId: base.id,
+      });
     }
   }, [isFarcasterMiniApp, isConnected, connect, connectors]);
 
@@ -59,9 +62,14 @@ export const config = createConfig({
     [celo.id]: http(),
   },
   connectors: [
-    farcasterMiniApp(),
-    farcasterFrame(),
+    farcasterMiniApp({
+      chains: [base],
+    }),
+    farcasterFrame({
+      chains: [base],
+    }),
   ],
+  ssr: false,
 });
 
 const queryClient = new QueryClient();
