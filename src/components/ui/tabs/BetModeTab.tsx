@@ -103,6 +103,18 @@ const ERC20_ABI = [
     const currentChainId = useChainId();
     const { switchChain } = useSwitchChain();
     
+    // Patch connectors to add getChainId method if missing (workaround for Farcaster connectors)
+    useEffect(() => {
+      if (connectors.length > 0) {
+        connectors.forEach((connector) => {
+          if (connector && typeof (connector as any).getChainId !== 'function') {
+            // Add getChainId method that returns Base chainId (synchronous for wagmi compatibility)
+            (connector as any).getChainId = () => base.id;
+          }
+        });
+      }
+    }, [connectors]);
+    
   // Get QT token address from environment (client-side safe)
   // Fallback to hardcoded address if env var not set
   const QT_TOKEN_ADDRESS = "0x541529ADB3f344128aa87917fd2926E7D240FB07";
@@ -1193,7 +1205,10 @@ const ERC20_ABI = [
                         </p>
                         {connectors.length > 0 && (
                           <button
-                            onClick={() => connect({ connector: connectors[0] })}
+                            onClick={() => connect({ 
+                              connector: connectors[0],
+                              chainId: base.id,
+                            })}
                             className="w-full mt-2 py-2 px-4 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-all text-sm"
                           >
                             Connect Wallet
