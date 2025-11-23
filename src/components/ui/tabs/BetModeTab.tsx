@@ -183,17 +183,13 @@ const ERC20_ABI = [
   }, [balanceError]);
     
   // Wagmi hooks for deposit transaction
-  const { writeContract, data: depositTxHash, isPending: isDepositPending, error: writeContractError } = useWriteContract({
-    chainId: base.id,
-  });
+  const { writeContract, data: depositTxHash, isPending: isDepositPending, error: writeContractError } = useWriteContract();
   const { isLoading: isDepositConfirming, isSuccess: isDepositConfirmed } = useWaitForTransactionReceipt({
     hash: depositTxHash,
   });
   
   // Wagmi hooks for withdrawal transaction
-  const { writeContract: writeWithdrawContract, data: withdrawTxHash } = useWriteContract({
-    chainId: base.id,
-  });
+  const { writeContract: writeWithdrawContract, data: withdrawTxHash } = useWriteContract();
   const { isSuccess: isWithdrawConfirmed } = useWaitForTransactionReceipt({
     hash: withdrawTxHash,
   });
