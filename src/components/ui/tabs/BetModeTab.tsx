@@ -6,8 +6,7 @@
   import { base } from 'wagmi/chains';
   import { CheckCircle, XCircle } from 'lucide-react';
   import { formatUnits, parseUnits } from 'viem';
-  import { getWalletClient } from '@wagmi/core';
-  import { encodeFunctionData } from 'viem';
+  import { createWalletClient, custom } from 'viem';
   import { config } from '~/components/providers/WagmiProvider';
   import sdk from '@farcaster/miniapp-sdk';
   import {
@@ -505,11 +504,16 @@ const ERC20_ABI = [
         // Step 1: Check and approve if needed
         const currentAllowance = allowanceRaw || BigInt(0);
         
-        // Get wallet client directly to bypass wagmi's getChainId check
-        const walletClient = await getWalletClient(config, { chainId: targetChainId });
-        if (!walletClient) {
-          throw new Error('Failed to get wallet client. Please ensure your wallet is connected.');
+        // Get wallet client directly from window.ethereum to bypass wagmi's getChainId check
+        if (!window.ethereum) {
+          throw new Error('No wallet provider found. Please connect your wallet.');
         }
+        
+        // Create wallet client directly from ethereum provider to bypass wagmi
+        const walletClient = createWalletClient({
+          chain: base,
+          transport: custom(window.ethereum),
+        });
         
         if (currentAllowance < amountWei) {
           setDepositStep('approving');
@@ -517,11 +521,11 @@ const ERC20_ABI = [
           
           // Use wallet client's writeContract method directly to bypass wagmi's getChainId check
           const approveHash = await walletClient.writeContract({
+            account: address as `0x${string}`,
             address: qtTokenAddress,
             abi: ERC20_ABI,
             functionName: 'approve',
             args: [contractAddress, amountWei],
-            chain: base,
           });
           
           console.log('Approval transaction hash:', approveHash);
@@ -537,11 +541,11 @@ const ERC20_ABI = [
         
         // Use wallet client's writeContract method directly to bypass wagmi's getChainId check
         const depositHash = await walletClient.writeContract({
+          account: address as `0x${string}`,
           address: contractAddress,
           abi: BET_MODE_VAULT_ABI,
           functionName: 'deposit',
           args: [amountWei],
-          chain: base,
         });
         
         console.log('Deposit transaction hash:', depositHash);
@@ -855,19 +859,44 @@ const ERC20_ABI = [
         setWithdrawStep('withdrawing');
         console.log('Withdrawing from contract...');
 
-        // Get wallet client directly to bypass wagmi's getChainId check
-        const walletClient = await getWalletClient(config, { chainId: base.id });
-        if (!walletClient) {
-          throw new Error('Failed to get wallet client. Please ensure your wallet is connected.');
+        // Get wallet provider directly to bypass wagmi's getChainId check
+        // Try Farcaster SDK first, then fallback to window.ethereum
+        let provider: any = null;
+        try {
+          const farcasterProvider = await sdk.wallet.getEthereumProvider();
+          if (farcasterProvider) {
+            provider = farcasterProvider;
+          }
+        } catch (e) {
+          console.warn('Farcaster SDK provider not available, using window.ethereum');
         }
+        
+        if (!provider && window.ethereum) {
+          provider = window.ethereum;
+        }
+        
+        if (!provider) {
+          throw new Error('No wallet provider found. Please connect your wallet.');
+        }
+        
+        if (!address) {
+          throw new Error('No wallet address found. Please connect your wallet.');
+        }
+        
+        // Create wallet client directly from provider to bypass wagmi
+        const walletClient = createWalletClient({
+          account: address as `0x${string}`,
+          chain: base,
+          transport: custom(provider),
+        });
 
         // Use wallet client's writeContract method directly to bypass wagmi's getChainId check
         const withdrawHash = await walletClient.writeContract({
+          account: address as `0x${string}`,
           address: contractAddress,
           abi: BET_MODE_VAULT_ABI,
           functionName: 'withdraw',
           args: [BigInt(amountWei), BigInt(nonce), signature as `0x${string}`],
-          chain: base,
         });
 
         console.log('Withdrawal transaction hash:', withdrawHash);
