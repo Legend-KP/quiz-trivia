@@ -363,12 +363,62 @@ const ERC20_ABI = [
       if (!contractAddress) {
         handleDepositVerification(depositTxHash);
       } else {
-        // Contract deposit - events will sync DB, just refresh status
+        // Contract deposit - events will sync DB, but add manual sync and polling
         setDepositing(false);
         setDepositStep('input');
         setShowDepositModal(false);
         setDepositAmount('');
+        
+        // Try manual sync first (in case event listener hasn't processed yet)
+        if (address && context?.user?.fid) {
+          try {
+            await fetch('/api/bet-mode/deposit/sync', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                fid: context.user.fid,
+                walletAddress: address,
+              }),
+            });
+          } catch (syncError) {
+            console.warn('Manual sync failed, will rely on event listener:', syncError);
+          }
+        }
+        
+        // Immediate refresh
         fetchStatus();
+        
+        // Poll for balance update (events might take a few seconds to process)
+        let pollCount = 0;
+        const maxPolls = 15; // Poll for up to 30 seconds (15 * 2s)
+        
+        const pollInterval = setInterval(() => {
+          pollCount++;
+          fetchStatus();
+          
+          // Try sync again after a few polls
+          if (pollCount === 3 && address && context?.user?.fid) {
+            fetch('/api/bet-mode/deposit/sync', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                fid: context.user.fid,
+                walletAddress: address,
+              }),
+            }).catch(() => {});
+          }
+          
+          if (pollCount >= maxPolls) {
+            clearInterval(pollInterval);
+            // Final refresh after polling completes
+            setTimeout(() => fetchStatus(), 1000);
+          }
+        }, 2000); // Poll every 2 seconds
+        
+        // Cleanup on unmount
+        return () => {
+          clearInterval(pollInterval);
+        };
       }
     }
   }, [isDepositConfirmed, depositTxHash, handleDepositVerification, contractAddress, fetchStatus]);
