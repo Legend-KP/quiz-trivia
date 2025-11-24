@@ -6,6 +6,9 @@
   import { base } from 'wagmi/chains';
   import { CheckCircle, XCircle } from 'lucide-react';
   import { formatUnits, parseUnits } from 'viem';
+  import { getWalletClient } from '@wagmi/core';
+  import { encodeFunctionData } from 'viem';
+  import { config } from '~/components/providers/WagmiProvider';
   import sdk from '@farcaster/miniapp-sdk';
   import {
     formatQT,
@@ -120,6 +123,9 @@ const ERC20_ABI = [
   const [depositAmount, setDepositAmount] = useState<string>('');
   const [depositing, setDepositing] = useState(false);
   const [depositStep, setDepositStep] = useState<'input' | 'approving' | 'depositing' | 'confirming'>('input');
+  const [depositTxHash, setDepositTxHash] = useState<`0x${string}` | undefined>();
+  const [isDepositPending, setIsDepositPending] = useState(false);
+  const [writeContractError, setWriteContractError] = useState<Error | null>(null);
   const [platformWallet, setPlatformWallet] = useState<string | null>(null);
   const [platformWalletError, setPlatformWalletError] = useState<string | null>(null);
   const [walletBalanceError, setWalletBalanceError] = useState<string | null>(null);
@@ -129,6 +135,7 @@ const ERC20_ABI = [
   const [withdrawAmount, setWithdrawAmount] = useState<string>('');
   const [withdrawing, setWithdrawing] = useState(false);
   const [withdrawStep, setWithdrawStep] = useState<'input' | 'preparing' | 'withdrawing' | 'confirming'>('input');
+  const [withdrawTxHash, setWithdrawTxHash] = useState<`0x${string}` | undefined>();
   const [withdrawalSuccess, setWithdrawalSuccess] = useState<{
     amount: number;
     txHash: string;
@@ -184,14 +191,12 @@ const ERC20_ABI = [
     }
   }, [balanceError]);
     
-  // Wagmi hooks for deposit transaction
-  const { writeContract, data: depositTxHash, isPending: isDepositPending, error: writeContractError } = useWriteContract();
+  // Wagmi hooks for deposit transaction confirmation (using state-managed hash)
   const { isLoading: isDepositConfirming, isSuccess: isDepositConfirmed } = useWaitForTransactionReceipt({
     hash: depositTxHash,
   });
   
-  // Wagmi hooks for withdrawal transaction
-  const { writeContract: writeWithdrawContract, data: withdrawTxHash } = useWriteContract();
+  // Wagmi hooks for withdrawal transaction confirmation
   const { isSuccess: isWithdrawConfirmed } = useWaitForTransactionReceipt({
     hash: withdrawTxHash,
   });
@@ -215,6 +220,8 @@ const ERC20_ABI = [
       console.error('Write contract error:', writeContractError);
       setError(writeContractError.message || 'Transaction failed. Please try again.');
       setDepositing(false);
+      setIsDepositPending(false);
+      setDepositStep('input');
     }
   }, [writeContractError]);
 
@@ -498,17 +505,26 @@ const ERC20_ABI = [
         // Step 1: Check and approve if needed
         const currentAllowance = allowanceRaw || BigInt(0);
         
+        // Get wallet client directly to bypass wagmi's getChainId check
+        const walletClient = await getWalletClient(config, { chainId: targetChainId });
+        if (!walletClient) {
+          throw new Error('Failed to get wallet client. Please ensure your wallet is connected.');
+        }
+        
         if (currentAllowance < amountWei) {
           setDepositStep('approving');
           console.log('Requesting approval...');
           
-          await writeContract({
+          // Use wallet client's writeContract method directly to bypass wagmi's getChainId check
+          const approveHash = await walletClient.writeContract({
             address: qtTokenAddress,
             abi: ERC20_ABI,
             functionName: 'approve',
             args: [contractAddress, amountWei],
-            chainId: targetChainId,
+            chain: base,
           });
+          
+          console.log('Approval transaction hash:', approveHash);
           
           // Wait for approval confirmation
           await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -516,15 +532,23 @@ const ERC20_ABI = [
         
         // Step 2: Call contract.deposit()
         setDepositStep('depositing');
+        setIsDepositPending(true);
         console.log('Depositing to contract...');
         
-        await writeContract({
+        // Use wallet client's writeContract method directly to bypass wagmi's getChainId check
+        const depositHash = await walletClient.writeContract({
           address: contractAddress,
           abi: BET_MODE_VAULT_ABI,
           functionName: 'deposit',
           args: [amountWei],
-          chainId: targetChainId,
+          chain: base,
         });
+        
+        console.log('Deposit transaction hash:', depositHash);
+        
+        // Store hash in state so useWaitForTransactionReceipt can track it
+        setDepositTxHash(depositHash);
+        setIsDepositPending(false);
         
         // Step 3: Wait for confirmation (handled by useWaitForTransactionReceipt)
         setDepositStep('confirming');
@@ -547,7 +571,9 @@ const ERC20_ABI = [
         }
         
         setError(errorMessage);
+        setWriteContractError(err);
         setDepositing(false);
+        setIsDepositPending(false);
         setDepositStep('input');
       }
     };
@@ -829,13 +855,23 @@ const ERC20_ABI = [
         setWithdrawStep('withdrawing');
         console.log('Withdrawing from contract...');
 
-        await writeWithdrawContract({
+        // Get wallet client directly to bypass wagmi's getChainId check
+        const walletClient = await getWalletClient(config, { chainId: base.id });
+        if (!walletClient) {
+          throw new Error('Failed to get wallet client. Please ensure your wallet is connected.');
+        }
+
+        // Use wallet client's writeContract method directly to bypass wagmi's getChainId check
+        const withdrawHash = await walletClient.writeContract({
           address: contractAddress,
           abi: BET_MODE_VAULT_ABI,
           functionName: 'withdraw',
           args: [BigInt(amountWei), BigInt(nonce), signature as `0x${string}`],
-          chainId: base.id,
+          chain: base,
         });
+
+        console.log('Withdrawal transaction hash:', withdrawHash);
+        setWithdrawTxHash(withdrawHash);
 
         // Step 3: Wait for confirmation (handled by useWaitForTransactionReceipt)
         setWithdrawStep('confirming');
