@@ -369,28 +369,26 @@ const ERC20_ABI = [
         setShowDepositModal(false);
         setDepositAmount('');
         
+        // Poll for balance update (events might take a few seconds to process)
+        let pollCount = 0;
+        const maxPolls = 15; // Poll for up to 30 seconds (15 * 2s)
+        
         // Try manual sync first (in case event listener hasn't processed yet)
         if (address && context?.user?.fid) {
-          try {
-            await fetch('/api/bet-mode/deposit/sync', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                fid: context.user.fid,
-                walletAddress: address,
-              }),
-            });
-          } catch (syncError) {
+          fetch('/api/bet-mode/deposit/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fid: context.user.fid,
+              walletAddress: address,
+            }),
+          }).catch((syncError) => {
             console.warn('Manual sync failed, will rely on event listener:', syncError);
-          }
+          });
         }
         
         // Immediate refresh
         fetchStatus();
-        
-        // Poll for balance update (events might take a few seconds to process)
-        let pollCount = 0;
-        const maxPolls = 15; // Poll for up to 30 seconds (15 * 2s)
         
         const pollInterval = setInterval(() => {
           pollCount++;
@@ -421,7 +419,7 @@ const ERC20_ABI = [
         };
       }
     }
-  }, [isDepositConfirmed, depositTxHash, handleDepositVerification, contractAddress, fetchStatus]);
+  }, [isDepositConfirmed, depositTxHash, handleDepositVerification, contractAddress, fetchStatus, address, context?.user?.fid]);
   
   // Handle withdrawal transaction confirmation
   useEffect(() => {
