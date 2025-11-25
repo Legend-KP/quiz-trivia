@@ -1301,10 +1301,10 @@ const ERC20_ABI = [
                         </button>
                       </div>
                       <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                        Available: {formatQT(status?.balance?.availableBalance || 0)} QT
+                        Available: {formatQT(status?.balance?.availableBalance || 0)}
                       </p>
                       <p className="text-xs text-gray-600 dark:text-gray-400">
-                        Min: {formatQT(1000)} QT
+                        Min: {formatQT(1000)}
                       </p>
                     </div>
 
@@ -1499,28 +1499,6 @@ const ERC20_ABI = [
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Amount to Deposit:
                       </label>
-                      
-                      {/* Quick deposit buttons */}
-                      <div className="grid grid-cols-3 gap-2 mb-2">
-                        {[MIN_BET, MIN_BET * 5, MIN_BET * 10].map((amount) => (
-                          <button
-                            key={amount}
-                            onClick={() => {
-                              const maxAmount = Math.min(amount, walletBalance);
-                              setDepositAmount(maxAmount.toString());
-                              setError(null);
-                            }}
-                            disabled={depositing || isDepositPending || isDepositConfirming || amount > walletBalance}
-                             className={`p-2 rounded-lg text-xs font-semibold transition-all ${
-                               amount > walletBalance
-                                 ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                                 : 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-200 hover:bg-blue-100 dark:hover:bg-blue-800'
-                             }`}
-                          >
-                            {formatQT(amount)}
-                          </button>
-                        ))}
-                      </div>
                       
                       <input
                         type="number"
