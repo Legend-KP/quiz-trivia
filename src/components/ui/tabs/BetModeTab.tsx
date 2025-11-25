@@ -469,7 +469,7 @@ const ERC20_ABI = [
       
       const MIN_DEPOSIT = 1000; // 1K QT minimum
       if (amount < MIN_DEPOSIT) {
-        setError(`Minimum deposit is ${formatQT(MIN_DEPOSIT)} QT`);
+        setError(`Minimum deposit is ${formatQT(MIN_DEPOSIT)}`);
         return;
       }
       
@@ -812,7 +812,7 @@ const ERC20_ABI = [
       // Minimum withdrawal check
       const MIN_WITHDRAW = 1000; // 1K QT minimum
       if (amount < MIN_WITHDRAW) {
-        setError(`Minimum withdrawal is ${formatQT(MIN_WITHDRAW)} QT`);
+        setError(`Minimum withdrawal is ${formatQT(MIN_WITHDRAW)}`);
         return;
       }
 
@@ -1257,23 +1257,6 @@ const ERC20_ABI = [
                       <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
                         Withdrawal Amount
                       </label>
-                      <div className="flex gap-2 mb-2">
-                        {[
-                          Math.min(10000, status?.balance?.availableBalance || 0),
-                          Math.min(50000, status?.balance?.availableBalance || 0),
-                          Math.min(100000, status?.balance?.availableBalance || 0),
-                        ]
-                          .filter((amt) => amt > 0)
-                          .map((amount) => (
-                            <button
-                              key={amount}
-                              onClick={() => setWithdrawAmount(amount.toString())}
-                              className="flex-1 py-2 px-3 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-sm font-medium text-gray-900 dark:text-gray-100"
-                            >
-                              {formatQT(amount)}
-                            </button>
-                          ))}
-                      </div>
                       <div className="relative">
                         <input
                           type="number"
