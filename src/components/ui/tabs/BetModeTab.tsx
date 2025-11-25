@@ -1286,19 +1286,7 @@ const ERC20_ABI = [
                       <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                         Available: {formatQT(status?.balance?.availableBalance || 0)}
                       </p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        Min: {formatQT(1000)}
-                      </p>
                     </div>
-
-                    {address && (
-                      <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <p className="text-xs text-gray-700 dark:text-gray-300 mb-1">Withdrawing to:</p>
-                        <p className="text-sm font-mono text-gray-900 dark:text-gray-100 break-all">
-                          {address}
-                        </p>
-                      </div>
-                    )}
                     
                     {/* Step indicators for contract withdrawal */}
                     {contractAddress && (withdrawStep !== 'input' || withdrawing) && (
