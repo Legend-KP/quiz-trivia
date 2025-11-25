@@ -906,7 +906,10 @@ const ERC20_ABI = [
 
         // Step 1: Request signature from backend
         setWithdrawStep('preparing');
-        const res = await fetch('/api/bet-mode/withdraw/prepare', {
+        let prepareData: any;
+        
+        // First attempt
+        let res = await fetch('/api/bet-mode/withdraw/prepare', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -916,9 +919,49 @@ const ERC20_ABI = [
           }),
         });
 
-        const data = await res.json();
+        let data = await res.json();
 
-        if (!res.ok) {
+        // If there's a balance mismatch, try to sync first
+        if (!res.ok && data.needsSync && address && fid) {
+          console.log('Balance mismatch detected, attempting to sync...');
+          try {
+            const syncRes = await fetch('/api/bet-mode/deposit/sync', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                fid,
+                walletAddress: address,
+              }),
+            });
+            
+            const syncData = await syncRes.json();
+            if (syncData.success && syncData.synced) {
+              // Retry withdrawal after sync
+              console.log('Balance synced, retrying withdrawal...');
+              await fetchStatus(); // Refresh status
+              
+              // Retry the withdrawal prepare
+              res = await fetch('/api/bet-mode/withdraw/prepare', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  fid,
+                  amount: finalAmount,
+                  walletAddress: address,
+                }),
+              });
+              
+              data = await res.json();
+              if (!res.ok) {
+                throw new Error(data.error || 'Failed to prepare withdrawal after sync');
+              }
+            } else {
+              throw new Error(data.error || 'Failed to prepare withdrawal. Balance sync did not resolve the issue.');
+            }
+          } catch (syncError: any) {
+            throw new Error(data.error || `Failed to prepare withdrawal: ${syncError.message}`);
+          }
+        } else if (!res.ok) {
           throw new Error(data.error || 'Failed to prepare withdrawal');
         }
 

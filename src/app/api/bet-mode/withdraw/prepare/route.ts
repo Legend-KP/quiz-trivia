@@ -74,11 +74,39 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Get current nonce from contract
+    // 3. Get current nonce from contract and verify contract balance
     const contractAddress = getBetModeVaultAddress();
     const rpcUrl = process.env.BASE_RPC_URL || 'https://mainnet.base.org';
     const provider = new ethers.JsonRpcProvider(rpcUrl);
     const contract = new ethers.Contract(contractAddress, BET_MODE_VAULT_ABI, provider);
+
+    // Check user's balance in contract
+    let contractBalance: bigint;
+    try {
+      contractBalance = await contract.userBalances(walletAddress);
+      const contractBalanceQT = parseFloat(ethers.formatEther(contractBalance));
+      
+      // Compare contract balance with database balance
+      if (contractBalanceQT < numAmount) {
+        const needsSync = contractBalanceQT < availableBalance;
+        return NextResponse.json(
+          { 
+            error: `Insufficient balance in contract. Your contract balance is ${contractBalanceQT.toFixed(2)} QT, but you're trying to withdraw ${numAmount} QT. ${needsSync ? 'Your database shows more balance - deposits may not have synced properly. Attempting to sync...' : 'Please reduce your withdrawal amount.'}`,
+            contractBalance: contractBalanceQT,
+            dbBalance: availableBalance,
+            requestedAmount: numAmount,
+            needsSync: needsSync,
+          },
+          { status: 400 }
+        );
+      }
+    } catch (error) {
+      console.error('Error fetching contract balance:', error);
+      return NextResponse.json(
+        { error: 'Failed to fetch balance from contract' },
+        { status: 500 }
+      );
+    }
 
     let nonce: bigint;
     try {
