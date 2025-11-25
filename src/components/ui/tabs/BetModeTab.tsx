@@ -830,14 +830,22 @@ const ERC20_ABI = [
       }
 
       const availableBalance = status?.balance?.availableBalance || 0;
-      if (amount > availableBalance) {
-        setError(`Insufficient balance. You have ${formatQT(availableBalance)} QT available.`);
+      // Round down available balance to avoid floating point precision issues
+      const maxWithdrawable = Math.floor(availableBalance);
+      
+      // Use a small epsilon to handle floating point precision issues when comparing
+      const epsilon = 0.01;
+      if (amount > maxWithdrawable + epsilon) {
+        setError(`Insufficient balance. You have ${formatQT(availableBalance)} QT available (max withdrawable: ${formatQT(maxWithdrawable)} QT).`);
         return;
       }
+      
+      // Ensure we use the floored amount for the actual withdrawal
+      const finalAmount = Math.min(Math.floor(amount), maxWithdrawable);
 
       // Minimum withdrawal check
       const MIN_WITHDRAW = 1000; // 1K QT minimum
-      if (amount < MIN_WITHDRAW) {
+      if (finalAmount < MIN_WITHDRAW) {
         setError(`Minimum withdrawal is ${formatQT(MIN_WITHDRAW)}`);
         return;
       }
@@ -859,7 +867,7 @@ const ERC20_ABI = [
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               fid,
-              amount,
+              amount: finalAmount,
               toAddress: address,
             }),
           });
@@ -875,7 +883,7 @@ const ERC20_ABI = [
           await fetchStatus();
           setError(null);
           setWithdrawalSuccess({
-            amount,
+            amount: finalAmount,
             txHash: data.txHash,
           });
         } catch (err: any) {
@@ -903,7 +911,7 @@ const ERC20_ABI = [
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             fid,
-            amount,
+            amount: finalAmount,
             walletAddress: address,
           }),
         });
@@ -1300,7 +1308,9 @@ const ERC20_ABI = [
                           onClick={() => {
                             const maxAmount = status?.balance?.availableBalance || 0;
                             if (maxAmount > 0) {
-                              setWithdrawAmount(maxAmount.toString());
+                              // Round to avoid floating point precision issues
+                              const roundedMax = Math.floor(maxAmount);
+                              setWithdrawAmount(roundedMax.toString());
                               setError(null);
                             }
                           }}
