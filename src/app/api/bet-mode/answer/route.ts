@@ -14,6 +14,7 @@ import {
   calculateConsecutiveDays,
   getTodayDateString,
 } from '~/lib/betMode';
+import { syncBalanceUpdate } from '~/lib/syncContractBalance';
 
 export const runtime = 'nodejs';
 
@@ -87,6 +88,12 @@ export async function POST(req: NextRequest) {
         }
       );
 
+      // Sync balance debit to contract (loss)
+      // Don't await - let it run async to not block the response
+      syncBalanceUpdate(numFid, game.betAmount, 'DEBIT').catch((error) => {
+        console.error('Failed to sync DEBIT balance update:', error);
+      });
+
       // Award lottery tickets (consolation)
       await awardLotteryTickets(numFid, game.betAmount, 1, game.weekId);
 
@@ -143,6 +150,16 @@ export async function POST(req: NextRequest) {
           $set: { updatedAt: now },
         }
       );
+
+      // Sync balance credit to contract (win)
+      // Credit the net winnings (payout - betAmount) since betAmount was already deducted
+      const netWinnings = payout - game.betAmount;
+      if (netWinnings > 0) {
+        // Don't await - let it run async to not block the response
+        syncBalanceUpdate(numFid, netWinnings, 'CREDIT').catch((error) => {
+          console.error('Failed to sync CREDIT balance update:', error);
+        });
+      }
 
       // Award lottery tickets
       await awardLotteryTickets(numFid, game.betAmount, 1, game.weekId);

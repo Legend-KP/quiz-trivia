@@ -4,9 +4,9 @@
  * This contract holds all user QT tokens in a custodial vault.
  * Users deposit/withdraw through the contract, and events sync to database.
  * 
- * Contract Address: 0xD9DaF0183265cf600F0e2df6aD2dE4F0334B15B3
- * BaseScan: https://basescan.org/address/0xD9DaF0183265cf600F0e2df6aD2dE4F0334B15B3
- * Verified: ✅ Yes
+ * Contract Address: 0x9e64C4FAc590Cb159988B5b62655BBd16aeE8621
+ * BaseScan: https://basescan.org/address/0x9e64C4FAc590Cb159988B5b62655BBd16aeE8621
+ * Verified: ⏳ Pending (deployed with new creditBalance/debitBalance functions)
  * 
  * ABI Source: Verified contract on BaseScan
  * Last Updated: Contract deployment and verification
@@ -70,6 +70,30 @@ export const BET_MODE_VAULT_ABI = [
       { indexed: false, internalType: 'uint256', name: 'timestamp', type: 'uint256' },
     ],
     name: 'Deposited',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'user', type: 'address' },
+      { indexed: false, internalType: 'uint256', name: 'amount', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'newBalance', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'nonce', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'timestamp', type: 'uint256' },
+    ],
+    name: 'BalanceCredited',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'user', type: 'address' },
+      { indexed: false, internalType: 'uint256', name: 'amount', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'newBalance', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'nonce', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'timestamp', type: 'uint256' },
+    ],
+    name: 'BalanceDebited',
     type: 'event',
   },
   {
@@ -166,6 +190,30 @@ export const BET_MODE_VAULT_ABI = [
     type: 'function',
   },
   {
+    inputs: [
+      { internalType: 'address', name: 'user', type: 'address' },
+      { internalType: 'uint256', name: 'amount', type: 'uint256' },
+      { internalType: 'uint256', name: 'nonce', type: 'uint256' },
+      { internalType: 'bytes', name: 'signature', type: 'bytes' },
+    ],
+    name: 'creditBalance',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { internalType: 'address', name: 'user', type: 'address' },
+      { internalType: 'uint256', name: 'amount', type: 'uint256' },
+      { internalType: 'uint256', name: 'nonce', type: 'uint256' },
+      { internalType: 'bytes', name: 'signature', type: 'bytes' },
+    ],
+    name: 'debitBalance',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
     inputs: [{ internalType: 'uint256', name: 'amount', type: 'uint256' }],
     name: 'emergencyWithdraw',
     outputs: [],
@@ -201,6 +249,7 @@ export const BET_MODE_VAULT_ABI = [
       { internalType: 'uint256', name: 'deposited', type: 'uint256' },
       { internalType: 'uint256', name: 'withdrawn', type: 'uint256' },
       { internalType: 'uint256', name: 'nextNonce', type: 'uint256' },
+      { internalType: 'uint256', name: 'nextBalanceUpdateNonce', type: 'uint256' },
     ],
     stateMutability: 'view',
     type: 'function',
@@ -321,6 +370,13 @@ export const BET_MODE_VAULT_ABI = [
     stateMutability: 'view',
     type: 'function',
   },
+  {
+    inputs: [{ internalType: 'address', name: '', type: 'address' }],
+    name: 'balanceUpdateNonces',
+    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
 ] as const;
 
 /**
@@ -331,7 +387,7 @@ export function getBetModeVaultAddress(): `0x${string}` {
   const address =
     process.env.NEXT_PUBLIC_BET_MODE_VAULT_ADDRESS ||
     process.env.BET_MODE_VAULT_ADDRESS ||
-    '0xD9DaF0183265cf600F0e2df6aD2dE4F0334B15B3'; // Fallback to deployed contract address
+    '0x9e64C4FAc590Cb159988B5b62655BBd16aeE8621'; // Fallback to deployed contract address
   
   return address as `0x${string}`;
 }

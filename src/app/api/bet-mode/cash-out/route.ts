@@ -6,6 +6,7 @@ import {
   getQTTransactionsCollection,
 } from '~/lib/mongodb';
 import { calculatePayout, calculateBaseTickets } from '~/lib/betMode';
+import { syncBalanceUpdate } from '~/lib/syncContractBalance';
 
 export const runtime = 'nodejs';
 
@@ -57,6 +58,16 @@ export async function POST(req: NextRequest) {
         $set: { updatedAt: now },
       }
     );
+
+    // Sync balance credit to contract (win)
+    // Credit the net winnings (payout - betAmount) since betAmount was already deducted
+    const netWinnings = payout - game.betAmount;
+    if (netWinnings > 0) {
+      // Don't await - let it run async to not block the response
+      syncBalanceUpdate(numFid, netWinnings, 'CREDIT').catch((error) => {
+        console.error('Failed to sync CREDIT balance update:', error);
+      });
+    }
 
     // Award lottery tickets
     const tickets = await getLotteryTicketsCollection();

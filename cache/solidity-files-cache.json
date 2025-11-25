@@ -1,153 +1,9 @@
 {
   "_format": "hh-sol-cache-2",
   "files": {
-    "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\QuizTriviaEntry.sol": {
-      "lastModificationDate": 1761459287256,
-      "contentHash": "7864ff59447a02265182d63b93586058",
-      "sourceName": "contracts/QuizTriviaEntry.sol",
-      "solcConfig": {
-        "version": "0.8.20",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "QuizTriviaEntry"
-      ]
-    },
-    "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\QTRewardDistributor.sol": {
-      "lastModificationDate": 1763025521439,
-      "contentHash": "3da9ff8b32f8762c217678596b9e3f8a",
-      "sourceName": "contracts/QTRewardDistributor.sol",
-      "solcConfig": {
-        "version": "0.8.20",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "QTRewardDistributor"
-      ]
-    },
-    "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\QuizTriviaEntry-Fixed.sol": {
-      "lastModificationDate": 1761456943333,
-      "contentHash": "ff090a7bb25be105df56e4d9cf3a3a30",
-      "sourceName": "contracts/QuizTriviaEntry-Fixed.sol",
-      "solcConfig": {
-        "version": "0.8.20",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "QuizTriviaSignature"
-      ]
-    },
-    "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\DailyRewardDistributor.sol": {
-      "lastModificationDate": 1763025572927,
-      "contentHash": "a5844a2afa3ebf99d1f5e3d2fb6daec6",
-      "sourceName": "contracts/DailyRewardDistributor.sol",
-      "solcConfig": {
-        "version": "0.8.20",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "DailyRewardDistributor"
-      ]
-    },
     "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\BetModeVault.sol": {
-      "lastModificationDate": 1763823637653,
-      "contentHash": "faa2b571e7ff881fc3f4e19d0b4b6856",
+      "lastModificationDate": 1764102002904,
+      "contentHash": "d4b44f918a43fe65e1c8339c350dafbd",
       "sourceName": "contracts/BetModeVault.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -336,42 +192,6 @@
         "ECDSA"
       ]
     },
-    "C:\\Users\\LENOVO\\quiz-trivia\\node_modules\\@openzeppelin\\contracts\\utils\\ReentrancyGuard.sol": {
-      "lastModificationDate": 1760729598305,
-      "contentHash": "190613e556d509d9e9a0ea43dc5d891d",
-      "sourceName": "@openzeppelin/contracts/utils/ReentrancyGuard.sol",
-      "solcConfig": {
-        "version": "0.8.20",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.20"
-      ],
-      "artifacts": [
-        "ReentrancyGuard"
-      ]
-    },
     "C:\\Users\\LENOVO\\quiz-trivia\\node_modules\\@openzeppelin\\contracts\\utils\\cryptography\\MessageHashUtils.sol": {
       "lastModificationDate": 1760729598224,
       "contentHash": "260f3968eefa3bbd30520cff5384cd93",
@@ -408,6 +228,42 @@
       ],
       "artifacts": [
         "MessageHashUtils"
+      ]
+    },
+    "C:\\Users\\LENOVO\\quiz-trivia\\node_modules\\@openzeppelin\\contracts\\utils\\ReentrancyGuard.sol": {
+      "lastModificationDate": 1760729598305,
+      "contentHash": "190613e556d509d9e9a0ea43dc5d891d",
+      "sourceName": "@openzeppelin/contracts/utils/ReentrancyGuard.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "ReentrancyGuard"
       ]
     },
     "C:\\Users\\LENOVO\\quiz-trivia\\node_modules\\@openzeppelin\\contracts\\utils\\Context.sol": {
@@ -486,6 +342,44 @@
         "Strings"
       ]
     },
+    "C:\\Users\\LENOVO\\quiz-trivia\\node_modules\\@openzeppelin\\contracts\\utils\\math\\SignedMath.sol": {
+      "lastModificationDate": 1760729598331,
+      "contentHash": "ae3528afb8bdb0a7dcfba5b115ee8074",
+      "sourceName": "@openzeppelin/contracts/utils/math/SignedMath.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./SafeCast.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "SignedMath"
+      ]
+    },
     "C:\\Users\\LENOVO\\quiz-trivia\\node_modules\\@openzeppelin\\contracts\\utils\\math\\Math.sol": {
       "lastModificationDate": 1760729598199,
       "contentHash": "5ec781e33d3a9ac91ffdc83d94420412",
@@ -523,44 +417,6 @@
       ],
       "artifacts": [
         "Math"
-      ]
-    },
-    "C:\\Users\\LENOVO\\quiz-trivia\\node_modules\\@openzeppelin\\contracts\\utils\\math\\SignedMath.sol": {
-      "lastModificationDate": 1760729598331,
-      "contentHash": "ae3528afb8bdb0a7dcfba5b115ee8074",
-      "sourceName": "@openzeppelin/contracts/utils/math/SignedMath.sol",
-      "solcConfig": {
-        "version": "0.8.20",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "./SafeCast.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.20"
-      ],
-      "artifacts": [
-        "SignedMath"
       ]
     },
     "C:\\Users\\LENOVO\\quiz-trivia\\node_modules\\@openzeppelin\\contracts\\utils\\math\\SafeCast.sol": {
@@ -633,6 +489,150 @@
       ],
       "artifacts": [
         "Panic"
+      ]
+    },
+    "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\DailyRewardDistributor.sol": {
+      "lastModificationDate": 1763025572927,
+      "contentHash": "a5844a2afa3ebf99d1f5e3d2fb6daec6",
+      "sourceName": "contracts/DailyRewardDistributor.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "DailyRewardDistributor"
+      ]
+    },
+    "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\QTRewardDistributor.sol": {
+      "lastModificationDate": 1763025521439,
+      "contentHash": "3da9ff8b32f8762c217678596b9e3f8a",
+      "sourceName": "contracts/QTRewardDistributor.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "QTRewardDistributor"
+      ]
+    },
+    "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\QuizTriviaEntry-Fixed.sol": {
+      "lastModificationDate": 1761456943333,
+      "contentHash": "ff090a7bb25be105df56e4d9cf3a3a30",
+      "sourceName": "contracts/QuizTriviaEntry-Fixed.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "QuizTriviaSignature"
+      ]
+    },
+    "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\QuizTriviaEntry.sol": {
+      "lastModificationDate": 1761459287256,
+      "contentHash": "7864ff59447a02265182d63b93586058",
+      "sourceName": "contracts/QuizTriviaEntry.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "QuizTriviaEntry"
       ]
     }
   }
