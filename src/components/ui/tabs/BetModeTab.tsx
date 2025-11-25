@@ -289,6 +289,29 @@ const ERC20_ABI = [
       }
     }, [openDepositModal]);
 
+    // Auto-connect wallet when deposit modal opens in Farcaster
+    useEffect(() => {
+      if (showDepositModal && !isConnected && context?.user?.fid && connectors.length > 0) {
+        const isInFarcasterClient = typeof window !== 'undefined' && 
+          (window.location.href.includes('warpcast.com') || 
+           window.location.href.includes('farcaster') ||
+           window.ethereum?.isFarcaster ||
+           context?.client);
+        
+        if (isInFarcasterClient) {
+          console.log('Auto-connecting wallet for deposit...');
+          try {
+            connect({ 
+              connector: connectors[0],
+              chainId: base.id,
+            });
+          } catch (error) {
+            console.error('Auto-connection failed:', error);
+          }
+        }
+      }
+    }, [showDepositModal, isConnected, context?.user?.fid, connectors, connect, context?.client]);
+
     // Open withdraw modal if requested from homepage
     useEffect(() => {
       if (openWithdrawModal) {
@@ -504,25 +527,28 @@ const ERC20_ABI = [
         // Step 1: Check and approve if needed
         const currentAllowance = allowanceRaw || BigInt(0);
         
-        // Get wallet client directly from window.ethereum to bypass wagmi's getChainId check
-        // Get wallet provider directly to bypass wagmi's getChainId check
-        // Try Farcaster SDK first, then fallback to window.ethereum
+        // Get wallet provider - try multiple sources for Farcaster web compatibility
         let provider: any = null;
+        
+        // Try Farcaster SDK first (for Farcaster clients)
         try {
           const farcasterProvider = await sdk.wallet.getEthereumProvider();
           if (farcasterProvider) {
+            console.log('Using Farcaster SDK provider');
             provider = farcasterProvider;
           }
         } catch (e) {
-          console.warn('Farcaster SDK provider not available, using window.ethereum');
+          console.warn('Farcaster SDK provider not available:', e);
         }
         
-        if (!provider && window.ethereum) {
+        // Try window.ethereum (standard Web3 provider)
+        if (!provider && typeof window !== 'undefined' && window.ethereum) {
+          console.log('Using window.ethereum provider');
           provider = window.ethereum;
         }
         
         if (!provider) {
-          throw new Error('No wallet provider found. Please connect your wallet.');
+          throw new Error('No wallet provider found. Please ensure your wallet is connected and try again.');
         }
         
         if (!address) {
@@ -1465,6 +1491,25 @@ const ERC20_ABI = [
                         ⚠️ {walletBalanceError}
                       </div>
                     )}
+
+                    {!address && (
+                      <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+                        <p className="text-xs text-yellow-800 dark:text-yellow-200 mb-2">
+                          ⚠️ Please connect your wallet to deposit
+                        </p>
+                        {connectors.length > 0 && (
+                          <button
+                            onClick={() => connect({ 
+                              connector: connectors[0],
+                              chainId: base.id,
+                            })}
+                            className="w-full mt-2 py-2 px-4 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-all text-sm"
+                          >
+                            Connect Wallet
+                          </button>
+                        )}
+                      </div>
+                    )}
                     
                     <div className="mb-4">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1508,7 +1553,8 @@ const ERC20_ABI = [
                           depositing || 
                           isDepositPending || 
                           isDepositConfirming || 
-                          !depositAmount
+                          !depositAmount ||
+                          !address
                         }
                         className="flex-1 py-2 px-4 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
