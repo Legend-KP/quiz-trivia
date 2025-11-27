@@ -6,13 +6,13 @@ import {
   getQTTransactionsCollection,
 } from '~/lib/mongodb';
 import { calculatePayout, calculateBaseTickets } from '~/lib/betMode';
-import { syncBalanceUpdate } from '~/lib/syncContractBalance';
+import { creditWinnings } from '~/lib/betModeContract';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
   try {
-    const { gameId, fid } = await req.json();
+    const { gameId, fid, walletAddress } = await req.json();
 
     if (!gameId || !fid) {
       return NextResponse.json({ error: 'Missing gameId or fid' }, { status: 400 });
@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
 
     // Calculate payout (use previous question since we're cashing out before answering current)
     const payout = calculatePayout(game.betAmount, currentQ - 1);
+    const profit = payout - game.betAmount; // Profit = payout - betAmount
 
     const now = Date.now();
     const accounts = await getCurrencyAccountsCollection();
@@ -59,15 +60,11 @@ export async function POST(req: NextRequest) {
       }
     );
 
-    // Sync balance credit to contract (win)
-    // Credit the net winnings (payout - betAmount) since betAmount was already deducted
-    const netWinnings = payout - game.betAmount;
-    if (netWinnings > 0) {
-      // Don't await - let it run async to not block the response
-      syncBalanceUpdate(numFid, netWinnings, 'CREDIT').catch((error) => {
-        console.error('Failed to sync CREDIT balance update:', error);
-      });
-    }
+    // Sync winnings to contract (async - don't block response)
+    // Only credit the profit, not the full payout (betAmount was already deducted)
+    creditWinnings(walletAddress, profit).catch((error) => {
+      console.error('❌ Failed to sync winnings to contract:', error);
+    });
 
     // Award lottery tickets
     const tickets = await getLotteryTicketsCollection();

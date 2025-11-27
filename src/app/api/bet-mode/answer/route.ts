@@ -14,13 +14,13 @@ import {
   calculateConsecutiveDays,
   getTodayDateString,
 } from '~/lib/betMode';
-import { syncBalanceUpdate } from '~/lib/syncContractBalance';
+import { debitLoss, creditWinnings } from '~/lib/betModeContract';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
   try {
-    const { gameId, fid, answerIndex } = await req.json();
+    const { gameId, fid, answerIndex, walletAddress } = await req.json();
 
     if (!gameId || !fid || answerIndex === undefined) {
       return NextResponse.json({ error: 'Missing gameId, fid, or answerIndex' }, { status: 400 });
@@ -88,10 +88,9 @@ export async function POST(req: NextRequest) {
         }
       );
 
-      // Sync balance debit to contract (loss)
-      // Don't await - let it run async to not block the response
-      syncBalanceUpdate(numFid, game.betAmount, 'DEBIT').catch((error) => {
-        console.error('Failed to sync DEBIT balance update:', error);
+      // Sync loss to contract (async - don't block response)
+      debitLoss(walletAddress, game.betAmount).catch((error) => {
+        console.error('❌ Failed to sync loss to contract:', error);
       });
 
       // Award lottery tickets (consolation)
@@ -137,6 +136,7 @@ export async function POST(req: NextRequest) {
     if (currentQ === 10) {
       // Auto cash out at Q10
       const payout = calculatePayout(game.betAmount, 10);
+      const profit = payout - game.betAmount; // Profit = payout - betAmount
 
       const accounts = await getCurrencyAccountsCollection();
       await accounts.updateOne(
@@ -151,15 +151,11 @@ export async function POST(req: NextRequest) {
         }
       );
 
-      // Sync balance credit to contract (win)
-      // Credit the net winnings (payout - betAmount) since betAmount was already deducted
-      const netWinnings = payout - game.betAmount;
-      if (netWinnings > 0) {
-        // Don't await - let it run async to not block the response
-        syncBalanceUpdate(numFid, netWinnings, 'CREDIT').catch((error) => {
-          console.error('Failed to sync CREDIT balance update:', error);
-        });
-      }
+      // Sync winnings to contract (async - don't block response)
+      // Only credit the profit, not the full payout (betAmount was already deducted)
+      creditWinnings(walletAddress, profit).catch((error) => {
+        console.error('❌ Failed to sync winnings to contract:', error);
+      });
 
       // Award lottery tickets
       await awardLotteryTickets(numFid, game.betAmount, 1, game.weekId);

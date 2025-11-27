@@ -44,9 +44,6 @@ contract BetModeVault is Ownable, Pausable, ReentrancyGuard {
     /// @notice Nonces for withdrawal signatures (prevent replay attacks)
     mapping(address => uint256) public withdrawalNonces;
     
-    /// @notice Nonces for balance update signatures (prevent replay attacks)
-    mapping(address => uint256) public balanceUpdateNonces;
-    
     /// @notice Minimum deposit amount
     uint256 public constant MIN_DEPOSIT = 1_000 * 1e18; // 1K QT
     
@@ -88,22 +85,6 @@ contract BetModeVault is Ownable, Pausable, ReentrancyGuard {
     event EmergencyWithdrawal(
         address indexed admin,
         uint256 amount,
-        uint256 timestamp
-    );
-    
-    event BalanceCredited(
-        address indexed user,
-        uint256 amount,
-        uint256 newBalance,
-        uint256 nonce,
-        uint256 timestamp
-    );
-    
-    event BalanceDebited(
-        address indexed user,
-        uint256 amount,
-        uint256 newBalance,
-        uint256 nonce,
         uint256 timestamp
     );
     
@@ -235,123 +216,6 @@ contract BetModeVault is Ownable, Pausable, ReentrancyGuard {
         );
     }
     
-    /**
-     * @notice Credit user balance (for game winnings)
-     * @param user User address to credit
-     * @param amount Amount of QT tokens to credit
-     * @param nonce Unique nonce for this update (prevents replay)
-     * @param signature Admin signature authorizing this credit
-     * 
-     * Flow:
-     * 1. User wins in Bet Mode (off-chain)
-     * 2. Backend generates signature
-     * 3. Backend calls this function with signature
-     * 4. Contract verifies signature and updates balance
-     * 5. Backend listens to event and confirms sync
-     */
-    function creditBalance(
-        address user,
-        uint256 amount,
-        uint256 nonce,
-        bytes calldata signature
-    ) external whenNotPaused nonReentrant {
-        if (user == address(0)) revert InvalidAddress();
-        if (amount == 0) revert InsufficientAmount();
-        
-        // Verify nonce (must match expected nonce for user)
-        if (nonce != balanceUpdateNonces[user]) revert InvalidNonce();
-        
-        // Verify signature from admin
-        bytes32 messageHash = keccak256(abi.encodePacked(
-            user,
-            amount,
-            nonce,
-            block.chainid,
-            address(this),
-            "CREDIT" // Include action type to prevent signature reuse
-        ));
-        
-        bytes32 ethSignedMessageHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
-        address signer = ECDSA.recover(ethSignedMessageHash, signature);
-        
-        if (signer != adminSigner) revert InvalidSignature();
-        
-        // Update nonce (prevents signature reuse)
-        balanceUpdateNonces[user]++;
-        
-        // Update balances
-        userBalances[user] += amount;
-        totalContractBalance += amount;
-        
-        emit BalanceCredited(
-            user,
-            amount,
-            userBalances[user],
-            nonce,
-            block.timestamp
-        );
-    }
-    
-    /**
-     * @notice Debit user balance (for game losses)
-     * @param user User address to debit
-     * @param amount Amount of QT tokens to debit
-     * @param nonce Unique nonce for this update (prevents replay)
-     * @param signature Admin signature authorizing this debit
-     * 
-     * Flow:
-     * 1. User loses in Bet Mode (off-chain)
-     * 2. Backend generates signature
-     * 3. Backend calls this function with signature
-     * 4. Contract verifies signature and updates balance
-     * 5. Backend listens to event and confirms sync
-     */
-    function debitBalance(
-        address user,
-        uint256 amount,
-        uint256 nonce,
-        bytes calldata signature
-    ) external whenNotPaused nonReentrant {
-        if (user == address(0)) revert InvalidAddress();
-        if (amount == 0) revert InsufficientAmount();
-        
-        // Verify nonce (must match expected nonce for user)
-        if (nonce != balanceUpdateNonces[user]) revert InvalidNonce();
-        
-        // Verify signature from admin
-        bytes32 messageHash = keccak256(abi.encodePacked(
-            user,
-            amount,
-            nonce,
-            block.chainid,
-            address(this),
-            "DEBIT" // Include action type to prevent signature reuse
-        ));
-        
-        bytes32 ethSignedMessageHash = MessageHashUtils.toEthSignedMessageHash(messageHash);
-        address signer = ECDSA.recover(ethSignedMessageHash, signature);
-        
-        if (signer != adminSigner) revert InvalidSignature();
-        
-        // Check user has balance in contract
-        if (userBalances[user] < amount) revert InsufficientUserBalance();
-        
-        // Update nonce (prevents signature reuse)
-        balanceUpdateNonces[user]++;
-        
-        // Update balances
-        userBalances[user] -= amount;
-        totalContractBalance -= amount;
-        
-        emit BalanceDebited(
-            user,
-            amount,
-            userBalances[user],
-            nonce,
-            block.timestamp
-        );
-    }
-    
     // ===== VIEW FUNCTIONS =====
     
     /**
@@ -370,20 +234,17 @@ contract BetModeVault is Ownable, Pausable, ReentrancyGuard {
      * @return deposited Total deposited (lifetime)
      * @return withdrawn Total withdrawn (lifetime)
      * @return nextNonce Next valid nonce for withdrawals
-     * @return nextBalanceUpdateNonce Next valid nonce for balance updates
      */
     function getUserStats(address user) external view returns (
         uint256 currentBalance,
         uint256 deposited,
         uint256 withdrawn,
-        uint256 nextNonce,
-        uint256 nextBalanceUpdateNonce
+        uint256 nextNonce
     ) {
         currentBalance = userBalances[user];
         deposited = totalDeposits[user];
         withdrawn = totalWithdrawals[user];
         nextNonce = withdrawalNonces[user];
-        nextBalanceUpdateNonce = balanceUpdateNonces[user];
     }
     
     /**
@@ -489,6 +350,68 @@ contract BetModeVault is Ownable, Pausable, ReentrancyGuard {
         if (!success) revert TransferFailed();
         
         emit EmergencyWithdrawal(owner(), amount, block.timestamp);
+    }
+    
+    // ===== ADMIN FUNCTIONS FOR GAME OUTCOMES =====
+    
+    /**
+     * @notice Admin credits user balance after game win
+     * @param user User address
+     * @param amount Amount won (profit, not total payout)
+     * @dev Called by backend after user wins a game
+     *      Note: Only credits the profit (payout - betAmount)
+     *      The betAmount was already deducted when game started
+     */
+    function creditWinnings(address user, uint256 amount) external onlyOwner whenNotPaused {
+        if (user == address(0)) revert InvalidAddress();
+        if (amount == 0) revert InsufficientAmount();
+        
+        userBalances[user] += amount;
+        totalContractBalance += amount;
+        
+        emit WinningsCredited(user, amount, userBalances[user], block.timestamp);
+    }
+    
+    /**
+     * @notice Admin debits user balance after game loss
+     * @param user User address
+     * @param amount Amount lost (bet amount)
+     * @dev Called by backend after user loses a game
+     *      Note: The betAmount was locked when game started, now it's lost
+     */
+    function debitLoss(address user, uint256 amount) external onlyOwner whenNotPaused {
+        if (user == address(0)) revert InvalidAddress();
+        if (amount == 0) revert InsufficientAmount();
+        
+        if (userBalances[user] < amount) revert InsufficientUserBalance();
+        
+        userBalances[user] -= amount;
+        totalContractBalance -= amount;
+        
+        emit LossDebited(user, amount, userBalances[user], block.timestamp);
+    }
+    
+    /**
+     * @notice Admin adjusts user balance (for corrections/reconciliation)
+     * @param user User address
+     * @param newBalance New balance to set
+     * @dev Use carefully - for reconciliation only
+     *      Should match database balance exactly
+     */
+    function adjustBalance(address user, uint256 newBalance) external onlyOwner whenNotPaused {
+        if (user == address(0)) revert InvalidAddress();
+        
+        uint256 oldBalance = userBalances[user];
+        
+        if (newBalance > oldBalance) {
+            totalContractBalance += (newBalance - oldBalance);
+        } else {
+            totalContractBalance -= (oldBalance - newBalance);
+        }
+        
+        userBalances[user] = newBalance;
+        
+        emit BalanceAdjusted(user, oldBalance, newBalance, block.timestamp);
     }
     
     // ===== UTILITY FUNCTIONS =====

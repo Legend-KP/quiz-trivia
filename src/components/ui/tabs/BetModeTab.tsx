@@ -671,6 +671,7 @@ const ERC20_ABI = [
             gameId: currentGame.gameId,
             fid: context?.user?.fid,
             answerIndex: answerIndex ?? -1, // -1 for timeout
+            walletAddress: address || undefined, // Include wallet address for contract sync
           }),
         });
 
@@ -780,6 +781,7 @@ const ERC20_ABI = [
           body: JSON.stringify({
             gameId: currentGame.gameId,
             fid: context?.user?.fid,
+            walletAddress: address || undefined, // Include wallet address for contract sync
           }),
         });
 

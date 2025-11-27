@@ -72,10 +72,6 @@
           "ast"
         ]
       }
-    },
-    "compiler": {
-      "version": "0.8.20"
-    },
-    "remappings": []
+    }
   }
 }
