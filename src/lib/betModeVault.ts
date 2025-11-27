@@ -4,12 +4,12 @@
  * This contract holds all user QT tokens in a custodial vault.
  * Users deposit/withdraw through the contract, and events sync to database.
  * 
- * Contract Address: 0xD9DaF0183265cf600F0e2df6aD2dE4F0334B15B3
- * BaseScan: https://basescan.org/address/0xD9DaF0183265cf600F0e2df6aD2dE4F0334B15B3
+ * Contract Address: 0x5fD8503003efD9B9d558ca86De6da0c5BB00c263
+ * BaseScan: https://basescan.org/address/0x5fD8503003efD9B9d558ca86De6da0c5BB00c263
  * Verified: ✅ Yes
  * 
- * ABI Source: Verified contract on BaseScan
- * Last Updated: Contract deployment and verification
+ * ABI Source: Verified contract on BaseScan (includes game sync functions)
+ * Last Updated: Contract verification complete
  */
 
 export const BET_MODE_VAULT_ABI = [
@@ -65,6 +65,17 @@ export const BET_MODE_VAULT_ABI = [
     anonymous: false,
     inputs: [
       { indexed: true, internalType: 'address', name: 'user', type: 'address' },
+      { indexed: false, internalType: 'uint256', name: 'oldBalance', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'newBalance', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'timestamp', type: 'uint256' },
+    ],
+    name: 'BalanceAdjusted',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'user', type: 'address' },
       { indexed: false, internalType: 'uint256', name: 'amount', type: 'uint256' },
       { indexed: false, internalType: 'uint256', name: 'newBalance', type: 'uint256' },
       { indexed: false, internalType: 'uint256', name: 'timestamp', type: 'uint256' },
@@ -80,6 +91,17 @@ export const BET_MODE_VAULT_ABI = [
       { indexed: false, internalType: 'uint256', name: 'timestamp', type: 'uint256' },
     ],
     name: 'EmergencyWithdrawal',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'user', type: 'address' },
+      { indexed: false, internalType: 'uint256', name: 'amount', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'newBalance', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'timestamp', type: 'uint256' },
+    ],
+    name: 'LossDebited',
     type: 'event',
   },
   {
@@ -120,18 +142,6 @@ export const BET_MODE_VAULT_ABI = [
       { indexed: true, internalType: 'address', name: 'user', type: 'address' },
       { indexed: false, internalType: 'uint256', name: 'amount', type: 'uint256' },
       { indexed: false, internalType: 'uint256', name: 'newBalance', type: 'uint256' },
-      { indexed: false, internalType: 'uint256', name: 'nonce', type: 'uint256' },
-      { indexed: false, internalType: 'uint256', name: 'timestamp', type: 'uint256' },
-    ],
-    name: 'Withdrawn',
-    type: 'event',
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, internalType: 'address', name: 'user', type: 'address' },
-      { indexed: false, internalType: 'uint256', name: 'amount', type: 'uint256' },
-      { indexed: false, internalType: 'uint256', name: 'newBalance', type: 'uint256' },
       { indexed: false, internalType: 'uint256', name: 'timestamp', type: 'uint256' },
     ],
     name: 'WinningsCredited',
@@ -143,20 +153,10 @@ export const BET_MODE_VAULT_ABI = [
       { indexed: true, internalType: 'address', name: 'user', type: 'address' },
       { indexed: false, internalType: 'uint256', name: 'amount', type: 'uint256' },
       { indexed: false, internalType: 'uint256', name: 'newBalance', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'nonce', type: 'uint256' },
       { indexed: false, internalType: 'uint256', name: 'timestamp', type: 'uint256' },
     ],
-    name: 'LossDebited',
-    type: 'event',
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, internalType: 'address', name: 'user', type: 'address' },
-      { indexed: false, internalType: 'uint256', name: 'oldBalance', type: 'uint256' },
-      { indexed: false, internalType: 'uint256', name: 'newBalance', type: 'uint256' },
-      { indexed: false, internalType: 'uint256', name: 'timestamp', type: 'uint256' },
-    ],
-    name: 'BalanceAdjusted',
+    name: 'Withdrawn',
     type: 'event',
   },
   {
@@ -171,6 +171,16 @@ export const BET_MODE_VAULT_ABI = [
     name: 'MIN_WITHDRAWAL',
     outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
     stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { internalType: 'address', name: 'user', type: 'address' },
+      { internalType: 'uint256', name: 'newBalance', type: 'uint256' },
+    ],
+    name: 'adjustBalance',
+    outputs: [],
+    stateMutability: 'nonpayable',
     type: 'function',
   },
   {
@@ -189,6 +199,26 @@ export const BET_MODE_VAULT_ABI = [
       { internalType: 'uint256', name: 'userBal', type: 'uint256' },
     ],
     stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { internalType: 'address', name: 'user', type: 'address' },
+      { internalType: 'uint256', name: 'amount', type: 'uint256' },
+    ],
+    name: 'creditWinnings',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { internalType: 'address', name: 'user', type: 'address' },
+      { internalType: 'uint256', name: 'amount', type: 'uint256' },
+    ],
+    name: 'debitLoss',
+    outputs: [],
+    stateMutability: 'nonpayable',
     type: 'function',
   },
   {
@@ -354,36 +384,6 @@ export const BET_MODE_VAULT_ABI = [
     stateMutability: 'view',
     type: 'function',
   },
-  {
-    inputs: [
-      { internalType: 'address', name: 'user', type: 'address' },
-      { internalType: 'uint256', name: 'amount', type: 'uint256' },
-    ],
-    name: 'creditWinnings',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      { internalType: 'address', name: 'user', type: 'address' },
-      { internalType: 'uint256', name: 'amount', type: 'uint256' },
-    ],
-    name: 'debitLoss',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      { internalType: 'address', name: 'user', type: 'address' },
-      { internalType: 'uint256', name: 'newBalance', type: 'uint256' },
-    ],
-    name: 'adjustBalance',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
 ] as const;
 
 /**
@@ -408,4 +408,3 @@ export const MIN_DEPOSIT_VAULT = 1_000 * 1e18; // 1K QT in wei
  * Minimum withdrawal amount (1K QT)
  */
 export const MIN_WITHDRAWAL_VAULT = 1_000 * 1e18; // 1K QT in wei
-
