@@ -43,7 +43,7 @@ async function main() {
   
   // Get the contract factory
   console.log("📦 Compiling contract...");
-  const BetModeVault = await ethers.getContractFactory("BetModeVault");
+  const BetModeVault = await ethers.getContractFactory("contracts/BetModeVault.sol:BetModeVault");
   
   // Deploy the contract
   console.log("🚀 Deploying contract...");

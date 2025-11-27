@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\BetModeVault.sol": {
-      "lastModificationDate": 1764102734198,
-      "contentHash": "d4b44f918a43fe65e1c8339c350dafbd",
+      "lastModificationDate": 1764234353906,
+      "contentHash": "c9a437a165cfed4a1394c67f7c95d777",
       "sourceName": "contracts/BetModeVault.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -633,6 +633,66 @@
       ],
       "artifacts": [
         "QuizTriviaEntry"
+      ]
+    },
+    "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\BetModeVaultFlattened.sol": {
+      "lastModificationDate": 1764226784477,
+      "contentHash": "cd756d7817c3be7a86b0ab03bc1f6db7",
+      "sourceName": "contracts/BetModeVaultFlattened.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.20",
+        "^0.8.20",
+        "^0.8.20",
+        "^0.8.20",
+        "^0.8.20",
+        "^0.8.20",
+        "^0.8.20",
+        "^0.8.20",
+        "^0.8.20",
+        ">=0.4.16",
+        "^0.8.20",
+        "^0.8.20",
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "BetModeVault",
+        "Context",
+        "ECDSA",
+        "IERC20",
+        "Math",
+        "MessageHashUtils",
+        "Ownable",
+        "Panic",
+        "Pausable",
+        "ReentrancyGuard",
+        "SafeCast",
+        "SignedMath",
+        "Strings"
       ]
     }
   }

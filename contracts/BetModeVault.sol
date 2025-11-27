@@ -88,6 +88,27 @@ contract BetModeVault is Ownable, Pausable, ReentrancyGuard {
         uint256 timestamp
     );
     
+    event WinningsCredited(
+        address indexed user,
+        uint256 amount,
+        uint256 newBalance,
+        uint256 timestamp
+    );
+    
+    event LossDebited(
+        address indexed user,
+        uint256 amount,
+        uint256 newBalance,
+        uint256 timestamp
+    );
+    
+    event BalanceAdjusted(
+        address indexed user,
+        uint256 oldBalance,
+        uint256 newBalance,
+        uint256 timestamp
+    );
+    
     // ===== ERRORS =====
     
     error InsufficientAmount();
