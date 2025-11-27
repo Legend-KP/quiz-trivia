@@ -1,3 +1,4 @@
+// Sources flattened with hardhat v2.26.3 https://hardhat.org
 
 // SPDX-License-Identifier: MIT
 
@@ -38,6 +39,7 @@ abstract contract Context {
 // Original license: SPDX_License_Identifier: MIT
 // OpenZeppelin Contracts (last updated v5.0.0) (access/Ownable.sol)
 
+pragma solidity ^0.8.20;
 
 /**
  * @dev Contract module which provides a basic access control mechanism, where
@@ -140,6 +142,7 @@ abstract contract Ownable is Context {
 // OpenZeppelin Contracts (last updated v5.1.0) (utils/math/SafeCast.sol)
 // This file was procedurally generated from scripts/generate/templates/SafeCast.js.
 
+pragma solidity ^0.8.20;
 
 /**
  * @dev Wrappers over Solidity's uintXX/intXX/bool casting operators with added overflow
@@ -1304,6 +1307,7 @@ library SafeCast {
 // Original license: SPDX_License_Identifier: MIT
 // OpenZeppelin Contracts (last updated v5.1.0) (utils/Panic.sol)
 
+pragma solidity ^0.8.20;
 
 /**
  * @dev Helper library for emitting standardized panic codes.
@@ -1364,6 +1368,7 @@ library Panic {
 // Original license: SPDX_License_Identifier: MIT
 // OpenZeppelin Contracts (last updated v5.3.0) (utils/math/Math.sol)
 
+pragma solidity ^0.8.20;
 
 
 /**
@@ -2114,6 +2119,7 @@ library Math {
 // Original license: SPDX_License_Identifier: MIT
 // OpenZeppelin Contracts (last updated v5.1.0) (utils/math/SignedMath.sol)
 
+pragma solidity ^0.8.20;
 
 /**
  * @dev Standard signed math utilities missing in the Solidity language.
@@ -2183,6 +2189,7 @@ library SignedMath {
 // Original license: SPDX_License_Identifier: MIT
 // OpenZeppelin Contracts (last updated v5.4.0) (utils/Strings.sol)
 
+pragma solidity ^0.8.20;
 
 
 
@@ -2674,6 +2681,7 @@ library Strings {
 // Original license: SPDX_License_Identifier: MIT
 // OpenZeppelin Contracts (last updated v5.3.0) (utils/cryptography/MessageHashUtils.sol)
 
+pragma solidity ^0.8.20;
 
 /**
  * @dev Signature message hash utilities for producing digests to be consumed by {ECDSA} recovery or signing.
@@ -2774,6 +2782,7 @@ library MessageHashUtils {
 // Original license: SPDX_License_Identifier: MIT
 // OpenZeppelin Contracts (last updated v5.3.0) (utils/Pausable.sol)
 
+pragma solidity ^0.8.20;
 
 /**
  * @dev Contract module which allows children to implement an emergency stop
@@ -2887,6 +2896,7 @@ abstract contract Pausable is Context {
 // Original license: SPDX_License_Identifier: MIT
 // OpenZeppelin Contracts (last updated v5.4.0) (token/ERC20/IERC20.sol)
 
+pragma solidity >=0.4.16;
 
 /**
  * @dev Interface of the ERC-20 standard as defined in the ERC.
@@ -2969,6 +2979,7 @@ interface IERC20 {
 // Original license: SPDX_License_Identifier: MIT
 // OpenZeppelin Contracts (last updated v5.1.0) (utils/cryptography/ECDSA.sol)
 
+pragma solidity ^0.8.20;
 
 /**
  * @dev Elliptic Curve Digital Signature Algorithm (ECDSA) operations.
@@ -3152,6 +3163,7 @@ library ECDSA {
 // Original license: SPDX_License_Identifier: MIT
 // OpenZeppelin Contracts (last updated v5.1.0) (utils/ReentrancyGuard.sol)
 
+pragma solidity ^0.8.20;
 
 /**
  * @dev Contract module that helps prevent reentrant calls to a function.
@@ -3240,6 +3252,7 @@ abstract contract ReentrancyGuard {
 // File contracts/BetModeVault.sol
 
 // Original license: SPDX_License_Identifier: MIT
+pragma solidity ^0.8.20;
 
 
 

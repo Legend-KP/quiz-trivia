@@ -10,6 +10,7 @@ const config = {
         enabled: true,
         runs: 200,
       },
+      evmVersion: "paris", // Match the deployed contract
     },
   },
   networks: {
