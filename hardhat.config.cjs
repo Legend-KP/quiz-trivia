@@ -30,24 +30,25 @@ const config = {
   },
   etherscan: {
     apiKey: {
-      baseSepolia: "VMZ25B4ZKF49UPSI6J1QYM261DQ98C85N3",
-      base: "VMZ25B4ZKF49UPSI6J1QYM261DQ98C85N3",
+      base: process.env.BASESCAN_API_KEY || "VMZ25B4ZKF49UPSI6J1QYM261DQ98C85N3",
+      baseSepolia: process.env.BASESCAN_API_KEY || "VMZ25B4ZKF49UPSI6J1QYM261DQ98C85N3",
     },
     customChains: [
-      {
-        network: "baseSepolia",
-        chainId: 84532,
-        urls: {
-          apiURL: "https://api-sepolia.basescan.org/api",
-          browserURL: "https://sepolia.basescan.org",
-        },
-      },
       {
         network: "base",
         chainId: 8453,
         urls: {
-          apiURL: "https://api.basescan.org/api",
+          // Try V2 endpoint format - plugin requires V2 but BaseScan may need different format
+          apiURL: "https://api.basescan.org/v2/api",
           browserURL: "https://basescan.org",
+        },
+      },
+      {
+        network: "baseSepolia",
+        chainId: 84532,
+        urls: {
+          apiURL: "https://api-sepolia.basescan.org/v2/api",
+          browserURL: "https://sepolia.basescan.org",
         },
       },
     ],
