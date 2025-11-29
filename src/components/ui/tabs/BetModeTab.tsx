@@ -239,15 +239,23 @@ const ERC20_ABI = [
     // Fetch status
     const fetchStatus = useCallback(async () => {
       const fid = context?.user?.fid;
-      if (!fid) return;
+      if (!fid) {
+        console.log('Bet Mode: No FID available yet');
+        return;
+      }
 
       try {
         // Build status URL - wallet balance is now fetched client-side via Wagmi
         const res = await fetch(`/api/bet-mode/status?fid=${fid}`);
+        
+        if (!res.ok) {
+          throw new Error(`Status API returned ${res.status}: ${res.statusText}`);
+        }
+        
         const data = await res.json();
         
         // Merge wallet balance from Wagmi into status
-        if (isConnected && address) {
+        if (isConnected && address && typeof walletBalance === 'number') {
           data.balance = {
             ...data.balance,
             walletBalance, // Add wallet balance from Wagmi
@@ -265,8 +273,11 @@ const ERC20_ABI = [
         } else {
           setScreen('entry');
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to fetch status:', err);
+        setError(err.message || 'Failed to load Bet Mode status. Please refresh the page.');
+        // Set to entry screen even on error so user can see the UI
+        setScreen('entry');
       }
     }, [
       context?.user?.fid,
