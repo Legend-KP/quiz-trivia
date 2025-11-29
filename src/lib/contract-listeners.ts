@@ -44,17 +44,27 @@ function initializeContract() {
  * Find user by wallet address
  */
 async function findUserByWalletAddress(walletAddress: string) {
-  // Try to find user in database by wallet address
-  // This assumes you have a users collection with walletAddress field
-  const { getDb } = await import('~/lib/mongodb');
+  const { getDb, getCurrencyAccountsCollection } = await import('~/lib/mongodb');
   const db = await getDb();
+  const normalizedAddress = walletAddress.toLowerCase();
   
-  // Try multiple possible collections/fields
+  // First, try to find in currency_accounts (most direct)
+  const accounts = await getCurrencyAccountsCollection();
+  const account = await accounts.findOne({
+    walletAddress: normalizedAddress,
+  });
+  
+  if (account) {
+    // Return a user-like object with fid
+    return { fid: account.fid, _id: account.fid };
+  }
+  
+  // Fallback: Try to find in users collection
   const user = await db.collection('users').findOne({
     $or: [
-      { walletAddress: walletAddress.toLowerCase() },
-      { 'verified_addresses.primary.eth_address': walletAddress.toLowerCase() },
-      { 'verified_addresses.eth_addresses': walletAddress.toLowerCase() },
+      { walletAddress: normalizedAddress },
+      { 'verified_addresses.primary.eth_address': normalizedAddress },
+      { 'verified_addresses.eth_addresses': normalizedAddress },
     ],
   });
 
@@ -127,6 +137,7 @@ async function handleDepositEvent(
           createdAt: Date.now(),
         },
         $set: {
+          walletAddress: userAddress.toLowerCase(), // Store wallet address for future lookups
           updatedAt: Date.now(),
           lastDepositAt: new Date(Number(timestamp) * 1000),
         },
@@ -218,6 +229,7 @@ async function handleWithdrawalEvent(
           qtTotalWithdrawn: amountInQT,
         },
         $set: {
+          walletAddress: userAddress.toLowerCase(), // Store wallet address for future lookups
           updatedAt: Date.now(),
           lastWithdrawalAt: new Date(Number(timestamp) * 1000),
         },

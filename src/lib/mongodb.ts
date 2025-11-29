@@ -93,6 +93,7 @@ export interface CurrencyAccountDocument {
   qtTotalWithdrawn?: number; // Real QT withdrawn to blockchain (defaults to 0)
   qtTotalWagered?: number; // Total bet in Bet Mode (defaults to 0)
   qtTotalWon?: number; // Total won in Bet Mode (defaults to 0)
+  walletAddress?: string; // User's wallet address (for event listener lookups)
   
   createdAt: number;
   updatedAt: number;

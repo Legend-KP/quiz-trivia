@@ -6,7 +6,7 @@
   import { base } from 'wagmi/chains';
   import { CheckCircle, XCircle } from 'lucide-react';
   import { formatUnits, parseUnits } from 'viem';
-  import { createWalletClient, custom } from 'viem';
+  import { createWalletClient, createPublicClient, custom } from 'viem';
   import { config } from '~/components/providers/WagmiProvider';
   import sdk from '@farcaster/miniapp-sdk';
   import {
@@ -454,13 +454,16 @@ const ERC20_ABI = [
   useEffect(() => {
     if (isWithdrawConfirmed && withdrawTxHash) {
       // Contract withdrawal - events will sync DB, just refresh status
+      const withdrawAmountNum = parseFloat(withdrawAmount);
+      const finalAmount = isNaN(withdrawAmountNum) ? 0 : withdrawAmountNum;
+      
       setWithdrawing(false);
       setWithdrawStep('input');
       setShowWithdrawModal(false);
       setWithdrawAmount('');
       fetchStatus();
       setWithdrawalSuccess({
-        amount: parseFloat(withdrawAmount),
+        amount: finalAmount,
         txHash: withdrawTxHash,
       });
     }
@@ -591,8 +594,32 @@ const ERC20_ABI = [
           
           console.log('Approval transaction hash:', approveHash);
           
-          // Wait for approval confirmation
-          await new Promise((resolve) => setTimeout(resolve, 2000));
+          // Wait for approval transaction to be confirmed
+          const publicClient = createPublicClient({
+            chain: base,
+            transport: custom(customProvider),
+          });
+          
+          try {
+            const receipt = await publicClient.waitForTransactionReceipt({
+              hash: approveHash,
+              timeout: 60_000, // 60 seconds timeout
+            });
+            
+            if (receipt.status !== 'success') {
+              throw new Error('Approval transaction failed');
+            }
+            
+            console.log('Approval confirmed:', receipt);
+          } catch (approvalError: any) {
+            console.error('Approval confirmation error:', approvalError);
+            // If user rejected, throw error
+            if (approvalError.message?.includes('User rejected') || approvalError.message?.includes('denied')) {
+              throw new Error('Approval cancelled by user');
+            }
+            // Otherwise, continue - approval might still be processing
+            console.warn('Approval confirmation failed, but continuing...');
+          }
         }
         
         // Step 2: Call contract.deposit()

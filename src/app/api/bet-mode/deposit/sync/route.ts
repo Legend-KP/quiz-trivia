@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
             createdAt: Date.now(),
           },
           $set: {
+            walletAddress: walletAddress.toLowerCase(), // Store wallet address for event listener lookups
             updatedAt: Date.now(),
           },
         },
