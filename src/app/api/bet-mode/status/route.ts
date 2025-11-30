@@ -57,120 +57,53 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid fid' }, { status: 400 });
     }
 
-    // Get window state with error handling
-    let windowState;
-    try {
-      windowState = getBetModeWindowState();
-    } catch (windowError: any) {
-      console.error('Error getting window state:', windowError);
-      // Return default window state if there's an error
-      const now = new Date();
-      windowState = {
-        isOpen: true,
-        windowStart: now,
-        windowEnd: new Date('2099-12-31'),
-        snapshotTime: now,
-        drawTime: now,
-      };
-    }
-
+    const windowState = getBetModeWindowState();
     const weekId = getCurrentWeekId();
 
-    // Get user account with error handling
-    let account = null;
-    let qtBalance = 0;
-    let qtLockedBalance = 0;
-    let availableBalance = 0;
-    let activeGame = null;
-    let weeklyPool = null;
-    let userTickets = null;
-    let totalTickets = 0;
+    // Get user account
+    const accounts = await getCurrencyAccountsCollection();
+    const account = await accounts.findOne({ fid });
 
-    try {
-      const accounts = await getCurrencyAccountsCollection();
-      account = await accounts.findOne({ fid });
-      qtBalance = account?.qtBalance || 0;
-      qtLockedBalance = account?.qtLockedBalance || 0;
-      availableBalance = qtBalance - qtLockedBalance;
-    } catch (dbError: any) {
-      console.error('Error fetching currency account:', dbError);
-      // Continue with default values
-    }
+    const qtBalance = account?.qtBalance || 0;
+    const qtLockedBalance = account?.qtLockedBalance || 0;
+    const availableBalance = qtBalance - qtLockedBalance;
 
     // Check on-chain wallet balance if wallet address is provided
     let walletBalance = 0;
     if (walletAddressParam && ethers.isAddress(walletAddressParam)) {
-      try {
-        walletBalance = await getWalletQTBalance(walletAddressParam);
-      } catch (balanceError: any) {
-        console.error('Error fetching wallet balance:', balanceError);
-        // Continue with 0 balance
-      }
+      walletBalance = await getWalletQTBalance(walletAddressParam);
     }
 
-    // Get active game with error handling
-    try {
-      const games = await getBetModeGamesCollection();
-      activeGame = await games.findOne({ fid, status: 'active' });
-    } catch (gameError: any) {
-      console.error('Error fetching active game:', gameError);
-      // Continue with null
-    }
+    // Get active game
+    const games = await getBetModeGamesCollection();
+    const activeGame = await games.findOne({ fid, status: 'active' });
 
-    // Get weekly pool with error handling
-    try {
-      const pools = await getWeeklyPoolsCollection();
-      weeklyPool = await pools.findOne({ weekId });
-    } catch (poolError: any) {
-      console.error('Error fetching weekly pool:', poolError);
-      // Continue with null
-    }
+    // Get weekly pool
+    const pools = await getWeeklyPoolsCollection();
+    const weeklyPool = await pools.findOne({ weekId });
 
-    // Get user tickets with error handling
-    try {
-      const tickets = await getLotteryTicketsCollection();
-      userTickets = await tickets.findOne({ weekId, fid });
+    // Get user tickets
+    const tickets = await getLotteryTicketsCollection();
+    const userTickets = await tickets.findOne({ weekId, fid });
 
-      // Calculate total tickets for this week
-      const allTickets = await tickets.find({ weekId }).toArray();
-      totalTickets = allTickets.reduce((sum, t) => sum + (t.totalTickets || 0), 0);
-    } catch (ticketError: any) {
-      console.error('Error fetching lottery tickets:', ticketError);
-      // Continue with default values
-    }
+    // Calculate total tickets for this week
+    const allTickets = await tickets.find({ weekId }).toArray();
+    const totalTickets = allTickets.reduce((sum, t) => sum + (t.totalTickets || 0), 0);
 
     const userTicketCount = userTickets?.totalTickets || 0;
     const userShare = totalTickets > 0 ? (userTicketCount / totalTickets) * 100 : 0;
 
-    // Safely format dates
-    const formatDate = (date: Date): string => {
-      try {
-        return date.toISOString();
-      } catch {
-        return new Date().toISOString();
-      }
-    };
-
-    const formatTime = (ms?: number): string | null => {
-      if (!ms) return null;
-      try {
-        return formatTimeRemaining(ms);
-      } catch {
-        return null;
-      }
-    };
-
     return NextResponse.json({
       window: {
         isOpen: windowState.isOpen,
-        timeUntilOpen: formatTime(windowState.timeUntilOpen),
-        timeUntilClose: formatTime(windowState.timeUntilClose),
-        timeUntilSnapshot: formatTime(windowState.timeUntilSnapshot),
-        timeUntilDraw: formatTime(windowState.timeUntilDraw),
-        windowStart: formatDate(windowState.windowStart),
-        windowEnd: formatDate(windowState.windowEnd),
-        snapshotTime: formatDate(windowState.snapshotTime),
-        drawTime: formatDate(windowState.drawTime),
+        timeUntilOpen: windowState.timeUntilOpen ? formatTimeRemaining(windowState.timeUntilOpen) : null,
+        timeUntilClose: windowState.timeUntilClose ? formatTimeRemaining(windowState.timeUntilClose) : null,
+        timeUntilSnapshot: windowState.timeUntilSnapshot ? formatTimeRemaining(windowState.timeUntilSnapshot) : null,
+        timeUntilDraw: windowState.timeUntilDraw ? formatTimeRemaining(windowState.timeUntilDraw) : null,
+        windowStart: windowState.windowStart.toISOString(),
+        windowEnd: windowState.windowEnd.toISOString(),
+        snapshotTime: windowState.snapshotTime.toISOString(),
+        drawTime: windowState.drawTime.toISOString(),
       },
       balance: {
         qtBalance, // Internal balance (deposited to platform)
@@ -218,14 +151,7 @@ export async function GET(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('Bet Mode status error:', error);
-    console.error('Error stack:', error.stack);
-    // Return a more detailed error message for debugging
-    const errorMessage = error.message || 'Failed to get status';
-    const errorDetails = process.env.NODE_ENV === 'development' ? error.stack : undefined;
-    return NextResponse.json({ 
-      error: errorMessage,
-      details: errorDetails,
-    }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Failed to get status' }, { status: 500 });
   }
 }
 
