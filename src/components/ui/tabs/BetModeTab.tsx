@@ -111,7 +111,25 @@ const ERC20_ABI = [
   const qtTokenAddress = (process.env.NEXT_PUBLIC_QT_TOKEN_ADDRESS || QT_TOKEN_ADDRESS) as `0x${string}`;
   
   const [screen, setScreen] = useState<BetModeScreen>('entry');
-  const [status, setStatus] = useState<BetModeStatus | null>(null);
+  // Initialize with default status to prevent render blocking
+  const [status, setStatus] = useState<BetModeStatus | null>(() => ({
+    window: {
+      isOpen: true,
+    },
+    balance: {
+      qtBalance: 0,
+      qtLockedBalance: 0,
+      availableBalance: 0,
+      walletBalance: 0,
+    },
+    activeGame: null,
+    weeklyPool: null,
+    lottery: {
+      userTickets: 0,
+      totalTickets: 0,
+      userShare: '0',
+    },
+  }));
   const [betAmount, setBetAmount] = useState<number>(MIN_BET);
   const [customBet, setCustomBet] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -1098,16 +1116,9 @@ const ERC20_ABI = [
       }
     };
 
-    if (!status) {
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 flex items-center justify-center">
-          <div className="text-white text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-            <p>Loading Bet Mode...</p>
-          </div>
-        </div>
-      );
-    }
+    // Status is now always initialized, so we can always render
+    // Show loading indicator if actively fetching and no error
+    const isLoading = loading && !error && (!status?.balance || status.balance.qtBalance === 0);
 
     // Closed screen
     if (screen === 'closed') {
@@ -1153,15 +1164,7 @@ const ERC20_ABI = [
 
     // Entry screen
     if (screen === 'entry') {
-      // Show loading state if status hasn't loaded yet
-      if (!status) {
-        return (
-          <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 flex items-center justify-center">
-            <div className="text-white text-xl">Loading Bet Mode...</div>
-          </div>
-        );
-      }
-      
+      // Status is always initialized, so we can safely access it
       // Check if user has enough balance (no multiplier - just need bet amount)
       const canBet = (status?.balance?.availableBalance || 0) >= betAmount;
 
