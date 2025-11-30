@@ -2,12 +2,11 @@
 
   import React, { useState, useEffect, useCallback } from 'react';
   import { useMiniApp } from '@neynar/react';
-  import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useConnect, useChainId, useSwitchChain } from 'wagmi';
+  import { useAccount, useReadContract, useWaitForTransactionReceipt, useConnect, useChainId, useSwitchChain } from 'wagmi';
   import { base } from 'wagmi/chains';
   import { CheckCircle, XCircle } from 'lucide-react';
   import { formatUnits, parseUnits } from 'viem';
   import { createWalletClient, createPublicClient, custom } from 'viem';
-  import { config } from '~/components/providers/WagmiProvider';
   import sdk from '@farcaster/miniapp-sdk';
   import {
     formatQT,
@@ -100,7 +99,7 @@ const ERC20_ABI = [
 
   export function BetModeTab({ onExit, openDepositModal, openWithdrawModal }: BetModeTabProps = {}) {
     const { context } = useMiniApp();
-    const { address, isConnected, chainId: accountChainId } = useAccount();
+    const { address, isConnected } = useAccount();
     const { connect, connectors } = useConnect();
     const currentChainId = useChainId();
     const { switchChain } = useSwitchChain();
@@ -112,7 +111,8 @@ const ERC20_ABI = [
   
   const [screen, setScreen] = useState<BetModeScreen>('entry');
   // Initialize with default status to prevent render blocking
-  const [status, setStatus] = useState<BetModeStatus | null>(() => ({
+  // Type is BetModeStatus (not nullable) since we always initialize it
+  const [status, setStatus] = useState<BetModeStatus>(() => ({
     window: {
       isOpen: true,
     },
@@ -143,8 +143,8 @@ const ERC20_ABI = [
   const [depositTxHash, setDepositTxHash] = useState<`0x${string}` | undefined>();
   const [isDepositPending, setIsDepositPending] = useState(false);
   const [writeContractError, setWriteContractError] = useState<Error | null>(null);
-  const [platformWallet, setPlatformWallet] = useState<string | null>(null);
-  const [platformWalletError, setPlatformWalletError] = useState<string | null>(null);
+  const [_platformWallet, setPlatformWallet] = useState<string | null>(null);
+  const [_platformWalletError, setPlatformWalletError] = useState<string | null>(null);
   const [walletBalanceError, setWalletBalanceError] = useState<string | null>(null);
   
   // Withdrawal state
@@ -569,8 +569,8 @@ const ERC20_ABI = [
             console.log('Using Farcaster SDK provider');
             provider = farcasterProvider;
           }
-        } catch (e) {
-          console.warn('Farcaster SDK provider not available:', e);
+        } catch (_e) {
+          console.warn('Farcaster SDK provider not available:', _e);
         }
         
         // Try window.ethereum (standard Web3 provider)
@@ -887,7 +887,7 @@ const ERC20_ABI = [
         return;
       }
 
-      const availableBalance = status?.balance?.availableBalance || 0;
+      const availableBalance = status.balance?.availableBalance || 0;
       // Round down available balance to avoid floating point precision issues
       const maxWithdrawable = Math.floor(availableBalance);
       
@@ -964,7 +964,6 @@ const ERC20_ABI = [
 
         // Step 1: Request signature from backend
         setWithdrawStep('preparing');
-        let prepareData: any;
         
         // First attempt
         let res = await fetch('/api/bet-mode/withdraw/prepare', {
@@ -1037,7 +1036,7 @@ const ERC20_ABI = [
           if (farcasterProvider) {
             provider = farcasterProvider;
           }
-        } catch (e) {
+        } catch (_e) {
           console.warn('Farcaster SDK provider not available, using window.ethereum');
         }
         
@@ -1117,8 +1116,6 @@ const ERC20_ABI = [
     };
 
     // Status is now always initialized, so we can always render
-    // Show loading indicator if actively fetching and no error
-    const isLoading = loading && !error && (!status?.balance || status.balance.qtBalance === 0);
 
     // Closed screen
     if (screen === 'closed') {
@@ -1166,7 +1163,7 @@ const ERC20_ABI = [
     if (screen === 'entry') {
       // Status is always initialized, so we can safely access it
       // Check if user has enough balance (no multiplier - just need bet amount)
-      const canBet = (status?.balance?.availableBalance || 0) >= betAmount;
+      const canBet = (status.balance?.availableBalance || 0) >= betAmount;
 
       return (
         <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
@@ -1311,7 +1308,7 @@ const ERC20_ABI = [
                   
                   <div className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
                     <p className="text-xs text-gray-900 dark:text-gray-100 text-center">
-                      💼 Internal Balance: {formatQT(status?.balance?.availableBalance || 0)}
+                      💼 Internal Balance: {formatQT(status.balance?.availableBalance || 0)}
                     </p>
                     <p className="text-xs text-gray-700 dark:text-gray-300 text-center mt-1">
                       Minimum bet: {formatQT(MIN_BET)}
@@ -1333,7 +1330,7 @@ const ERC20_ABI = [
               </button>
 
               {/* Withdraw button - show if user has balance */}
-              {(status?.balance?.availableBalance || 0) > 0 && (
+              {(status.balance?.availableBalance || 0) > 0 && (
                 <button
                   onClick={() => setShowWithdrawModal(true)}
                   className="w-full mt-3 py-2 px-4 rounded-lg bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-200 font-semibold hover:bg-orange-200 dark:hover:bg-orange-800 transition-all"
@@ -1388,11 +1385,11 @@ const ERC20_ABI = [
                           }}
                           className="w-full p-3 pr-20 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                           min={1000}
-                          max={status?.balance?.availableBalance || 0}
+                          max={status.balance?.availableBalance || 0}
                         />
                         <button
                           onClick={() => {
-                            const maxAmount = status?.balance?.availableBalance || 0;
+                            const maxAmount = status.balance?.availableBalance || 0;
                             if (maxAmount > 0) {
                               // Round to avoid floating point precision issues
                               const roundedMax = Math.floor(maxAmount);
@@ -1406,7 +1403,7 @@ const ERC20_ABI = [
                         </button>
                       </div>
                       <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                        Available: {formatQT(status?.balance?.availableBalance || 0)}
+                        Available: {formatQT(status.balance?.availableBalance || 0)}
                       </p>
                     </div>
                     
@@ -1913,7 +1910,7 @@ const ERC20_ABI = [
             <div className="text-center mb-6">
               <div className="text-5xl mb-2">🎰</div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">THIS WEEK&apos;S LOTTERY</h2>
-                {status?.window?.timeUntilSnapshot && (
+                {status.window?.timeUntilSnapshot && (
                   <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">
                     Snapshot in: {status.window.timeUntilSnapshot}
                   </p>
