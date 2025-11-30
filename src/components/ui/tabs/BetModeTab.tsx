@@ -269,10 +269,24 @@ const ERC20_ABI = [
         const res = await fetch(`/api/bet-mode/status?fid=${fid}`);
         
         if (!res.ok) {
-          throw new Error(`Status API returned ${res.status}: ${res.statusText}`);
+          // Try to get error message from response
+          let errorMessage = `Status API returned ${res.status}`;
+          try {
+            const errorData = await res.json();
+            errorMessage = errorData.error || errorMessage;
+          } catch {
+            // If response is not JSON, use status text
+            errorMessage = res.statusText || errorMessage;
+          }
+          throw new Error(errorMessage);
         }
         
         const data = await res.json();
+        
+        // Validate response data structure
+        if (!data || typeof data !== 'object') {
+          throw new Error('Invalid response format from status API');
+        }
         
         // Merge wallet balance from Wagmi into status
         if (isConnected && address) {
@@ -283,6 +297,7 @@ const ERC20_ABI = [
         }
         
         setStatus(data);
+        setError(null); // Clear any previous errors
 
         // Determine screen based on status
         // Bet Mode is always open (24/7), so skip closed check
@@ -293,18 +308,25 @@ const ERC20_ABI = [
         } else {
           setScreen('entry');
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to fetch status:', err);
+        
         // Set default status on error to prevent infinite loading
-        setStatus({
+        const defaultStatus = {
           window: {
             isOpen: true,
+            timeUntilDraw: null,
+            timeUntilSnapshot: null,
           },
           balance: {
             qtBalance: 0,
             qtLockedBalance: 0,
             availableBalance: 0,
             walletBalance: walletBalance || 0,
+            totalDeposited: 0,
+            totalWithdrawn: 0,
+            totalWagered: 0,
+            totalWon: 0,
           },
           activeGame: null,
           weeklyPool: null,
@@ -313,9 +335,16 @@ const ERC20_ABI = [
             totalTickets: 0,
             userShare: '0',
           },
-        });
+        };
+        
+        setStatus(defaultStatus);
         setScreen('entry');
-        setError('Failed to load Bet Mode status. Please refresh the page.');
+        
+        // Show user-friendly error message
+        const errorMsg = err?.message || 'Failed to load Bet Mode status';
+        setError(errorMsg.includes('Failed to get status') 
+          ? 'Unable to connect to Bet Mode service. Please check your connection and try again.' 
+          : errorMsg);
       }
     }, [
       context?.user?.fid,

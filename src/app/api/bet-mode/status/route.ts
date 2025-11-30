@@ -57,12 +57,26 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid fid' }, { status: 400 });
     }
 
-    const windowState = getBetModeWindowState();
-    const weekId = getCurrentWeekId();
+    // Get window state and week ID (these should not fail, but wrap in try-catch just in case)
+    let windowState;
+    let weekId;
+    try {
+      windowState = getBetModeWindowState();
+      weekId = getCurrentWeekId();
+    } catch (windowError: any) {
+      console.error('Error getting window state:', windowError);
+      throw new Error(`Failed to calculate window state: ${windowError.message}`);
+    }
 
     // Get user account
-    const accounts = await getCurrencyAccountsCollection();
-    const account = await accounts.findOne({ fid });
+    let account;
+    try {
+      const accounts = await getCurrencyAccountsCollection();
+      account = await accounts.findOne({ fid });
+    } catch (dbError: any) {
+      console.error('Error fetching user account:', dbError);
+      throw new Error(`Database error: ${dbError.message || 'Failed to fetch user account'}`);
+    }
 
     const qtBalance = account?.qtBalance || 0;
     const qtLockedBalance = account?.qtLockedBalance || 0;
@@ -74,21 +88,30 @@ export async function GET(req: NextRequest) {
       walletBalance = await getWalletQTBalance(walletAddressParam);
     }
 
-    // Get active game
-    const games = await getBetModeGamesCollection();
-    const activeGame = await games.findOne({ fid, status: 'active' });
+    // Get active game, weekly pool, and tickets
+    let activeGame = null;
+    let weeklyPool = null;
+    let userTickets = null;
+    let totalTickets = 0;
+    
+    try {
+      const games = await getBetModeGamesCollection();
+      activeGame = await games.findOne({ fid, status: 'active' });
 
-    // Get weekly pool
-    const pools = await getWeeklyPoolsCollection();
-    const weeklyPool = await pools.findOne({ weekId });
+      const pools = await getWeeklyPoolsCollection();
+      weeklyPool = await pools.findOne({ weekId });
 
-    // Get user tickets
-    const tickets = await getLotteryTicketsCollection();
-    const userTickets = await tickets.findOne({ weekId, fid });
+      const tickets = await getLotteryTicketsCollection();
+      userTickets = await tickets.findOne({ weekId, fid });
 
-    // Calculate total tickets for this week
-    const allTickets = await tickets.find({ weekId }).toArray();
-    const totalTickets = allTickets.reduce((sum, t) => sum + (t.totalTickets || 0), 0);
+      // Calculate total tickets for this week
+      const allTickets = await tickets.find({ weekId }).toArray();
+      totalTickets = allTickets.reduce((sum, t) => sum + (t.totalTickets || 0), 0);
+    } catch (dbError: any) {
+      console.error('Error fetching game/pool/ticket data:', dbError);
+      // Don't throw - allow partial data to be returned
+      console.warn('Continuing with partial data due to database error');
+    }
 
     const userTicketCount = userTickets?.totalTickets || 0;
     const userShare = totalTickets > 0 ? (userTicketCount / totalTickets) * 100 : 0;
@@ -151,7 +174,23 @@ export async function GET(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('Bet Mode status error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to get status' }, { status: 500 });
+    console.error('Error stack:', error.stack);
+    
+    // Provide more detailed error message
+    let errorMessage = 'Failed to get Bet Mode status';
+    
+    if (error.message) {
+      errorMessage = error.message;
+    } else if (error.name === 'MongoServerError' || error.name === 'MongoError') {
+      errorMessage = 'Database connection error. Please try again.';
+    } else if (error.name === 'TypeError') {
+      errorMessage = 'Invalid data format. Please contact support.';
+    }
+    
+    return NextResponse.json({ 
+      error: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    }, { status: 500 });
   }
 }
 
