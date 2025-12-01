@@ -529,24 +529,83 @@ const ERC20_ABI = [
     }
   }, [isDepositConfirmed, depositTxHash, handleDepositVerification, contractAddress, fetchStatus, address, context?.user?.fid]);
   
+  // Store withdrawal amount before clearing (for success message)
+  const [withdrawnAmount, setWithdrawnAmount] = useState<number>(0);
+
   // Handle withdrawal transaction confirmation
   useEffect(() => {
     if (isWithdrawConfirmed && withdrawTxHash) {
-      // Contract withdrawal - events will sync DB, just refresh status
-      const withdrawAmountNum = parseFloat(withdrawAmount);
-      const finalAmount = isNaN(withdrawAmountNum) ? 0 : withdrawAmountNum;
-      
+      // Contract withdrawal - events will sync DB, but add polling to ensure balance updates
       setWithdrawing(false);
       setWithdrawStep('input');
       setShowWithdrawModal(false);
+      
+      // Store the amount before clearing
+      const withdrawAmountNum = parseFloat(withdrawAmount);
+      const finalAmount = isNaN(withdrawAmountNum) ? withdrawnAmount : withdrawAmountNum;
+      
       setWithdrawAmount('');
-      fetchStatus();
+      
+      // Set success state immediately
       setWithdrawalSuccess({
         amount: finalAmount,
         txHash: withdrawTxHash,
       });
+      
+      // Immediate refresh
+      fetchStatus();
+      
+      // Poll for balance update (events might take a few seconds to process)
+      let pollCount = 0;
+      const maxPolls = 15; // Poll for up to 30 seconds (15 * 2s)
+      
+      // Try manual sync first (in case event listener hasn't processed yet)
+      const performSync = async () => {
+        if (address && context?.user?.fid) {
+          try {
+            const syncRes = await fetch('/api/bet-mode/deposit/sync', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                fid: context.user.fid,
+                walletAddress: address,
+              }),
+            });
+            const syncData = await syncRes.json();
+            if (syncData.synced) {
+              console.log('Balance synced successfully:', syncData);
+            }
+          } catch (syncError) {
+            console.warn('Manual sync failed, will rely on event listener:', syncError);
+          }
+        }
+      };
+      
+      // Immediate sync attempt
+      performSync();
+      
+      const pollInterval = setInterval(() => {
+        pollCount++;
+        fetchStatus();
+        
+        // Try sync again after a few polls
+        if (pollCount === 3 || pollCount === 6 || pollCount === 9) {
+          performSync();
+        }
+        
+        if (pollCount >= maxPolls) {
+          clearInterval(pollInterval);
+          // Final refresh after polling completes
+          setTimeout(() => fetchStatus(), 1000);
+        }
+      }, 2000); // Poll every 2 seconds
+      
+      // Cleanup on unmount
+      return () => {
+        clearInterval(pollInterval);
+      };
     }
-  }, [isWithdrawConfirmed, withdrawTxHash, withdrawAmount, fetchStatus]);
+  }, [isWithdrawConfirmed, withdrawTxHash, withdrawAmount, withdrawnAmount, fetchStatus, address, context?.user?.fid]);
     
     const handleDeposit = async () => {
       // Contract-based deposit flow (required)
@@ -951,6 +1010,9 @@ const ERC20_ABI = [
       // Ensure we use the floored amount for the actual withdrawal
       const finalAmount = Math.min(Math.floor(amount), maxWithdrawable);
 
+      // Store the amount for success message
+      setWithdrawnAmount(finalAmount);
+
       // Minimum withdrawal check
       const MIN_WITHDRAW = 1000; // 1K QT minimum
       if (finalAmount < MIN_WITHDRAW) {
@@ -988,6 +1050,7 @@ const ERC20_ABI = [
 
           setShowWithdrawModal(false);
           setWithdrawAmount('');
+          setWithdrawnAmount(finalAmount);
           await fetchStatus();
           setError(null);
           setWithdrawalSuccess({
@@ -1568,9 +1631,9 @@ const ERC20_ABI = [
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                   <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-md w-full shadow-2xl">
                     <div className="text-center">
-                      <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                      <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-gradient-to-br from-green-400 to-green-600 mb-4 animate-pulse">
                         <svg
-                          className="h-8 w-8 text-green-600"
+                          className="h-10 w-10 text-white"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -1578,7 +1641,7 @@ const ERC20_ABI = [
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            strokeWidth={2}
+                            strokeWidth={3}
                             d="M5 13l4 4L19 7"
                           />
                         </svg>
@@ -1586,28 +1649,50 @@ const ERC20_ABI = [
                       <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                         Withdrawal Successful! 🎉
                       </h3>
-                      <p className="text-lg text-gray-700 dark:text-gray-300 mb-4">
-                        {formatQT(withdrawalSuccess.amount)} QT has been sent to your wallet
-                      </p>
-                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-4">
-                        <p className="text-xs text-gray-700 dark:text-gray-300 mb-1">Transaction Hash:</p>
-                        <p className="text-sm font-mono text-gray-900 dark:text-gray-100 break-all">
-                          {withdrawalSuccess.txHash}
+                      <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg p-4 mb-4 border-2 border-green-200 dark:border-green-800">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Amount Withdrawn</p>
+                        <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                          {withdrawalSuccess.amount > 0 ? formatQT(withdrawalSuccess.amount) : '0'} QT
                         </p>
-                        <a
-                          href={`https://basescan.org/tx/${withdrawalSuccess.txHash}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 mt-2 inline-block"
-                        >
-                          View on BaseScan →
-                        </a>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          Tokens have been sent to your connected wallet
+                        </p>
+                      </div>
+                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-4 text-left">
+                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
+                          Transaction Details
+                        </p>
+                        <div className="space-y-2">
+                          <div>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Transaction Hash:</p>
+                            <p className="text-xs font-mono text-gray-900 dark:text-gray-100 break-all bg-white dark:bg-gray-900 p-2 rounded border">
+                              {withdrawalSuccess.txHash}
+                            </p>
+                          </div>
+                          <a
+                            href={`https://basescan.org/tx/${withdrawalSuccess.txHash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
+                          >
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                            View on BaseScan
+                          </a>
+                        </div>
+                      </div>
+                      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 mb-4">
+                        <p className="text-xs text-blue-800 dark:text-blue-300">
+                          💡 Your balance will update automatically once the transaction is confirmed on-chain.
+                        </p>
                       </div>
                       <button
                         onClick={() => {
                           setWithdrawalSuccess(null);
+                          setWithdrawnAmount(0);
                         }}
-                        className="w-full py-3 px-4 rounded-lg bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-semibold transition-all"
+                        className="w-full py-3 px-4 rounded-lg bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-semibold transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
                       >
                         Done
                       </button>

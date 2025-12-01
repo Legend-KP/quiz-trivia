@@ -45,44 +45,66 @@ export async function POST(req: NextRequest) {
     const account = await accounts.findOne({ fid: numFid });
     const dbBalance = account?.qtBalance || 0;
 
-    // If contract balance is higher, update database
-    if (contractBalanceQT > dbBalance) {
-      const difference = contractBalanceQT - dbBalance;
+    // Sync if there's a mismatch (either deposits or withdrawals)
+    const difference = contractBalanceQT - dbBalance;
+    const tolerance = 0.01; // Small tolerance for floating point precision
 
-      // Update database
+    if (Math.abs(difference) > tolerance) {
+      // Update database to match contract balance
       await accounts.updateOne(
         { fid: numFid },
         {
-          $inc: {
-            qtBalance: difference,
-            qtTotalDeposited: difference,
+          $set: {
+            qtBalance: contractBalanceQT, // Set directly to contract balance
+            walletAddress: walletAddress.toLowerCase(), // Store wallet address for event listener lookups
+            updatedAt: Date.now(),
           },
           $setOnInsert: {
             fid: numFid,
             balance: 0,
             dailyStreakDay: 0,
             qtLockedBalance: 0,
+            qtTotalDeposited: 0,
             qtTotalWithdrawn: 0,
             qtTotalWagered: 0,
             qtTotalWon: 0,
             createdAt: Date.now(),
           },
-          $set: {
-            walletAddress: walletAddress.toLowerCase(), // Store wallet address for event listener lookups
-            updatedAt: Date.now(),
-          },
         },
         { upsert: true }
       );
+
+      // Update totals if this is a significant difference
+      if (difference > tolerance) {
+        // Deposit - increment totals
+        await accounts.updateOne(
+          { fid: numFid },
+          {
+            $inc: {
+              qtTotalDeposited: difference,
+            },
+          }
+        );
+      } else if (difference < -tolerance) {
+        // Withdrawal - increment withdrawal total
+        await accounts.updateOne(
+          { fid: numFid },
+          {
+            $inc: {
+              qtTotalWithdrawn: Math.abs(difference),
+            },
+          }
+        );
+      }
 
       // Log sync transaction
       const transactions = await getQTTransactionsCollection();
       await transactions.insertOne({
         fid: numFid,
-        type: 'deposit',
-        amount: difference,
-        fromAddress: walletAddress,
-        toAddress: contractAddress,
+        type: difference > 0 ? 'deposit' : 'withdrawal',
+        amount: difference, // Positive for deposit, negative for withdrawal
+        fromAddress: difference > 0 ? walletAddress : contractAddress,
+        toAddress: difference > 0 ? contractAddress : walletAddress,
         txHash: `sync-${Date.now()}`, // Mark as sync transaction
         blockNumber: 0,
         status: 'completed',
@@ -96,6 +118,7 @@ export async function POST(req: NextRequest) {
         previousDbBalance: dbBalance,
         newDbBalance: contractBalanceQT,
         difference,
+        type: difference > 0 ? 'deposit' : 'withdrawal',
       });
     }
 
