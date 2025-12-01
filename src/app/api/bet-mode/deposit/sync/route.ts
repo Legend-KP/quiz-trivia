@@ -3,7 +3,6 @@ import { ethers } from 'ethers';
 import {
   getCurrencyAccountsCollection,
   getQTTransactionsCollection,
-  getDb,
 } from '~/lib/mongodb';
 import { BET_MODE_VAULT_ABI, getBetModeVaultAddress } from '~/lib/betModeVault';
 

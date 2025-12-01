@@ -312,21 +312,16 @@ const ERC20_ABI = [
         console.error('Failed to fetch status:', err);
         
         // Set default status on error to prevent infinite loading
-        const defaultStatus = {
+        const defaultStatus: BetModeStatus = {
           window: {
             isOpen: true,
-            timeUntilDraw: null,
-            timeUntilSnapshot: null,
+            // timeUntilDraw and timeUntilSnapshot are optional, so omit them
           },
           balance: {
             qtBalance: 0,
             qtLockedBalance: 0,
             availableBalance: 0,
             walletBalance: walletBalance || 0,
-            totalDeposited: 0,
-            totalWithdrawn: 0,
-            totalWagered: 0,
-            totalWon: 0,
           },
           activeGame: null,
           weeklyPool: null,
