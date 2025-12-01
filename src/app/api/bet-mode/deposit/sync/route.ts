@@ -45,37 +45,42 @@ export async function POST(req: NextRequest) {
     const dbBalance = account?.qtBalance || 0;
 
     // Sync if there's a mismatch (either deposits or withdrawals)
+    // IMPORTANT: Only sync if contract balance is HIGHER (deposits) or LOWER (withdrawals)
+    // Do NOT overwrite if DB balance is higher (might include game winnings not yet synced to contract)
     const difference = contractBalanceQT - dbBalance;
     const tolerance = 0.01; // Small tolerance for floating point precision
 
     if (Math.abs(difference) > tolerance) {
-      // Update database to match contract balance
-      await accounts.updateOne(
-        { fid: numFid },
-        {
-          $set: {
-            qtBalance: contractBalanceQT, // Set directly to contract balance
-            walletAddress: walletAddress.toLowerCase(), // Store wallet address for event listener lookups
-            updatedAt: Date.now(),
-          },
-          $setOnInsert: {
-            fid: numFid,
-            balance: 0,
-            dailyStreakDay: 0,
-            qtLockedBalance: 0,
-            qtTotalDeposited: 0,
-            qtTotalWithdrawn: 0,
-            qtTotalWagered: 0,
-            qtTotalWon: 0,
-            createdAt: Date.now(),
-          },
-        },
-        { upsert: true }
-      );
-
-      // Update totals if this is a significant difference
+      // Only sync if contract balance is higher (deposit) or significantly lower (withdrawal)
+      // If DB balance is higher, it might include game winnings that haven't been synced to contract yet
+      // In that case, we should sync the contract, not overwrite the DB
       if (difference > tolerance) {
-        // Deposit - increment totals
+        // Contract balance is higher - likely a deposit that wasn't recorded in DB
+        // Update database to match contract balance
+        await accounts.updateOne(
+          { fid: numFid },
+          {
+            $set: {
+              qtBalance: contractBalanceQT, // Set directly to contract balance
+              walletAddress: walletAddress.toLowerCase(), // Store wallet address for event listener lookups
+              updatedAt: Date.now(),
+            },
+            $setOnInsert: {
+              fid: numFid,
+              balance: 0,
+              dailyStreakDay: 0,
+              qtLockedBalance: 0,
+              qtTotalDeposited: 0,
+              qtTotalWithdrawn: 0,
+              qtTotalWagered: 0,
+              qtTotalWon: 0,
+              createdAt: Date.now(),
+            },
+          },
+          { upsert: true }
+        );
+
+        // Update deposit total
         await accounts.updateOne(
           { fid: numFid },
           {
@@ -84,8 +89,21 @@ export async function POST(req: NextRequest) {
             },
           }
         );
-      } else if (difference < -tolerance) {
-        // Withdrawal - increment withdrawal total
+      } else if (difference < -tolerance && Math.abs(difference) > 100) {
+        // Contract balance is significantly lower - likely a withdrawal
+        // Only sync if difference is significant (more than 100 QT) to avoid overwriting game winnings
+        await accounts.updateOne(
+          { fid: numFid },
+          {
+            $set: {
+              qtBalance: contractBalanceQT, // Set directly to contract balance
+              walletAddress: walletAddress.toLowerCase(),
+              updatedAt: Date.now(),
+            },
+          }
+        );
+
+        // Update withdrawal total
         await accounts.updateOne(
           { fid: numFid },
           {
@@ -94,6 +112,17 @@ export async function POST(req: NextRequest) {
             },
           }
         );
+      } else {
+        // DB balance is higher - likely includes game winnings not yet synced to contract
+        // Don't overwrite, just return current state
+        return NextResponse.json({
+          success: true,
+          synced: false,
+          contractBalance: contractBalanceQT,
+          dbBalance,
+          difference,
+          message: 'DB balance is higher (may include game winnings not yet synced to contract)',
+        });
       }
 
       // Log sync transaction
