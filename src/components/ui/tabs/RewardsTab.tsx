@@ -106,16 +106,19 @@ export function RewardsTab() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 flex flex-col items-center justify-center">
+    <div className="relative h-screen overflow-y-auto bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500">
+      {/* Background gradient - fixed */}
+      <div className="fixed inset-0 bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 -z-10"></div>
+      
       {/* Coins Panel - Top Left */}
-      <div className="absolute top-4 left-4 z-50">
+      <div className="fixed top-4 left-4 z-50">
         <span className="px-3 py-1 rounded-full bg-black/30 border border-white/20 text-white text-sm">
           Coins: {balance ?? '—'}
         </span>
       </div>
 
       {/* Rewards Content */}
-      <div className="w-full max-w-md mx-auto space-y-4">
+      <div className="relative z-10 w-full max-w-md mx-auto p-4 pt-20 pb-24 space-y-4 min-h-full flex flex-col items-center justify-center">
         {/* Daily Claim Section */}
         <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-2xl">
           <h2 className="text-2xl font-bold text-center mb-2 text-gray-800">
