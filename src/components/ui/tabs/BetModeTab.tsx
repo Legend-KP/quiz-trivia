@@ -59,7 +59,7 @@ const ERC20_ABI = [
   },
 ] as const;
 
-  type BetModeScreen = 'entry' | 'game' | 'cash-out' | 'loss' | 'lottery' | 'closed';
+  type BetModeScreen = 'entry' | 'bet-selection' | 'game' | 'cash-out' | 'loss' | 'lottery' | 'closed';
 
   interface BetModeStatus {
     window: {
@@ -470,7 +470,18 @@ const ERC20_ABI = [
         setDepositing(false);
         setDepositStep('input');
         setShowDepositModal(false);
+        
+        // Store the amount for success message
+        const depositAmountNum = parseFloat(depositAmount);
+        const finalAmount = isNaN(depositAmountNum) ? 0 : depositAmountNum;
+        
         setDepositAmount('');
+        
+        // Set success state
+        setDepositSuccess({
+          amount: finalAmount,
+          txHash: depositTxHash,
+        });
         
         // Poll for balance update (events might take a few seconds to process)
         let pollCount = 0;
@@ -526,6 +537,12 @@ const ERC20_ABI = [
   
   // Store withdrawal amount before clearing (for success message)
   const [withdrawnAmount, setWithdrawnAmount] = useState<number>(0);
+  
+  // Deposit success state
+  const [depositSuccess, setDepositSuccess] = useState<{
+    amount: number;
+    txHash: string;
+  } | null>(null);
 
   // Handle withdrawal transaction confirmation
   useEffect(() => {
@@ -886,6 +903,12 @@ const ERC20_ABI = [
     //     }
     //   }
     // }, [screen, timeRemaining, gameResult, handleAnswer]);
+
+  const handleStartGameClick = () => {
+    // Navigate to bet selection screen
+    setScreen('bet-selection');
+    setError(null);
+  };
 
   const handleStartGame = async () => {
     const fid = context?.user?.fid;
@@ -1320,50 +1343,6 @@ const ERC20_ABI = [
                 </div>
               )}
 
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-                  Choose your bet:
-                </label>
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  {[10000, 50000, 100000, 500000].map((amount) => (
-                    <button
-                      key={amount}
-                      onClick={() => {
-                        setBetAmount(amount);
-                        setCustomBet('');
-                      }}
-                      className={`p-3 rounded-lg border-2 transition-all ${
-                        betAmount === amount && !customBet
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="font-semibold text-gray-900 dark:text-gray-100">{formatQT(amount)}</div>
-                      <div className="text-xs text-gray-700 dark:text-gray-300">
-                        Win up to {formatQT(amount * BET_MODE_MULTIPLIERS[10])}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-                <div className="mt-2">
-                  <input
-                    type="number"
-                    placeholder="Custom amount"
-                    value={customBet}
-                    onChange={(e) => {
-                      setCustomBet(e.target.value);
-                      if (e.target.value) setBetAmount(Number(e.target.value));
-                    }}
-                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                    min={MIN_BET}
-                    max={MAX_BET}
-                  />
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                    Min: {formatQT(MIN_BET)} | Max: {formatQT(MAX_BET)}
-                  </p>
-                </div>
-              </div>
-
               {status && (
                 <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-6">
                   <div className="flex justify-between text-sm mb-2">
@@ -1444,32 +1423,23 @@ const ERC20_ABI = [
               )}
               
               <button
-                onClick={handleStartGame}
+                onClick={handleStartGameClick}
                 disabled={loading || !canBet}
-                className={`w-full py-3 px-6 rounded-xl font-bold text-white transition-all ${
+                className={`w-full py-4 px-6 rounded-xl font-bold text-white text-lg transition-all shadow-lg transform hover:scale-105 ${
                   loading || !canBet
                     ? 'bg-gray-400 cursor-not-allowed'
                     : 'bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700'
                 }`}
               >
-                {loading ? 'Starting...' : canBet ? 'START GAME' : 'INSUFFICIENT BALANCE'}
+                {loading ? 'Starting...' : canBet ? '🎮 START GAME' : 'INSUFFICIENT BALANCE'}
               </button>
-
-              {/* Withdraw button - show if user has balance */}
-              {(status?.balance?.availableBalance || 0) > 0 && (
-                <button
-                  onClick={() => setShowWithdrawModal(true)}
-                  className="w-full mt-3 py-2 px-4 rounded-lg bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-200 font-semibold hover:bg-orange-200 dark:hover:bg-orange-800 transition-all"
-                >
-                  💸 Withdraw QT Tokens
-                </button>
-              )}
 
               <button
                 onClick={() => setScreen('lottery')}
-                className="w-full mt-3 py-2 px-4 rounded-lg bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-200 font-semibold hover:bg-purple-200 dark:hover:bg-purple-800 transition-all"
+                className="w-full mt-4 py-3 px-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold text-base shadow-lg transform hover:scale-105 transition-all flex items-center justify-center gap-2"
               >
-                View Lottery Info
+                <span className="text-xl">🎰</span>
+                <span>View Lottery Info</span>
               </button>
               
               {/* Withdrawal Modal */}
@@ -1624,9 +1594,41 @@ const ERC20_ABI = [
               {/* Withdrawal Success Modal */}
               {withdrawalSuccess && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                  <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-md w-full shadow-2xl">
-                    <div className="text-center">
-                      <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-gradient-to-br from-green-400 to-green-600 mb-4 animate-pulse">
+                  <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-md w-full shadow-2xl relative overflow-hidden">
+                    {/* Sparkle Effects */}
+                    <div className="absolute inset-0 pointer-events-none">
+                      {[...Array(12)].map((_, i) => (
+                        <div
+                          key={i}
+                          className="absolute animate-sparkle"
+                          style={{
+                            left: `${Math.random() * 100}%`,
+                            top: `${Math.random() * 100}%`,
+                            animationDelay: `${Math.random() * 2}s`,
+                            animationDuration: `${1.5 + Math.random()}s`,
+                          }}
+                        >
+                          <span className="text-yellow-400 text-2xl opacity-80">✨</span>
+                        </div>
+                      ))}
+                    </div>
+                    <style jsx>{`
+                      @keyframes sparkle {
+                        0%, 100% {
+                          opacity: 0;
+                          transform: scale(0) rotate(0deg);
+                        }
+                        50% {
+                          opacity: 1;
+                          transform: scale(1) rotate(180deg);
+                        }
+                      }
+                      .animate-sparkle {
+                        animation: sparkle 2s ease-in-out infinite;
+                      }
+                    `}</style>
+                    <div className="text-center relative z-10">
+                      <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-gradient-to-br from-green-400 to-green-600 mb-4 animate-pulse shadow-lg">
                         <svg
                           className="h-10 w-10 text-white"
                           fill="none"
@@ -1686,6 +1688,112 @@ const ERC20_ABI = [
                         onClick={() => {
                           setWithdrawalSuccess(null);
                           setWithdrawnAmount(0);
+                        }}
+                        className="w-full py-3 px-4 rounded-lg bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-semibold transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+                      >
+                        Done
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Deposit Success Modal */}
+              {depositSuccess && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                  <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-md w-full shadow-2xl relative overflow-hidden">
+                    {/* Sparkle Effects */}
+                    <div className="absolute inset-0 pointer-events-none">
+                      {[...Array(12)].map((_, i) => (
+                        <div
+                          key={i}
+                          className="absolute animate-sparkle"
+                          style={{
+                            left: `${Math.random() * 100}%`,
+                            top: `${Math.random() * 100}%`,
+                            animationDelay: `${Math.random() * 2}s`,
+                            animationDuration: `${1.5 + Math.random()}s`,
+                          }}
+                        >
+                          <span className="text-yellow-400 text-2xl opacity-80">✨</span>
+                        </div>
+                      ))}
+                    </div>
+                    <style jsx>{`
+                      @keyframes sparkle {
+                        0%, 100% {
+                          opacity: 0;
+                          transform: scale(0) rotate(0deg);
+                        }
+                        50% {
+                          opacity: 1;
+                          transform: scale(1) rotate(180deg);
+                        }
+                      }
+                      .animate-sparkle {
+                        animation: sparkle 2s ease-in-out infinite;
+                      }
+                    `}</style>
+                    <div className="text-center relative z-10">
+                      <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-gradient-to-br from-green-400 to-green-600 mb-4 animate-pulse shadow-lg">
+                        <svg
+                          className="h-10 w-10 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={3}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                        Deposit Successful! 🎉
+                      </h3>
+                      <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg p-4 mb-4 border-2 border-green-200 dark:border-green-800">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Amount Deposited</p>
+                        <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                          {depositSuccess.amount > 0 ? formatQT(depositSuccess.amount) : '0'} QT
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                          Tokens have been added to your Bet Mode balance
+                        </p>
+                      </div>
+                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-4 text-left">
+                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">
+                          Transaction Details
+                        </p>
+                        <div className="space-y-2">
+                          <div>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Transaction Hash:</p>
+                            <p className="text-xs font-mono text-gray-900 dark:text-gray-100 break-all bg-white dark:bg-gray-900 p-2 rounded border">
+                              {depositSuccess.txHash}
+                            </p>
+                          </div>
+                          <a
+                            href={`https://basescan.org/tx/${depositSuccess.txHash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
+                          >
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                            View on BaseScan
+                          </a>
+                        </div>
+                      </div>
+                      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 mb-4">
+                        <p className="text-xs text-blue-800 dark:text-blue-300">
+                          💡 Your balance will update automatically once the transaction is confirmed on-chain.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setDepositSuccess(null);
                         }}
                         className="w-full py-3 px-4 rounded-lg bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white font-semibold transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
                       >
@@ -1859,6 +1967,110 @@ const ERC20_ABI = [
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Bet Selection screen
+    if (screen === 'bet-selection') {
+      const canBet = (status?.balance?.availableBalance || 0) >= betAmount;
+      
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
+          <div className="max-w-md mx-auto mt-10 mb-10 pb-20">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-2xl overflow-y-auto max-h-[calc(100vh-5rem)]">
+              <button
+                onClick={() => setScreen('entry')}
+                className="mb-4 px-3 py-1 rounded bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium"
+              >
+                ← Back
+              </button>
+              
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Choose Your Bet</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Select your bet amount to start playing</p>
+              </div>
+
+              {error && (
+                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
+
+              <div className="mb-6">
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  {[10000, 50000, 100000, 500000].map((amount) => (
+                    <button
+                      key={amount}
+                      onClick={() => {
+                        setBetAmount(amount);
+                        setCustomBet('');
+                        setError(null);
+                      }}
+                      className={`p-4 rounded-xl border-2 transition-all transform hover:scale-105 ${
+                        betAmount === amount && !customBet
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-lg scale-105'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
+                      }`}
+                    >
+                      <div className="font-bold text-lg text-gray-900 dark:text-gray-100">{formatQT(amount)}</div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                        Win up to {formatQT(amount * BET_MODE_MULTIPLIERS[10])}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+                    Or enter custom amount:
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="Custom amount"
+                    value={customBet}
+                    onChange={(e) => {
+                      setCustomBet(e.target.value);
+                      if (e.target.value) {
+                        setBetAmount(Number(e.target.value));
+                        setError(null);
+                      }
+                    }}
+                    className="w-full p-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800"
+                    min={MIN_BET}
+                    max={MAX_BET}
+                  />
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 text-center">
+                    Min: {formatQT(MIN_BET)} | Max: {formatQT(MAX_BET)}
+                  </p>
+                </div>
+              </div>
+
+              {status && (
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-4 mb-6 border-2 border-blue-200 dark:border-blue-800">
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-gray-700 dark:text-gray-300 font-medium">Available Balance:</span>
+                    <span className="font-bold text-lg text-gray-900 dark:text-gray-100">{formatQT(status.balance?.availableBalance || 0)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-700 dark:text-gray-300">Selected Bet:</span>
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">{formatQT(customBet ? Number(customBet) : betAmount)}</span>
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={handleStartGame}
+                disabled={loading || !canBet}
+                className={`w-full py-4 px-6 rounded-xl font-bold text-white text-lg transition-all shadow-lg transform hover:scale-105 ${
+                  loading || !canBet
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700'
+                }`}
+              >
+                {loading ? 'Starting Game...' : canBet ? '🚀 START GAME' : `INSUFFICIENT BALANCE (Need ${formatQT(betAmount)})`}
+              </button>
             </div>
           </div>
         </div>
