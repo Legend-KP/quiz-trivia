@@ -4,18 +4,19 @@
  */
 
 // Multipliers for each question (Q1-Q10)
+// Smooth, intuitive progression with clear milestones
 export const BET_MODE_MULTIPLIERS = [
   0,      // Q0 (not used)
-  1.1,    // Q1
-  1.3,    // Q2
-  1.6,    // Q3
-  2.2,    // Q4
-  3.0,    // Q5
-  4.2,    // Q6
-  6.5,    // Q7
-  7.2,    // Q8
-  8.5,    // Q9
-  10.0,   // Q10 (auto cash out)
+  1.1,    // Q1: +10% (11K from 10K bet)
+  1.3,    // Q2: +30% (13K from 10K bet)
+  1.5,    // Q3: +50% (15K from 10K bet)
+  2.0,    // Q4: +100% (20K from 10K bet) - Doubled your money!
+  3.0,    // Q5: +200% (30K from 10K bet) - Cash out unlocks here
+  4.0,    // Q6: +300% (40K from 10K bet)
+  5.0,    // Q7: +400% (50K from 10K bet)
+  6.5,    // Q8: +550% (65K from 10K bet)
+  8.0,    // Q9: +700% (80K from 10K bet)
+  10.0,   // Q10: +900% (100K from 10K bet) - Auto cash out, 10x your bet!
 ] as const;
 
 // Bet limits
