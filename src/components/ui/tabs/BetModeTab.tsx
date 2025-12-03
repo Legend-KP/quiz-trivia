@@ -1,6 +1,6 @@
   "use client";
 
-  import React, { useState, useEffect, useCallback } from 'react';
+  import React, { useState, useEffect, useCallback, useRef } from 'react';
   import { useMiniApp } from '@neynar/react';
   import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useConnect, useChainId, useSwitchChain } from 'wagmi';
   import { base } from 'wagmi/chains';
@@ -111,7 +111,13 @@ const ERC20_ABI = [
   const qtTokenAddress = (process.env.NEXT_PUBLIC_QT_TOKEN_ADDRESS || QT_TOKEN_ADDRESS) as `0x${string}`;
   
   const [screen, setScreen] = useState<BetModeScreen>('entry');
+  const screenRef = useRef<BetModeScreen>(screen);
   const [status, setStatus] = useState<BetModeStatus | null>(null);
+  
+  // Keep screenRef in sync with screen state
+  useEffect(() => {
+    screenRef.current = screen;
+  }, [screen]);
   const [betAmount, setBetAmount] = useState<number>(MIN_BET);
   const [customBet, setCustomBet] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -260,7 +266,11 @@ const ERC20_ABI = [
             userShare: '0',
           },
         });
-        setScreen('entry');
+        // Only change screen to 'entry' if not on a preserved screen
+        const screensToPreserve: BetModeScreen[] = ['lottery', 'bet-selection', 'cash-out', 'loss'];
+        if (!screensToPreserve.includes(screenRef.current)) {
+          setScreen('entry');
+        }
         return;
       }
 
@@ -300,13 +310,20 @@ const ERC20_ABI = [
         setError(null); // Clear any previous errors
 
         // Determine screen based on status
-        // Bet Mode is always open (24/7), so skip closed check
-        if (data.activeGame) {
-          setScreen('game');
-          // Load game state
-          await loadGameState(data.activeGame.gameId);
-        } else {
-          setScreen('entry');
+        // Only auto-change screen if user is on 'entry' or 'game' screen
+        // Preserve current screen for 'lottery', 'bet-selection', 'cash-out', 'loss' screens
+        const screensToPreserve: BetModeScreen[] = ['lottery', 'bet-selection', 'cash-out', 'loss'];
+        const shouldPreserveScreen = screensToPreserve.includes(screenRef.current);
+        
+        if (!shouldPreserveScreen) {
+          // Bet Mode is always open (24/7), so skip closed check
+          if (data.activeGame) {
+            setScreen('game');
+            // Load game state
+            await loadGameState(data.activeGame.gameId);
+          } else {
+            setScreen('entry');
+          }
         }
       } catch (err: any) {
         console.error('Failed to fetch status:', err);
@@ -333,7 +350,12 @@ const ERC20_ABI = [
         };
         
         setStatus(defaultStatus);
-        setScreen('entry');
+        
+        // Only change screen to 'entry' on error if not on a preserved screen
+        const screensToPreserve: BetModeScreen[] = ['lottery', 'bet-selection', 'cash-out', 'loss'];
+        if (!screensToPreserve.includes(screenRef.current)) {
+          setScreen('entry');
+        }
         
         // Show user-friendly error message
         const errorMsg = err?.message || 'Failed to load Bet Mode status';
