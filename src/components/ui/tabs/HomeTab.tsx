@@ -990,9 +990,9 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context
             <h2 className="text-xl font-bold text-gray-800 mb-6">{q.question}</h2>
             <div className="space-y-3">
               {q.options.map((opt, i) => (
-                <button key={i} onClick={() => handleAnswer(i)} className="w-full p-4 text-left rounded-lg border-2 bg-gray-50 border-gray-300 hover:border-blue-500 hover:bg-blue-50 transition-all">
-                  <span className="font-semibold mr-3">{String.fromCharCode(65 + i)}.</span>
-                  <span>{opt}</span>
+                <button key={i} onClick={() => handleAnswer(i)} className="w-full p-4 text-left rounded-lg border-2 bg-gray-50 border-gray-300 hover:border-blue-500 hover:bg-blue-50 transition-all text-gray-900">
+                  <span className="font-semibold mr-3 text-gray-900">{String.fromCharCode(65 + i)}.</span>
+                  <span className="text-gray-900">{opt}</span>
                 </button>
               ))}
             </div>
@@ -1114,9 +1114,9 @@ const ChallengeModePage: React.FC<ChallengeModePageProps> = ({ onExit, context }
             <h2 className="text-xl font-bold text-gray-800 mb-6">{q.question}</h2>
             <div className="space-y-3">
               {q.options.map((opt, i) => (
-                <button key={i} onClick={() => onAnswer(i)} className="w-full p-4 text-left rounded-lg border-2 bg-gray-50 border-gray-300 hover:border-blue-500 hover:bg-blue-50 transition-all">
-                  <span className="font-semibold mr-3">{String.fromCharCode(65 + i)}.</span>
-                  <span>{opt}</span>
+                <button key={i} onClick={() => onAnswer(i)} className="w-full p-4 text-left rounded-lg border-2 bg-gray-50 border-gray-300 hover:border-blue-500 hover:bg-blue-50 transition-all text-gray-900">
+                  <span className="font-semibold mr-3 text-gray-900">{String.fromCharCode(65 + i)}.</span>
+                  <span className="text-gray-900">{opt}</span>
                 </button>
               ))}
             </div>
