@@ -97,30 +97,9 @@ async function main() {
   // Verify this is actually a distributor contract by checking reward amount
   console.log("🔍 Verifying contract...");
   let rewardAmount;
-  let tokenAddressLocked;
-  let currentTokenAddress;
   try {
     rewardAmount = await dailyRewardDistributor.REWARD_AMOUNT();
-    tokenAddressLocked = await dailyRewardDistributor.tokenAddressLocked();
-    currentTokenAddress = await dailyRewardDistributor.qtToken();
     console.log("✅ Contract verified - Reward Amount:", ethers.formatEther(rewardAmount), "QT tokens");
-    console.log("✅ Token Address Locked:", tokenAddressLocked ? "Yes" : "No");
-    console.log("✅ Current Token Address:", currentTokenAddress);
-    
-    if (!tokenAddressLocked) {
-      console.error("\n❌ Error: Token address is not set yet!");
-      console.log("   You must set the token address before depositing tokens.");
-      console.log("\n💡 Please run:");
-      console.log("   npx hardhat run scripts/set-token-address.cjs --network base");
-      process.exit(1);
-    }
-    
-    if (currentTokenAddress.toLowerCase() !== QT_TOKEN_ADDRESS.toLowerCase()) {
-      console.warn("\n⚠️  Warning: Token address in contract does not match QT_TOKEN_ADDRESS!");
-      console.log("   Contract token address:", currentTokenAddress);
-      console.log("   Expected token address:", QT_TOKEN_ADDRESS);
-      console.log("\n   This may cause issues. Please verify the token address is correct.");
-    }
   } catch (error) {
     console.error("❌ Error: This address is not a valid DailyRewardDistributor contract!");
     console.log("   The contract at", QT_DISTRIBUTOR_ADDRESS, "does not have the expected functions.");

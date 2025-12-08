@@ -269,7 +269,7 @@ const ERC20_ABI = [
         // Only change screen to 'entry' if not on a preserved screen
         const screensToPreserve: BetModeScreen[] = ['lottery', 'bet-selection', 'cash-out', 'loss'];
         if (!screensToPreserve.includes(screenRef.current)) {
-          setScreen('entry');
+        setScreen('entry');
         }
         return;
       }
@@ -316,13 +316,13 @@ const ERC20_ABI = [
         const shouldPreserveScreen = screensToPreserve.includes(screenRef.current);
         
         if (!shouldPreserveScreen) {
-          // Bet Mode is always open (24/7), so skip closed check
-          if (data.activeGame) {
-            setScreen('game');
-            // Load game state
-            await loadGameState(data.activeGame.gameId);
-          } else {
-            setScreen('entry');
+        // Bet Mode is always open (24/7), so skip closed check
+        if (data.activeGame) {
+          setScreen('game');
+          // Load game state
+          await loadGameState(data.activeGame.gameId);
+        } else {
+          setScreen('entry');
           }
         }
       } catch (err: any) {
@@ -354,7 +354,7 @@ const ERC20_ABI = [
         // Only change screen to 'entry' on error if not on a preserved screen
         const screensToPreserve: BetModeScreen[] = ['lottery', 'bet-selection', 'cash-out', 'loss'];
         if (!screensToPreserve.includes(screenRef.current)) {
-          setScreen('entry');
+        setScreen('entry');
         }
         
         // Show user-friendly error message

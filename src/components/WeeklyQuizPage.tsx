@@ -133,11 +133,11 @@
             // Get latest answers state
             setAnswers(currentAnswers => {
               onComplete(currentScore, [...currentAnswers, {
-                questionId: question.id,
-                selectedAnswer: answerIndex,
-                correct: question.correct,
-                isCorrect
-              }], timeString);
+            questionId: question.id,
+            selectedAnswer: answerIndex,
+            correct: question.correct,
+            isCorrect
+          }], timeString);
               return currentAnswers;
             });
             

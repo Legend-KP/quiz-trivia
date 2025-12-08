@@ -46,7 +46,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
 
     setIsDetailsModalOpen(false);
     // Start the quiz directly (currency deduction happens in onQuizStart callback)
-    onQuizStart();
+        onQuizStart();
   };
 
   const getButtonText = () => {
@@ -253,15 +253,15 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                   Close
                 </button>
                 
-                <button
-                  onClick={() => {
-                    setIsDetailsModalOpen(false);
+                  <button
+                    onClick={() => {
+                      setIsDetailsModalOpen(false);
                     window.location.href = '/leaderboard?mode=CLASSIC';
-                  }}
+                    }}
                   className="flex-1 px-3 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold text-sm rounded-lg hover:from-blue-600 hover:to-purple-700 transition min-w-[140px]"
-                >
-                  📊 View Leaderboard
-                </button>
+                  >
+                    📊 View Leaderboard
+                  </button>
                 
                 {canStartQuiz && (
                   <button

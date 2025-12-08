@@ -362,16 +362,16 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
             />
           ) : (
             <h3 className="text-6xl md:text-7xl lg:text-8xl font-black text-yellow-400 uppercase tracking-wider" style={{
-              fontFamily: 'Impact, Arial Black, sans-serif',
+            fontFamily: 'Impact, Arial Black, sans-serif',
               textShadow: '2px 2px 0px rgba(0,0,0,0.8)'
-            }}>
+          }}>
               QUIZ TRIVIA
-            </h3>
+          </h3>
           )}
         </div>
 
         {/* Mode Buttons */}
-        <div className="space-y-4 w-full max-w-sm md:max-w-md">
+        <div className="space-y-4 w-full max-w-sm md:max-w-md -mt-4">
           <WeeklyQuizStartButton
             quizState={_weeklyQuizState}
             onQuizStart={async () => {
@@ -431,13 +431,13 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
             <span className="absolute -top-2 right-3 text-xs font-semibold bg-black/50 text-white px-2 py-0.5 rounded-md backdrop-blur">
               Coming Soon
             </span>
-            <QuizStartButton
-              mode={QuizMode.CHALLENGE}
-              modeName="Challenge Mode"
-              onQuizStart={onStartChallenge}
+          <QuizStartButton
+            mode={QuizMode.CHALLENGE}
+            modeName="Challenge Mode"
+            onQuizStart={onStartChallenge}
               className="pointer-events-none opacity-60"
-            />
-          </div>
+          />
+        </div>
         </div>
       </div>
     </div>
@@ -1217,7 +1217,7 @@ export default function QuizTriviaApp() {
           />
         </>
       )}
-
+      
       {currentScreen === 'time' && (
         <TimeModePage 
           onExit={() => setCurrentScreen('home')}
