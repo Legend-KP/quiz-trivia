@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+
+pragma solidity ^0.8.20;
 
 /**
- * @title DailyRewardDistributor
+ * @title DailyRewardDistributor (Upgradeable Token Address)
  * @dev Smart contract for distributing QT tokens as daily rewards
  * @notice Users can claim 1,000 QT tokens once per day
+ * @notice Token address can be set ONCE after deployment (for airdrop compatibility)
  */
 contract DailyRewardDistributor {
     // QT Token contract
@@ -12,6 +14,9 @@ contract DailyRewardDistributor {
     
     // Owner of the contract
     address public owner;
+    
+    // Token address lock (prevents changing after first set)
+    bool public tokenAddressLocked;
     
     // Reward amount (1,000 QT tokens with 18 decimals)
     uint256 public constant REWARD_AMOUNT = 1000 * 10**18;
@@ -24,6 +29,7 @@ contract DailyRewardDistributor {
     event QTTokensDeposited(uint256 amount, uint256 timestamp);
     event QTTokensWithdrawn(uint256 amount, uint256 timestamp);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event QTTokenAddressSet(address indexed tokenAddress, uint256 timestamp);
     
     // Modifiers
     modifier onlyOwner() {
@@ -40,9 +46,31 @@ contract DailyRewardDistributor {
     
     bool private _reentrancyGuard;
     
-    constructor(address _qtTokenAddress) {
-        qtToken = _qtTokenAddress;
+    /**
+     * @dev Constructor - deploys with placeholder address
+     * @param _initialTokenAddress Placeholder address (use address(1) or any non-zero)
+     */
+    constructor(address _initialTokenAddress) {
+        require(_initialTokenAddress != address(0), "Initial address cannot be zero");
+        qtToken = _initialTokenAddress;
         owner = msg.sender;
+        tokenAddressLocked = false; // Not locked yet
+    }
+    
+    /**
+     * @dev Set the actual QT token address (ONE TIME ONLY)
+     * @notice Must be called after token is deployed and airdropped to this contract
+     * @param _qtTokenAddress The real QT token contract address
+     */
+    function setQTTokenAddress(address _qtTokenAddress) external onlyOwner {
+        require(!tokenAddressLocked, "Token address already locked");
+        require(_qtTokenAddress != address(0), "Token address cannot be zero");
+        require(_qtTokenAddress != qtToken, "Same address as current");
+        
+        qtToken = _qtTokenAddress;
+        tokenAddressLocked = true; // PERMANENTLY LOCKED
+        
+        emit QTTokenAddressSet(_qtTokenAddress, block.timestamp);
     }
     
     /**
@@ -59,6 +87,7 @@ contract DailyRewardDistributor {
      * @dev Claim QT token reward (once per day)
      */
     function claimQTReward() external nonReentrant {
+        require(tokenAddressLocked, "Token address not set yet");
         require(canClaimToday(msg.sender), "Already claimed today");
         require(getQTBalance() >= REWARD_AMOUNT, "Insufficient QT tokens in contract");
         
@@ -77,6 +106,7 @@ contract DailyRewardDistributor {
      * @param userAddress Address of the user to claim reward for
      */
     function claimQTRewardForUser(address userAddress) external onlyOwner nonReentrant {
+        require(tokenAddressLocked, "Token address not set yet");
         require(canClaimToday(userAddress), "User already claimed today");
         require(getQTBalance() >= REWARD_AMOUNT, "Insufficient QT tokens in contract");
         
@@ -95,6 +125,7 @@ contract DailyRewardDistributor {
      * @param amount Amount of QT tokens to deposit
      */
     function depositQTTokens(uint256 amount) external onlyOwner {
+        require(tokenAddressLocked, "Token address not set yet");
         require(transferFromQT(msg.sender, address(this), amount), "QT token transfer failed");
         emit QTTokensDeposited(amount, block.timestamp);
     }
@@ -104,6 +135,7 @@ contract DailyRewardDistributor {
      * @param amount Amount of QT tokens to withdraw
      */
     function withdrawQTTokens(uint256 amount) external onlyOwner {
+        require(tokenAddressLocked, "Token address not set yet");
         require(transferQT(msg.sender, amount), "QT token transfer failed");
         emit QTTokensWithdrawn(amount, block.timestamp);
     }
@@ -113,6 +145,7 @@ contract DailyRewardDistributor {
      * @return balance Current QT token balance
      */
     function getQTBalance() public view returns (uint256) {
+        if (!tokenAddressLocked) return 0; // No balance until token set
         return balanceOfQT(address(this));
     }
     
@@ -159,4 +192,3 @@ contract DailyRewardDistributor {
         return success && (data.length == 0 || abi.decode(data, (bool)));
     }
 }
-

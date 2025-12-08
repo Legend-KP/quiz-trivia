@@ -552,8 +552,8 @@
       ]
     },
     "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\DailyRewardDistributor.sol": {
-      "lastModificationDate": 1763025572927,
-      "contentHash": "a5844a2afa3ebf99d1f5e3d2fb6daec6",
+      "lastModificationDate": 1765225255467,
+      "contentHash": "c8b8df9672c924ae9b420a0f7007e3d4",
       "sourceName": "contracts/DailyRewardDistributor.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -581,7 +581,7 @@
       },
       "imports": [],
       "versionPragmas": [
-        "^0.8.19"
+        "^0.8.20"
       ],
       "artifacts": [
         "DailyRewardDistributor"

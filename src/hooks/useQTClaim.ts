@@ -13,136 +13,28 @@ const QT_DISTRIBUTOR_ADDRESS = (
     ? envAddress
     : NEW_1K_CONTRACT
 ) as `0x${string}`;
+// Updated ABI matching the deployed contract
 const QT_DISTRIBUTOR_ABI = [
-  {
-    "inputs": [{"internalType": "address", "name": "_qtTokenAddress", "type": "address"}],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {"indexed": true, "internalType": "address", "name": "previousOwner", "type": "address"},
-      {"indexed": true, "internalType": "address", "name": "newOwner", "type": "address"}
-    ],
-    "name": "OwnershipTransferred",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {"indexed": true, "internalType": "address", "name": "user", "type": "address"},
-      {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"},
-      {"indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256"}
-    ],
-    "name": "QTRewardClaimed",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"},
-      {"indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256"}
-    ],
-    "name": "QTTokensDeposited",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"},
-      {"indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256"}
-    ],
-    "name": "QTTokensWithdrawn",
-    "type": "event"
-  },
-  {
-    "inputs": [],
-    "name": "REWARD_AMOUNT",
-    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [{"internalType": "address", "name": "user", "type": "address"}],
-    "name": "canClaimToday",
-    "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "claimQTReward",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [{"internalType": "address", "name": "userAddress", "type": "address"}],
-    "name": "claimQTRewardForUser",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [{"internalType": "uint256", "name": "amount", "type": "uint256"}],
-    "name": "depositQTTokens",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getQTBalance",
-    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [{"internalType": "address", "name": "user", "type": "address"}],
-    "name": "getUserClaimStatus",
-    "outputs": [
-      {"internalType": "uint256", "name": "lastClaim", "type": "uint256"},
-      {"internalType": "bool", "name": "canClaim", "type": "bool"}
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [{"internalType": "address", "name": "", "type": "address"}],
-    "name": "lastClaimDate",
-    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "owner",
-    "outputs": [{"internalType": "address", "name": "", "type": "address"}],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "qtToken",
-    "outputs": [{"internalType": "address", "name": "", "type": "address"}],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [{"internalType": "address", "name": "newOwner", "type": "address"}],
-    "name": "transferOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [{"internalType": "uint256", "name": "amount", "type": "uint256"}],
-    "name": "withdrawQTTokens",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  }
+  {"inputs":[{"internalType":"address","name":"_initialTokenAddress","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},
+  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},
+  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"QTRewardClaimed","type":"event"},
+  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"tokenAddress","type":"address"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"QTTokenAddressSet","type":"event"},
+  {"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"QTTokensDeposited","type":"event"},
+  {"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"QTTokensWithdrawn","type":"event"},
+  {"inputs":[],"name":"REWARD_AMOUNT","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"canClaimToday","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"claimQTReward","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"internalType":"address","name":"userAddress","type":"address"}],"name":"claimQTRewardForUser","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"depositQTTokens","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[],"name":"getQTBalance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserClaimStatus","outputs":[{"internalType":"uint256","name":"lastClaim","type":"uint256"},{"internalType":"bool","name":"canClaim","type":"bool"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"lastClaimDate","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"qtToken","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"address","name":"_qtTokenAddress","type":"address"}],"name":"setQTTokenAddress","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[],"name":"tokenAddressLocked","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"withdrawQTTokens","outputs":[],"stateMutability":"nonpayable","type":"function"}
 ] as const;
 
 export function useQTClaim() {

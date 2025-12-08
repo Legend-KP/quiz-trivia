@@ -32,14 +32,17 @@ async function main() {
   console.log("✅ Contract factory loaded!\n");
   
   console.log("📋 Contract Details:");
-  console.log("  QT Token Address:", QT_TOKEN_ADDRESS);
+  console.log("  Initial Token Address (placeholder):", "0x0000000000000000000000000000000000000001");
   console.log("  Reward Amount: 1,000 QT tokens per day");
   console.log("  Network: Base Mainnet");
+  console.log("  Note: Token address will be set after deployment using setQTTokenAddress()");
   console.log("");
   
-  // Deploy the contract
-  console.log("🚀 Deploying contract...");
-  const dailyRewardDistributor = await DailyRewardDistributor.deploy(QT_TOKEN_ADDRESS);
+  // Deploy the contract with placeholder address (address(1))
+  // The actual token address will be set later using setQTTokenAddress()
+  const PLACEHOLDER_ADDRESS = "0x0000000000000000000000000000000000000001";
+  console.log("🚀 Deploying contract with placeholder address...");
+  const dailyRewardDistributor = await DailyRewardDistributor.deploy(PLACEHOLDER_ADDRESS);
   console.log("⏳ Waiting for deployment confirmation...");
   await dailyRewardDistributor.waitForDeployment();
   
@@ -53,17 +56,22 @@ async function main() {
   console.log("\n🔍 Verifying deployment...");
   const qtTokenAddress = await dailyRewardDistributor.qtToken();
   const rewardAmount = await dailyRewardDistributor.REWARD_AMOUNT();
+  const tokenAddressLocked = await dailyRewardDistributor.tokenAddressLocked();
   
-  console.log("✅ QT Token Address:", qtTokenAddress);
+  console.log("✅ Initial QT Token Address (placeholder):", qtTokenAddress);
   console.log("✅ Reward Amount:", ethers.formatEther(rewardAmount), "QT tokens");
+  console.log("✅ Token Address Locked:", tokenAddressLocked ? "Yes" : "No (needs to be set)");
   
   console.log("\n📝 Next Steps:");
   console.log("1. Update your .env file with the contract address:");
   console.log(`   NEXT_PUBLIC_QT_DISTRIBUTOR_ADDRESS=${contractAddress}`);
   console.log(`   QT_DISTRIBUTOR_ADDRESS=${contractAddress}`);
-  console.log("2. Deposit 100 million QT tokens to the contract using:");
+  console.log("2. Set the actual QT token address (ONE TIME ONLY):");
+  console.log(`   npx hardhat run scripts/set-token-address.cjs --network base`);
+  console.log("   (Create this script to call setQTTokenAddress with the real token address)");
+  console.log("3. Deposit QT tokens to the contract using:");
   console.log("   DEPOSIT_AMOUNT=100000000 npx hardhat run scripts/deposit-daily-reward-tokens.cjs --network base");
-  console.log("3. Update your frontend to use the new contract address");
+  console.log("4. Update your frontend to use the new contract address");
   
   return contractAddress;
 }
