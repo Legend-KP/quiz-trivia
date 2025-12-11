@@ -310,19 +310,16 @@ const ERC20_ABI = [
         setError(null); // Clear any previous errors
 
         // Determine screen based on status
-        // Only auto-change screen if user is on 'entry' or 'game' screen
-        // Preserve current screen for 'lottery', 'bet-selection', 'cash-out', 'loss' screens
+        // Always switch to 'game' if there's an activeGame and not on a terminal/preserved screen
         const screensToPreserve: BetModeScreen[] = ['lottery', 'bet-selection', 'cash-out', 'loss'];
-        const shouldPreserveScreen = screensToPreserve.includes(screenRef.current);
-        
-        if (!shouldPreserveScreen) {
-        // Bet Mode is always open (24/7), so skip closed check
         if (data.activeGame) {
-          setScreen('game');
-          // Load game state
-          await loadGameState(data.activeGame.gameId);
+          if (!screensToPreserve.includes(screenRef.current)) {
+            setScreen('game');
+            await loadGameState(data.activeGame.gameId);
+          }
         } else {
-          setScreen('entry');
+          if (!screensToPreserve.includes(screenRef.current)) {
+            setScreen('entry');
           }
         }
       } catch (err: any) {
