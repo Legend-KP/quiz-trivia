@@ -237,10 +237,32 @@ const ERC20_ABI = [
     // const [timeRemaining, setTimeRemaining] = useState<number>(30); // Timer removed for testing
     const [gameResult, setGameResult] = useState<any>(null);
 
-    const loadGameState = useCallback(async (_gameId: string) => {
-      // In a real implementation, you'd fetch the current question
-      // For now, we'll handle it through the answer flow
-    }, []);
+    const loadGameState = useCallback(async (gameId: string) => {
+      try {
+        const fid = context?.user?.fid;
+        if (!fid) return;
+
+        // Fetch game data from API
+        const res = await fetch(`/api/bet-mode/game?gameId=${gameId}&fid=${fid}`);
+        if (!res.ok) {
+          console.error('Failed to load game state:', res.status);
+          return;
+        }
+
+        const data = await res.json();
+        
+        if (data.game && data.question) {
+          setCurrentGame({
+            gameId: data.game.gameId,
+            betAmount: data.game.betAmount,
+            currentQuestion: data.game.currentQuestion,
+          });
+          setCurrentQuestion(data.question);
+        }
+      } catch (err: any) {
+        console.error('Error loading game state:', err);
+      }
+    }, [context?.user?.fid]);
 
     // Fetch status
     const fetchStatus = useCallback(async () => {
@@ -313,10 +335,15 @@ const ERC20_ABI = [
         // Always switch to 'game' if there's an activeGame and not on a terminal/preserved screen
         const screensToPreserve: BetModeScreen[] = ['lottery', 'bet-selection', 'cash-out', 'loss'];
         if (data.activeGame) {
+          // Switch screen immediately if not on a preserved screen (so loading state shows)
           if (!screensToPreserve.includes(screenRef.current)) {
             setScreen('game');
-            await loadGameState(data.activeGame.gameId);
           }
+          // Always load game state if there's an active game (async, will update currentQuestion when done)
+          loadGameState(data.activeGame.gameId).catch((err) => {
+            console.error('Failed to load game state:', err);
+            setError('Failed to load game. Please try again.');
+          });
         } else {
           if (!screensToPreserve.includes(screenRef.current)) {
             setScreen('entry');
@@ -2091,6 +2118,18 @@ const ERC20_ABI = [
                 {loading ? 'Starting Game...' : canBet ? '🚀 START GAME' : `INSUFFICIENT BALANCE (Need ${formatQT(betAmount)})`}
               </button>
             </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Game screen - show loading if screen is 'game' but question not loaded yet
+    if (screen === 'game' && !currentQuestion) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 flex items-center justify-center">
+          <div className="text-white text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+            <p>Loading your game...</p>
           </div>
         </div>
       );
