@@ -2183,46 +2183,6 @@ const ERC20_ABI = [
       );
     }
 
-    // Game screen fallback (when resuming but no question loaded)
-    if (screen === 'game') {
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
-          <div className="max-w-md mx-auto mt-20 mb-10 pb-20">
-            <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-2xl text-center space-y-4">
-              <div className="text-4xl">⏳</div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Resuming your game...</h2>
-              <p className="text-sm text-gray-700 dark:text-gray-300">
-                We detected an active game but could not load the current question. You can try again or go back to the Bet Mode home.
-              </p>
-              <div className="space-y-3">
-                <button
-                  onClick={() => {
-                    // Re-fetch status to try to recover the current game
-                    fetchStatus();
-                  }}
-                  className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold hover:from-blue-600 hover:to-purple-700 transition-all"
-                >
-                  Retry loading game
-                </button>
-                <button
-                  onClick={() => {
-                    setScreen('entry');
-                    setCurrentGame(null);
-                    setCurrentQuestion(null);
-                    setSelectedAnswer(null);
-                    setGameResult(null);
-                  }}
-                  className="w-full py-3 px-6 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
-                >
-                  Back to Bet Mode home
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
     // Cash out screen
     if (screen === 'cash-out' && gameResult) {
       const betAmount = currentGame?.betAmount || gameResult.betAmount || 0;

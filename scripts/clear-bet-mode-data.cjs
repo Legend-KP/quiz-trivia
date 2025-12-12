@@ -101,8 +101,8 @@ async function clearBetModeData() {
     const poolsResult = await collections.pools.deleteMany({});
     console.log(`   ✅ Deleted ${poolsResult.deletedCount} weekly pools`);
 
-    // 5. Reset Bet Mode fields in currency_accounts
-    console.log('5️⃣  Resetting Bet Mode balances in currency_accounts...');
+    // 5. Reset Bet Mode fields in currency_accounts (including walletAddress)
+    console.log('5️⃣  Resetting Bet Mode balances and wallet addresses in currency_accounts...');
     const accountsResult = await collections.accounts.updateMany(
       {
         $or: [
@@ -112,6 +112,7 @@ async function clearBetModeData() {
           { qtTotalWithdrawn: { $exists: true } },
           { qtTotalWagered: { $exists: true } },
           { qtTotalWon: { $exists: true } },
+          { walletAddress: { $exists: true } },
         ],
       },
       {
@@ -124,9 +125,12 @@ async function clearBetModeData() {
           qtTotalWon: 0,
           updatedAt: Date.now(),
         },
+        $unset: {
+          walletAddress: "",
+        },
       }
     );
-    console.log(`   ✅ Reset Bet Mode balances for ${accountsResult.modifiedCount} accounts`);
+    console.log(`   ✅ Reset Bet Mode balances and cleared wallet addresses for ${accountsResult.modifiedCount} accounts`);
 
     // Verify deletion
     console.log('\n📊 Verification:');
