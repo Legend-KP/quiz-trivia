@@ -237,32 +237,10 @@ const ERC20_ABI = [
     // const [timeRemaining, setTimeRemaining] = useState<number>(30); // Timer removed for testing
     const [gameResult, setGameResult] = useState<any>(null);
 
-    const loadGameState = useCallback(async (gameId: string) => {
-      try {
-        const fid = context?.user?.fid;
-        if (!fid) return;
-
-        // Fetch game data from API
-        const res = await fetch(`/api/bet-mode/game?gameId=${gameId}&fid=${fid}`);
-        if (!res.ok) {
-          console.error('Failed to load game state:', res.status);
-          return;
-        }
-
-        const data = await res.json();
-        
-        if (data.game && data.question) {
-          setCurrentGame({
-            gameId: data.game.gameId,
-            betAmount: data.game.betAmount,
-            currentQuestion: data.game.currentQuestion,
-          });
-          setCurrentQuestion(data.question);
-        }
-      } catch (err: any) {
-        console.error('Error loading game state:', err);
-      }
-    }, [context?.user?.fid]);
+    const loadGameState = useCallback(async (_gameId: string) => {
+      // In a real implementation, you'd fetch the current question
+      // For now, we'll handle it through the answer flow
+    }, []);
 
     // Fetch status
     const fetchStatus = useCallback(async () => {
@@ -335,15 +313,10 @@ const ERC20_ABI = [
         // Always switch to 'game' if there's an activeGame and not on a terminal/preserved screen
         const screensToPreserve: BetModeScreen[] = ['lottery', 'bet-selection', 'cash-out', 'loss'];
         if (data.activeGame) {
-          // Switch screen immediately if not on a preserved screen (so loading state shows)
           if (!screensToPreserve.includes(screenRef.current)) {
             setScreen('game');
+            await loadGameState(data.activeGame.gameId);
           }
-          // Always load game state if there's an active game (async, will update currentQuestion when done)
-          loadGameState(data.activeGame.gameId).catch((err) => {
-            console.error('Failed to load game state:', err);
-            setError('Failed to load game. Please try again.');
-          });
         } else {
           if (!screensToPreserve.includes(screenRef.current)) {
             setScreen('entry');
@@ -2123,18 +2096,6 @@ const ERC20_ABI = [
       );
     }
 
-    // Game screen - show loading if screen is 'game' but question not loaded yet
-    if (screen === 'game' && !currentQuestion) {
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 flex items-center justify-center">
-          <div className="text-white text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-            <p>Loading your game...</p>
-          </div>
-        </div>
-      );
-    }
-
     // Game screen
     if (screen === 'game' && currentQuestion) {
       const questionNum = currentQuestion.questionNumber || 1;
@@ -2216,6 +2177,46 @@ const ERC20_ABI = [
                   )}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Game screen fallback (when resuming but no question loaded)
+    if (screen === 'game') {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
+          <div className="max-w-md mx-auto mt-20 mb-10 pb-20">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-2xl text-center space-y-4">
+              <div className="text-4xl">⏳</div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Resuming your game...</h2>
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                We detected an active game but could not load the current question. You can try again or go back to the Bet Mode home.
+              </p>
+              <div className="space-y-3">
+                <button
+                  onClick={() => {
+                    // Re-fetch status to try to recover the current game
+                    fetchStatus();
+                  }}
+                  className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold hover:from-blue-600 hover:to-purple-700 transition-all"
+                >
+                  Retry loading game
+                </button>
+                <button
+                  onClick={() => {
+                    setScreen('entry');
+                    setCurrentGame(null);
+                    setCurrentQuestion(null);
+                    setSelectedAnswer(null);
+                    setGameResult(null);
+                  }}
+                  className="w-full py-3 px-6 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
+                >
+                  Back to Bet Mode home
+                </button>
+              </div>
             </div>
           </div>
         </div>
