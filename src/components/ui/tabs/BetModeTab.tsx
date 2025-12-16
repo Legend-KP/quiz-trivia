@@ -114,9 +114,9 @@ const ERC20_ABI = [
   const screenRef = useRef<BetModeScreen>(screen);
   const [status, setStatus] = useState<BetModeStatus | null>(null);
   
-  // Track previous prop values to detect changes
-  const prevOpenDepositModal = useRef(openDepositModal);
-  const prevOpenWithdrawModal = useRef(openWithdrawModal);
+  // Track if modals were opened from props to prevent reopening
+  const depositModalOpenedFromProps = useRef(false);
+  const withdrawModalOpenedFromProps = useRef(false);
   
   // Keep screenRef in sync with screen state
   useEffect(() => {
@@ -379,14 +379,14 @@ const ERC20_ABI = [
       return () => clearInterval(interval);
     }, [fetchStatus]);
 
-    // Open deposit modal if requested from homepage (only when prop changes from false to true)
+    // Open deposit modal if requested from homepage (only once when prop changes to true)
     useEffect(() => {
-      const prevValue = prevOpenDepositModal.current;
-      prevOpenDepositModal.current = openDepositModal;
-      
-      // Only open if prop changed from false to true
-      if (openDepositModal && !prevValue && !showDepositModal) {
+      if (openDepositModal && !depositModalOpenedFromProps.current && !showDepositModal) {
         setShowDepositModal(true);
+        depositModalOpenedFromProps.current = true;
+      } else if (!openDepositModal) {
+        // Reset flag when prop becomes false
+        depositModalOpenedFromProps.current = false;
       }
     }, [openDepositModal, showDepositModal]);
 
@@ -413,14 +413,14 @@ const ERC20_ABI = [
       }
     }, [showDepositModal, isConnected, context?.user?.fid, connectors, connect, context?.client]);
 
-    // Open withdraw modal if requested from homepage (only when prop changes from false to true)
+    // Open withdraw modal if requested from homepage (only once when prop changes to true)
     useEffect(() => {
-      const prevValue = prevOpenWithdrawModal.current;
-      prevOpenWithdrawModal.current = openWithdrawModal;
-      
-      // Only open if prop changed from false to true
-      if (openWithdrawModal && !prevValue && !showWithdrawModal) {
+      if (openWithdrawModal && !withdrawModalOpenedFromProps.current && !showWithdrawModal) {
         setShowWithdrawModal(true);
+        withdrawModalOpenedFromProps.current = true;
+      } else if (!openWithdrawModal) {
+        // Reset flag when prop becomes false
+        withdrawModalOpenedFromProps.current = false;
       }
     }, [openWithdrawModal, showWithdrawModal]);
     
@@ -477,6 +477,7 @@ const ERC20_ABI = [
       if (data.success) {
         setError(null);
         setShowDepositModal(false);
+        depositModalOpenedFromProps.current = false; // Reset flag
         setDepositAmount('');
         await fetchStatus(); // Refresh balance
       } else {
@@ -501,6 +502,7 @@ const ERC20_ABI = [
         setDepositing(false);
         setDepositStep('input');
         setShowDepositModal(false);
+        depositModalOpenedFromProps.current = false; // Reset flag
         
         // Store the amount for success message
         const depositAmountNum = parseFloat(depositAmount);
@@ -582,6 +584,7 @@ const ERC20_ABI = [
       setWithdrawing(false);
       setWithdrawStep('input');
       setShowWithdrawModal(false);
+      withdrawModalOpenedFromProps.current = false; // Reset flag
       
       // Store the amount before clearing
       const withdrawAmountNum = parseFloat(withdrawAmount);
@@ -1098,6 +1101,7 @@ const ERC20_ABI = [
           }
 
           setShowWithdrawModal(false);
+          withdrawModalOpenedFromProps.current = false; // Reset flag
           setWithdrawAmount('');
           setWithdrawnAmount(finalAmount);
           await fetchStatus();
@@ -1482,6 +1486,7 @@ const ERC20_ABI = [
                       <button
                         onClick={() => {
                           setShowWithdrawModal(false);
+                          withdrawModalOpenedFromProps.current = false; // Reset flag
                           setWithdrawAmount('');
                           setError(null);
                         }}
@@ -1588,6 +1593,7 @@ const ERC20_ABI = [
                       <button
                         onClick={() => {
                           setShowWithdrawModal(false);
+                          withdrawModalOpenedFromProps.current = false; // Reset flag
                           setWithdrawAmount('');
                           setError(null);
                         }}
@@ -1844,6 +1850,7 @@ const ERC20_ABI = [
                       <button
                         onClick={() => {
                           setShowDepositModal(false);
+                          depositModalOpenedFromProps.current = false; // Reset flag
                           setDepositAmount('');
                           setError(null);
                           setDepositStep('input');
@@ -1919,6 +1926,7 @@ const ERC20_ABI = [
                       <button
                         onClick={() => {
                           setShowDepositModal(false);
+                          depositModalOpenedFromProps.current = false; // Reset flag
                           setDepositAmount('');
                           setError(null);
                         }}
