@@ -118,6 +118,10 @@ const ERC20_ABI = [
   const depositModalOpenedFromProps = useRef(false);
   const withdrawModalOpenedFromProps = useRef(false);
   
+  // Track transaction progress to prevent modal reopening during 2-step transactions
+  const isDepositInProgress = useRef(false);
+  const isWithdrawInProgress = useRef(false);
+  
   // Keep screenRef in sync with screen state
   useEffect(() => {
     screenRef.current = screen;
@@ -380,8 +384,9 @@ const ERC20_ABI = [
     }, [fetchStatus]);
 
     // Open deposit modal if requested from homepage (only once when prop changes to true)
+    // Prevent reopening during transaction flow
     useEffect(() => {
-      if (openDepositModal && !depositModalOpenedFromProps.current && !showDepositModal) {
+      if (openDepositModal && !depositModalOpenedFromProps.current && !showDepositModal && !isDepositInProgress.current) {
         setShowDepositModal(true);
         depositModalOpenedFromProps.current = true;
       } else if (!openDepositModal) {
@@ -414,8 +419,9 @@ const ERC20_ABI = [
     }, [showDepositModal, isConnected, context?.user?.fid, connectors, connect, context?.client]);
 
     // Open withdraw modal if requested from homepage (only once when prop changes to true)
+    // Prevent reopening during transaction flow
     useEffect(() => {
-      if (openWithdrawModal && !withdrawModalOpenedFromProps.current && !showWithdrawModal) {
+      if (openWithdrawModal && !withdrawModalOpenedFromProps.current && !showWithdrawModal && !isWithdrawInProgress.current) {
         setShowWithdrawModal(true);
         withdrawModalOpenedFromProps.current = true;
       } else if (!openWithdrawModal) {
@@ -478,13 +484,16 @@ const ERC20_ABI = [
         setError(null);
         setShowDepositModal(false);
         depositModalOpenedFromProps.current = false; // Reset flag
+        isDepositInProgress.current = false; // Reset transaction progress flag
         setDepositAmount('');
         await fetchStatus(); // Refresh balance
       } else {
         setError(data.error || 'Failed to verify deposit');
+        isDepositInProgress.current = false; // Reset transaction progress flag on error
       }
     } catch (err: any) {
       setError(err.message || 'Failed to verify deposit');
+      isDepositInProgress.current = false; // Reset transaction progress flag on error
     } finally {
       setDepositing(false);
     }
@@ -503,6 +512,7 @@ const ERC20_ABI = [
         setDepositStep('input');
         setShowDepositModal(false);
         depositModalOpenedFromProps.current = false; // Reset flag
+        isDepositInProgress.current = false; // Reset transaction progress flag
         
         // Store the amount for success message
         const depositAmountNum = parseFloat(depositAmount);
@@ -585,6 +595,7 @@ const ERC20_ABI = [
       setWithdrawStep('input');
       setShowWithdrawModal(false);
       withdrawModalOpenedFromProps.current = false; // Reset flag
+      isWithdrawInProgress.current = false; // Reset transaction progress flag
       
       // Store the amount before clearing
       const withdrawAmountNum = parseFloat(withdrawAmount);
@@ -689,6 +700,8 @@ const ERC20_ABI = [
       }
       
       try {
+        // Mark transaction as in progress BEFORE starting (prevents modal reopening)
+        isDepositInProgress.current = true;
         setDepositing(true);
         setError(null);
         
@@ -851,6 +864,8 @@ const ERC20_ABI = [
         setDepositing(false);
         setIsDepositPending(false);
         setDepositStep('input');
+        // Reset transaction progress flag on error
+        isDepositInProgress.current = false;
       }
     };
     
@@ -1076,6 +1091,8 @@ const ERC20_ABI = [
       if (!contractAddress) {
         // Fallback to old withdrawal method
         try {
+          // Mark transaction as in progress for fallback method too
+          isWithdrawInProgress.current = true;
           setWithdrawing(true);
           setError(null);
 
@@ -1102,6 +1119,7 @@ const ERC20_ABI = [
 
           setShowWithdrawModal(false);
           withdrawModalOpenedFromProps.current = false; // Reset flag
+          isWithdrawInProgress.current = false; // Reset transaction progress flag
           setWithdrawAmount('');
           setWithdrawnAmount(finalAmount);
           await fetchStatus();
@@ -1112,6 +1130,7 @@ const ERC20_ABI = [
           });
         } catch (err: any) {
           setError(err.message || 'Failed to process withdrawal');
+          isWithdrawInProgress.current = false; // Reset transaction progress flag on error
         } finally {
           setWithdrawing(false);
         }
@@ -1120,6 +1139,8 @@ const ERC20_ABI = [
 
       // NEW: Contract-based withdrawal flow
       try {
+        // Mark transaction as in progress BEFORE starting (prevents modal reopening)
+        isWithdrawInProgress.current = true;
         setWithdrawing(true);
         setError(null);
 
@@ -1258,6 +1279,9 @@ const ERC20_ABI = [
       } catch (err: any) {
         console.error('Withdrawal error:', err);
         
+        // Reset transaction progress flag on error
+        isWithdrawInProgress.current = false;
+        
         let errorMessage = 'Failed to process withdrawal';
         
         if (err.message?.includes('User rejected') || err.message?.includes('denied') || err.message?.includes('rejected')) {
@@ -1279,6 +1303,8 @@ const ERC20_ABI = [
         setError(errorMessage);
         setWithdrawing(false);
         setWithdrawStep('input');
+        // Reset transaction progress flag on error
+        isWithdrawInProgress.current = false;
       }
     };
 
