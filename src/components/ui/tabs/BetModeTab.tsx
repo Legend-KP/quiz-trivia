@@ -501,7 +501,8 @@ const ERC20_ABI = [
   
   // Handle deposit transaction confirmation
   useEffect(() => {
-    if (isDepositConfirmed && depositTxHash) {
+    // Prevent deposit confirmation from firing during withdrawal
+    if (isDepositConfirmed && depositTxHash && !isWithdrawInProgress.current && !withdrawing) {
       // If using contract, events will handle DB update automatically
       // Otherwise, use manual verification
       if (!contractAddress) {
@@ -589,7 +590,8 @@ const ERC20_ABI = [
 
   // Handle withdrawal transaction confirmation
   useEffect(() => {
-    if (isWithdrawConfirmed && withdrawTxHash) {
+    // Prevent withdrawal confirmation from firing during deposit
+    if (isWithdrawConfirmed && withdrawTxHash && !isDepositInProgress.current && !depositing) {
       // Contract withdrawal - events will sync DB, but add polling to ensure balance updates
       setWithdrawing(false);
       setWithdrawStep('input');
@@ -665,6 +667,12 @@ const ERC20_ABI = [
   }, [isWithdrawConfirmed, withdrawTxHash, withdrawAmount, withdrawnAmount, fetchStatus, address, context?.user?.fid]);
     
     const handleDeposit = async () => {
+      // Prevent double-click / multiple simultaneous calls
+      if (depositing || isDepositPending || isDepositConfirming || isDepositInProgress.current) {
+        console.log('Deposit already in progress, ignoring duplicate call');
+        return;
+      }
+      
       // Contract-based deposit flow (required)
       if (!contractAddress) {
         setError('Bet Mode Vault contract is not configured. Please contact support.');
@@ -702,6 +710,10 @@ const ERC20_ABI = [
       try {
         // Mark transaction as in progress BEFORE starting (prevents modal reopening)
         isDepositInProgress.current = true;
+        // Clear any pending withdrawal state to prevent cross-triggering
+        setWithdrawTxHash(undefined);
+        setWithdrawalSuccess(null);
+        setWithdrawing(false);
         setDepositing(true);
         setError(null);
         
@@ -1047,6 +1059,12 @@ const ERC20_ABI = [
     };
 
     const handleWithdraw = async () => {
+      // Prevent double-click / multiple simultaneous calls
+      if (withdrawing || isWithdrawInProgress.current || withdrawStep !== 'input') {
+        console.log('Withdrawal already in progress, ignoring duplicate call');
+        return;
+      }
+      
       if (!address) {
         setError('Please connect your wallet first.');
         return;
@@ -1141,6 +1159,10 @@ const ERC20_ABI = [
       try {
         // Mark transaction as in progress BEFORE starting (prevents modal reopening)
         isWithdrawInProgress.current = true;
+        // Clear any pending deposit state to prevent cross-triggering
+        setDepositTxHash(undefined);
+        setDepositSuccess(null);
+        setDepositing(false);
         setWithdrawing(true);
         setError(null);
 
