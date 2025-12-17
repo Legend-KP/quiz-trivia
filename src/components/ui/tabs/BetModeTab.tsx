@@ -2284,19 +2284,10 @@ const ERC20_ABI = [
                   <button
                     onClick={handleCashOut}
                     disabled={loading}
-                    className="flex-1 py-3 px-6 rounded-xl bg-green-500 text-white font-bold hover:bg-green-600 transition-all disabled:opacity-50"
+                    className="w-full py-3 px-6 rounded-xl bg-green-500 text-white font-bold hover:bg-green-600 transition-all disabled:opacity-50"
                   >
                     💰 CASH OUT {formatQT(currentPayout)}
                   </button>
-                  {questionNum < 10 && (
-                    <button
-                      onClick={handleContinue}
-                      disabled={loading || selectedAnswer === null}
-                      className="flex-1 py-3 px-6 rounded-xl bg-blue-500 text-white font-bold hover:bg-blue-600 transition-all disabled:opacity-50"
-                    >
-                      CONTINUE →
-                    </button>
-                  )}
                 </div>
               )}
             </div>

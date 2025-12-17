@@ -259,13 +259,24 @@ export function formatTimeRemaining(ms: number): string {
 
 /**
  * Format QT amount for display
+ * Removes unnecessary ".00" (e.g., "10.00K" → "10K", "500.00K" → "500K")
  */
 export function formatQT(amount: number): string {
   if (amount >= 1000000) {
-    return `${(amount / 1000000).toFixed(2)}M QT`;
+    const millions = amount / 1000000;
+    // If it's a whole number, show without decimals; otherwise show up to 2 decimals without trailing zeros
+    const formatted = millions % 1 === 0 
+      ? millions.toString() 
+      : parseFloat(millions.toFixed(2)).toString();
+    return `${formatted}M QT`;
   }
   if (amount >= 1000) {
-    return `${(amount / 1000).toFixed(2)}K QT`;
+    const thousands = amount / 1000;
+    // If it's a whole number, show without decimals; otherwise show up to 2 decimals without trailing zeros
+    const formatted = thousands % 1 === 0 
+      ? thousands.toString() 
+      : parseFloat(thousands.toFixed(2)).toString();
+    return `${formatted}K QT`;
   }
   return `${amount.toLocaleString()} QT`;
 }
