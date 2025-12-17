@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     // If wrong answer, handle loss
     if (!isCorrect) {
       const lossDistribution = calculateLossDistribution(game.betAmount);
-      const REVENUE_WALLET = '0xa0722635a73361f0071efa69b69c9773669cb0cb';
+      const REVENUE_WALLET = '0x4215C58fc9C67003447C10b4A728cdBf8606570b';
       const BURN_ADDRESS = '0x000000000000000000000000000000000000dEaD';
 
       // Update weekly pool (tracking only)
