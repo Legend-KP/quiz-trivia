@@ -204,7 +204,6 @@ export interface BetModeGameDocument {
   finalPayout?: number;
   lossDistribution?: {
     toBurn: number;
-    toLottery: number;
     toPlatform: number;
   };
   weekId: string; // e.g., "2025-W47"

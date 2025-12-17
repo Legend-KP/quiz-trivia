@@ -60,7 +60,7 @@ const ERC20_ABI = [
   },
 ] as const;
 
-  type BetModeScreen = 'entry' | 'bet-selection' | 'game' | 'cash-out' | 'loss' | 'lottery' | 'closed';
+  type BetModeScreen = 'entry' | 'bet-selection' | 'game' | 'cash-out' | 'loss' | 'info' | 'closed';
 
   interface BetModeStatus {
     window: {
@@ -82,15 +82,10 @@ const ERC20_ABI = [
       currentQuestion: number;
     } | null;
     weeklyPool: {
-      lotteryPool: number;
       toBurnAccumulated: number;
       totalLosses: number;
+      platformRevenue: number;
     } | null;
-    lottery: {
-      userTickets: number;
-      totalTickets: number;
-      userShare: string;
-    };
   }
 
   interface BetModeTabProps {
@@ -272,14 +267,9 @@ const ERC20_ABI = [
           },
           activeGame: null,
           weeklyPool: null,
-          lottery: {
-            userTickets: 0,
-            totalTickets: 0,
-            userShare: '0',
-          },
         });
         // Only change screen to 'entry' if not on a preserved screen
-        const screensToPreserve: BetModeScreen[] = ['lottery', 'bet-selection', 'cash-out', 'loss'];
+        const screensToPreserve: BetModeScreen[] = ['info', 'bet-selection', 'cash-out', 'loss'];
         if (!screensToPreserve.includes(screenRef.current)) {
         setScreen('entry');
         }
@@ -323,7 +313,7 @@ const ERC20_ABI = [
 
         // Determine screen based on status
         // Always switch to 'game' if there's an activeGame and not on a terminal/preserved screen
-        const screensToPreserve: BetModeScreen[] = ['lottery', 'bet-selection', 'cash-out', 'loss'];
+        const screensToPreserve: BetModeScreen[] = ['info', 'bet-selection', 'cash-out', 'loss'];
         if (data.activeGame) {
           if (!screensToPreserve.includes(screenRef.current)) {
             setScreen('game');
@@ -351,17 +341,12 @@ const ERC20_ABI = [
           },
           activeGame: null,
           weeklyPool: null,
-          lottery: {
-            userTickets: 0,
-            totalTickets: 0,
-            userShare: '0',
-          },
         };
         
         setStatus(defaultStatus);
         
         // Only change screen to 'entry' on error if not on a preserved screen
-        const screensToPreserve: BetModeScreen[] = ['lottery', 'bet-selection', 'cash-out', 'loss'];
+        const screensToPreserve: BetModeScreen[] = ['info', 'bet-selection', 'cash-out', 'loss'];
         if (!screensToPreserve.includes(screenRef.current)) {
         setScreen('entry');
         }
@@ -1413,22 +1398,12 @@ const ERC20_ABI = [
               <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100">Bet Mode</h2>
               <p className="text-gray-700 dark:text-gray-300 mb-6">🔴 Available 24/7</p>
 
-              <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 mb-6">
-                <p className="text-sm text-gray-900 dark:text-gray-100 mb-2">⏰ NEXT LOTTERY DRAW:</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {status?.window?.timeUntilDraw || 'Calculating...'}
-                </p>
-              </div>
-
               <div className="text-left bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-6">
                 <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
                   🎮 Game Mode: Always Open (24/7)
                 </p>
-                <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
-                  🎰 Lottery Draw: Weekly (Friday 2:00 PM UTC)
-                </p>
                 <p className="text-sm text-gray-700 dark:text-gray-300">
-                  🔥 Token Burn: Weekly (Friday 2:30 PM UTC)
+                  🔥 Token Burn: Immediate (50% of losses)
                 </p>
               </div>
             </div>
@@ -1467,11 +1442,6 @@ const ERC20_ABI = [
                 <div className="text-5xl mb-2">🎰</div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">BET MODE</h2>
                 <p className="text-sm text-green-600 dark:text-green-400 font-semibold mt-1">🔴 LIVE 24/7!</p>
-                {status?.window?.timeUntilDraw && (
-                  <p className="text-xs text-gray-700 dark:text-gray-300 mt-2">
-                    Next lottery draw: {status?.window?.timeUntilDraw || 'Calculating...'}
-                  </p>
-                )}
               </div>
 
               {error && (
@@ -1492,16 +1462,6 @@ const ERC20_ABI = [
                       <span className="font-semibold text-gray-900 dark:text-gray-100">{formatQT(walletBalance)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-700 dark:text-gray-300">🎟️ Your Tickets:</span>
-                    <span className="font-semibold text-gray-900 dark:text-gray-100">{(status.lottery?.userTickets || 0).toFixed(1)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-700 dark:text-gray-300">📊 Pool:</span>
-                    <span className="font-semibold text-gray-900 dark:text-gray-100">
-                      {formatQT(status.weeklyPool?.lotteryPool || 0)}
-                    </span>
-                  </div>
                 </div>
               )}
 
@@ -1572,11 +1532,11 @@ const ERC20_ABI = [
               </button>
 
               <button
-                onClick={() => setScreen('lottery')}
+                onClick={() => setScreen('info')}
                 className="w-full mt-4 py-3 px-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold text-base shadow-lg transform hover:scale-105 transition-all flex items-center justify-center gap-2"
               >
                 <span className="text-xl">🎰</span>
-                <span>View Lottery Info</span>
+                <span>Bet Mode Info</span>
               </button>
               
               {/* Withdrawal Modal */}
@@ -2319,9 +2279,6 @@ const ERC20_ABI = [
                 <div className="text-lg text-green-700 dark:text-green-300">
                   Profit: +{formatQT(profit)} ({profitPercent}%)
                 </div>
-                <div className="text-sm text-gray-700 dark:text-gray-300 mt-2">
-                  🎟️ Tickets earned: {gameResult.ticketsEarned || 0}
-                </div>
               </div>
 
               <div className="space-y-3">
@@ -2367,16 +2324,9 @@ const ERC20_ABI = [
                 <div className="text-sm text-red-700 dark:text-red-300">
                   But your loss contributes to:
                   <div className="mt-2 text-left">
-                    <div>• {formatQT(gameResult.lossDistribution?.toBurn || 0)} burned 🔥</div>
-                    <div>• {formatQT(gameResult.lossDistribution?.toLottery || 0)} to lottery 🎰</div>
-                    <div>• {formatQT(gameResult.lossDistribution?.toPlatform || 0)} to platform 💼</div>
+                    <div>• {formatQT(gameResult.lossDistribution?.toBurn || 0)} burned 🔥 (50%)</div>
+                    <div>• {formatQT(gameResult.lossDistribution?.toPlatform || 0)} to app revenue 💰 (50%)</div>
                   </div>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-6">
-                <div className="text-sm text-gray-700 dark:text-gray-300">
-                  🎟️ You earned {gameResult.ticketsEarned || 0} lottery tickets!
                 </div>
               </div>
 
@@ -2392,8 +2342,8 @@ const ERC20_ABI = [
       );
     }
 
-    // Lottery screen
-    if (screen === 'lottery') {
+    // Bet Mode Info screen
+    if (screen === 'info') {
       // Show loading state if status hasn't loaded yet
       if (!status) {
         return (
@@ -2405,61 +2355,55 @@ const ERC20_ABI = [
       
       return (
         <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
-        <div className="max-w-md mx-auto mt-10 mb-10 pb-20">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-2xl overflow-y-auto max-h-[calc(100vh-5rem)]">
-            <div className="text-center mb-6">
-              <div className="text-5xl mb-2">🎰</div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">THIS WEEK&apos;S LOTTERY</h2>
-                {status?.window?.timeUntilSnapshot && (
-                  <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">
-                    Snapshot in: {status?.window?.timeUntilSnapshot || 'Calculating...'}
-                  </p>
-                )}
+          <div className="max-w-md mx-auto mt-10 mb-10 pb-20">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-2xl overflow-y-auto max-h-[calc(100vh-5rem)]">
+              <div className="text-center mb-6">
+                <div className="text-5xl mb-2">ℹ️</div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">BET MODE INFO</h2>
               </div>
 
-              <div className="bg-gradient-to-r from-purple-50 dark:from-purple-900 to-pink-50 dark:to-pink-900 rounded-lg p-4 mb-6 border-2 border-purple-200 dark:border-purple-700">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-800 dark:text-purple-200 mb-1">
-                    💰 {formatQT(status.weeklyPool?.lotteryPool || 0)}
-                  </div>
-                  <div className="text-sm text-purple-700 dark:text-purple-300">Current Pool</div>
-                </div>
-              </div>
-
-              <div className="mb-6 max-h-[30vh] overflow-y-auto">
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">YOUR STATUS:</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-700 dark:text-gray-300">🎟️ Your Tickets:</span>
-                    <span className="font-semibold text-gray-900 dark:text-gray-100">{(status.lottery?.userTickets || 0).toFixed(1)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-700 dark:text-gray-300">📊 Your Share:</span>
-                    <span className="font-semibold text-gray-900 dark:text-gray-100">{status.lottery?.userShare || 0}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-700 dark:text-gray-300">🎯 Win Probability:</span>
-                    <span className="font-semibold text-gray-900 dark:text-gray-100">
-                      {((parseFloat(String(status.lottery?.userShare || 0)) / 100) * 31).toFixed(1)}%
-                    </span>
+              <div className="space-y-4 mb-6">
+                <div className="bg-gradient-to-r from-blue-50 dark:from-blue-900 to-cyan-50 dark:to-cyan-900 rounded-lg p-4 border-2 border-blue-200 dark:border-blue-700">
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">💰 How It Works</h3>
+                  <div className="text-sm text-gray-700 dark:text-gray-300 space-y-2">
+                    <p>• Place a bet (10K - 500K QT)</p>
+                    <p>• Answer 10 questions correctly</p>
+                    <p>• Win up to 10x your bet!</p>
+                    <p>• Cash out anytime after Q5</p>
                   </div>
                 </div>
-              </div>
 
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-6 max-h-[40vh] overflow-y-auto">
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">🏆 PRIZE STRUCTURE:</h3>
-                <div className="text-xs text-gray-700 dark:text-gray-300 space-y-1 pr-2">
-                  <div>Tier 1 (1 winner): {formatQT((status.weeklyPool?.lotteryPool || 0) * 0.40)} (40%)</div>
-                  <div>Tier 2 (2 winners): {formatQT((status.weeklyPool?.lotteryPool || 0) * 0.125)} each (12.5%)</div>
-                  <div>Tier 3 (5 winners): {formatQT((status.weeklyPool?.lotteryPool || 0) * 0.04)} each (4%)</div>
-                  <div>Tier 4 (10 winners): {formatQT((status.weeklyPool?.lotteryPool || 0) * 0.01)} each (1%)</div>
-                  <div>Tier 5 (20 winners): {formatQT((status.weeklyPool?.lotteryPool || 0) * 0.0025)} each (0.25%)</div>
+                <div className="bg-gradient-to-r from-green-50 dark:from-green-900 to-emerald-50 dark:to-emerald-900 rounded-lg p-4 border-2 border-green-200 dark:border-green-700">
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">📈 Multipliers</h3>
+                  <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
+                    <p>Q1: 1.1x | Q2: 1.3x | Q3: 1.5x | Q4: 2.0x</p>
+                    <p>Q5: 3.0x | Q6: 4.0x | Q7: 5.0x</p>
+                    <p>Q8: 6.5x | Q9: 8.0x | Q10: 10.0x</p>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-red-50 dark:from-red-900 to-orange-50 dark:to-orange-900 rounded-lg p-4 border-2 border-red-200 dark:border-red-700">
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">🔥 Loss Distribution</h3>
+                  <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
+                    <p>• 50% burned permanently 🔥</p>
+                    <p>• 50% app revenue 💰</p>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-purple-50 dark:from-purple-900 to-pink-50 dark:to-pink-900 rounded-lg p-4 border-2 border-purple-200 dark:border-purple-700">
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">⚡ Rules</h3>
+                  <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
+                    <p>• 30 seconds per question</p>
+                    <p>• Wrong answer = game over</p>
+                    <p>• Cash out available from Q5</p>
+                    <p>• Q10 = auto cash out</p>
+                  </div>
                 </div>
               </div>
 
               <button
                 onClick={() => setScreen('entry')}
-                className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold hover:from-purple-600 hover:to-pink-700 transition-all"
+                className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-bold hover:from-blue-600 hover:to-cyan-700 transition-all"
               >
                 PLAY BET MODE
               </button>

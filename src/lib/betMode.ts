@@ -27,9 +27,9 @@ export const MAX_BET = 500000; // 500K QT
 export const QUESTION_TIME_LIMIT = 30; // 30 seconds per question
 
 // Loss distribution percentages
-export const LOSS_BURN_PERCENT = 0.60; // 60%
-export const LOSS_LOTTERY_PERCENT = 0.35; // 35%
-export const LOSS_PLATFORM_PERCENT = 0.05; // 5%
+export const LOSS_BURN_PERCENT = 0.50; // 50%
+export const LOSS_PLATFORM_PERCENT = 0.50; // 50% (app revenue)
+// Lottery system removed - no longer used
 
 // Lottery ticket calculation
 export const TICKETS_PER_10K_WAGERED = 1; // 1 ticket per 10K wagered
@@ -141,15 +141,14 @@ export function calculatePayout(betAmount: number, questionNumber: number): numb
 
 /**
  * Calculate loss distribution
+ * 50% burned, 50% app revenue (lottery system removed)
  */
 export function calculateLossDistribution(lossAmount: number): {
   toBurn: number;
-  toLottery: number;
   toPlatform: number;
 } {
   return {
     toBurn: Math.floor(lossAmount * LOSS_BURN_PERCENT),
-    toLottery: Math.floor(lossAmount * LOSS_LOTTERY_PERCENT),
     toPlatform: Math.floor(lossAmount * LOSS_PLATFORM_PERCENT),
   };
 }

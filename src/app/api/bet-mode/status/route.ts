@@ -4,7 +4,6 @@ import {
   getCurrencyAccountsCollection,
   getBetModeGamesCollection,
   getWeeklyPoolsCollection,
-  getLotteryTicketsCollection,
 } from '~/lib/mongodb';
 import { getBetModeWindowState, getCurrentWeekId, formatTimeRemaining } from '~/lib/betMode';
 
@@ -88,11 +87,9 @@ export async function GET(req: NextRequest) {
       walletBalance = await getWalletQTBalance(walletAddressParam);
     }
 
-    // Get active game, weekly pool, and tickets
+    // Get active game and weekly pool
     let activeGame = null;
     let weeklyPool = null;
-    let userTickets = null;
-    let totalTickets = 0;
     
     try {
       const games = await getBetModeGamesCollection();
@@ -100,21 +97,11 @@ export async function GET(req: NextRequest) {
 
       const pools = await getWeeklyPoolsCollection();
       weeklyPool = await pools.findOne({ weekId });
-
-      const tickets = await getLotteryTicketsCollection();
-      userTickets = await tickets.findOne({ weekId, fid });
-
-      // Calculate total tickets for this week
-      const allTickets = await tickets.find({ weekId }).toArray();
-      totalTickets = allTickets.reduce((sum, t) => sum + (t.totalTickets || 0), 0);
     } catch (dbError: any) {
-      console.error('Error fetching game/pool/ticket data:', dbError);
+      console.error('Error fetching game/pool data:', dbError);
       // Don't throw - allow partial data to be returned
       console.warn('Continuing with partial data due to database error');
     }
-
-    const userTicketCount = userTickets?.totalTickets || 0;
-    const userShare = totalTickets > 0 ? (userTicketCount / totalTickets) * 100 : 0;
 
     return NextResponse.json({
       window: {
@@ -149,28 +136,12 @@ export async function GET(req: NextRequest) {
       weeklyPool: weeklyPool
         ? {
             weekId: weeklyPool.weekId,
-            lotteryPool: weeklyPool.lotteryPool,
-            toBurnAccumulated: weeklyPool.toBurnAccumulated,
-            totalLosses: weeklyPool.totalLosses,
-            snapshotTaken: weeklyPool.snapshotTaken,
-            drawCompleted: weeklyPool.drawCompleted,
-            burnCompleted: weeklyPool.burnCompleted,
-            totalParticipants: weeklyPool.totalParticipants || 0,
-            totalTickets: weeklyPool.totalTickets || 0,
+            toBurnAccumulated: weeklyPool.toBurnAccumulated || 0,
+            totalLosses: weeklyPool.totalLosses || 0,
+            platformRevenue: weeklyPool.platformRevenue || 0,
+            burnCompleted: weeklyPool.burnCompleted || false,
           }
         : null,
-      lottery: {
-        userTickets: userTicketCount,
-        totalTickets,
-        userShare: userShare.toFixed(2),
-        weekId,
-        betBasedTickets: userTickets?.betBasedTickets || 0,
-        gameBasedTickets: userTickets?.gameBasedTickets || 0,
-        bonusTickets: userTickets?.bonusTickets || 0,
-        consecutiveDays: userTickets?.consecutiveDays || 0,
-        gamesPlayed: userTickets?.gamesPlayed || 0,
-        totalWagered: userTickets?.totalWagered || 0,
-      },
     });
   } catch (error: any) {
     console.error('Bet Mode status error:', error);

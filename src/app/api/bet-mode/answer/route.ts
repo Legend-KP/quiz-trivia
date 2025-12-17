@@ -1,18 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { ethers } from 'ethers';
 import {
   getBetModeGamesCollection,
   getCurrencyAccountsCollection,
   getWeeklyPoolsCollection,
-  getLotteryTicketsCollection,
   getQTTransactionsCollection,
 } from '~/lib/mongodb';
 import {
   calculatePayout,
   calculateLossDistribution,
-  calculateBaseTickets,
-  getStreakMultiplier,
-  calculateConsecutiveDays,
-  getTodayDateString,
 } from '~/lib/betMode';
 import { debitLoss, creditWinnings } from '~/lib/betModeContract';
 
@@ -62,16 +58,16 @@ export async function POST(req: NextRequest) {
     // If wrong answer, handle loss
     if (!isCorrect) {
       const lossDistribution = calculateLossDistribution(game.betAmount);
+      const REVENUE_WALLET = '0xa0722635a73361f0071efa69b69c9773669cb0cb';
+      const BURN_ADDRESS = '0x000000000000000000000000000000000000dEaD';
 
-      // Update weekly pool
+      // Update weekly pool (tracking only)
       const pools = await getWeeklyPoolsCollection();
       await pools.updateOne(
         { weekId: game.weekId },
         {
           $inc: {
             totalLosses: game.betAmount,
-            toBurnAccumulated: lossDistribution.toBurn,
-            lotteryPool: lossDistribution.toLottery,
             platformRevenue: lossDistribution.toPlatform,
           },
           $set: { updatedAt: now },
@@ -93,8 +89,57 @@ export async function POST(req: NextRequest) {
         console.error('❌ Failed to sync loss to contract:', error);
       });
 
-      // Award lottery tickets (consolation)
-      await awardLotteryTickets(numFid, game.betAmount, 1, game.weekId);
+      // Immediate burn: Send 50% to burn address
+      if (lossDistribution.toBurn > 0) {
+        const privateKey = process.env.WALLET_PRIVATE_KEY || process.env.PRIVATE_KEY;
+        const rpcUrl = process.env.BASE_RPC_URL || 'https://mainnet.base.org';
+        const qtTokenAddress = process.env.QT_TOKEN_ADDRESS;
+
+        if (privateKey && qtTokenAddress) {
+          try {
+            const provider = new ethers.JsonRpcProvider(rpcUrl);
+            const wallet = new ethers.Wallet(privateKey, provider);
+            const tokenAbi = ['function transfer(address to, uint256 amount) returns (bool)'];
+            const tokenContract = new ethers.Contract(qtTokenAddress, tokenAbi, wallet);
+            const burnAmountWei = ethers.parseUnits(lossDistribution.toBurn.toString(), 18);
+            
+            const burnTx = await tokenContract.transfer(BURN_ADDRESS, burnAmountWei);
+            console.log(`🔥 Burn transaction sent: ${burnTx.hash}`);
+            // Don't wait for confirmation to avoid blocking response
+            burnTx.wait().catch((error) => {
+              console.error('❌ Burn transaction failed:', error);
+            });
+          } catch (error) {
+            console.error('❌ Failed to burn tokens:', error);
+          }
+        }
+      }
+
+      // Immediate revenue transfer: Send 50% to revenue wallet
+      if (lossDistribution.toPlatform > 0) {
+        const privateKey = process.env.WALLET_PRIVATE_KEY || process.env.PRIVATE_KEY;
+        const rpcUrl = process.env.BASE_RPC_URL || 'https://mainnet.base.org';
+        const qtTokenAddress = process.env.QT_TOKEN_ADDRESS;
+
+        if (privateKey && qtTokenAddress) {
+          try {
+            const provider = new ethers.JsonRpcProvider(rpcUrl);
+            const wallet = new ethers.Wallet(privateKey, provider);
+            const tokenAbi = ['function transfer(address to, uint256 amount) returns (bool)'];
+            const tokenContract = new ethers.Contract(qtTokenAddress, tokenAbi, wallet);
+            const revenueAmountWei = ethers.parseUnits(lossDistribution.toPlatform.toString(), 18);
+            
+            const revenueTx = await tokenContract.transfer(REVENUE_WALLET, revenueAmountWei);
+            console.log(`💰 Revenue transaction sent: ${revenueTx.hash}`);
+            // Don't wait for confirmation to avoid blocking response
+            revenueTx.wait().catch((error) => {
+              console.error('❌ Revenue transaction failed:', error);
+            });
+          } catch (error) {
+            console.error('❌ Failed to transfer revenue:', error);
+          }
+        }
+      }
 
       // Log transaction
       const transactions = await getQTTransactionsCollection();

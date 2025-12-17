@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   getBetModeGamesCollection,
   getCurrencyAccountsCollection,
-  getLotteryTicketsCollection,
   getQTTransactionsCollection,
 } from '~/lib/mongodb';
-import { calculatePayout, calculateBaseTickets } from '~/lib/betMode';
+import { calculatePayout } from '~/lib/betMode';
 import { creditWinnings } from '~/lib/betModeContract';
 
 export const runtime = 'nodejs';
@@ -66,25 +65,6 @@ export async function POST(req: NextRequest) {
       console.error('❌ Failed to sync winnings to contract:', error);
     });
 
-    // Award lottery tickets
-    const tickets = await getLotteryTicketsCollection();
-    const ticketDoc = await tickets.findOne({ weekId: game.weekId, fid: numFid });
-
-    if (ticketDoc) {
-      const baseTickets = calculateBaseTickets(game.betAmount, 1);
-      await tickets.updateOne(
-        { weekId: game.weekId, fid: numFid },
-        {
-          $inc: {
-            betBasedTickets: baseTickets.betBasedTickets,
-            gameBasedTickets: baseTickets.gameBasedTickets,
-            gamesPlayed: 1,
-            totalWagered: game.betAmount,
-          },
-          $set: { updatedAt: now },
-        }
-      );
-    }
 
     // Log transaction
     const transactions = await getQTTransactionsCollection();
@@ -117,7 +97,6 @@ export async function POST(req: NextRequest) {
       payout,
       profit: payout - game.betAmount,
       newBalance: updatedAccount?.qtBalance || 0,
-      ticketsEarned: calculateBaseTickets(game.betAmount, 1).totalTickets,
     });
   } catch (error: any) {
     console.error('Bet Mode cash out error:', error);
