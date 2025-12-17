@@ -81,6 +81,11 @@ export async function GET(request: NextRequest) {
   const questionsParam = searchParams.get("questions");
   const accuracyParam = searchParams.get("accuracy");
 
+  // Bet Mode specific params (for dynamic thumbnails when sharing Bet Mode results)
+  const payoutParam = searchParams.get("payout");
+  const profitParam = searchParams.get("profit");
+  const ticketsParam = searchParams.get("tickets");
+
   const fallbackImage = new ImageResponse(
     (
       <div
@@ -173,6 +178,9 @@ export async function GET(request: NextRequest) {
   const timeValue = timeParam ?? null;
   const questionsValue = questionsParam ?? null;
   const accuracyValue = accuracyParam ?? null;
+  const payoutValue = payoutParam ?? null;
+  const profitValue = profitParam ?? null;
+  const ticketsValue = ticketsParam ?? null;
 
   if (scoreValue) {
     stats.push(
@@ -190,6 +198,17 @@ export async function GET(request: NextRequest) {
   }
   if (accuracyValue) {
     stats.push(formatStat("Accuracy", accuracyValue)!);
+  }
+
+  // Bet Mode stats - used when sharing Bet Mode results
+  if (payoutValue) {
+    stats.push(formatStat("Payout", payoutValue)!);
+  }
+  if (profitValue) {
+    stats.push(formatStat("Profit", profitValue)!);
+  }
+  if (ticketsValue) {
+    stats.push(formatStat("Tickets", ticketsValue)!);
   }
 
   return new ImageResponse(

@@ -8,7 +8,8 @@
   import { formatUnits, parseUnits } from 'viem';
   import { createWalletClient, createPublicClient, custom } from 'viem';
   import { config } from '~/components/providers/WagmiProvider';
-  import sdk from '@farcaster/miniapp-sdk';
+import sdk from '@farcaster/miniapp-sdk';
+import { APP_URL } from '~/lib/constants';
   import {
     formatQT,
     BET_MODE_MULTIPLIERS,
@@ -1046,18 +1047,49 @@ const ERC20_ABI = [
       }
     };
 
-    const handleContinue = () => {
+  const handleContinue = () => {
       // Continue to next question (already handled in handleAnswer)
       setSelectedAnswer(null);
     };
 
-    const handlePlayAgain = () => {
+  const handlePlayAgain = () => {
       setScreen('entry');
       setCurrentGame(null);
       setCurrentQuestion(null);
       setGameResult(null);
       setSelectedAnswer(null);
       setError(null);
+    };
+
+    const handleShareResult = async () => {
+      try {
+        const fid = context?.user?.fid;
+        if (!fid) {
+          setError('Farcaster authentication required to share your result.');
+          return;
+        }
+
+        if (!gameResult) {
+          setError('No game result available to share.');
+          return;
+        }
+
+        const betAmount = currentGame?.betAmount || gameResult.betAmount || 0;
+        const profit = gameResult.profit || (gameResult.payout - betAmount);
+
+        const params = new URLSearchParams();
+        params.set('mode', 'Bet Mode');
+        params.set('payout', `${formatQT(gameResult.payout)} QT`);
+        params.set('profit', `+${formatQT(profit)} QT`);
+        params.set('tickets', `${gameResult.ticketsEarned || 0}`);
+
+        const shareUrl = `${APP_URL}/share/${fid}?${params.toString()}`;
+
+        await sdk.actions.openUrl(shareUrl);
+      } catch (err) {
+        console.error('Failed to open Farcaster share URL:', err);
+        setError('Failed to open Farcaster to share your result. Please try again.');
+      }
     };
 
     const handleWithdraw = async () => {
@@ -2282,12 +2314,21 @@ const ERC20_ABI = [
                 </div>
               </div>
 
-              <button
-                onClick={handlePlayAgain}
-                className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold hover:from-green-600 hover:to-blue-700 transition-all"
-              >
-                PLAY AGAIN
-              </button>
+              <div className="space-y-3">
+                <button
+                  onClick={handlePlayAgain}
+                  className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold hover:from-green-600 hover:to-blue-700 transition-all"
+                >
+                  PLAY AGAIN
+                </button>
+                <button
+                  onClick={handleShareResult}
+                  className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold hover:from-purple-600 hover:to-pink-700 transition-all flex items-center justify-center gap-2"
+                >
+                  <span>📤</span>
+                  <span>Share on Farcaster</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

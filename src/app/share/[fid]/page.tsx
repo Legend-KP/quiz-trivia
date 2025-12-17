@@ -23,7 +23,17 @@ export async function generateMetadata({
   imageUrl.searchParams.set("fid", fid);
 
   // Pass through selected query parameters to hydrate the thumbnail
-  const passthroughKeys = ["mode", "score", "time", "questions", "accuracy"];
+  // Extended with Bet Mode specific params (payout, profit, tickets)
+  const passthroughKeys = [
+    "mode",
+    "score",
+    "time",
+    "questions",
+    "accuracy",
+    "payout",
+    "profit",
+    "tickets",
+  ];
   for (const key of passthroughKeys) {
     const value = resolvedSearch?.[key];
     if (!value) continue;
