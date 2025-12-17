@@ -106,10 +106,10 @@ export async function POST(req: NextRequest) {
             const burnTx = await tokenContract.transfer(BURN_ADDRESS, burnAmountWei);
             console.log(`🔥 Burn transaction sent: ${burnTx.hash}`);
             // Don't wait for confirmation to avoid blocking response
-            burnTx.wait().catch((error) => {
+            burnTx.wait().catch((error: any) => {
               console.error('❌ Burn transaction failed:', error);
             });
-          } catch (error) {
+          } catch (error: any) {
             console.error('❌ Failed to burn tokens:', error);
           }
         }
@@ -132,10 +132,10 @@ export async function POST(req: NextRequest) {
             const revenueTx = await tokenContract.transfer(REVENUE_WALLET, revenueAmountWei);
             console.log(`💰 Revenue transaction sent: ${revenueTx.hash}`);
             // Don't wait for confirmation to avoid blocking response
-            revenueTx.wait().catch((error) => {
+            revenueTx.wait().catch((error: any) => {
               console.error('❌ Revenue transaction failed:', error);
             });
-          } catch (error) {
+          } catch (error: any) {
             console.error('❌ Failed to transfer revenue:', error);
           }
         }
