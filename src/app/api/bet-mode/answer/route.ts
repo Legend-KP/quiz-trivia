@@ -173,7 +173,6 @@ export async function POST(req: NextRequest) {
         correctAnswer: question.correctIndex,
         explanation: question.explanation || 'Better luck next time!',
         lossDistribution,
-        ticketsEarned: calculateBaseTickets(game.betAmount, 1).totalTickets,
       });
     }
 
