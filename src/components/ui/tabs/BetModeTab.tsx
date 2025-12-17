@@ -121,6 +121,9 @@ const ERC20_ABI = [
   // Track transaction progress to prevent modal reopening during 2-step transactions
   const isDepositInProgress = useRef(false);
   const isWithdrawInProgress = useRef(false);
+  // Persist the latest amounts across async flows (avoid reading cleared state)
+  const currentDepositAmount = useRef<number>(0);
+  const currentWithdrawAmount = useRef<number>(0);
   
   // Keep screenRef in sync with screen state
   useEffect(() => {
@@ -515,10 +518,8 @@ const ERC20_ABI = [
         depositModalOpenedFromProps.current = false; // Reset flag
         isDepositInProgress.current = false; // Reset transaction progress flag
         
-        // Store the amount for success message
-        const depositAmountNum = parseFloat(depositAmount);
-        const finalAmount = isNaN(depositAmountNum) ? 0 : depositAmountNum;
-        
+        // Store the amount for success message (use ref to avoid cleared state)
+        const finalAmount = currentDepositAmount.current;
         setDepositAmount('');
         
         // Set success state
@@ -599,10 +600,8 @@ const ERC20_ABI = [
       withdrawModalOpenedFromProps.current = false; // Reset flag
       isWithdrawInProgress.current = false; // Reset transaction progress flag
       
-      // Store the amount before clearing
-      const withdrawAmountNum = parseFloat(withdrawAmount);
-      const finalAmount = isNaN(withdrawAmountNum) ? withdrawnAmount : withdrawAmountNum;
-      
+      // Store the amount before clearing (use ref to avoid cleared state)
+      const finalAmount = currentWithdrawAmount.current;
       setWithdrawAmount('');
       
       // Set success state immediately
@@ -664,7 +663,7 @@ const ERC20_ABI = [
         clearInterval(pollInterval);
       };
     }
-  }, [isWithdrawConfirmed, withdrawTxHash, withdrawAmount, withdrawnAmount, fetchStatus, address, context?.user?.fid]);
+  }, [isWithdrawConfirmed, withdrawTxHash, fetchStatus, address, context?.user?.fid]);
     
     const handleDeposit = async () => {
       // Prevent double-click / multiple simultaneous calls
@@ -706,6 +705,9 @@ const ERC20_ABI = [
         setError(`Insufficient wallet balance. You have ${formatQT(walletBalance)} QT.`);
         return;
       }
+      
+      // Persist amount for success modal before any async clears state
+      currentDepositAmount.current = amount;
       
       try {
         // Mark transaction as in progress BEFORE starting (prevents modal reopening)
@@ -1097,6 +1099,7 @@ const ERC20_ABI = [
 
       // Store the amount for success message
       setWithdrawnAmount(finalAmount);
+      currentWithdrawAmount.current = finalAmount;
 
       // Minimum withdrawal check
       const MIN_WITHDRAW = 1000; // 1K QT minimum
