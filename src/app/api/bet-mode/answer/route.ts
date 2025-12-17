@@ -201,8 +201,6 @@ export async function POST(req: NextRequest) {
         console.error('❌ Failed to sync winnings to contract:', error);
       });
 
-      // Award lottery tickets
-      await awardLotteryTickets(numFid, game.betAmount, 1, game.weekId);
 
       // Log transaction
       const transactions = await getQTTransactionsCollection();
@@ -236,7 +234,6 @@ export async function POST(req: NextRequest) {
         questionNumber: 10,
         payout,
         profit: payout - game.betAmount,
-        ticketsEarned: calculateBaseTickets(game.betAmount, 1).totalTickets,
         nextQuestion: null, // Game complete
       });
     }
@@ -281,77 +278,4 @@ export async function POST(req: NextRequest) {
   }
 }
 
-/**
- * Award lottery tickets to a user
- */
-async function awardLotteryTickets(
-  fid: number,
-  betAmount: number,
-  gamesPlayed: number,
-  weekId: string
-) {
-  const tickets = await getLotteryTicketsCollection();
-  const now = Date.now();
-  const today = getTodayDateString();
-
-  const ticketDoc = await tickets.findOne({ weekId, fid });
-
-  if (!ticketDoc) {
-    // First game this week
-    const baseTickets = calculateBaseTickets(betAmount, gamesPlayed);
-    const multiplier = getStreakMultiplier(1);
-    const bonusTickets = baseTickets.totalTickets * (multiplier - 1);
-    const totalTickets = baseTickets.totalTickets * multiplier;
-
-    await tickets.insertOne({
-      weekId,
-      fid,
-      betBasedTickets: baseTickets.betBasedTickets,
-      gameBasedTickets: baseTickets.gameBasedTickets,
-      bonusTickets,
-      totalTickets,
-      gamesPlayed: 1,
-      totalWagered: betAmount,
-      consecutiveDays: 1,
-      daysPlayed: [today],
-      streakMultiplier: multiplier,
-      createdAt: now,
-      updatedAt: now,
-    });
-  } else {
-    // Add to existing
-    const current = ticketDoc;
-    const daysPlayed = [...(current.daysPlayed || [])];
-    if (!daysPlayed.includes(today)) {
-      daysPlayed.push(today);
-    }
-
-    const consecutiveDays = calculateConsecutiveDays(daysPlayed);
-    const multiplier = getStreakMultiplier(consecutiveDays);
-
-    const newBetBased = current.betBasedTickets + Math.floor(betAmount / 10000);
-    const newGameBased = current.gameBasedTickets + gamesPlayed * 0.5;
-    const baseTotal = newBetBased + newGameBased;
-    const bonusTickets = baseTotal * (multiplier - 1);
-    const finalTotal = baseTotal * multiplier;
-
-    await tickets.updateOne(
-      { weekId, fid },
-      {
-        $set: {
-          betBasedTickets: newBetBased,
-          gameBasedTickets: newGameBased,
-          bonusTickets,
-          totalTickets: finalTotal,
-          gamesPlayed: current.gamesPlayed + gamesPlayed,
-          totalWagered: current.totalWagered + betAmount,
-          consecutiveDays,
-          daysPlayed,
-          streakMultiplier: multiplier,
-          updatedAt: now,
-        },
-      }
-    );
-  }
-}
 
