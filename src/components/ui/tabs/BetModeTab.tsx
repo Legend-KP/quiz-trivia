@@ -9,7 +9,7 @@
   import { createWalletClient, createPublicClient, custom } from 'viem';
   import { config } from '~/components/providers/WagmiProvider';
 import sdk from '@farcaster/miniapp-sdk';
-import { APP_URL } from '~/lib/constants';
+import { APP_URL, APP_NAME } from '~/lib/constants';
   import {
     formatQT,
     BET_MODE_MULTIPLIERS,
@@ -100,7 +100,7 @@ const ERC20_ABI = [
   }
 
   export function BetModeTab({ onExit, openDepositModal, openWithdrawModal }: BetModeTabProps = {}) {
-    const { context } = useMiniApp();
+    const { context, actions } = useMiniApp();
     const { address, isConnected, chainId: accountChainId } = useAccount();
     const { connect, connectors } = useConnect();
     const currentChainId = useChainId();
@@ -1076,18 +1076,37 @@ const ERC20_ABI = [
 
         const betAmount = currentGame?.betAmount || gameResult.betAmount || 0;
         const profit = gameResult.profit || (gameResult.payout - betAmount);
+        const profitPercent = betAmount > 0 ? ((profit / betAmount) * 100).toFixed(0) : '0';
 
-        const params = new URLSearchParams();
-        params.set('mode', 'Bet Mode');
-        params.set('payout', `${formatQT(gameResult.payout)} QT`);
-        params.set('profit', `+${formatQT(profit)} QT`);
-        params.set('tickets', `${gameResult.ticketsEarned || 0}`);
+        const buildShareUrl = () => {
+          const base = new URL(`${APP_URL}/share/${fid}`);
+          base.searchParams.set('mode', 'Bet Mode');
+          base.searchParams.set('payout', `${formatQT(gameResult.payout)} QT`);
+          base.searchParams.set('profit', `+${formatQT(profit)} QT`);
+          base.searchParams.set('tickets', `${gameResult.ticketsEarned || 0}`);
+          return base.toString();
+        };
 
-        const shareUrl = `${APP_URL}/share/${fid}?${params.toString()}`;
+        const shareText = gameResult.type === 'cash-out'
+          ? `I just cashed out ${formatQT(gameResult.payout)} QT in ${APP_NAME} Bet Mode! 💰 Profit: +${formatQT(profit)} (${profitPercent}%)`
+          : `I just won ${formatQT(gameResult.payout)} QT in ${APP_NAME} Bet Mode! 🎉 Profit: +${formatQT(profit)} (${profitPercent}%)`;
 
-        await sdk.actions.openUrl(shareUrl);
+        try {
+          await actions.composeCast({
+            text: `${shareText} Come try it:`,
+            embeds: [buildShareUrl()],
+          });
+        } catch (err) {
+          console.error('Failed to open Farcaster composer:', err);
+          const text = encodeURIComponent(`${shareText} Come try it:`);
+          const url = encodeURIComponent(buildShareUrl());
+          const warpcastUrl = `https://warpcast.com/~/compose?text=${text}%20${url}`;
+          if (typeof window !== 'undefined') {
+            window.open(warpcastUrl, '_blank', 'noopener,noreferrer');
+          }
+        }
       } catch (err) {
-        console.error('Failed to open Farcaster share URL:', err);
+        console.error('Failed to share result:', err);
         setError('Failed to open Farcaster to share your result. Please try again.');
       }
     };
@@ -2323,10 +2342,9 @@ const ERC20_ABI = [
                 </button>
                 <button
                   onClick={handleShareResult}
-                  className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold hover:from-purple-600 hover:to-pink-700 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200"
                 >
-                  <span>📤</span>
-                  <span>Share on Farcaster</span>
+                  📣 Share on Farcaster
                 </button>
               </div>
             </div>
