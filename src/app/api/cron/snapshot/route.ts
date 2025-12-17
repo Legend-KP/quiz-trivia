@@ -93,9 +93,8 @@ export async function GET(req: NextRequest) {
             status: 'lost',
             completedAt: now,
             lossDistribution: {
-              toBurn: Math.floor(game.betAmount * 0.6),
-              toLottery: Math.floor(game.betAmount * 0.35),
-              toPlatform: Math.floor(game.betAmount * 0.05),
+              toBurn: Math.floor(game.betAmount * 0.5),
+              toPlatform: Math.floor(game.betAmount * 0.5),
             },
           },
         }
