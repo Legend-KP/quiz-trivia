@@ -670,8 +670,8 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
             </div>
           ) : (
             <div 
-              className="space-y-3 max-h-[50vh] overflow-y-auto pr-2 leaderboard-scroll"
-              style={{ 
+              className={`space-y-3 pr-2 ${mode === QuizMode.TIME_MODE ? '' : 'max-h-[50vh] overflow-y-auto leaderboard-scroll'}`}
+              style={mode === QuizMode.TIME_MODE ? {} : { 
                 scrollbarWidth: 'thin', 
                 scrollbarColor: '#94a3b8 #e2e8f0'
               }}
