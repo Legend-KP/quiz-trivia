@@ -2373,9 +2373,9 @@ const ERC20_ABI = [
                 <div className="bg-gradient-to-r from-green-50 dark:from-green-900 to-emerald-50 dark:to-emerald-900 rounded-lg p-4 border-2 border-green-200 dark:border-green-700">
                   <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">📈 Multipliers</h3>
                   <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
-                    <p>Q1: 1.1x | Q2: 1.3x | Q3: 1.5x | Q4: 2.0x</p>
-                    <p>Q5: 3.0x | Q6: 4.0x | Q7: 5.0x</p>
-                    <p>Q8: 6.5x | Q9: 8.0x | Q10: 5.0x</p>
+                    <p>Q1: 1.05x | Q2: 1.15x | Q3: 1.30x | Q4: 1.50x</p>
+                    <p>Q5: 2.00x | Q6: 2.50x | Q7: 3.00x</p>
+                    <p>Q8: 3.75x | Q9: 4.50x | Q10: 5.00x</p>
                   </div>
                 </div>
 

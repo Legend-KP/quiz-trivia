@@ -270,11 +270,9 @@ export async function POST(req: NextRequest) {
     );
 
     const nextQuestion = game.questions[currentQ];
-    // currentPayout is for the question you just answered correctly (currentQ)
-    // nextPayout is for the next question you're about to answer (currentQ + 1)
     const currentPayout = calculatePayout(game.betAmount, currentQ);
-    const nextPayout = currentQ < 10 ? calculatePayout(game.betAmount, currentQ + 1) : 0;
-    const canCashOut = currentQ >= 5; // Can cash out from Q5+ (after answering Q5 correctly)
+    const nextPayout = calculatePayout(game.betAmount, currentQ + 1);
+    const canCashOut = currentQ >= 5; // Can cash out from Q5+
 
     return NextResponse.json({
       success: true,

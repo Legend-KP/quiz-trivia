@@ -1,22 +1,22 @@
 /**
- * Bet Mode Utilities
+ * Bet Mode Utilities - Updated with 5x Max Multiplier
  * Core functions for Bet Mode game logic, lottery, and window management
  */
 
 // Multipliers for each question (Q1-Q10)
-// Smooth, intuitive progression with clear milestones
+// Smooth progression building to 5x at Q10
 export const BET_MODE_MULTIPLIERS = [
   0,      // Q0 (not used)
-  1.1,    // Q1: +10% (11K from 10K bet)
-  1.3,    // Q2: +30% (13K from 10K bet)
-  1.5,    // Q3: +50% (15K from 10K bet)
-  2.0,    // Q4: +100% (20K from 10K bet) - Doubled your money!
-  3.0,    // Q5: +200% (30K from 10K bet) - Cash out unlocks here
-  4.0,    // Q6: +300% (40K from 10K bet)
-  5.0,    // Q7: +400% (50K from 10K bet)
-  6.5,    // Q8: +550% (65K from 10K bet)
-  8.0,    // Q9: +700% (80K from 10K bet)
-  5.0,    // Q10: +400% (50K from 10K bet) - Auto cash out, 5x your bet!
+  1.05,   // Q1: +5% (10.5K from 10K bet) - Easy start
+  1.15,   // Q2: +15% (11.5K from 10K bet) - Building confidence
+  1.30,   // Q3: +30% (13K from 10K bet) - Getting interesting
+  1.50,   // Q4: +50% (15K from 10K bet) - Halfway to double
+  2.00,   // Q5: +100% (20K from 10K bet) - DOUBLED! Cash out unlocks
+  2.50,   // Q6: +150% (25K from 10K bet) - 2.5x milestone
+  3.00,   // Q7: +200% (30K from 10K bet) - TRIPLED!
+  3.75,   // Q8: +275% (37.5K from 10K bet) - Almost 4x
+  4.50,   // Q9: +350% (45K from 10K bet) - One question from max!
+  5.00,   // Q10: +400% (50K from 10K bet) - 5X YOUR BET! 🎉
 ] as const;
 
 // Bet limits
@@ -301,4 +301,42 @@ export function validateBetAmount(betAmount: number, userBalance: number): {
   }
   return { valid: true };
 }
+
+/*
+═══════════════════════════════════════════════════════════════
+MULTIPLIER PROGRESSION BREAKDOWN (10K Bet Example)
+═══════════════════════════════════════════════════════════════
+
+Q1:  1.05x → 10.5K   (+500 QT)    +5%    - Warm up
+Q2:  1.15x → 11.5K   (+1.5K QT)   +15%   - Building
+Q3:  1.30x → 13K     (+3K QT)     +30%   - Getting real
+Q4:  1.50x → 15K     (+5K QT)     +50%   - Halfway to double
+Q5:  2.00x → 20K     (+10K QT)    +100%  - DOUBLED! 💰 (Cash out unlocks)
+Q6:  2.50x → 25K     (+15K QT)    +150%  - 2.5x milestone
+Q7:  3.00x → 30K     (+20K QT)    +200%  - TRIPLED! 🔥
+Q8:  3.75x → 37.5K   (+27.5K QT)  +275%  - Almost 4x
+Q9:  4.50x → 45K     (+35K QT)    +350%  - So close to max!
+Q10: 5.00x → 50K     (+40K QT)    +400%  - 5X JACKPOT! 🎉
+
+KEY FEATURES:
+✅ Smooth, exponential-feeling progression
+✅ Clear psychological milestones (2x at Q5, 3x at Q7, 5x at Q10)
+✅ Risk/reward balance - each question significantly increases payout
+✅ Cash out still unlocks at Q5 (doubled money)
+✅ Max 5x payout at Q10 (was 10x before)
+✅ More sustainable for the platform
+✅ Still exciting and rewarding for players
+
+COMPARISON TO OLD 10x SYSTEM:
+Old Q10: 10x (100K from 10K bet)
+New Q10: 5x  (50K from 10K bet)
+
+The new system:
+- More sustainable long-term
+- Lower house risk
+- Still very attractive 5x max return
+- Smoother progression curve
+- Better psychological pacing
+═══════════════════════════════════════════════════════════════
+*/
 
