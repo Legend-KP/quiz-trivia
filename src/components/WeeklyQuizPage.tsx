@@ -25,14 +25,13 @@
     const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
     const [showResult, setShowResult] = useState(false);
     const [answers, setAnswers] = useState<Answer[]>([]);
-    const [waitingForNext, setWaitingForNext] = useState(false);
-    const [nextQuestionTime, setNextQuestionTime] = useState<number | null>(null);
     const [startTime, setStartTime] = useState<number | null>(null);
     const [pausedTime, setPausedTime] = useState<number>(0); // Track total paused time
     const [pauseStartTime, setPauseStartTime] = useState<number | null>(null); // When pause started
     const pausedTimeRef = useRef<number>(0); // Ref to track paused time for closure access
     const pauseStartTimeRef = useRef<number | null>(null); // Ref to track pause start for closure access
     const startTimeRef = useRef<number | null>(null); // Ref to track start time for closure access
+    const questionStartTimeRef = useRef<number | null>(null); // Track when current question started (for timestamp-based timer)
     const [alreadyCompleted, setAlreadyCompleted] = useState(false);
     const [checkingCompletion, setCheckingCompletion] = useState(true);
 
@@ -101,7 +100,8 @@
       setSelectedAnswer(answerIndex);
       setShowResult(true);
       
-      // Pause timer when showing result (3 seconds)
+      // Pause overall quiz timer when showing result (3 seconds)
+      // Note: Question timer automatically pauses because useEffect returns early when showResult is true
       if (pauseStartTime === null) {
         setPauseStartTime(Date.now());
       }
@@ -117,7 +117,7 @@
           
           // Use functional updates to get latest state values
           setScore(currentScore => {
-            // Calculate paused time (result displays + waits) - use refs to get latest values
+            // Calculate paused time (result displays) - use refs to get latest values
             let totalPaused = pausedTimeRef.current;
             if (pauseStartTimeRef.current) {
               totalPaused += (Date.now() - pauseStartTimeRef.current) / 1000; // Add current pause
@@ -145,17 +145,20 @@
           });
         }, 3000);
       } else {
-        // Countdown for next question (10 seconds)
+        // Move to next question immediately after showing result (3 seconds)
         setTimeout(() => {
-          // Resume timer after result display, then pause again for wait
+          // Resume overall quiz timer after result display
           if (pauseStartTime) {
             setPausedTime(prev => prev + (Date.now() - pauseStartTime) / 1000);
             setPauseStartTime(null);
           }
-          setWaitingForNext(true);
-          setNextQuestionTime(10);
-          // Pause timer during wait
-          setPauseStartTime(Date.now());
+          // Move to next question immediately
+          setCurrentQuestion(currentQuestion + 1);
+          setTimeLeft(config.questions[currentQuestion + 1].timeLimit);
+          setSelectedAnswer(null);
+          setShowResult(false);
+          // Reset question start time for timestamp-based timer
+          questionStartTimeRef.current = Date.now();
         }, 3000);
       }
     }, [currentQuestion, score, answers, startTime, pausedTime, pauseStartTime, onComplete, config.questions]);
@@ -164,34 +167,46 @@
       handleAnswerSubmit(null);
     }, [handleAnswerSubmit]);
 
+    // Timestamp-based timer that continues even when app is in background
     useEffect(() => {
-      if (!started) return;
-      if (timeLeft > 0 && !showResult && !waitingForNext) {
-        const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-        return () => clearTimeout(timer);
-      } else if (timeLeft === 0 && !waitingForNext) {
-        handleTimeUp();
+      if (!started || showResult) return;
+      
+      // Initialize question start time if not set
+      if (questionStartTimeRef.current === null) {
+        questionStartTimeRef.current = Date.now();
       }
-    }, [timeLeft, showResult, waitingForNext, handleTimeUp, started]);
-
-    useEffect(() => {
-      if (nextQuestionTime && nextQuestionTime > 0) {
-        const timer = setTimeout(() => setNextQuestionTime(nextQuestionTime - 1), 1000);
-        return () => clearTimeout(timer);
-      } else if (nextQuestionTime === 0) {
-        // Resume timer when starting next question
-        if (pauseStartTime) {
-          setPausedTime(prev => prev + (Date.now() - pauseStartTime) / 1000);
-          setPauseStartTime(null);
+      
+      const updateTimer = () => {
+        if (!questionStartTimeRef.current) return;
+        
+        // Calculate elapsed time - the start time is already adjusted when paused
+        // so this calculation automatically accounts for the pause
+        const elapsed = Math.floor((Date.now() - questionStartTimeRef.current) / 1000);
+        const remaining = config.questions[currentQuestion].timeLimit - elapsed;
+        
+        if (remaining <= 0) {
+          setTimeLeft(0);
+          handleTimeUp();
+        } else {
+          setTimeLeft(remaining);
         }
-        setCurrentQuestion(currentQuestion + 1);
-        setTimeLeft(config.questions[currentQuestion + 1].timeLimit);
-        setSelectedAnswer(null);
-        setShowResult(false);
-        setWaitingForNext(false);
-        setNextQuestionTime(null);
+      };
+      
+      // Update immediately
+      updateTimer();
+      
+      // Update every 100ms for smooth countdown (more frequent updates for accuracy)
+      const interval = setInterval(updateTimer, 100);
+      
+      return () => clearInterval(interval);
+    }, [started, showResult, currentQuestion, config.questions, handleTimeUp]);
+    
+    // Reset question start time when question changes
+    useEffect(() => {
+      if (started && !showResult) {
+        questionStartTimeRef.current = Date.now();
       }
-    }, [nextQuestionTime, currentQuestion, pauseStartTime, config.questions]);
+    }, [currentQuestion, started, showResult]);
 
     const formatTime = (seconds: number): string => {
       const mins = Math.floor(seconds / 60);
@@ -199,11 +214,6 @@
       return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
-    const formatWaitTime = (seconds: number): string => {
-      const mins = Math.floor(seconds / 60);
-      const secs = seconds % 60;
-      return `${mins}:${secs.toString().padStart(2, '0')}`;
-    };
 
     const question = config.questions[currentQuestion];
 
@@ -244,7 +254,7 @@
           <div className="bg-white rounded-2xl p-8 shadow-2xl text-center max-w-md w-full">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">Weekly Quiz Challenge 🧠</h2>
             <div className="text-gray-700 space-y-2 mb-6 text-left">
-              <p>📋 The quiz has <strong>10 questions</strong> with <strong>10-second intervals</strong> between each question.</p>
+              <p>📋 The quiz has <strong>10 questions</strong>.</p>
               <p>⏳ You&apos;ll get <strong>45 seconds</strong> per question — so think fast!</p>
               <p>✅ Correct answer = +1 point</p>
               <p>❌ Wrong answer = -0.5 point</p>
@@ -255,6 +265,7 @@
             <button
               onClick={() => {
                 setStartTime(Date.now()); // Set start time when quiz actually starts
+                questionStartTimeRef.current = Date.now(); // Initialize question start time
                 setStarted(true);
               }}
               className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all"
@@ -266,24 +277,6 @@
       );
     }
 
-    // Waiting countdown for next question
-    if (waitingForNext && nextQuestionTime !== null) {
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4 flex items-center justify-center">
-          <div className="max-w-md mx-auto text-center">
-            <div className="bg-white rounded-2xl p-8 shadow-2xl">
-              <Clock className="mx-auto mb-4 text-blue-500" size={48} />
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">Next Question In:</h2>
-              <div className="text-4xl font-bold text-blue-600 mb-4">{formatWaitTime(nextQuestionTime)}</div>
-              <p className="text-gray-600">Question {currentQuestion + 2} of {config.questions.length}</p>
-              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                <p className="text-blue-800 font-semibold">Current Score: {score}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
 
     // Main Quiz UI
     return (
