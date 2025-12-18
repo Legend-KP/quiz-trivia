@@ -637,8 +637,8 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
   }, [context?.user?.fid, submitted, submitScore]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4">
-      <div className="max-w-4xl mx-auto pt-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4 overflow-y-auto">
+      <div className="max-w-4xl mx-auto pt-8 pb-8">
         
 
         {/* Leaderboard */}
@@ -670,7 +670,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
             </div>
           ) : (
             <div 
-              className="space-y-3 max-h-[70vh] overflow-y-auto pr-2 leaderboard-scroll"
+              className="space-y-3 max-h-[50vh] overflow-y-auto pr-2 leaderboard-scroll"
               style={{ 
                 scrollbarWidth: 'thin', 
                 scrollbarColor: '#94a3b8 #e2e8f0'
