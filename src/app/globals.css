@@ -115,4 +115,30 @@ body {
   .focus-ring {
     @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
   }
+
+  /* Leaderboard scrollbar - override global scrollbar hiding */
+  .leaderboard-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #94a3b8 #e2e8f0;
+    -ms-overflow-style: auto;
+  }
+
+  .leaderboard-scroll::-webkit-scrollbar {
+    display: block;
+    width: 8px;
+  }
+
+  .leaderboard-scroll::-webkit-scrollbar-track {
+    background: #e2e8f0;
+    border-radius: 10px;
+  }
+
+  .leaderboard-scroll::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 10px;
+  }
+
+  .leaderboard-scroll::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+  }
 }

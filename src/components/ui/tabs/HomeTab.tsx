@@ -669,7 +669,13 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
               <p className="text-gray-500">No participants yet. Be the first to complete the quiz!</p>
             </div>
           ) : (
-            <div className="space-y-3 max-h-[70vh] overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 transparent' }}>
+            <div 
+              className="space-y-3 max-h-[70vh] overflow-y-auto pr-2 leaderboard-scroll"
+              style={{ 
+                scrollbarWidth: 'thin', 
+                scrollbarColor: '#94a3b8 #e2e8f0'
+              }}
+            >
               {leaderboard.map((player, index) => (
                 <div
                   key={player.fid}
