@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
+import wheelOptions, { WheelOption } from '~/config/wheelOptions';
 
 interface SpinWheelProps {
   onSpin: () => Promise<{ success: boolean; spinResult?: any; balance?: number; error?: string }>;
-  onQTTokenWin?: (userAddress: string) => Promise<{ success: boolean; txHash?: string; error?: string }>;
+  onQTTokenWin?: (userAddress: string, qtAmount: number) => Promise<{ success: boolean; txHash?: string; error?: string }>;
   userAddress?: string;
   disabled?: boolean;
 }
@@ -63,15 +64,8 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
   };
 
 
-  // IMPORTANT: This order MUST match the backend SPIN_OPTIONS order exactly
-  const wheelOptions = [
-    { id: '0_coins', label: '0', color: '#FF6B6B', coins: 0 },
-    { id: '5_coins', label: '5', color: '#4ECDC4', coins: 5 },
-    { id: '10_coins', label: '10', color: '#45B7D1', coins: 10 },
-    { id: '15_coins', label: '15', color: '#96CEB4', coins: 15 },
-    { id: '25_coins', label: '25', color: '#FFEAA7', coins: 25 },
-    { id: 'qt_token', label: '10k $QT', color: '#DDA0DD', coins: '10k', isToken: true }
-  ];
+  // Wheel options are now imported from config/wheelOptions.ts
+  // All segments award QT tokens: 100, 200, 500, 1000, 2000, 10000
 
   const handleSpin = async () => {
     if (isSpinning || disabled || !canSpin) return;
@@ -93,7 +87,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
         const resultIndex = wheelOptions.findIndex(opt => opt.id === response.spinResult.id);
         
         // Calculate the angle to land on this segment
-        // Each segment is 60 degrees, we want to land in the middle of the segment
+        // Each segment is 60 degrees (360 / 6 segments), we want to land in the middle of the segment
         const segmentAngle = resultIndex * 60;
         const targetAngle = 360 - segmentAngle + 30; // +30 to center on segment, inverse rotation
         
@@ -107,15 +101,11 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
           wheelRef.current.style.transform = `rotate(${finalRotation}deg)`;
         }
         
-        setResult(response.spinResult);
-        
-        // If user won QT tokens, show instructions for claiming
-        if (response.spinResult.isToken) {
-          setResult({
-            ...response.spinResult,
-            needsWalletClaim: true
-          });
-        }
+        // All results are now QT tokens
+        setResult({
+          ...response.spinResult,
+          needsWalletClaim: true
+        });
         
         setTimeout(() => {
           setShowResult(true);
@@ -147,11 +137,16 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
       return;
     }
 
+    if (!result || !result.qtAmount) {
+      alert('Invalid spin result');
+      return;
+    }
+
     try {
       setIsClaiming(true);
       // This will trigger a wallet transaction
       // The user will need to sign the transaction in their Farcaster wallet
-      const qtResponse = await onQTTokenWin(userAddress);
+      const qtResponse = await onQTTokenWin(userAddress, result.qtAmount);
       
       if (qtResponse?.success) {
         setResult({
@@ -186,7 +181,9 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
           ref={wheelRef}
           className="w-64 h-64 rounded-full border-8 border-white shadow-2xl relative overflow-hidden"
           style={{ 
-            background: 'conic-gradient(from 0deg, #FF6B6B 0deg 60deg, #4ECDC4 60deg 120deg, #45B7D1 120deg 180deg, #96CEB4 180deg 240deg, #FFEAA7 240deg 300deg, #DDA0DD 300deg 360deg)'
+            background: `conic-gradient(from 0deg, ${wheelOptions.map((opt, i) => 
+              `${opt.color} ${i * 60}deg ${(i + 1) * 60}deg`
+            ).join(', ')})`
           }}
         >
           {/* Wheel segments with centered text */}
@@ -258,34 +255,14 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
         {showResult && result && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-8 max-w-sm mx-4 text-center shadow-2xl">
-              {result.isToken ? (
-                // QT Token win section
-                <div>
-                  <div className="text-6xl mb-4">🎁</div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-2">Congratulations!</h3>
-                  <div className="text-xl text-gray-600 mb-6">
-                    <span className="font-bold text-yellow-600">You won 10,000 QT Tokens!</span>
-                  </div>
+              {/* All results are now QT tokens */}
+              <div>
+                <div className="text-6xl mb-4">🎁</div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">Congratulations!</h3>
+                <div className="text-xl text-gray-600 mb-6">
+                  <span className="font-bold text-yellow-600">You won {result.qtAmount?.toLocaleString() || result.label} QT Tokens!</span>
                 </div>
-              ) : result.coins === 0 ? (
-                // Zero result section
-                <div>
-                  <div className="text-6xl mb-4">😢</div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-2">Better luck next time</h3>
-                  <div className="text-xl text-gray-600 mb-6">
-                    <span className="font-bold text-gray-500">The wheel has more surprises waiting! 🎰</span>
-                  </div>
-                </div>
-              ) : (
-                // Regular winning result section
-                <div>
-                  <div className="text-6xl mb-4">🎉</div>
-                  <h3 className="text-2xl font-bold text-gray-800 mb-2">Congratulations!</h3>
-                  <div className="text-xl text-gray-600 mb-6">
-                    <>You won: <span className="font-bold text-purple-600">{result.label}</span></>
-                  </div>
-                </div>
-              )}
+              </div>
             {result.isToken && (
               <div className="bg-yellow-100 border border-yellow-400 rounded-lg p-4 mb-4">
                 <p className="text-yellow-700 text-sm mb-3">

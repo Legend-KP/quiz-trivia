@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useMiniApp } from '@neynar/react';
 import SpinWheel from '~/components/SpinWheel';
 import { useQTClaim } from '~/hooks/useQTClaim';
+import { useSpinWheelQTClaim } from '~/hooks/useSpinWheelQTClaim';
 
 export function RewardsTab() {
   const { context } = useMiniApp();
@@ -18,6 +19,17 @@ export function RewardsTab() {
     isConfirmed,
     refetchCanClaim 
   } = useQTClaim();
+  
+  // Spin wheel QT claim hook
+  const {
+    claimSpinReward: claimSpinWheelReward,
+    isPending: isSpinWheelPending,
+    isSuccess: isSpinWheelSuccess,
+    isError: isSpinWheelError,
+    error: spinWheelError,
+    txHash: spinWheelTxHash
+  } = useSpinWheelQTClaim();
+  
   const [claimSuccess, setClaimSuccess] = useState(false);
 
   // Fetch balance
@@ -40,6 +52,22 @@ export function RewardsTab() {
         headers: { 'Content-Type': 'application/json' }, 
         body: JSON.stringify({ fid }) 
       });
+      
+      // Check if response is OK and is JSON
+      if (!res.ok) {
+        const text = await res.text();
+        console.error('API error response:', text);
+        return { success: false, error: `API error: ${res.status} ${res.statusText}` };
+      }
+      
+      // Check content type
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await res.text();
+        console.error('Non-JSON response:', text.substring(0, 200));
+        return { success: false, error: 'Server returned non-JSON response' };
+      }
+      
       const data = await res.json();
       
       if (data?.balance !== undefined) {
@@ -49,12 +77,23 @@ export function RewardsTab() {
       return data;
     } catch (error) {
       console.error('Spin wheel error:', error);
-      return { success: false, error: 'Failed to spin wheel' };
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to spin wheel' };
     }
   };
 
-  const handleQTTokenWin = async (userAddress: string) => {
-    return await claimQTReward(userAddress);
+  const handleQTTokenWin = async (userAddress: string, qtAmount: number) => {
+    try {
+      await claimSpinWheelReward(qtAmount);
+      return { 
+        success: true, 
+        txHash: spinWheelTxHash || undefined 
+      };
+    } catch (err: any) {
+      return { 
+        success: false, 
+        error: err?.message || 'Failed to claim QT tokens' 
+      };
+    }
   };
 
   const handleDailyClaim = async () => {
