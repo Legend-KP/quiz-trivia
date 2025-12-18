@@ -2375,7 +2375,7 @@ const ERC20_ABI = [
                   <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
                     <p>Q1: 1.1x | Q2: 1.3x | Q3: 1.5x | Q4: 2.0x</p>
                     <p>Q5: 3.0x | Q6: 4.0x | Q7: 5.0x</p>
-                    <p>Q8: 6.5x | Q9: 8.0x | Q10: 10.0x</p>
+                    <p>Q8: 6.5x | Q9: 8.0x | Q10: 5.0x</p>
                   </div>
                 </div>
 
