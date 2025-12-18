@@ -344,8 +344,8 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
         }}></div>
       </div>
 
-      {/* Coins Panel - Top Left */}
-      <div className="absolute top-4 left-4 z-50">
+      {/* Coins Panel - Top Left (Fixed like profile) */}
+      <div className="fixed top-4 left-4 z-50">
         <span className="px-3 py-1 rounded-full bg-black/30 border border-white/20 text-white text-sm">Coins: {balance ?? '—'}</span>
       </div>
 
@@ -372,6 +372,14 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
 
         {/* Mode Buttons */}
         <div className="space-y-4 w-full max-w-sm md:max-w-md -mt-4">
+          {/* Time Mode - First */}
+          <QuizStartButton
+            mode={QuizMode.TIME_MODE}
+            modeName="Time Mode"
+            onQuizStart={onStartTimeMode}
+          />
+
+          {/* Weekly Quiz - Second */}
           <WeeklyQuizStartButton
             quizState={_weeklyQuizState}
             onQuizStart={async () => {
@@ -414,12 +422,7 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
             userCompleted={weeklyUserCompleted}
           />
 
-          <QuizStartButton
-            mode={QuizMode.TIME_MODE}
-            modeName="Time Mode"
-            onQuizStart={onStartTimeMode}
-          />
-
+          {/* Bet Mode */}
           <button
             onClick={onStartBetMode}
             className="w-full bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white font-bold py-6 px-10 rounded-xl text-2xl transform hover:scale-105 transition-all duration-200 shadow-2xl"
@@ -427,7 +430,8 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
             🎰 Bet Mode
           </button>
 
-          <div className="relative">
+          {/* Challenge Mode - Hidden for now */}
+          {/* <div className="relative">
             <span className="absolute -top-2 right-3 text-xs font-semibold bg-black/50 text-white px-2 py-0.5 rounded-md backdrop-blur">
               Coming Soon
             </span>
@@ -437,7 +441,7 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
             onQuizStart={onStartChallenge}
               className="pointer-events-none opacity-60"
           />
-        </div>
+        </div> */}
         </div>
       </div>
     </div>
