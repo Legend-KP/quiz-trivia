@@ -16,7 +16,7 @@ export const BET_MODE_MULTIPLIERS = [
   5.0,    // Q7: +400% (50K from 10K bet)
   6.5,    // Q8: +550% (65K from 10K bet)
   8.0,    // Q9: +700% (80K from 10K bet)
-  10.0,   // Q10: +900% (100K from 10K bet) - Auto cash out, 10x your bet!
+  5.0,    // Q10: +400% (50K from 10K bet) - Auto cash out, 5x your bet!
 ] as const;
 
 // Bet limits

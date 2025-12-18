@@ -2365,7 +2365,7 @@ const ERC20_ABI = [
                   <div className="text-sm text-gray-700 dark:text-gray-300 space-y-2">
                     <p>• Place a bet (10K - 500K QT)</p>
                     <p>• Answer 10 questions correctly</p>
-                    <p>• Win up to 10x your bet!</p>
+                    <p>• Win up to 5x your bet!</p>
                     <p>• Cash out anytime after Q5</p>
                   </div>
                 </div>
