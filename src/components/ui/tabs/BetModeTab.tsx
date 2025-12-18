@@ -241,8 +241,10 @@ const ERC20_ABI = [
     const [currentGame, setCurrentGame] = useState<any>(null);
     const [currentQuestion, setCurrentQuestion] = useState<any>(null);
     const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-    // const [timeRemaining, setTimeRemaining] = useState<number>(30); // Timer removed for testing
     const [gameResult, setGameResult] = useState<any>(null);
+    // 30 second timer per question (time limit to answer)
+    const [questionTimerEnd, setQuestionTimerEnd] = useState<number | null>(null);
+    const [timerDisplay, setTimerDisplay] = useState<number>(30);
 
     const loadGameState = useCallback(async (_gameId: string) => {
       // In a real implementation, you'd fetch the current question
@@ -917,8 +919,11 @@ const ERC20_ABI = [
           // Continue to next question
           if (data.nextQuestion) {
             setCurrentQuestion(data.nextQuestion);
-            // setTimeRemaining(30); // Timer removed for testing
             setSelectedAnswer(null);
+            // Start 30 second timer for next question
+            const timerEnd = Date.now() + 30000; // 30 seconds from now
+            setQuestionTimerEnd(timerEnd);
+            setTimerDisplay(30);
             setCurrentGame((prev: any) => ({
               ...prev,
               currentQuestion: data.nextQuestion.questionNumber,
@@ -936,22 +941,37 @@ const ERC20_ABI = [
       }
     }, [currentGame, context?.user?.fid]);
 
-    // Timer removed for testing - can be re-enabled later
-    // useEffect(() => {
-    //   if (screen === 'game' && timeRemaining > 0 && !gameResult) {
-    //     const timer = setInterval(() => {
-    //       setTimeRemaining((prev) => {
-    //         if (prev <= 1) {
-    //           // Timeout - auto-submit null answer
-    //           handleAnswer(null);
-    //           return 0;
-    //         }
-    //         return prev - 1;
-    //       }, 1000);
-    //       return () => clearInterval(timer);
-    //     }
-    //   }
-    // }, [screen, timeRemaining, gameResult, handleAnswer]);
+    // 30 second timer per question (time limit to answer, works even when app is in background)
+    useEffect(() => {
+      if (questionTimerEnd === null || screen !== 'game' || gameResult) {
+        return;
+      }
+
+      let timeoutTriggered = false;
+
+      const updateTimer = () => {
+        const now = Date.now();
+        const remaining = Math.max(0, Math.ceil((questionTimerEnd - now) / 1000));
+        setTimerDisplay(remaining);
+
+        if (remaining === 0 && selectedAnswer === null && !loading && !timeoutTriggered) {
+          // Time's up - auto-submit as wrong answer (null = timeout)
+          timeoutTriggered = true;
+          setQuestionTimerEnd(null);
+          handleAnswer(null);
+        } else if (remaining === 0) {
+          setQuestionTimerEnd(null);
+        }
+      };
+
+      // Update immediately
+      updateTimer();
+
+      // Update every second
+      const interval = setInterval(updateTimer, 1000);
+
+      return () => clearInterval(interval);
+    }, [questionTimerEnd, screen, gameResult, selectedAnswer, loading, handleAnswer]);
 
   const handleStartGameClick = () => {
     // Navigate to bet selection screen
@@ -991,7 +1011,10 @@ const ERC20_ABI = [
 
         setCurrentGame(data);
         setCurrentQuestion(data.question);
-        // setTimeRemaining(30); // Timer removed for testing
+        // Start 30 second timer for first question
+        const timerEnd = Date.now() + 30000; // 30 seconds from now
+        setQuestionTimerEnd(timerEnd);
+        setTimerDisplay(30);
         setScreen('game');
       } catch (err: any) {
         setError(err.message || 'Failed to start game');
@@ -1066,15 +1089,15 @@ const ERC20_ABI = [
         const buildShareUrl = () => {
           const base = new URL(`${APP_URL}/share/${fid}`);
           base.searchParams.set('mode', 'Bet Mode');
-          base.searchParams.set('payout', `${formatQT(gameResult.payout)} QT`);
-          base.searchParams.set('profit', `+${formatQT(profit)} QT`);
+          base.searchParams.set('payout', formatQT(gameResult.payout));
+          base.searchParams.set('profit', `+${formatQT(profit)}`);
           base.searchParams.set('tickets', `${gameResult.ticketsEarned || 0}`);
           return base.toString();
         };
 
         const shareText = gameResult.type === 'cash-out'
-          ? `I just cashed out ${formatQT(gameResult.payout)} QT in ${APP_NAME} Bet Mode! 💰 Profit: +${formatQT(profit)} (${profitPercent}%)`
-          : `I just won ${formatQT(gameResult.payout)} QT in ${APP_NAME} Bet Mode! 🎉 Profit: +${formatQT(profit)} (${profitPercent}%)`;
+          ? `I just cashed out ${formatQT(gameResult.payout)} in ${APP_NAME} Bet Mode! 💰 Profit: +${formatQT(profit)} (${profitPercent}%)`
+          : `I just won ${formatQT(gameResult.payout)} in ${APP_NAME} Bet Mode! 🎉 Profit: +${formatQT(profit)} (${profitPercent}%)`;
 
         try {
           await actions.composeCast({
@@ -1453,7 +1476,7 @@ const ERC20_ABI = [
               {status && (
                 <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-6">
                   <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-700 dark:text-gray-300">💰 Your Balance:</span>
+                    <span className="text-gray-700 dark:text-gray-300">💰 Your Bet Mode Balance:</span>
                     <span className="font-semibold text-gray-900 dark:text-gray-100">{formatQT(status.balance?.availableBalance || 0)}</span>
                   </div>
                   {isConnected && address && (
@@ -1480,44 +1503,6 @@ const ERC20_ABI = [
                   💸 Withdraw QT
                 </button>
               </div>
-
-              {!canBet && (
-                <div className="mb-3 space-y-2">
-                  {walletBalance >= MIN_BET && isConnected ? (
-                  // User has QT in wallet but not deposited - show deposit button
-                  <button
-                    onClick={() => setShowDepositModal(true)}
-                    className="w-full py-3 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all"
-                  >
-                    💰 Deposit QT Tokens
-                  </button>
-                  ) : walletBalance < MIN_BET && isConnected ? (
-                    // User has wallet but not enough QT - show buy button
-                    <button
-                      onClick={handleBuyQT}
-                      className="w-full py-3 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 transition-all"
-                    >
-                      🛒 Buy QT Tokens (Need {formatQT(MIN_BET)} minimum)
-                    </button>
-                  ) : (
-                    // User not connected - show connect message
-                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <p className="text-xs text-yellow-800 text-center">
-                        ⚠️ Connect your wallet to deposit QT tokens
-                      </p>
-                    </div>
-                  )}
-                  
-                  <div className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-                    <p className="text-xs text-gray-900 dark:text-gray-100 text-center">
-                      💼 Internal Balance: {formatQT(status?.balance?.availableBalance || 0)}
-                    </p>
-                    <p className="text-xs text-gray-700 dark:text-gray-300 text-center mt-1">
-                      Minimum bet: {formatQT(MIN_BET)}
-                    </p>
-                  </div>
-                </div>
-              )}
               
               <button
                 onClick={handleStartGameClick}
@@ -1748,7 +1733,7 @@ const ERC20_ABI = [
                       <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg p-4 mb-4 border-2 border-green-200 dark:border-green-800">
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Amount Withdrawn</p>
                         <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                          {withdrawalSuccess.amount > 0 ? formatQT(withdrawalSuccess.amount) : '0'} QT
+                          {withdrawalSuccess.amount > 0 ? formatQT(withdrawalSuccess.amount) : '0 QT'}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                           Tokens have been sent to your connected wallet
@@ -1855,7 +1840,7 @@ const ERC20_ABI = [
                       <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg p-4 mb-4 border-2 border-green-200 dark:border-green-800">
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Amount Deposited</p>
                         <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                          {depositSuccess.amount > 0 ? formatQT(depositSuccess.amount) : '0'} QT
+                          {depositSuccess.amount > 0 ? formatQT(depositSuccess.amount) : '0 QT'}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                           Tokens have been added to your Bet Mode balance
@@ -2216,21 +2201,33 @@ const ERC20_ABI = [
               </div>
 
             <div className="mb-6 max-h-[50vh] overflow-y-auto pr-2">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">{currentQuestion.text}</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{currentQuestion.text}</h3>
+                <div className={`px-3 py-1 rounded-lg font-bold text-sm ${
+                  timerDisplay <= 10 
+                    ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' 
+                    : timerDisplay <= 15
+                    ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
+                    : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                }`}>
+                  ⏱️ {timerDisplay}s
+                </div>
+              </div>
               <div className="space-y-3">
                   {currentQuestion.options.map((option: string, index: number) => (
                     <button
                       key={index}
                       onClick={() => {
                         setSelectedAnswer(index);
+                        setQuestionTimerEnd(null); // Stop timer when answer is selected
                         handleAnswer(index);
                       }}
-                      disabled={loading || selectedAnswer !== null}
+                      disabled={loading || selectedAnswer !== null || timerDisplay === 0}
                       className={`w-full p-4 rounded-lg border-2 text-left transition-all ${
                         selectedAnswer === index
                           ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900'
                           : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                      } ${loading || selectedAnswer !== null ? 'opacity-50' : ''} text-gray-900 dark:text-gray-100`}
+                      } ${loading || selectedAnswer !== null || timerDisplay === 0 ? 'opacity-50 cursor-not-allowed' : ''} text-gray-900 dark:text-gray-100`}
                     >
                       <span className="font-semibold mr-2">{String.fromCharCode(65 + index)})</span>
                       {option}
