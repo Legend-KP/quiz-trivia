@@ -89,55 +89,52 @@ export async function POST(req: NextRequest) {
         console.error('❌ Failed to sync loss to contract:', error);
       });
 
-      // Immediate burn: Send 50% to burn address
-      if (lossDistribution.toBurn > 0) {
-        const privateKey = process.env.WALLET_PRIVATE_KEY || process.env.PRIVATE_KEY;
+      // Immediate burn and revenue transfer: Withdraw from contract and distribute
+      if (lossDistribution.toBurn > 0 || lossDistribution.toPlatform > 0) {
+        const ownerPrivateKey = process.env.CONTRACT_OWNER_PRIVATE_KEY || process.env.PRIVATE_KEY;
         const rpcUrl = process.env.BASE_RPC_URL || 'https://mainnet.base.org';
         const qtTokenAddress = process.env.QT_TOKEN_ADDRESS;
+        const { getBetModeVaultAddress, BET_MODE_VAULT_ABI } = await import('~/lib/betModeVault');
 
-        if (privateKey && qtTokenAddress) {
+        if (ownerPrivateKey && qtTokenAddress) {
           try {
             const provider = new ethers.JsonRpcProvider(rpcUrl);
-            const wallet = new ethers.Wallet(privateKey, provider);
-            const tokenAbi = ['function transfer(address to, uint256 amount) returns (bool)'];
-            const tokenContract = new ethers.Contract(qtTokenAddress, tokenAbi, wallet);
-            const burnAmountWei = ethers.parseUnits(lossDistribution.toBurn.toString(), 18);
+            const ownerWallet = new ethers.Wallet(ownerPrivateKey, provider);
+            const vaultAddress = getBetModeVaultAddress();
+            const vaultContract = new ethers.Contract(vaultAddress, BET_MODE_VAULT_ABI, ownerWallet);
+            const tokenContract = new ethers.Contract(qtTokenAddress, ['function transfer(address to, uint256 amount) returns (bool)'], ownerWallet);
             
-            const burnTx = await tokenContract.transfer(BURN_ADDRESS, burnAmountWei);
-            console.log(`🔥 Burn transaction sent: ${burnTx.hash}`);
-            // Don't wait for confirmation to avoid blocking response
-            burnTx.wait().catch((error: any) => {
-              console.error('❌ Burn transaction failed:', error);
-            });
-          } catch (error: any) {
-            console.error('❌ Failed to burn tokens:', error);
-          }
-        }
-      }
-
-      // Immediate revenue transfer: Send 50% to revenue wallet
-      if (lossDistribution.toPlatform > 0) {
-        const privateKey = process.env.WALLET_PRIVATE_KEY || process.env.PRIVATE_KEY;
-        const rpcUrl = process.env.BASE_RPC_URL || 'https://mainnet.base.org';
-        const qtTokenAddress = process.env.QT_TOKEN_ADDRESS;
-
-        if (privateKey && qtTokenAddress) {
-          try {
-            const provider = new ethers.JsonRpcProvider(rpcUrl);
-            const wallet = new ethers.Wallet(privateKey, provider);
-            const tokenAbi = ['function transfer(address to, uint256 amount) returns (bool)'];
-            const tokenContract = new ethers.Contract(qtTokenAddress, tokenAbi, wallet);
-            const revenueAmountWei = ethers.parseUnits(lossDistribution.toPlatform.toString(), 18);
+            // Step 1: Withdraw the full loss amount from contract to owner wallet
+            const totalLossWei = ethers.parseEther(game.betAmount.toString());
+            console.log(`🔄 Withdrawing ${game.betAmount} QT from contract for distribution...`);
+            const withdrawTx = await vaultContract.ownerWithdraw(totalLossWei);
+            await withdrawTx.wait();
+            console.log(`✅ Withdrawn from contract: ${withdrawTx.hash}`);
             
-            const revenueTx = await tokenContract.transfer(REVENUE_WALLET, revenueAmountWei);
-            console.log(`💰 Revenue transaction sent: ${revenueTx.hash}`);
-            // Don't wait for confirmation to avoid blocking response
-            revenueTx.wait().catch((error: any) => {
-              console.error('❌ Revenue transaction failed:', error);
-            });
+            // Step 2: Transfer 50% to burn address
+            if (lossDistribution.toBurn > 0) {
+              const burnAmountWei = ethers.parseEther(lossDistribution.toBurn.toString());
+              const burnTx = await tokenContract.transfer(BURN_ADDRESS, burnAmountWei);
+              console.log(`🔥 Burn transaction sent: ${burnTx.hash}`);
+              burnTx.wait().catch((error: any) => {
+                console.error('❌ Burn transaction failed:', error);
+              });
+            }
+            
+            // Step 3: Transfer 50% to revenue wallet
+            if (lossDistribution.toPlatform > 0) {
+              const revenueAmountWei = ethers.parseEther(lossDistribution.toPlatform.toString());
+              const revenueTx = await tokenContract.transfer(REVENUE_WALLET, revenueAmountWei);
+              console.log(`💰 Revenue transaction sent: ${revenueTx.hash}`);
+              revenueTx.wait().catch((error: any) => {
+                console.error('❌ Revenue transaction failed:', error);
+              });
+            }
           } catch (error: any) {
-            console.error('❌ Failed to transfer revenue:', error);
+            console.error('❌ Failed to distribute loss tokens:', error);
           }
+        } else {
+          console.warn('⚠️ Contract owner private key or QT token address not configured - skipping token distribution');
         }
       }
 
