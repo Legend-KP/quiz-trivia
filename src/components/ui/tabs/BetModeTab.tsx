@@ -2309,23 +2309,13 @@ const ERC20_ABI = [
               <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100">❌ WRONG ANSWER</h2>
 
               {gameResult.explanation && (
-                <div className="bg-blue-50 dark:bg-blue-900 rounded-lg p-3 mb-4 border border-blue-200 dark:border-blue-700">
-                  <p className="text-sm text-blue-800 dark:text-blue-200">{gameResult.explanation}</p>
-                </div>
-              )}
-
-              <div className="bg-red-50 dark:bg-red-900 rounded-lg p-4 mb-6 border-2 border-red-200 dark:border-red-700 max-h-[30vh] overflow-y-auto">
-                <div className="text-xl font-bold text-red-800 dark:text-red-200 mb-2">
-                  Lost: {formatQT(betAmount)}
-                </div>
-                <div className="text-sm text-red-700 dark:text-red-300">
-                  But your loss contributes to:
-                  <div className="mt-2 text-left">
-                    <div>• {formatQT(gameResult.lossDistribution?.toBurn || 0)} burned 🔥 (50%)</div>
-                    <div>• {formatQT(gameResult.lossDistribution?.toPlatform || 0)} to app revenue 💰 (50%)</div>
+                <div className="mb-4">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 text-center">✅ Correct Answer:</p>
+                  <div className="bg-blue-50 dark:bg-blue-900 rounded-lg p-3 border border-blue-200 dark:border-blue-700">
+                    <p className="text-sm text-blue-800 dark:text-blue-200">{gameResult.explanation}</p>
                   </div>
                 </div>
-              </div>
+              )}
 
               <button
                 onClick={handlePlayAgain}
@@ -2354,9 +2344,14 @@ const ERC20_ABI = [
         <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-orange-500 p-4 overflow-y-auto">
           <div className="max-w-md mx-auto mt-10 mb-10 pb-20">
             <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-2xl overflow-y-auto max-h-[calc(100vh-5rem)]">
+              <button
+                onClick={() => setScreen('entry')}
+                className="mb-4 px-3 py-1 rounded bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium"
+              >
+                ← Back
+              </button>
               <div className="text-center mb-6">
-                <div className="text-5xl mb-2">ℹ️</div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">BET MODE INFO</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">How Bet Mode Works</h2>
               </div>
 
               <div className="space-y-4 mb-6">
@@ -2393,7 +2388,6 @@ const ERC20_ABI = [
                     <p>• 30 seconds per question</p>
                     <p>• Wrong answer = game over</p>
                     <p>• Cash out available from Q5</p>
-                    <p>• Q10 = auto cash out</p>
                   </div>
                 </div>
               </div>
