@@ -637,7 +637,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
   }, [context?.user?.fid, submitted, submitScore]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4 overflow-y-auto">
       <div className="max-w-4xl mx-auto pt-8 pb-8">
         
 
@@ -668,62 +668,9 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
             <div className="text-center py-8">
               <p className="text-gray-500">No participants yet. Be the first to complete the quiz!</p>
             </div>
-          ) : mode === QuizMode.TIME_MODE ? (
-            // Time Mode: No max-height, no overflow - expands fully, page scrolls naturally
-            <div className="space-y-3">
-              {leaderboard.map((player, index) => (
-                <div
-                  key={player.fid}
-                  className={`flex items-center justify-between p-4 rounded-lg border-2 ${
-                    index < 3
-                      ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-300'
-                      : 'bg-gray-50 border-gray-200'
-                  }`}
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                      player.rank === 1 ? 'bg-yellow-500 text-yellow-900' :
-                      player.rank === 2 ? 'bg-gray-400 text-gray-900' :
-                      player.rank === 3 ? 'bg-orange-500 text-orange-900' :
-                      'bg-blue-500 text-blue-900'
-                    }`}>
-                      {player.rank === 1 ? '🥇' : 
-                       player.rank === 2 ? '🥈' : 
-                       player.rank === 3 ? '🥉' : player.rank}
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      {player.pfpUrl && (
-                        <img 
-                          src={player.pfpUrl} 
-                          alt="Profile" 
-                          className="w-8 h-8 rounded-full"
-                        />
-                      )}
-                      <div>
-                        <div className="font-semibold text-black">
-                          {player.displayName || player.username}
-                        </div>
-                        <div className="text-sm text-gray-300">@{player.username}</div>
-                        <div className="text-xs text-gray-400">
-                          Completed in {player.time}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xl font-bold text-blue-600">{player.score}</div>
-                    <div className="text-xs text-gray-500">points</div>
-                    <div className="text-xs text-gray-400">
-                      {new Date(player.completedAt).toLocaleDateString()}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
           ) : (
-            // Other Modes: Has max-height, has overflow - fixed height, list scrolls
             <div 
-              className="space-y-3 max-h-[50vh] overflow-y-auto pr-2 leaderboard-scroll"
+              className={`space-y-3 pr-2 max-h-[50vh] overflow-y-auto leaderboard-scroll`}
               style={{ 
                 scrollbarWidth: 'thin', 
                 scrollbarColor: '#94a3b8 #e2e8f0'
