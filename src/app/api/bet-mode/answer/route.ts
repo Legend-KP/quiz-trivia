@@ -100,21 +100,22 @@ export async function POST(req: NextRequest) {
             const vaultContract = new ethers.Contract(vaultAddress, BET_MODE_VAULT_ABI, ownerWallet);
             const tokenContract = new ethers.Contract(qtTokenAddress, ['function transfer(address to, uint256 amount) returns (bool)'], ownerWallet);
             
-            // Step 1: Withdraw the full loss amount from contract to owner wallet
-            // This must happen BEFORE debitLoss, because debitLoss reduces totalContractBalance
-            // but the actual tokens are still in the contract until we withdraw them
-            const totalLossWei = ethers.parseEther(game.betAmount.toString());
-            console.log(`🔄 Withdrawing ${game.betAmount} QT from contract for distribution...`);
-            const withdrawTx = await vaultContract.ownerWithdraw(totalLossWei);
-            const withdrawReceipt = await withdrawTx.wait();
-            if (withdrawReceipt.status !== 1) {
-              throw new Error(`Withdrawal transaction failed: ${withdrawTx.hash}`);
-            }
-            console.log(`✅ Withdrawn from contract: ${withdrawTx.hash}`);
+            console.log(`📊 Loss Distribution: ${game.betAmount} QT total`);
+            console.log(`   - Burn: ${lossDistribution.toBurn} QT (50%)`);
+            console.log(`   - Revenue: ${lossDistribution.toPlatform} QT (50%) to ${REVENUE_WALLET}`);
             
-            // Step 2: Transfer 50% to burn address (await to ensure it completes)
+            // Step 1: Withdraw 50% for burn from contract to owner wallet
             if (lossDistribution.toBurn > 0) {
               const burnAmountWei = ethers.parseEther(lossDistribution.toBurn.toString());
+              console.log(`🔄 Withdrawing ${lossDistribution.toBurn} QT from contract for burn...`);
+              const burnWithdrawTx = await vaultContract.ownerWithdraw(burnAmountWei);
+              const burnWithdrawReceipt = await burnWithdrawTx.wait();
+              if (burnWithdrawReceipt.status !== 1) {
+                throw new Error(`Burn withdrawal transaction failed: ${burnWithdrawTx.hash}`);
+              }
+              console.log(`✅ Burn withdrawal confirmed: ${burnWithdrawTx.hash}`);
+              
+              // Immediately transfer to burn address
               console.log(`🔥 Transferring ${lossDistribution.toBurn} QT to burn address...`);
               const burnTx = await tokenContract.transfer(BURN_ADDRESS, burnAmountWei);
               const burnReceipt = await burnTx.wait();
@@ -124,19 +125,29 @@ export async function POST(req: NextRequest) {
               console.log(`✅ Burn transaction confirmed: ${burnTx.hash}`);
             }
             
-            // Step 3: Transfer 50% to revenue wallet (await to ensure it completes)
+            // Step 2: Withdraw 50% for revenue from contract to owner wallet, then transfer to revenue wallet
             if (lossDistribution.toPlatform > 0) {
               const revenueAmountWei = ethers.parseEther(lossDistribution.toPlatform.toString());
-              console.log(`💰 Transferring ${lossDistribution.toPlatform} QT to revenue wallet...`);
+              console.log(`🔄 Withdrawing ${lossDistribution.toPlatform} QT from contract for revenue...`);
+              const revenueWithdrawTx = await vaultContract.ownerWithdraw(revenueAmountWei);
+              const revenueWithdrawReceipt = await revenueWithdrawTx.wait();
+              if (revenueWithdrawReceipt.status !== 1) {
+                throw new Error(`Revenue withdrawal transaction failed: ${revenueWithdrawTx.hash}`);
+              }
+              console.log(`✅ Revenue withdrawal confirmed: ${revenueWithdrawTx.hash}`);
+              
+              // Immediately transfer to revenue wallet
+              console.log(`💰 Transferring ${lossDistribution.toPlatform} QT to revenue wallet ${REVENUE_WALLET}...`);
               const revenueTx = await tokenContract.transfer(REVENUE_WALLET, revenueAmountWei);
               const revenueReceipt = await revenueTx.wait();
               if (revenueReceipt.status !== 1) {
                 throw new Error(`Revenue transaction failed: ${revenueTx.hash}`);
               }
-              console.log(`✅ Revenue transaction confirmed: ${revenueTx.hash}`);
+              console.log(`✅ Revenue transaction confirmed: ${revenueTx.hash} - Sent ${lossDistribution.toPlatform} QT to ${REVENUE_WALLET}`);
             }
           } catch (error: any) {
             console.error('❌ Failed to distribute loss tokens:', error);
+            console.error('Error details:', error.message || error);
             // Don't throw - log error but continue with game state update
           }
         } else {
