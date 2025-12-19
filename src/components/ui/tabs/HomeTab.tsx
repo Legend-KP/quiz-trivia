@@ -456,6 +456,9 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
               onStartWeeklyQuiz();
             }}
             userCompleted={weeklyUserCompleted}
+            isWalletConnected={isConnected && !!address}
+            walletBalance={walletBalance}
+            hasEnoughQT={walletBalance >= 1}
           />
 
           {/* Bet Mode */}

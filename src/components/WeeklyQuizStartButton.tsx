@@ -7,13 +7,19 @@ interface WeeklyQuizStartButtonProps {
   onQuizStart: () => void;
   userCompleted?: boolean;
   className?: string;
+  isWalletConnected?: boolean;
+  walletBalance?: number;
+  hasEnoughQT?: boolean;
 }
 
 const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
   quizState,
   onQuizStart,
   userCompleted = false,
-  className = ""
+  className = "",
+  isWalletConnected = false,
+  walletBalance = 0,
+  hasEnoughQT = false,
 }) => {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   
@@ -130,8 +136,62 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
     }
   };
 
-  const canStartQuiz = quizState === 'live' && !userCompleted;
+  const canStartQuiz = quizState === 'live' && !userCompleted && isWalletConnected && hasEnoughQT;
   const stateInfo = getStateInfo();
+
+  // Determine why user can't participate
+  const getWhyCantParticipate = () => {
+    // If user already completed, show that message
+    if (userCompleted) {
+      return {
+        title: 'Already Completed',
+        message: 'You have already completed this quiz. Each user can only take the quiz once per week.',
+        icon: '✅',
+      };
+    }
+    
+    // If quiz is not live, show quiz state message
+    if (quizState !== 'live') {
+      if (quizState === 'upcoming') {
+        return {
+          title: 'Quiz Not Started',
+          message: 'This quiz hasn\'t started yet. Please wait for the quiz to go live.',
+          icon: '⏰',
+        };
+      }
+      if (quizState === 'ended') {
+        return {
+          title: 'Quiz Ended',
+          message: 'This quiz has ended. Please wait for the next quiz to start.',
+          icon: '⏹️',
+        };
+      }
+    }
+
+    // If quiz is live, check wallet and QT requirements
+    if (quizState === 'live') {
+      if (!isWalletConnected) {
+        return {
+          title: 'Wallet Not Connected',
+          message: 'Please connect your Farcaster wallet to participate in the Weekly Quiz.',
+          icon: '🔗',
+        };
+      }
+
+      if (!hasEnoughQT) {
+        return {
+          title: 'Insufficient QT Tokens',
+          message: `You need to hold at least 1 QT token to participate. Your current balance: ${walletBalance.toFixed(4)} QT.\n\nPlease get QT tokens and try again.`,
+          icon: '💰',
+        };
+      }
+    }
+
+    // User can participate
+    return null;
+  };
+
+  const whyCantParticipate = getWhyCantParticipate();
 
   return (
     <>
@@ -241,6 +301,19 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                     {stateInfo.message}: {countdown}
                   </p>
                 </div>
+
+                {/* Why Can't Participate Section */}
+                {whyCantParticipate && !canStartQuiz && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <div className="font-semibold text-red-800 mb-1.5 text-sm flex items-center gap-2">
+                      <span>{whyCantParticipate.icon}</span>
+                      <span>{whyCantParticipate.title}</span>
+                    </div>
+                    <p className="text-xs text-red-700 whitespace-pre-line">
+                      {whyCantParticipate.message}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
