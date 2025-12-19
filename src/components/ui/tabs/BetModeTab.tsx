@@ -1473,7 +1473,7 @@ const ERC20_ABI = [
               <div className="text-center mb-6">
                 <div className="text-5xl mb-2">🎰</div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">BET MODE</h2>
-                <p className="text-sm text-green-600 dark:text-green-400 font-semibold mt-1">🔴 LIVE 24/7!</p>
+                <p className="text-sm text-green-600 dark:text-green-400 font-semibold mt-1">🤑 Make upto 5x! 🤑</p>
               </div>
 
               {error && (
@@ -2394,8 +2394,8 @@ const ERC20_ABI = [
                 <div className="bg-gradient-to-r from-purple-50 dark:from-purple-900 to-pink-50 dark:to-pink-900 rounded-lg p-4 border-2 border-purple-200 dark:border-purple-700">
                   <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">⚡ Rules</h3>
                   <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
-                    <p>• Q1-Q4: 30s | Q5: 25s | Q6-Q7: 20s | Q8-Q9: 15s | Q10: 10s</p>
-                    <p>• Wrong answer = game over</p>
+                    <p>• Time per question: Q1-Q4: 30s | Q5: 25s | Q6-Q7: 20s | Q8-Q9: 15s | Q10: 10s</p>
+                    <p>• Wrong answer = game over (Loose the bet amount) </p>
                     <p>• Cash out available from Q5</p>
                   </div>
                 </div>
