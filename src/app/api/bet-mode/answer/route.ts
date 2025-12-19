@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
               console.log(`   - Burn: ${lossDistribution.toBurn} QT (50%)`);
               console.log(`   - Revenue: ${lossDistribution.toPlatform} QT (50%) to ${REVENUE_WALLET}`);
               
-              // Step 1: Withdraw 50% for burn from contract to owner wallet
+              // Step 1: Withdraw 50% for burn from contract to owner wallet, then transfer to burn address
               if (lossDistribution.toBurn > 0) {
                 const burnAmountWei = ethers.parseEther(lossDistribution.toBurn.toString());
                 console.log(`🔄 Withdrawing ${lossDistribution.toBurn} QT from contract for burn...`);
@@ -121,14 +121,24 @@ export async function POST(req: NextRequest) {
                 }
                 console.log(`✅ Burn withdrawal confirmed: ${burnWithdrawTx.hash}`);
                 
+                // Verify owner wallet has the tokens before transferring
+                const ownerBalanceBeforeBurn = await tokenContract.balanceOf(ownerWallet.address);
+                console.log(`💰 Owner wallet balance after burn withdrawal: ${ethers.formatEther(ownerBalanceBeforeBurn)} QT`);
+                
+                if (ownerBalanceBeforeBurn < burnAmountWei) {
+                  throw new Error(`Insufficient balance in owner wallet for burn. Have: ${ethers.formatEther(ownerBalanceBeforeBurn)} QT, Need: ${ethers.formatEther(burnAmountWei)} QT`);
+                }
+                
                 // Immediately transfer to burn address
-                console.log(`🔥 Transferring ${lossDistribution.toBurn} QT to burn address...`);
+                console.log(`🔥 Transferring ${lossDistribution.toBurn} QT to burn address ${BURN_ADDRESS}...`);
                 const burnTx = await tokenContract.transfer(BURN_ADDRESS, burnAmountWei);
+                console.log(`⏳ Burn transfer transaction sent: ${burnTx.hash}, waiting for confirmation...`);
+                
                 const burnReceipt = await burnTx.wait();
                 if (burnReceipt.status !== 1) {
                   throw new Error(`Burn transaction failed: ${burnTx.hash}`);
                 }
-                console.log(`✅ Burn transaction confirmed: ${burnTx.hash}`);
+                console.log(`✅ Burn transaction confirmed: ${burnTx.hash} - Sent ${lossDistribution.toBurn} QT to ${BURN_ADDRESS}`);
               }
               
               // Step 2: Withdraw 50% for revenue from contract to owner wallet, then transfer to revenue wallet
