@@ -102,89 +102,89 @@ function getCurrentWeeklyQuiz(): WeeklyQuizConfig {
   
   return {
     id: getQuizIdFromDate(startDate),
-    topic: "Zero Knowledge Proof", // Update this topic for each quiz
+    topic: "Modular Blockchains & L2s", // Update this topic for each quiz
     startTime: startDate.toISOString(), // Tuesday or Friday 6 PM UTC
     endTime: endDate.toISOString(), // Next day 6 AM UTC (12-hour window)
     questions: [
     {
       id: 1,
-      question: "What does a Zero-Knowledge Proof allow a prover to demonstrate?",
-      options: ["Knowledge of a value without revealing the value itself", "The speed of blockchain consensus", "The ownership of all private keys", "That the transaction fee is zero"],
-      correct: 0,
+      question: "What does \"modular blockchain\" primarily mean?",
+      options: ["A blockchain optimized only for smart contracts", "A blockchain that separates execution, settlement, and data availability", "A chain that supports multiple virtual machines", "A blockchain that runs without validators"],
+      correct: 1,
       timeLimit: 45,
-      explanation: "ZKPs let one party prove knowledge of a fact or value without revealing the underlying information."
+      explanation: "A blockchain that separates execution, settlement, and data availability"
     },
     {
       id: 2,
-      question: "Which of the following is a key property of Zero-Knowledge Proofs?",
-      options: ["Integrity, Decentralization, and Transparency", "Privacy, Speed, and Scalability", "Confidentiality, Accuracy, and Cost-efficiency", "Completeness, Soundness, and Zero-Knowledge"],
-      correct: 3,
+      question: "In Ethereum's modular stack, which layer provides economic finality?",
+      options: ["Execution layer", "Data availability layer", "Settlement layer", "Sequencer layer"],
+      correct: 2,
       timeLimit: 45,
-      explanation: "ZKPs are defined by three core properties: completeness, soundness, and zero-knowledge."
+      explanation: "Settlement layer"
     },
     {
       id: 3,
-      question: "Which blockchain uses zk-SNARKs to provide private transactions?",
-      options: ["Zcash", "Bitcoin", "Ethereum", "Polygon PoS"],
-      correct: 0,
+      question: "What is the main role of rollups in Ethereum scaling?",
+      options: ["Increasing block size on L1", "Executing transactions off-chain and posting proofs on L1", "Replacing validators with sequencers", "Eliminating gas fees"],
+      correct: 1,
       timeLimit: 45,
-      explanation: "Zcash pioneered zk-SNARKs to enable shielded transactions that hide sender, receiver, and amount."
+      explanation: "Executing transactions off-chain and posting proofs on L1"
     },
     {
       id: 4,
-      question: "What does the term \"zero-knowledge\" specifically refer to in ZKPs?",
-      options: ["That the prover has no private data", "That no computation occurs during verification", "That the verifier learns nothing beyond the validity of the claim", "That the proof is always probabilistic"],
-      correct: 2,
+      question: "Which statement best describes Optimistic Rollups?",
+      options: ["They assume transactions are invalid unless proven correct", "They rely on fraud proofs to challenge incorrect execution", "They finalize transactions instantly", "They do not depend on Ethereum for security"],
+      correct: 1,
       timeLimit: 45,
-      explanation: "The \"zero-knowledge\" aspect ensures no information is leaked other than the fact that the statement is true."
+      explanation: "They rely on fraud proofs to challenge incorrect execution"
     },
     {
       id: 5,
-      question: "In zk-SNARK, what does the \"SNARK\" stand for?",
-      options: ["Succinct Non-Interactive Argument of Knowledge", "Secure Non-Automated Reasoning Kernel", "Simple Non-Analytical Random Key", "Symmetric Non-Advanced Recursive Knowledge"],
-      correct: 0,
+      question: "What differentiates zk-rollups from optimistic rollups?",
+      options: ["zk-rollups use sequencers, optimistic rollups don't", "zk-rollups rely on validity proofs instead of fraud proofs", "zk-rollups store all data off-chain", "zk-rollups cannot support smart contracts"],
+      correct: 1,
       timeLimit: 45,
-      explanation: "zk-SNARK means a succinct, non-interactive argument of knowledge — proofs are compact and verifiable quickly."
+      explanation: "zk-rollups rely on validity proofs instead of fraud proofs"
     },
     {
       id: 6,
-      question: "What makes zk-STARKs different from zk-SNARKs?",
-      options: ["They don't require a trusted setup and are post-quantum secure", "They are slower and less transparent", "They use elliptic curve pairings", "They require private keys from validators"],
-      correct: 0,
+      question: "Why is Data Availability (DA) critical for rollups?",
+      options: ["It ensures faster transaction execution", "It allows anyone to reconstruct the rollup state", "It reduces gas costs on Ethereum", "It prevents MEV extraction"],
+      correct: 1,
       timeLimit: 45,
-      explanation: "zk-STARKs remove the need for trusted setup and are quantum-resistant, using hash-based cryptography."
+      explanation: "It allows anyone to reconstruct the rollup state"
     },
     {
       id: 7,
-      question: "Which statement best explains the \"soundness\" property in ZKPs?",
-      options: ["Only the prover learns the verification result", "Proofs always execute faster than traditional verifications", "Dishonest prover cannot convince the verifier of a false statement", "Soundness ensures public verifiability of all proofs"],
+      question: "Which of the following is an example of a Data Availability-focused layer?",
+      options: ["Arbitrum", "Optimism", "Celestia", "Starknet"],
       correct: 2,
       timeLimit: 45,
-      explanation: "Soundness guarantees that false claims cannot be proven true, maintaining trust in the proof system."
+      explanation: "Celestia"
     },
     {
       id: 8,
-      question: "Which Zero-Knowledge proof system scales best for large computations?",
-      options: ["zk-SNARK", "zk-STARK", "Bulletproofs", "zk-Rollups"],
+      question: "What problem do shared sequencers aim to solve?",
+      options: ["High gas fees on Ethereum", "Fragmented liquidity across rollups", "Lack of decentralization in DA layers", "Limited smart contract support"],
       correct: 1,
       timeLimit: 45,
-      explanation: "zk-STARKs are highly scalable due to transparent setup and proof sizes that grow logarithmically with computation size."
+      explanation: "Fragmented liquidity across rollups"
     },
     {
       id: 9,
-      question: "Why are zk-STARKs considered post-quantum secure while zk-SNARKs are not?",
-      options: ["zk-STARKs rely on lattice-based assumptions", "zk-STARKs require smaller keys", "zk-SNARKs use symmetric encryption", "zk-STARKs use hash-based security, resistant to Shor's algorithm"],
-      correct: 3,
+      question: "In a modular design, what does the execution layer primarily handle?",
+      options: ["Consensus and validator incentives", "Storing transaction data permanently", "Running transaction logic and state changes", "Providing cryptographic finality"],
+      correct: 2,
       timeLimit: 45,
-      explanation: "zk-STARKs rely on collision-resistant hash functions, which are believed to be safe from quantum attacks."
+      explanation: "Running transaction logic and state changes"
     },
     {
       id: 10,
-      question: "What role do ZKPs play in blockchain scalability solutions like zk-Rollups?",
-      options: ["They replace consensus algorithms", "Compress many transactions into one proof", "They manage wallet private keys", "They remove the need for nodes"],
+      question: "What is a key trade-off when moving execution off L1 to rollups?",
+      options: ["Reduced security guarantees", "Increased reliance on smart contracts and proofs", "Loss of composability entirely", "Elimination of decentralization"],
       correct: 1,
       timeLimit: 45,
-      explanation: "zk-Rollups batch multiple off-chain transactions and post a ZKP on-chain to prove their validity efficiently."
+      explanation: "Increased reliance on smart contracts and proofs"
     }
   ]
   };
