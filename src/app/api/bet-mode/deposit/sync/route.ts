@@ -125,19 +125,9 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // Log sync transaction
-      const transactions = await getQTTransactionsCollection();
-      await transactions.insertOne({
-        fid: numFid,
-        type: difference > 0 ? 'deposit' : 'withdrawal',
-        amount: difference, // Positive for deposit, negative for withdrawal
-        fromAddress: difference > 0 ? walletAddress : contractAddress,
-        toAddress: difference > 0 ? contractAddress : walletAddress,
-        txHash: `sync-${Date.now()}`, // Mark as sync transaction
-        blockNumber: 0,
-        status: 'completed',
-        createdAt: Date.now(),
-      });
+      // Don't create transaction records for sync operations
+      // Sync operations are internal and shouldn't appear in user transaction history
+      // The actual blockchain transactions are already recorded by event listeners
 
       return NextResponse.json({
         success: true,

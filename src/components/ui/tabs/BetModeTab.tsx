@@ -120,6 +120,9 @@ const ERC20_ABI = [
   // Persist the latest amounts across async flows (avoid reading cleared state)
   const currentDepositAmount = useRef<number>(0);
   const currentWithdrawAmount = useRef<number>(0);
+  // Debounce sync calls to prevent multiple simultaneous syncs
+  const lastSyncTime = useRef<number>(0);
+  const SYNC_DEBOUNCE_MS = 5000; // Only allow sync once every 5 seconds
   
   // Keep screenRef in sync with screen state
   useEffect(() => {
@@ -549,21 +552,37 @@ const ERC20_ABI = [
         
         // Poll for balance update (events might take a few seconds to process)
         let pollCount = 0;
-        const maxPolls = 15; // Poll for up to 30 seconds (15 * 2s)
+        const maxPolls = 10; // Reduced from 15 - poll for up to 30 seconds (10 * 3s)
         
-        // Try manual sync first (in case event listener hasn't processed yet)
-        if (address && context?.user?.fid) {
-          fetch('/api/bet-mode/deposit/sync', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              fid: context.user.fid,
-              walletAddress: address,
-            }),
-          }).catch((syncError) => {
-            console.warn('Manual sync failed, will rely on event listener:', syncError);
-          });
-        }
+        // Single sync attempt after 3 seconds (give event listener time to process)
+        const syncTimeout = setTimeout(() => {
+          const now = Date.now();
+          // Debounce: only sync if enough time has passed since last sync
+          if (now - lastSyncTime.current < SYNC_DEBOUNCE_MS) {
+            console.log('Sync debounced, skipping...');
+            return;
+          }
+          
+          if (address && context?.user?.fid) {
+            lastSyncTime.current = now;
+            fetch('/api/bet-mode/deposit/sync', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                fid: context.user.fid,
+                walletAddress: address,
+              }),
+            }).then((syncRes) => {
+              syncRes.json().then((syncData) => {
+                if (syncData.synced) {
+                  fetchStatus(); // Refresh after sync
+                }
+              });
+            }).catch((syncError) => {
+              console.warn('Manual sync failed, will rely on event listener:', syncError);
+            });
+          }
+        }, 3000);
         
         // Immediate refresh
         fetchStatus();
@@ -572,28 +591,17 @@ const ERC20_ABI = [
           pollCount++;
           fetchStatus();
           
-          // Try sync again after a few polls
-          if (pollCount === 3 && address && context?.user?.fid) {
-            fetch('/api/bet-mode/deposit/sync', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                fid: context.user.fid,
-                walletAddress: address,
-              }),
-            }).catch(() => {});
-          }
-          
           if (pollCount >= maxPolls) {
             clearInterval(pollInterval);
             // Final refresh after polling completes
             setTimeout(() => fetchStatus(), 1000);
           }
-        }, 2000); // Poll every 2 seconds
+        }, 3000); // Poll every 3 seconds (reduced from 2s)
         
         // Cleanup on unmount
         return () => {
           clearInterval(pollInterval);
+          clearTimeout(syncTimeout);
         };
       }
     }
@@ -636,9 +644,18 @@ const ERC20_ABI = [
       let pollCount = 0;
       const maxPolls = 15; // Poll for up to 30 seconds (15 * 2s)
       
-      // Try manual sync first (in case event listener hasn't processed yet)
+      // Try manual sync once after a delay (event listener should handle it, but sync as backup)
+      // Only sync once to avoid creating multiple transaction records
       const performSync = async () => {
+        const now = Date.now();
+        // Debounce: only sync if enough time has passed since last sync
+        if (now - lastSyncTime.current < SYNC_DEBOUNCE_MS) {
+          console.log('Sync debounced, skipping...');
+          return;
+        }
+        
         if (address && context?.user?.fid) {
+          lastSyncTime.current = now;
           try {
             const syncRes = await fetch('/api/bet-mode/deposit/sync', {
               method: 'POST',
@@ -651,6 +668,7 @@ const ERC20_ABI = [
             const syncData = await syncRes.json();
             if (syncData.synced) {
               console.log('Balance synced successfully:', syncData);
+              fetchStatus(); // Refresh status after sync
             }
           } catch (syncError) {
             console.warn('Manual sync failed, will rely on event listener:', syncError);
@@ -658,28 +676,27 @@ const ERC20_ABI = [
         }
       };
       
-      // Immediate sync attempt
-      performSync();
+      // Single sync attempt after 3 seconds (give event listener time to process)
+      const syncTimeout = setTimeout(() => {
+        performSync();
+      }, 3000);
       
+      // Poll for balance update (reduced frequency)
       const pollInterval = setInterval(() => {
         pollCount++;
         fetchStatus();
-        
-        // Try sync again after a few polls
-        if (pollCount === 3 || pollCount === 6 || pollCount === 9) {
-          performSync();
-        }
         
         if (pollCount >= maxPolls) {
           clearInterval(pollInterval);
           // Final refresh after polling completes
           setTimeout(() => fetchStatus(), 1000);
         }
-      }, 2000); // Poll every 2 seconds
+      }, 3000); // Poll every 3 seconds (reduced from 2s)
       
       // Cleanup on unmount
       return () => {
         clearInterval(pollInterval);
+        clearTimeout(syncTimeout);
       };
     }
   }, [isWithdrawConfirmed, withdrawTxHash, fetchStatus, address, context?.user?.fid]);
@@ -1317,7 +1334,7 @@ const ERC20_ABI = [
 
         let data = await res.json();
 
-        // If there's a balance mismatch, try to sync first
+        // If there's a balance mismatch, try to sync first (only once)
         if (!res.ok && data.needsSync && address && fid) {
           console.log('Balance mismatch detected, attempting to sync...');
           try {
@@ -1332,11 +1349,14 @@ const ERC20_ABI = [
             
             const syncData = await syncRes.json();
             if (syncData.success && syncData.synced) {
-              // Retry withdrawal after sync
+              // Retry withdrawal after sync (only once)
               console.log('Balance synced, retrying withdrawal...');
               await fetchStatus(); // Refresh status
               
-              // Retry the withdrawal prepare
+              // Wait a moment for DB to update
+              await new Promise(resolve => setTimeout(resolve, 500));
+              
+              // Retry the withdrawal prepare (only once)
               res = await fetch('/api/bet-mode/withdraw/prepare', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
