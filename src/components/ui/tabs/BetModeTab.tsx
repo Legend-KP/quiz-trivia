@@ -431,35 +431,29 @@ const ERC20_ABI = [
       }
     }, [openWithdrawModal, showWithdrawModal]);
     
-  // Fetch platform wallet address
+  // Fetch platform wallet address (optional - only needed for deposit verification)
   useEffect(() => {
     let isMounted = true;
     
     fetch('/api/bet-mode/platform-wallet')
-      .then(res => {
-        if (!res.ok) {
-          return res.json().then(errData => {
-            throw new Error(errData.error || 'Failed to fetch platform wallet');
-          });
-        }
-        return res.json();
-      })
+      .then(res => res.json())
       .then(data => {
         if (!isMounted) return;
         
         if (data.address) {
           setPlatformWallet(data.address);
           setPlatformWalletError(null);
-        } else if (data.error) {
-          setPlatformWalletError(data.error);
         } else {
-          setPlatformWalletError('No platform wallet address returned');
+          // Platform wallet not configured - this is OK, just set to null
+          setPlatformWallet(null);
+          setPlatformWalletError(null);
         }
       })
       .catch(err => {
         if (!isMounted) return;
-        console.error('Failed to fetch platform wallet:', err);
-        setPlatformWalletError(err.message || 'Failed to load platform wallet');
+        // Silently handle error - platform wallet is optional
+        setPlatformWallet(null);
+        setPlatformWalletError(null);
       });
     
     return () => {
