@@ -36,21 +36,36 @@ export function verifyAdminAuth(req: NextRequest): { valid: boolean; error?: str
 }
 
 /**
- * Get client IP address from request
+ * Get client IP address from NextRequest
+ * Handles various proxy headers and Next.js deployment scenarios
+ * 
+ * Note: NextRequest doesn't have a direct 'ip' property in Next.js 15+
+ * IP addresses must be extracted from headers
  */
 export function getClientIP(req: NextRequest): string {
-  // Check various headers for IP (in order of preference)
-  const forwarded = req.headers.get('x-forwarded-for');
-  if (forwarded) {
-    return forwarded.split(',')[0].trim();
+  // Try various headers that proxies/load balancers use (in order of preference)
+  
+  // x-forwarded-for: Standard proxy header (most common)
+  // Can contain multiple IPs, take the first one
+  const forwardedFor = req.headers.get('x-forwarded-for');
+  if (forwardedFor) {
+    return forwardedFor.split(',')[0].trim();
   }
 
+  // x-real-ip: Nginx and other reverse proxies
   const realIP = req.headers.get('x-real-ip');
   if (realIP) {
     return realIP;
   }
 
-  return req.ip || 'unknown';
+  // x-vercel-forwarded-for: Vercel-specific header
+  const vercelForwardedFor = req.headers.get('x-vercel-forwarded-for');
+  if (vercelForwardedFor) {
+    return vercelForwardedFor.split(',')[0].trim();
+  }
+
+  // Fallback if no IP can be determined
+  return 'unknown';
 }
 
 /**
