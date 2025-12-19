@@ -460,6 +460,33 @@ const ERC20_ABI = [
       isMounted = false;
     };
   }, []);
+
+  // Clear active games when entering bet mode entry screen
+  useEffect(() => {
+    if (screen !== 'entry') return;
+    
+    const clearActiveGame = async () => {
+      const fid = context?.user?.fid;
+      if (!fid) return;
+      
+      try {
+        const res = await fetch('/api/bet-mode/clear-active', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fid }),
+        });
+        if (res.ok) {
+          // Refresh status after clearing to update balance
+          fetchStatus();
+        }
+      } catch (err) {
+        // Silently handle - not critical
+        console.error('Failed to clear active game on entry:', err);
+      }
+    };
+    
+    clearActiveGame();
+  }, [screen, context?.user?.fid, fetchStatus]);
     
   // Handle deposit verification with useCallback to avoid stale closures
   const handleDepositVerification = useCallback(async (txHash: string) => {
@@ -1003,6 +1030,18 @@ const ERC20_ABI = [
       setError(null);
 
       try {
+        // Clear any existing active game before starting a new one
+        try {
+          await fetch('/api/bet-mode/clear-active', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fid }),
+          });
+        } catch (clearErr) {
+          // Continue even if clearing fails - start endpoint will handle it
+          console.error('Failed to clear active game:', clearErr);
+        }
+
         const res = await fetch('/api/bet-mode/start', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1068,13 +1107,32 @@ const ERC20_ABI = [
       setSelectedAnswer(null);
     };
 
-  const handlePlayAgain = () => {
+  const handlePlayAgain = async () => {
+      // Clear any active games before starting fresh
+      const fid = context?.user?.fid;
+      if (fid) {
+        try {
+          await fetch('/api/bet-mode/clear-active', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fid }),
+          });
+        } catch (err) {
+          // Silently handle - not critical
+          console.error('Failed to clear active game:', err);
+        }
+      }
+      
       setScreen('entry');
       setCurrentGame(null);
       setCurrentQuestion(null);
       setGameResult(null);
       setSelectedAnswer(null);
       setError(null);
+      // Refresh status to get updated balance
+      if (fid) {
+        fetchStatus();
+      }
     };
 
     const handleShareResult = async () => {
@@ -1427,7 +1485,7 @@ const ERC20_ABI = [
               </button>
             )}
               <div className="text-6xl mb-4">🎰</div>
-              <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100">Bet Mode</h2>
+              <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100">Bet Mode: Make upto 5x!</h2>
               <p className="text-gray-700 dark:text-gray-300 mb-6">🔴 Available 24/7</p>
 
               <div className="text-left bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-6">
@@ -2316,6 +2374,16 @@ const ERC20_ABI = [
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-2xl text-center overflow-y-auto max-h-[calc(100vh-5rem)]">
             <XCircle className="w-16 h-16 text-red-500 dark:text-red-400 mx-auto mb-4" />
               <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100">❌ WRONG ANSWER</h2>
+
+              {/* Display losing amount */}
+              {betAmount > 0 && (
+                <div className="mb-4">
+                  <div className="bg-red-50 dark:bg-red-900 rounded-lg p-4 border-2 border-red-200 dark:border-red-700">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Amount Lost</p>
+                    <p className="text-2xl font-bold text-red-600 dark:text-red-400">{formatQT(betAmount)}</p>
+                  </div>
+                </div>
+              )}
 
               {gameResult.explanation && (
                 <div className="mb-4">
