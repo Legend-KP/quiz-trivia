@@ -24,6 +24,10 @@ function formatMode(mode?: string | null) {
     case "time_mode":
     case "time-mode":
       return "Timed Sprint";
+    case "spin-wheel":
+    case "spinwheel":
+    case "spin the wheel":
+      return "Spin the Wheel";
     default:
       return normalized
         .replace(/[_-]/g, " ")
@@ -85,6 +89,9 @@ export async function GET(request: NextRequest) {
   const payoutParam = searchParams.get("payout");
   const profitParam = searchParams.get("profit");
   // Removed ticketsParam - tickets section removed from Bet Mode thumbnails
+  
+  // Spin Wheel specific params
+  const qtAmountParam = searchParams.get("qtAmount");
 
   const fallbackImage = new ImageResponse(
     (
@@ -181,6 +188,9 @@ export async function GET(request: NextRequest) {
   const payoutValue = payoutParam ?? null;
   const profitValue = profitParam ?? null;
   // Removed tickets section from Bet Mode thumbnails
+  
+  // Spin Wheel specific params
+  const qtAmountValue = qtAmountParam ?? null;
 
   if (scoreValue) {
     statsData.push({
@@ -204,6 +214,14 @@ export async function GET(request: NextRequest) {
   }
   if (profitValue) {
     statsData.push({ label: "Profit", value: profitValue });
+  }
+  
+  // Spin Wheel stats - used when sharing Spin Wheel results
+  if (qtAmountValue && modeParam?.toLowerCase() === "spin-wheel") {
+    const qtAmount = Number(qtAmountValue);
+    if (!isNaN(qtAmount)) {
+      statsData.push({ label: "QT Won", value: `${qtAmount.toLocaleString()} QT` });
+    }
   }
 
   return new ImageResponse(
@@ -344,7 +362,7 @@ export async function GET(request: NextRequest) {
                   </div>
                   <div
                     style={{
-                      fontSize: "96px",
+                      fontSize: modeLabel === "Spin the Wheel" ? "72px" : "96px",
                       fontWeight: 800,
                       lineHeight: 1,
                       color: "#FACC15",

@@ -97,13 +97,13 @@ export default function PublicLeaderboard() {
   const handleShare = async () => {
     try {
       await actions.composeCast({
-        text: 'I just played Quiz Trivia! 🎉 Come try it:',
+        text: '🎉 I'm playing Quiz Trivia by @kushal-paliwal — fun, fast, and addictive.\nJump in and see how you rank 👇',
         embeds: ['https://quiz-trivia-mu.vercel.app/'],
       });
     } catch (err) {
       console.error('Failed to open Farcaster composer:', err);
       // Fallback to Warpcast compose URL
-      const text = encodeURIComponent('I just played Quiz Trivia! 🎉 Come try it:');
+      const text = encodeURIComponent('🎉 I'm playing Quiz Trivia by @kushal-paliwal — fun, fast, and addictive.\nJump in and see how you rank 👇');
       const url = encodeURIComponent('https://quiz-trivia-mu.vercel.app/');
       const warpcastUrl = `https://warpcast.com/~/compose?text=${text}%20${url}`;
       if (typeof window !== 'undefined') {

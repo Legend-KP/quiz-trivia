@@ -171,9 +171,21 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
   };
 
   const handleShare = async () => {
-    const qtAmount = result?.qtAmount?.toLocaleString() || 0;
-    const shareText = `🎉 I just won ${qtAmount} QT tokens from the ${APP_NAME} Spin the Wheel! 🎰 Try your luck too:`;
-    const shareUrl = APP_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+    const qtAmount = result?.qtAmount || 0;
+    const qtAmountFormatted = qtAmount.toLocaleString();
+    const shareText = `🎉 Just hit the Spin the Wheel on ${APP_NAME} by @kushal-paliwal\nWon ${qtAmountFormatted} QT tokens 🎰\nFeeling lucky? Try your spin 👇`;
+    
+    // Build share URL with thumbnail
+    const fid = context?.user?.fid;
+    let shareUrl = APP_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+    
+    if (fid) {
+      // Create share URL with thumbnail parameters
+      const shareUrlObj = new URL(`${shareUrl}/share/${fid}`);
+      shareUrlObj.searchParams.set('mode', 'spin-wheel');
+      shareUrlObj.searchParams.set('qtAmount', qtAmount.toString());
+      shareUrl = shareUrlObj.toString();
+    }
 
     try {
       // Try to use Farcaster composeCast if available

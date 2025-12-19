@@ -792,21 +792,21 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
 
                 const shareText =
                   mode === QuizMode.TIME_MODE
-                    ? `I just smashed Time Mode in ${APP_NAME}! ⚡️ Scored ${score} correct.`
-                    : `I just finished the Weekly Challenge on ${APP_NAME}! 🧠 Scored ${formatScoreValue(
+                    ? `⚡️ I just smashed Time Mode on ${APP_NAME} by @kushal-paliwal!\n${score} correct answers with ${accuracyPercent || 0}% accuracy — think you can beat it? 👀\nCome try it 👇`
+                    : `🧠 Weekly Challenge complete on ${APP_NAME} by @kushal-paliwal!\nScored ${formatScoreValue(
                         score,
-                      )}/${totalQuestions}.`;
+                      )}/${totalQuestions} — this one really tests your brain 🔥\nJump in and give it a go 👇`;
 
                 try {
                   await actions.composeCast({
-                    text: `${shareText} Come try it:`,
+                    text: shareText,
                     embeds: [
                       buildShareUrl(),
                     ],
                   });
                 } catch (err) {
                   console.error('Failed to open Farcaster composer:', err);
-                  const text = encodeURIComponent(`${shareText} Come try it:`);
+                  const text = encodeURIComponent(shareText);
                   const url = encodeURIComponent(buildShareUrl());
                   const warpcastUrl = `https://warpcast.com/~/compose?text=${text}%20${url}`;
                   if (typeof window !== 'undefined') {

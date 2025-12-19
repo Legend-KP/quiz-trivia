@@ -1088,25 +1088,26 @@ const ERC20_ABI = [
 
         const buildShareUrl = () => {
           const base = new URL(`${APP_URL}/share/${fid}`);
-          base.searchParams.set('mode', 'Bet Mode');
+          base.searchParams.set('mode', 'bet-mode');
+          base.searchParams.set('result', gameResult.type === 'cash-out' ? 'cashout' : 'win');
           base.searchParams.set('payout', formatQT(gameResult.payout));
-          base.searchParams.set('profit', `+${formatQT(profit)}`);
+          base.searchParams.set('profit', formatQT(profit));
           base.searchParams.set('tickets', `${gameResult.ticketsEarned || 0}`);
           return base.toString();
         };
 
         const shareText = gameResult.type === 'cash-out'
-          ? `I just cashed out ${formatQT(gameResult.payout)} in ${APP_NAME} Bet Mode! 💰 Profit: +${formatQT(profit)} (${profitPercent}%)`
-          : `I just won ${formatQT(gameResult.payout)} in ${APP_NAME} Bet Mode! 🎉 Profit: +${formatQT(profit)} (${profitPercent}%)`;
+          ? `💰 Just cashed out on ${APP_NAME} by @kushal-paliwal\nPayout: ${formatQT(gameResult.payout)}\nProfit: +${formatQT(profit)} (${profitPercent}%) 😎\nThink you can play it smarter? 👇`
+          : `🎉 Big win in Bet Mode on ${APP_NAME} by @kushal-paliwal!\nPayout: ${formatQT(gameResult.payout)}\nProfit: +${formatQT(profit)} (${profitPercent}%) 🔥\nYour turn to try 👇`;
 
         try {
           await actions.composeCast({
-            text: `${shareText} Come try it:`,
+            text: shareText,
             embeds: [buildShareUrl()],
           });
         } catch (err) {
           console.error('Failed to open Farcaster composer:', err);
-          const text = encodeURIComponent(`${shareText} Come try it:`);
+          const text = encodeURIComponent(shareText);
           const url = encodeURIComponent(buildShareUrl());
           const warpcastUrl = `https://warpcast.com/~/compose?text=${text}%20${url}`;
           if (typeof window !== 'undefined') {
