@@ -3,7 +3,7 @@ const { ethers } = require("hardhat");
 async function main() {
   console.log("💰 Funding ALL contracts with 1 million QT tokens each...\n");
   
-  const QT_TOKEN_ADDRESS = process.env.QT_TOKEN_ADDRESS || "0x541529ADB3f344128aa87917fd2926E7D240FB07";
+  const QT_TOKEN_ADDRESS = process.env.QT_TOKEN_ADDRESS || "0x361faAea711B20caF59726e5f478D745C187cB07";
   const FUND_AMOUNT = 1_000_000; // 1 million QT tokens (without decimals)
   const FUND_AMOUNT_WEI = ethers.parseEther(FUND_AMOUNT.toString());
   

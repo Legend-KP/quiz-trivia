@@ -14,7 +14,7 @@ export function QTTokenBar() {
   const [error, setError] = useState<string | null>(null);
 
   // QT Token information
-  const QT_TOKEN_ADDRESS = "0x541529ADB3f344128aa87917fd2926E7D240FB07";
+  const QT_TOKEN_ADDRESS = "0x361faAea711B20caF59726e5f478D745C187cB07";
   const CHAIN_ID = "8453"; // Base Mainnet
   const TOKEN_SYMBOL = "$QT";
   const TOKEN_NAME = "Quiz Trivia Token";

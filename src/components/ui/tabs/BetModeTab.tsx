@@ -103,7 +103,7 @@ const ERC20_ABI = [
     
   // Get QT token address from environment (client-side safe)
   // Fallback to hardcoded address if env var not set
-  const QT_TOKEN_ADDRESS = "0x541529ADB3f344128aa87917fd2926E7D240FB07";
+  const QT_TOKEN_ADDRESS = "0x361faAea711B20caF59726e5f478D745C187cB07";
   const qtTokenAddress = (process.env.NEXT_PUBLIC_QT_TOKEN_ADDRESS || QT_TOKEN_ADDRESS) as `0x${string}`;
   
   const [screen, setScreen] = useState<BetModeScreen>('entry');
@@ -921,7 +921,7 @@ const ERC20_ABI = [
     
     const handleBuyQT = async () => {
       try {
-        const QT_TOKEN_ADDRESS = "0x541529ADB3f344128aa87917fd2926E7D240FB07";
+        const QT_TOKEN_ADDRESS = "0x361faAea711B20caF59726e5f478D745C187cB07";
         const CHAIN_ID = "8453"; // Base Mainnet
         const TOKEN_ASSET_ID = `eip155:${CHAIN_ID}/erc20:${QT_TOKEN_ADDRESS}`;
         

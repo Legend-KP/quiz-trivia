@@ -5,7 +5,7 @@ import { useWriteContract, useReadContract, useAccount, useWaitForTransactionRec
 // This should be set to the deployed SpinWheelQTDistributor contract address
 const SPIN_WHEEL_CONTRACT = process.env.NEXT_PUBLIC_SPIN_WHEEL_QT_DISTRIBUTOR_ADDRESS as `0x${string}` || '0x0000000000000000000000000000000000000000';
 
-const QT_TOKEN_ADDRESS = '0x541529ADB3f344128aa87917fd2926E7D240FB07';
+const QT_TOKEN_ADDRESS = '0x361faAea711B20caF59726e5f478D745C187cB07';
 
 // Contract ABI (complete)
 const SPIN_WHEEL_ABI = [

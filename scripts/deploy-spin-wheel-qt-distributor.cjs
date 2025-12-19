@@ -7,7 +7,7 @@ async function main() {
   const SpinWheelQTDistributor = await ethers.getContractFactory("SpinWheelQTDistributor");
   
   // QT Token address on Base network
-  const QT_TOKEN_ADDRESS = process.env.QT_TOKEN_ADDRESS || "0x541529ADB3f344128aa87917fd2926E7D240FB07";
+  const QT_TOKEN_ADDRESS = process.env.QT_TOKEN_ADDRESS || "0x361faAea711B20caF59726e5f478D745C187cB07";
   
   if (!QT_TOKEN_ADDRESS) {
     throw new Error("QT_TOKEN_ADDRESS environment variable is required");

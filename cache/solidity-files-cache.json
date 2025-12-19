@@ -703,8 +703,8 @@
       ]
     },
     "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\SpinWheelQTDistributor.sol": {
-      "lastModificationDate": 1766143377441,
-      "contentHash": "c77935884144d5c2adb0dbb4ae3c3a63",
+      "lastModificationDate": 1766170220245,
+      "contentHash": "b8073637c3ed7b76829e568d639b2bf7",
       "sourceName": "contracts/SpinWheelQTDistributor.sol",
       "solcConfig": {
         "version": "0.8.20",

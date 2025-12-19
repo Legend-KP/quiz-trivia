@@ -5,7 +5,7 @@ async function main() {
   
   // Contract addresses
   const SPIN_WHEEL_CONTRACT = process.env.SPIN_WHEEL_CONTRACT_ADDRESS || "0x8f8298D16dC4F192587e11a7a7C7F8c7F81A4C89";
-  const QT_TOKEN_ADDRESS = process.env.QT_TOKEN_ADDRESS || "0x541529ADB3f344128aa87917fd2926E7D240FB07";
+  const QT_TOKEN_ADDRESS = process.env.QT_TOKEN_ADDRESS || "0x361faAea711B20caF59726e5f478D745C187cB07";
   // Amount to withdraw - if "all" or "0", withdraws entire balance
   const WITHDRAW_AMOUNT = process.env.WITHDRAW_AMOUNT || "all";
   

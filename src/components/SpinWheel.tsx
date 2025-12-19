@@ -28,7 +28,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
       
       if (lastSpinTime) {
         const timeSinceLastSpin = Date.now() - parseInt(lastSpinTime);
-        const cooldownPeriod = 60 * 60 * 1000; // 1 hour in milliseconds
+        const cooldownPeriod = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
         const remainingTime = cooldownPeriod - timeSinceLastSpin;
         
         if (remainingTime > 0) {
@@ -82,10 +82,10 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
       const response = await onSpin();
       
       if (response.success && response.spinResult) {
-        // Record the spin time for 1-hour cooldown
+        // Record the spin time for 12-hour cooldown
         localStorage.setItem('lastSpinTime', Date.now().toString());
         setCanSpin(false);
-        setTimeLeft(60 * 60); // 1 hour in seconds
+        setTimeLeft(12 * 60 * 60); // 12 hours in seconds
         
         // Find which segment index the result corresponds to
         const resultIndex = wheelOptions.findIndex(opt => opt.id === response.spinResult.id);
@@ -303,7 +303,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
             </div>
           </div>
               <div className="text-xs text-gray-500">
-                You can spin once every hour
+                You can spin once every 12 hours
               </div>
         </div>
       )}

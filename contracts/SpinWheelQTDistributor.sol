@@ -22,8 +22,8 @@ contract SpinWheelQTDistributor {
     uint256 public constant REWARD_2000_QT = 2000 * 10**18;
     uint256 public constant REWARD_10000_QT = 10000 * 10**18;
     
-    // Cooldown period (1 hour = 3600 seconds)
-    uint256 public constant COOLDOWN_PERIOD = 3600;
+    // Cooldown period (12 hours = 43200 seconds)
+    uint256 public constant COOLDOWN_PERIOD = 43200;
     
     // Track last claim timestamp per user
     mapping(address => uint256) public lastClaimTimestamp;

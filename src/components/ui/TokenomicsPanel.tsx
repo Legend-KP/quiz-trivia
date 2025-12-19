@@ -14,7 +14,7 @@ const QTTokenomicsPanel = ({ isOpen, onClose }: TokenomicsPanelProps) => {
   const [copied, setCopied] = useState(false);
 
   // QT Token information
-  const QT_TOKEN_ADDRESS = "0x541529ADB3f344128aa87917fd2926E7D240FB07";
+  const QT_TOKEN_ADDRESS = "0x361faAea711B20caF59726e5f478D745C187cB07";
   const CHAIN_ID = "8453"; // Base Mainnet
   const TOKEN_ASSET_ID = `eip155:${CHAIN_ID}/erc20:${QT_TOKEN_ADDRESS}`;
 
