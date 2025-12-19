@@ -7,7 +7,7 @@ import sdk from "@farcaster/miniapp-sdk";
  * Bottom Navigation Component
  * 
  * Displays a fixed bottom navigation bar with three options:
- * - Left: $QT (Token view)
+ * - Left: Buy $QT (Opens token in wallet for buying)
  * - Center: Home
  * - Right: Rewards
  */
@@ -29,10 +29,12 @@ export function BottomNavigation({
   const CHAIN_ID = "8453"; // Base Mainnet
   const TOKEN_ASSET_ID = `eip155:${CHAIN_ID}/erc20:${QT_TOKEN_ADDRESS}`;
 
-  const handleQTClick = async () => {
+  const handleBuyQT = async () => {
     setIsLoadingQT(true);
     try {
+      // Open QT token in wallet for buying
       await sdk.actions.viewToken({ token: TOKEN_ASSET_ID });
+      console.log("Opening QT token in wallet");
     } catch (err) {
       console.error("Failed to open token in wallet:", err);
     } finally {
@@ -64,9 +66,9 @@ export function BottomNavigation({
     >
       <div className="bg-white backdrop-blur-md border-t-2 border-gray-200 shadow-xl">
         <div className="flex items-center justify-around h-16 px-2">
-          {/* Left: $QT */}
+          {/* Left: Buy $QT */}
           <button
-            onClick={handleQTClick}
+            onClick={handleBuyQT}
             disabled={isLoadingQT}
             className={`flex flex-col items-center justify-center flex-1 h-full transition-all duration-200 rounded-lg text-gray-800 ${
               activeTab === "qt"
@@ -101,7 +103,9 @@ export function BottomNavigation({
                 </div>
               )}
             </div>
-            <span className="text-[10px] mt-0.5 font-medium">Token</span>
+            <span className="text-[10px] mt-0.5 font-medium">
+              {isLoadingQT ? "Opening..." : "Buy"}
+            </span>
           </button>
 
           {/* Home */}
