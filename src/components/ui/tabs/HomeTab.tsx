@@ -10,6 +10,21 @@ import { currentWeeklyQuiz } from '~/lib/weeklyQuiz';
 import { useQuizState } from '~/hooks/useWeeklyQuiz';
 import QuizResultsSubmitPage from '~/components/QuizResultsSubmitPage';
 import { BetModeTab } from './BetModeTab';
+import { useAccount, useReadContract } from 'wagmi';
+import { base } from 'wagmi/chains';
+import { formatUnits } from 'viem';
+
+const ERC20_ABI = [
+  {
+    inputs: [{ internalType: 'address', name: 'account', type: 'address' }],
+    name: 'balanceOf',
+    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+] as const;
+
+const QT_TOKEN_ADDRESS = "0x541529ADB3f344128aa87917fd2926E7D240FB07";
 
 // Type definitions
 interface QuizQuestion {
@@ -285,6 +300,24 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
   const [weeklyUserCompleted, setWeeklyUserCompleted] = useState(false);
   const { actions, added, context } = useMiniApp();
   const attemptedAddRef = useRef(false);
+  const { address, isConnected } = useAccount();
+  const qtTokenAddress = (process.env.NEXT_PUBLIC_QT_TOKEN_ADDRESS || QT_TOKEN_ADDRESS) as `0x${string}`;
+
+  // Read QT token balance from wallet
+  const { data: walletBalanceRaw } = useReadContract({
+    address: qtTokenAddress,
+    abi: ERC20_ABI,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    chainId: base.id,
+    query: {
+      enabled: !!address && !!qtTokenAddress && isConnected && typeof address === 'string',
+      refetchInterval: 10000, // Refetch every 10 seconds
+    },
+  });
+
+  // Convert balance from wei to QT (18 decimals)
+  const walletBalance = walletBalanceRaw ? parseFloat(formatUnits(walletBalanceRaw, 18)) : 0;
 
   // Determine if current user has already completed the current weekly quiz (single attempt enforcement)
   useEffect(() => {
@@ -392,6 +425,19 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
                   return;
                 }
 
+                // Check if user has connected wallet and QT tokens
+                if (!isConnected || !address) {
+                  alert('Please connect your Farcaster wallet to start the Weekly Quiz. You need to hold QT tokens to participate.');
+                  return;
+                }
+
+                // Check QT token balance (require at least 1 QT token)
+                const minRequiredQT = 1;
+                if (walletBalance < minRequiredQT) {
+                  alert(`You need to hold at least ${minRequiredQT} QT token to start the Weekly Quiz. Your current balance: ${walletBalance.toFixed(4)} QT.\n\nPlease get QT tokens and try again.`);
+                  return;
+                }
+
                 // Server-side check: Verify user hasn't already completed this quiz
                 const checkRes = await fetch(`/api/leaderboard/check?fid=${fid}&quizId=${quizId}`);
                 const checkData = await checkRes.json();
@@ -402,17 +448,7 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
                   return;
                 }
 
-                // Deduct coins
-                const res = await fetch('/api/currency/spend', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ fid, amount: 15, reason: 'weekly_entry' }),
-                });
-                if (!res.ok) {
-                  const d = await res.json().catch(() => ({}));
-                  alert(d?.error || 'Insufficient balance');
-                  return;
-                }
+                // No coin deduction - Weekly Quiz now requires QT tokens instead
               } catch (_e) {
                 alert('Failed to start quiz. Please try again.');
                 return;

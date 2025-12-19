@@ -214,11 +214,11 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                 {/* Rewards */}
                 <div className="bg-yellow-50 rounded-lg p-3">
                   <div className="font-semibold text-yellow-800 mb-1.5 text-sm">
-                    🔥 Rewards — 15M $QT Tokens
+                    🔥 Rewards — 25M $QT Tokens
                   </div>
-                  <p className="text-xs text-yellow-700 mb-1">🥇 1st Place: 4.0M $QT</p>
-                  <p className="text-xs text-yellow-700 mb-1">🥈 2nd Place: 2.5M $QT</p>
-                  <p className="text-xs text-yellow-700 mb-1">🥉 3rd Place: 1.5M $QT</p>
+                  <p className="text-xs text-yellow-700 mb-1">🥇 1st Place: 10M $QT</p>
+                  <p className="text-xs text-yellow-700 mb-1">🥈 2nd Place: 5M $QT</p>
+                  <p className="text-xs text-yellow-700 mb-1">🥉 3rd Place: 3M $QT</p>
                   <p className="text-xs text-yellow-700">4th-10th: 1.0M $QT each</p>
                 </div>
 
@@ -229,7 +229,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                   </div>
                   {quizState === 'ended' && !userCompleted && (
                     <p className={`text-xs ${stateInfo.textColor} mb-1.5`}>
-                      This quiz has ended. Check the leaderboard to see results!
+                      This quiz has ended, Add Frame for next Quiz update. Check the leaderboard to see results!
                     </p>
                   )}
                   {userCompleted && (
