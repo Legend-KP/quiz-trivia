@@ -7,7 +7,7 @@ import sdk from "@farcaster/miniapp-sdk";
  * Bottom Navigation Component
  * 
  * Displays a fixed bottom navigation bar with three options:
- * - Left: Buy $QT (Opens token in wallet for buying)
+ * - Left: Buy $QT (Opens swap interface to buy QT token)
  * - Center: Home
  * - Right: Rewards
  */
@@ -32,11 +32,14 @@ export function BottomNavigation({
   const handleBuyQT = async () => {
     setIsLoadingQT(true);
     try {
-      // Open QT token in wallet for buying
-      await sdk.actions.viewToken({ token: TOKEN_ASSET_ID });
-      console.log("Opening QT token in wallet");
+      // Open swap interface to buy QT token directly
+      await sdk.actions.swapToken({
+        sellToken: `eip155:${CHAIN_ID}/native`, // Base ETH
+        buyToken: TOKEN_ASSET_ID, // QT Token
+      });
+      console.log("Opening swap interface to buy QT token");
     } catch (err) {
-      console.error("Failed to open token in wallet:", err);
+      console.error("Failed to open swap interface:", err);
     } finally {
       setIsLoadingQT(false);
     }
@@ -70,18 +73,18 @@ export function BottomNavigation({
           <button
             onClick={handleBuyQT}
             disabled={isLoadingQT}
-            className={`flex flex-col items-center justify-center flex-1 h-full transition-all duration-200 rounded-lg text-gray-800 ${
-              activeTab === "qt"
-                ? "bg-white shadow-md"
-                : "bg-white hover:bg-gray-50"
-            } ${isLoadingQT ? "opacity-50 cursor-not-allowed" : ""}`}
+            className={`flex flex-col items-center justify-center flex-1 h-full mx-1 transition-all duration-200 rounded-2xl bg-white text-purple-600 font-bold shadow-lg ${
+              isLoadingQT
+                ? "opacity-50 cursor-not-allowed"
+                : "hover:bg-gray-100 active:scale-95"
+            }`}
           >
             <div className="relative">
               <span className="text-lg font-bold">$QT</span>
               {isLoadingQT && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <svg
-                    className="animate-spin h-4 w-4 text-gray-800"
+                    className="animate-spin h-4 w-4 text-purple-600"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
