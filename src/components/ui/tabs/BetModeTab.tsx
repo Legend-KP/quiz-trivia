@@ -246,6 +246,16 @@ const ERC20_ABI = [
     const [questionTimerEnd, setQuestionTimerEnd] = useState<number | null>(null);
     const [timerDisplay, setTimerDisplay] = useState<number>(30);
 
+    // Get time limit for each question based on question number
+    const getQuestionTimeLimit = (questionNumber: number): number => {
+      if (questionNumber >= 1 && questionNumber <= 4) return 30; // Q1-Q4: 30 seconds
+      if (questionNumber === 5) return 25; // Q5: 25 seconds
+      if (questionNumber === 6 || questionNumber === 7) return 20; // Q6-Q7: 20 seconds
+      if (questionNumber === 8 || questionNumber === 9) return 15; // Q8-Q9: 15 seconds
+      if (questionNumber === 10) return 10; // Q10: 10 seconds
+      return 30; // Default fallback
+    };
+
     const loadGameState = useCallback(async (_gameId: string) => {
       // In a real implementation, you'd fetch the current question
       // For now, we'll handle it through the answer flow
@@ -920,10 +930,12 @@ const ERC20_ABI = [
           if (data.nextQuestion) {
             setCurrentQuestion(data.nextQuestion);
             setSelectedAnswer(null);
-            // Start 30 second timer for next question
-            const timerEnd = Date.now() + 30000; // 30 seconds from now
+            // Start timer for next question based on question number
+            const questionNum = data.nextQuestion.questionNumber || 1;
+            const timeLimit = getQuestionTimeLimit(questionNum) * 1000; // Convert to milliseconds
+            const timerEnd = Date.now() + timeLimit;
             setQuestionTimerEnd(timerEnd);
-            setTimerDisplay(30);
+            setTimerDisplay(getQuestionTimeLimit(questionNum));
             setCurrentGame((prev: any) => ({
               ...prev,
               currentQuestion: data.nextQuestion.questionNumber,
@@ -1011,10 +1023,12 @@ const ERC20_ABI = [
 
         setCurrentGame(data);
         setCurrentQuestion(data.question);
-        // Start 30 second timer for first question
-        const timerEnd = Date.now() + 30000; // 30 seconds from now
+        // Start timer for first question based on question number
+        const questionNum = data.question?.questionNumber || 1;
+        const timeLimit = getQuestionTimeLimit(questionNum) * 1000; // Convert to milliseconds
+        const timerEnd = Date.now() + timeLimit;
         setQuestionTimerEnd(timerEnd);
-        setTimerDisplay(30);
+        setTimerDisplay(getQuestionTimeLimit(questionNum));
         setScreen('game');
       } catch (err: any) {
         setError(err.message || 'Failed to start game');
@@ -2386,7 +2400,7 @@ const ERC20_ABI = [
                 <div className="bg-gradient-to-r from-purple-50 dark:from-purple-900 to-pink-50 dark:to-pink-900 rounded-lg p-4 border-2 border-purple-200 dark:border-purple-700">
                   <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">⚡ Rules</h3>
                   <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
-                    <p>• 30 seconds per question</p>
+                    <p>• Q1-Q4: 30s | Q5: 25s | Q6-Q7: 20s | Q8-Q9: 15s | Q10: 10s</p>
                     <p>• Wrong answer = game over</p>
                     <p>• Cash out available from Q5</p>
                   </div>
