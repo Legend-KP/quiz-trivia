@@ -1,8 +1,37 @@
-import { MongoClient, Db, Collection } from 'mongodb';
+import { MongoClient, Db, Collection, MongoClientOptions } from 'mongodb';
 
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_DB_NAME || 'quiz_trivia';
 const collectionName = process.env.MONGODB_COLLECTION || 'leaderboard';
+
+// Secure MongoDB connection options
+const getMongoClientOptions = (): MongoClientOptions => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  return {
+    // Connection pool settings
+    maxPoolSize: 10, // Maximum number of connections in the pool
+    minPoolSize: 2, // Minimum number of connections in the pool
+    maxIdleTimeMS: 30000, // Close connections after 30 seconds of inactivity
+    
+    // Connection timeout settings
+    connectTimeoutMS: 10000, // 10 seconds to establish connection
+    socketTimeoutMS: 45000, // 45 seconds for socket operations
+    
+    // Security: Enforce SSL/TLS in production
+    ...(isProduction && {
+      tls: true,
+      tlsAllowInvalidCertificates: false, // Reject invalid certificates
+    }),
+    
+    // Retry settings
+    retryWrites: true,
+    retryReads: true,
+    
+    // Server selection timeout
+    serverSelectionTimeoutMS: 10000, // 10 seconds to select a server
+  };
+};
 
 export interface LeaderboardEntry {
   fid: number;
@@ -20,18 +49,62 @@ export interface LeaderboardEntry {
 
 let client: MongoClient | null = null;
 let db: Db | null = null;
+let connectionPromise: Promise<MongoClient> | null = null;
+
+/**
+ * Get or create MongoDB client with secure connection options
+ */
+async function getClient(): Promise<MongoClient> {
+  if (!uri) {
+    throw new Error('MONGODB_URI environment variable is not set');
+  }
+
+  // If connection is in progress, wait for it
+  if (connectionPromise) {
+    return connectionPromise;
+  }
+
+  // If client exists and is connected, return it
+  if (client) {
+    try {
+      await client.db('admin').command({ ping: 1 });
+      return client;
+    } catch (error) {
+      // Connection is dead, reset and reconnect
+      client = null;
+      db = null;
+    }
+  }
+
+  // Create new connection
+  connectionPromise = (async () => {
+    try {
+      const options = getMongoClientOptions();
+      const newClient = new MongoClient(uri, options);
+      await newClient.connect();
+      
+      // Verify connection
+      await newClient.db('admin').command({ ping: 1 });
+      
+      client = newClient;
+      db = client.db(dbName);
+      connectionPromise = null;
+      
+      return client;
+    } catch (error) {
+      connectionPromise = null;
+      client = null;
+      db = null;
+      throw error;
+    }
+  })();
+
+  return connectionPromise;
+}
 
 export async function getLeaderboardCollection(): Promise<Collection<LeaderboardEntry>> {
   try {
-    if (!uri) {
-      throw new Error('MONGODB_URI environment variable is not set');
-    }
-
-    if (!client) {
-      client = new MongoClient(uri);
-      await client.connect();
-      db = client.db(dbName);
-    }
+    await getClient();
 
     if (!db) {
       throw new Error('Database connection failed - db is null');
@@ -43,6 +116,7 @@ export async function getLeaderboardCollection(): Promise<Collection<Leaderboard
     // Reset the connection state so we can try again
     client = null;
     db = null;
+    connectionPromise = null;
     throw error;
   }
 }
@@ -127,17 +201,12 @@ export interface ChallengeDocument {
 }
 
 export async function getDb(): Promise<Db> {
-  if (!uri) {
-    throw new Error('MONGODB_URI environment variable is not set');
-  }
-  if (!client) {
-    client = new MongoClient(uri);
-    await client.connect();
-    db = client.db(dbName);
-  }
+  await getClient();
+  
   if (!db) {
     throw new Error('Database connection failed - db is null');
   }
+  
   return db;
 }
 

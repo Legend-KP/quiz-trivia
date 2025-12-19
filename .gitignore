@@ -41,10 +41,22 @@ yarn-error.log*
 next-env.d.ts
 
 # documentation (keep important ones, ignore old/duplicate)
-BET_MODE_COMPLETE_DOCUMENTATION.md
-ENV_SETUP_GUIDE.md
-# Keep: README.md, SPIN_WHEEL_QT_IMPLEMENTATION.md, DEPLOYMENT_SUCCESS_SPIN_WHEEL.md, VERIFICATION_INSTRUCTIONS.md, CLEANUP_SUMMARY.md
+# Keep: README.md, BET_MODE_SETUP_GUIDE.md, SPIN_WHEEL_QT_IMPLEMENTATION.md, DEPLOYMENT_SUCCESS_SPIN_WHEEL.md, WEEKLY_QUIZ_COMPLETE_DOCUMENTATION.md, WEEKLY_QUIZ_IMPLEMENTATION.md
 *.md
+!README.md
+!BET_MODE_SETUP_GUIDE.md
+!SPIN_WHEEL_QT_IMPLEMENTATION.md
+!DEPLOYMENT_SUCCESS_SPIN_WHEEL.md
+!WEEKLY_QUIZ_COMPLETE_DOCUMENTATION.md
+!WEEKLY_QUIZ_IMPLEMENTATION.md
+
+# sensitive files
 ENV_FILE_TEMPLATE.txt
 scripts/redeploy-all-contracts.cjs
 scripts/withdraw-all-contracts.cjs
+
+# build artifacts
+artifacts/
+cache/
+*.sol
+!contracts/*.sol
