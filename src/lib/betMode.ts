@@ -21,7 +21,7 @@ export const BET_MODE_MULTIPLIERS = [
 
 // Bet limits
 export const MIN_BET = 10000; // 10K QT
-export const MAX_BET = 500000; // 500K QT
+export const MAX_BET = 5000000; // 5M QT
 
 // Time limits
 export const QUESTION_TIME_LIMIT = 30; // 30 seconds per question
