@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Zap, Lock, TrendingUp, X } from "lucide-react";
+import { Zap, TrendingUp, X, Copy, Check, Gift, Coins } from "lucide-react";
 import sdk from "@farcaster/miniapp-sdk";
 
 interface TokenomicsPanelProps {
@@ -11,6 +11,7 @@ interface TokenomicsPanelProps {
 
 const QTTokenomicsPanel = ({ isOpen, onClose }: TokenomicsPanelProps) => {
   const [isLoadingBuy, setIsLoadingBuy] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // QT Token information
   const QT_TOKEN_ADDRESS = "0x541529ADB3f344128aa87917fd2926E7D240FB07";
@@ -69,6 +70,16 @@ const QTTokenomicsPanel = ({ isOpen, onClose }: TokenomicsPanelProps) => {
     }
   };
 
+  const handleCopyAddress = async () => {
+    try {
+      await navigator.clipboard.writeText(QT_TOKEN_ADDRESS);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy address:", err);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -92,6 +103,72 @@ const QTTokenomicsPanel = ({ isOpen, onClose }: TokenomicsPanelProps) => {
         {/* Header */}
         <div className="p-6 pt-8">
           <h1 className="text-3xl font-bold text-white mb-2">Quiz Trivia Token</h1>
+          
+          {/* Buy Button - Moved here */}
+          <div className="mt-4 mb-4">
+            <button
+              onClick={handleBuyQT}
+              disabled={isLoadingBuy}
+              className={`w-full bg-white text-purple-600 font-bold text-lg py-4 rounded-2xl shadow-lg transition-all duration-200 ${
+                isLoadingBuy
+                  ? 'opacity-50 cursor-not-allowed'
+                  : 'hover:bg-gray-100 active:scale-95'
+              }`}
+            >
+              {isLoadingBuy ? (
+                <div className="flex items-center justify-center gap-2">
+                  <svg
+                    className="animate-spin h-5 w-5"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  <span>Opening Wallet...</span>
+                </div>
+              ) : (
+                'Buy $QT'
+              )}
+            </button>
+          </div>
+
+          {/* Token Info - Moved here */}
+          <div className="mb-6 bg-black/20 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-white/60 text-xs">Contract Address</p>
+              <button
+                onClick={handleCopyAddress}
+                className="flex items-center gap-1 text-white/80 hover:text-white transition-colors"
+                title="Copy address"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span className="text-xs">Copied!</span>
+                  </>
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+            <p className="text-white text-xs font-mono break-all mb-2">
+              {QT_TOKEN_ADDRESS}
+            </p>
+            <p className="text-white/60 text-xs">Base Network</p>
+          </div>
         </div>
 
         {/* Ring Chart Section */}
@@ -157,6 +234,36 @@ const QTTokenomicsPanel = ({ isOpen, onClose }: TokenomicsPanelProps) => {
               </div>
             </div>
 
+            {/* Rewards */}
+            <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-5 border border-white/10">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-pink-500/20 flex items-center justify-center flex-shrink-0">
+                  <Gift className="w-6 h-6 text-pink-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-white font-bold text-lg mb-1">Rewards</h3>
+                  <p className="text-white/70 text-sm">
+                    Daily Rewards, Spin The Wheel and Weekly Quiz Reward
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Bet Mode */}
+            <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-5 border border-white/10">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                  <Coins className="w-6 h-6 text-orange-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-white font-bold text-lg mb-1">Bet Mode</h3>
+                  <p className="text-white/70 text-sm">
+                    Bet mode runs on QT token as its bloodline, from placing bets to earning profits.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Staking Rewards */}
             <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-5 border border-white/10">
               <div className="flex items-start gap-4">
@@ -171,75 +278,9 @@ const QTTokenomicsPanel = ({ isOpen, onClose }: TokenomicsPanelProps) => {
                 </div>
               </div>
             </div>
-
-            {/* Liquidity */}
-            <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-5 border border-white/10">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                  <Lock className="w-6 h-6 text-blue-400" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-white font-bold text-lg mb-1">Deep Liquidity Pool</h3>
-                  <p className="text-white/70 text-sm">
-                    55% allocated to liquidity pools for stable trading and sustainable long-term growth
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* Buy Button */}
-        <div className="mx-4 mb-6">
-          <button
-            onClick={handleBuyQT}
-            disabled={isLoadingBuy}
-            className={`w-full bg-white text-purple-600 font-bold text-lg py-4 rounded-2xl shadow-lg transition-all duration-200 ${
-              isLoadingBuy
-                ? 'opacity-50 cursor-not-allowed'
-                : 'hover:bg-gray-100 active:scale-95'
-            }`}
-          >
-            {isLoadingBuy ? (
-              <div className="flex items-center justify-center gap-2">
-                <svg
-                  className="animate-spin h-5 w-5"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-                <span>Opening Wallet...</span>
-              </div>
-            ) : (
-              'Buy $QT'
-            )}
-          </button>
-        </div>
-
-        {/* Token Info */}
-        <div className="mx-4 mb-6 bg-black/20 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
-          <div className="text-center">
-            <p className="text-white/60 text-xs mb-1">Contract Address</p>
-            <p className="text-white text-xs font-mono break-all">
-              {QT_TOKEN_ADDRESS}
-            </p>
-            <p className="text-white/60 text-xs mt-2">Base Network</p>
-          </div>
-        </div>
       </div>
     </div>
   );
