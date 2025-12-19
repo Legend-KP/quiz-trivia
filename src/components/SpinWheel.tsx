@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useMiniApp } from '@neynar/react';
 import wheelOptions, { WheelOption } from '~/config/wheelOptions';
+import { APP_URL, APP_NAME } from '~/lib/constants';
 
 interface SpinWheelProps {
   onSpin: () => Promise<{ success: boolean; spinResult?: any; balance?: number; error?: string }>;
@@ -9,9 +11,11 @@ interface SpinWheelProps {
 }
 
 const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress, disabled = false }) => {
+  const { context, actions } = useMiniApp();
   const [isSpinning, setIsSpinning] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [showResult, setShowResult] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [canSpin, setCanSpin] = useState(true);
@@ -153,6 +157,13 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
           ...result,
           txHash: qtResponse.txHash
         });
+        // Wait a moment for transaction to be confirmed
+        setTimeout(() => {
+          // Close the claim modal
+          setShowResult(false);
+          // Show success popup
+          setShowSuccessPopup(true);
+        }, 1500);
       } else {
         alert(`Failed to claim QT tokens: ${qtResponse?.error || 'Unknown error'}`);
       }
@@ -161,6 +172,60 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
     } finally {
       setIsClaiming(false);
     }
+  };
+
+  const handleShare = async () => {
+    try {
+      const fid = context?.user?.fid;
+      if (!fid) {
+        alert('Farcaster authentication required to share your win.');
+        return;
+      }
+
+      if (!result || !result.qtAmount) {
+        alert('No win to share.');
+        return;
+      }
+
+      const formatQT = (amount: number) => {
+        if (amount >= 1000) {
+          return `${(amount / 1000).toFixed(amount % 1000 === 0 ? 0 : 1)}K`;
+        }
+        return amount.toString();
+      };
+
+      const buildShareUrl = () => {
+        const base = new URL(`${APP_URL}/share/${fid}`);
+        base.searchParams.set('mode', 'Spin Wheel');
+        base.searchParams.set('qt', formatQT(result.qtAmount));
+        return base.toString();
+      };
+
+      const shareText = `🎰 I just won ${formatQT(result.qtAmount)} QT tokens on the Spin Wheel in ${APP_NAME}! 🎉 Try your luck:`;
+
+      try {
+        await actions.composeCast({
+          text: shareText,
+          embeds: [buildShareUrl()],
+        });
+      } catch (err) {
+        console.error('Failed to open Farcaster composer:', err);
+        const text = encodeURIComponent(shareText);
+        const url = encodeURIComponent(buildShareUrl());
+        const warpcastUrl = `https://warpcast.com/~/compose?text=${text}%20${url}`;
+        if (typeof window !== 'undefined') {
+          window.open(warpcastUrl, '_blank', 'noopener,noreferrer');
+        }
+      }
+    } catch (err) {
+      console.error('Failed to share result:', err);
+      alert('Failed to share. Please try again.');
+    }
+  };
+
+  const handleCloseSuccessPopup = () => {
+    setShowSuccessPopup(false);
+    resetWheel();
   };
 
   const resetWheel = () => {
@@ -264,17 +329,17 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
                 </div>
               </div>
             {result.isToken && (
-              <div className="bg-yellow-100 border border-yellow-400 rounded-lg p-4 mb-4">
-                <p className="text-yellow-700 text-sm mb-3">
+              <div className="bg-yellow-100 border border-yellow-400 rounded-lg p-4">
+                <p className="text-yellow-700 text-sm mb-4">
                   To claim your tokens, you need to sign a transaction with your wallet.
                 </p>
                 <button
                   onClick={handleClaimQTTokens}
                   disabled={isClaiming}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                  className={`w-full px-6 py-4 rounded-lg font-bold text-lg transition-all ${
                     isClaiming 
                       ? 'bg-yellow-300 text-yellow-700 cursor-not-allowed' 
-                      : 'bg-yellow-500 text-yellow-900 hover:bg-yellow-400'
+                      : 'bg-yellow-500 text-yellow-900 hover:bg-yellow-400 shadow-lg hover:shadow-xl transform hover:scale-105'
                   }`}
                 >
                   {isClaiming ? '⏳ Processing...' : '🚀 Claim QT Tokens'}
@@ -286,14 +351,37 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
                 )}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Success Popup after claiming */}
+      {showSuccessPopup && result && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 max-w-sm mx-4 text-center shadow-2xl">
+            <div className="text-6xl mb-4">🎉</div>
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">Success!</h3>
+            <div className="text-xl text-gray-600 mb-6">
+              <span className="font-bold text-green-600">
+                You've successfully claimed {result.qtAmount?.toLocaleString() || result.label} QT Tokens!
+              </span>
+            </div>
             
-            
-            <button
-              onClick={resetWheel}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-2 rounded-full font-semibold hover:from-purple-600 hover:to-pink-600 transition-all"
-            >
-              Awesome!
-            </button>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={handleShare}
+                className="w-full px-6 py-3 rounded-lg font-semibold bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                📤 Share Your Win
+              </button>
+              
+              <button
+                onClick={handleCloseSuccessPopup}
+                className="w-full px-6 py-3 rounded-lg font-semibold bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 transition-all"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
