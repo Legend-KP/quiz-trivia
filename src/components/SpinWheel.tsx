@@ -366,18 +366,22 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
                 You've successfully claimed {result.qtAmount?.toLocaleString() || result.label} QT Tokens!
               </span>
             </div>
-            
+            {result.txHash && (
+              <p className="text-xs text-gray-500 mb-4">
+                Transaction: {result.txHash.slice(0, 10)}...{result.txHash.slice(-8)}
+              </p>
+            )}
             <div className="flex flex-col gap-3">
               <button
                 onClick={handleShare}
-                className="w-full px-6 py-3 rounded-lg font-semibold bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="w-full px-6 py-3 rounded-lg font-semibold bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 📤 Share Your Win
               </button>
               
               <button
                 onClick={handleCloseSuccessPopup}
-                className="w-full px-6 py-3 rounded-lg font-semibold bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 transition-all"
+                className="w-full px-6 py-3 rounded-lg font-semibold bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all"
               >
                 Close
               </button>
