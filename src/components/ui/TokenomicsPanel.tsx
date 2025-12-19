@@ -21,7 +21,7 @@ const QTTokenomicsPanel = ({ isOpen, onClose }: TokenomicsPanelProps) => {
   const tokenData = [
     { label: 'Airdrop', percentage: 20, amount: '20B', color: '#FF4081' },
     { label: 'Community Rewards', percentage: 10, amount: '10B', color: '#2196F3' },
-    { label: 'Team', percentage: 15, amount: '15B', color: '#9C27B0' },
+    { label: 'Development & Team', percentage: 15, amount: '15B', color: '#9C27B0' },
     { label: 'Liquidity', percentage: 55, amount: '55B', color: '#FF9800' }
   ];
 
@@ -91,8 +91,7 @@ const QTTokenomicsPanel = ({ isOpen, onClose }: TokenomicsPanelProps) => {
 
         {/* Header */}
         <div className="p-6 pt-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Tokenomics</h1>
-          <p className="text-white/80 text-sm">The $QT Token</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Quiz Trivia Token</h1>
         </div>
 
         {/* Ring Chart Section */}
@@ -137,7 +136,7 @@ const QTTokenomicsPanel = ({ isOpen, onClose }: TokenomicsPanelProps) => {
 
         {/* Utility Section */}
         <div className="mx-4 mb-6">
-          <h2 className="text-2xl font-bold text-white mb-4">$QT Utility Token</h2>
+          <h2 className="text-2xl font-bold text-white mb-4">Token Utility</h2>
           <p className="text-white/80 text-sm mb-6">
             Core on-chain utility for Quiz Trivia ecosystem — used for game access, staking, rewards, and future features.
           </p>
@@ -150,7 +149,7 @@ const QTTokenomicsPanel = ({ isOpen, onClose }: TokenomicsPanelProps) => {
                   <Zap className="w-6 h-6 text-green-400" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-white font-bold text-lg mb-1">Access Premium Modes</h3>
+                  <h3 className="text-white font-bold text-lg mb-1">Access Quiz Modes</h3>
                   <p className="text-white/70 text-sm">
                     Use $QT to unlock Weekly Quiz Challenge and Bet Mode for competitive gameplay and bigger rewards
                   </p>
