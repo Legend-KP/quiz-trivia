@@ -355,7 +355,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Create or update master user data
-        const masterData: MasterUserDataDocument = {
+        const masterData: Omit<MasterUserDataDocument, 'createdAt' | '_id'> = {
           fid,
           username,
           displayName,

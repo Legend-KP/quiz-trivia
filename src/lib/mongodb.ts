@@ -429,7 +429,7 @@ export interface MasterUserDataDocument {
   airdropAmount?: number;         // Calculated airdrop amount
   
   // Metadata
-  createdAt: number;              // Document creation timestamp
+  createdAt?: number;             // Document creation timestamp (optional, set on insert)
   updatedAt: number;              // Last update timestamp
   lastSyncedAt?: number;          // Last time data was synced from source collections
 }
