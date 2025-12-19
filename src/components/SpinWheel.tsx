@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useMiniApp } from '@neynar/react';
 import wheelOptions from '~/config/wheelOptions';
+import { APP_URL, APP_NAME } from '~/lib/constants';
 
 interface SpinWheelProps {
   onSpin: () => Promise<{ success: boolean; spinResult?: any; balance?: number; error?: string }>;
@@ -9,6 +11,7 @@ interface SpinWheelProps {
 }
 
 const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress, disabled = false }) => {
+  const { context, actions } = useMiniApp();
   const [isSpinning, setIsSpinning] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [showResult, setShowResult] = useState(false);
@@ -168,30 +171,34 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
   };
 
   const handleShare = async () => {
-    const shareText = `🎉 I just won ${result?.qtAmount?.toLocaleString() || 0} QT tokens from the Quiz Trivia Spin the Wheel! 🎰 Try your luck too!`;
-    const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const qtAmount = result?.qtAmount?.toLocaleString() || 0;
+    const shareText = `🎉 I just won ${qtAmount} QT tokens from the ${APP_NAME} Spin the Wheel! 🎰 Try your luck too:`;
+    const shareUrl = APP_URL || (typeof window !== 'undefined' ? window.location.origin : '');
 
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Quiz Trivia - Spin the Wheel Win!',
+    try {
+      // Try to use Farcaster composeCast if available
+      if (actions?.composeCast) {
+        await actions.composeCast({
           text: shareText,
-          url: shareUrl,
+          embeds: [shareUrl],
         });
-      } catch (err) {
-        // User cancelled or error occurred
-        console.log('Share cancelled or failed:', err);
+      } else {
+        // Fallback to Warpcast compose URL
+        const text = encodeURIComponent(shareText);
+        const url = encodeURIComponent(shareUrl);
+        const warpcastUrl = `https://warpcast.com/~/compose?text=${text}%20${url}`;
+        if (typeof window !== 'undefined') {
+          window.open(warpcastUrl, '_blank', 'noopener,noreferrer');
+        }
       }
-    } else {
-      // Fallback: Copy to clipboard
-      const fullText = `${shareText} ${shareUrl}`;
-      try {
-        await navigator.clipboard.writeText(fullText);
-        alert('Copied to clipboard!');
-      } catch (err) {
-        console.error('Failed to copy:', err);
-        // Final fallback: show text
-        alert(fullText);
+    } catch (err) {
+      console.error('Failed to open Farcaster composer:', err);
+      // Fallback to Warpcast compose URL
+      const text = encodeURIComponent(shareText);
+      const url = encodeURIComponent(shareUrl);
+      const warpcastUrl = `https://warpcast.com/~/compose?text=${text}%20${url}`;
+      if (typeof window !== 'undefined') {
+        window.open(warpcastUrl, '_blank', 'noopener,noreferrer');
       }
     }
   };
