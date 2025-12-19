@@ -391,3 +391,50 @@ export async function getBurnRecordsCollection(): Promise<Collection<BurnRecordD
   const database = await getDb();
   return database.collection<BurnRecordDocument>('burn_records');
 }
+
+// ---------------- Master User Data for Airdrop ----------------
+
+/**
+ * Master User Data Collection
+ * Purpose: Aggregate user information for token airdrop identification
+ * This collection contains essential user data aggregated from multiple sources
+ */
+export interface MasterUserDataDocument {
+  _id?: any;                      // MongoDB document ID
+  fid: number;                    // Farcaster ID (primary key)
+  username: string;               // Farcaster username
+  displayName?: string;           // User's display name
+  walletAddress?: string;         // User's wallet address (for airdrop)
+  
+  // Quiz Statistics
+  totalQuizzesPlayed: number;     // Total quizzes completed (all modes)
+  weeklyQuizzesPlayed: number;    // Weekly Quiz completions
+  timeModeQuizzesPlayed: number;  // Time Mode completions
+  challengeQuizzesPlayed: number; // Challenge Mode completions
+  
+  // Bet Mode Statistics
+  totalQTWagered: number;         // Total QT tokens wagered in Bet Mode
+  totalQTWon: number;             // Total QT tokens won in Bet Mode
+  betModeGamesPlayed: number;     // Number of Bet Mode games played
+  betModeGamesWon: number;        // Number of Bet Mode games won
+  
+  // Activity Statistics
+  firstActivityAt: number;        // First activity timestamp
+  lastActivityAt: number;         // Last activity timestamp
+  daysActive: number;              // Number of unique days active
+  
+  // Airdrop Eligibility
+  eligibleForAirdrop: boolean;    // Whether user is eligible for airdrop
+  airdropTier?: number;           // Airdrop tier (1-5 based on activity)
+  airdropAmount?: number;         // Calculated airdrop amount
+  
+  // Metadata
+  createdAt: number;              // Document creation timestamp
+  updatedAt: number;              // Last update timestamp
+  lastSyncedAt?: number;          // Last time data was synced from source collections
+}
+
+export async function getMasterUserDataCollection(): Promise<Collection<MasterUserDataDocument>> {
+  const database = await getDb();
+  return database.collection<MasterUserDataDocument>('master_user_data');
+}
