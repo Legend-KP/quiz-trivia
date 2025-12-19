@@ -58,7 +58,8 @@ export async function POST(req: NextRequest) {
     // If wrong answer, handle loss
     if (!isCorrect) {
       const lossDistribution = calculateLossDistribution(game.betAmount);
-      const REVENUE_WALLET = '0xb92b66CBbb304A9C1ee1208594fcBa5f61CCc75E';
+      // Ensure checksummed address for revenue wallet
+      const REVENUE_WALLET = ethers.getAddress('0xa0722635A73361f0071EFa69b69C9773669Cb0CB');
       const BURN_ADDRESS = '0x000000000000000000000000000000000000dEaD';
 
       // Update weekly pool (tracking only)
@@ -100,7 +101,10 @@ export async function POST(req: NextRequest) {
               const ownerWallet = new ethers.Wallet(ownerPrivateKey, provider);
               const vaultAddress = getBetModeVaultAddress();
               const vaultContract = new ethers.Contract(vaultAddress, BET_MODE_VAULT_ABI, ownerWallet);
-              const tokenContract = new ethers.Contract(qtTokenAddress, ['function transfer(address to, uint256 amount) returns (bool)'], ownerWallet);
+              const tokenContract = new ethers.Contract(qtTokenAddress, [
+                'function transfer(address to, uint256 amount) returns (bool)',
+                'function balanceOf(address account) view returns (uint256)'
+              ], ownerWallet);
               
               console.log(`📊 Loss Distribution: ${game.betAmount} QT total`);
               console.log(`   - Burn: ${lossDistribution.toBurn} QT (50%)`);
@@ -131,6 +135,8 @@ export async function POST(req: NextRequest) {
               if (lossDistribution.toPlatform > 0) {
                 const revenueAmountWei = ethers.parseEther(lossDistribution.toPlatform.toString());
                 console.log(`🔄 Withdrawing ${lossDistribution.toPlatform} QT from contract for revenue...`);
+                console.log(`📍 Revenue wallet address: ${REVENUE_WALLET}`);
+                
                 const revenueWithdrawTx = await vaultContract.ownerWithdraw(revenueAmountWei);
                 const revenueWithdrawReceipt = await revenueWithdrawTx.wait();
                 if (revenueWithdrawReceipt.status !== 1) {
@@ -138,14 +144,29 @@ export async function POST(req: NextRequest) {
                 }
                 console.log(`✅ Revenue withdrawal confirmed: ${revenueWithdrawTx.hash}`);
                 
+                // Verify owner wallet has the tokens before transferring
+                const ownerBalance = await tokenContract.balanceOf(ownerWallet.address);
+                console.log(`💰 Owner wallet balance after withdrawal: ${ethers.formatEther(ownerBalance)} QT`);
+                
+                if (ownerBalance < revenueAmountWei) {
+                  throw new Error(`Insufficient balance in owner wallet. Have: ${ethers.formatEther(ownerBalance)} QT, Need: ${ethers.formatEther(revenueAmountWei)} QT`);
+                }
+                
                 // Immediately transfer to revenue wallet
                 console.log(`💰 Transferring ${lossDistribution.toPlatform} QT to revenue wallet ${REVENUE_WALLET}...`);
                 const revenueTx = await tokenContract.transfer(REVENUE_WALLET, revenueAmountWei);
+                console.log(`⏳ Revenue transfer transaction sent: ${revenueTx.hash}, waiting for confirmation...`);
+                
                 const revenueReceipt = await revenueTx.wait();
                 if (revenueReceipt.status !== 1) {
                   throw new Error(`Revenue transaction failed: ${revenueTx.hash}`);
                 }
-                console.log(`✅ Revenue transaction confirmed: ${revenueTx.hash} - Sent ${lossDistribution.toPlatform} QT to ${REVENUE_WALLET}`);
+                
+                // Verify the transfer succeeded by checking revenue wallet balance
+                const revenueWalletBalance = await tokenContract.balanceOf(REVENUE_WALLET);
+                console.log(`✅ Revenue transaction confirmed: ${revenueTx.hash}`);
+                console.log(`✅ Sent ${lossDistribution.toPlatform} QT to ${REVENUE_WALLET}`);
+                console.log(`✅ Revenue wallet balance: ${ethers.formatEther(revenueWalletBalance)} QT`);
               }
             } catch (error: any) {
               console.error('❌ Failed to distribute loss tokens:', error);
