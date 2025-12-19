@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -21,6 +22,7 @@ import "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
  * - Full event emission for database sync
  */
 contract BetModeVault is Ownable, Pausable, ReentrancyGuard {
+    using SafeERC20 for IERC20;
     using ECDSA for bytes32;
     using MessageHashUtils for bytes32;
 
@@ -153,9 +155,8 @@ contract BetModeVault is Ownable, Pausable, ReentrancyGuard {
     function deposit(uint256 amount) external whenNotPaused nonReentrant {
         if (amount < MIN_DEPOSIT) revert InsufficientAmount();
         
-        // Transfer QT from user to THIS CONTRACT
-        bool success = qtToken.transferFrom(msg.sender, address(this), amount);
-        if (!success) revert TransferFailed();
+        // Transfer QT from user to THIS CONTRACT using SafeERC20
+        qtToken.safeTransferFrom(msg.sender, address(this), amount);
         
         // Update user balance
         userBalances[msg.sender] += amount;
@@ -224,9 +225,8 @@ contract BetModeVault is Ownable, Pausable, ReentrancyGuard {
         totalWithdrawals[msg.sender] += amount;
         totalContractBalance -= amount;
         
-        // Transfer QT from contract to user
-        bool success = qtToken.transfer(msg.sender, amount);
-        if (!success) revert TransferFailed();
+        // Transfer QT from contract to user using SafeERC20
+        qtToken.safeTransfer(msg.sender, amount);
         
         emit Withdrawn(
             msg.sender,
@@ -297,8 +297,7 @@ contract BetModeVault is Ownable, Pausable, ReentrancyGuard {
         
         if (amount > contractBalance) revert InsufficientContractBalance();
         
-        bool success = qtToken.transfer(owner(), amount);
-        if (!success) revert TransferFailed();
+        qtToken.safeTransfer(owner(), amount);
         
         emit OwnerWithdrawal(
             owner(),
@@ -317,8 +316,7 @@ contract BetModeVault is Ownable, Pausable, ReentrancyGuard {
         
         if (contractBalance == 0) revert InsufficientContractBalance();
         
-        bool success = qtToken.transfer(owner(), contractBalance);
-        if (!success) revert TransferFailed();
+        qtToken.safeTransfer(owner(), contractBalance);
         
         emit OwnerWithdrawal(
             owner(),
@@ -367,8 +365,7 @@ contract BetModeVault is Ownable, Pausable, ReentrancyGuard {
         
         if (amount > contractBalance) revert InsufficientContractBalance();
         
-        bool success = qtToken.transfer(owner(), amount);
-        if (!success) revert TransferFailed();
+        qtToken.safeTransfer(owner(), amount);
         
         emit EmergencyWithdrawal(owner(), amount, block.timestamp);
     }

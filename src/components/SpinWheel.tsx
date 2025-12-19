@@ -106,10 +106,10 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
         }
         
         // All results are now QT tokens
-        setResult({
-          ...response.spinResult,
-          needsWalletClaim: true
-        });
+          setResult({
+            ...response.spinResult,
+            needsWalletClaim: true
+          });
         
         setTimeout(() => {
           setShowResult(true);
@@ -301,13 +301,13 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl p-8 max-w-sm mx-4 text-center shadow-2xl">
               {/* All results are now QT tokens */}
-              <div>
-                <div className="text-6xl mb-4">🎁</div>
-                <h3 className="text-2xl font-bold text-gray-800 mb-2">Congratulations!</h3>
-                <div className="text-xl text-gray-600 mb-6">
+                <div>
+                  <div className="text-6xl mb-4">🎁</div>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-2">Congratulations!</h3>
+                  <div className="text-xl text-gray-600 mb-6">
                   <span className="font-bold text-yellow-600">You won {result.qtAmount?.toLocaleString() || result.label} QT Tokens!</span>
+                  </div>
                 </div>
-              </div>
             {result.isToken && (
               <div className="bg-yellow-100 border border-yellow-400 rounded-lg p-4">
                 <p className="text-yellow-700 text-sm mb-4">
@@ -354,13 +354,13 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
               >
                 📤 Share Your Win
               </button>
-              
-              <button
+            
+            <button
                 onClick={handleCloseSuccessPopup}
                 className="w-full px-6 py-3 rounded-lg font-semibold bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 transition-all"
-              >
+            >
                 Close
-              </button>
+            </button>
             </div>
           </div>
         </div>

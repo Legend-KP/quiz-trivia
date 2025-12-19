@@ -1,14 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 /**
  * @title QTRewardDistributor
  * @dev Smart contract for distributing QT tokens as rewards
  * @notice Users can claim QT token rewards through this contract
  */
 contract QTRewardDistributor {
+    using SafeERC20 for IERC20;
+    
     // QT Token contract
-    address public qtToken;
+    IERC20 public qtToken;
     
     // Owner of the contract
     address public owner;
@@ -41,7 +46,8 @@ contract QTRewardDistributor {
     bool private _reentrancyGuard;
     
     constructor(address _qtTokenAddress) {
-        qtToken = _qtTokenAddress;
+        require(_qtTokenAddress != address(0), "Invalid QT token address");
+        qtToken = IERC20(_qtTokenAddress);
         owner = msg.sender;
     }
     
@@ -66,8 +72,8 @@ contract QTRewardDistributor {
         uint256 today = block.timestamp / 86400;
         lastClaimDate[msg.sender] = today;
         
-        // Transfer QT tokens to user
-        require(transferQT(msg.sender, REWARD_AMOUNT), "QT token transfer failed");
+        // Transfer QT tokens to user using SafeERC20
+        qtToken.safeTransfer(msg.sender, REWARD_AMOUNT);
         
         emit QTRewardClaimed(msg.sender, REWARD_AMOUNT, block.timestamp);
     }
@@ -84,27 +90,29 @@ contract QTRewardDistributor {
         uint256 today = block.timestamp / 86400;
         lastClaimDate[userAddress] = today;
         
-        // Transfer QT tokens to user
-        require(transferQT(userAddress, REWARD_AMOUNT), "QT token transfer failed");
+        // Transfer QT tokens to user using SafeERC20
+        qtToken.safeTransfer(userAddress, REWARD_AMOUNT);
         
         emit QTRewardClaimed(userAddress, REWARD_AMOUNT, block.timestamp);
     }
     
     /**
      * @dev Deposit QT tokens to the contract (owner only)
-     * @param amount Amount of QT tokens to deposit
+     * @param amount Amount of QT tokens to deposit (with 18 decimals)
      */
     function depositQTTokens(uint256 amount) external onlyOwner {
-        require(transferFromQT(msg.sender, address(this), amount), "QT token transfer failed");
+        require(amount > 0, "Amount must be greater than 0");
+        qtToken.safeTransferFrom(msg.sender, address(this), amount);
         emit QTTokensDeposited(amount, block.timestamp);
     }
     
     /**
      * @dev Withdraw QT tokens from the contract (owner only)
-     * @param amount Amount of QT tokens to withdraw
+     * @param amount Amount of QT tokens to withdraw (with 18 decimals)
      */
     function withdrawQTTokens(uint256 amount) external onlyOwner {
-        require(transferQT(msg.sender, amount), "QT token transfer failed");
+        require(amount > 0, "Amount must be greater than 0");
+        qtToken.safeTransfer(msg.sender, amount);
         emit QTTokensWithdrawn(amount, block.timestamp);
     }
     
@@ -113,7 +121,7 @@ contract QTRewardDistributor {
      * @return balance Current QT token balance
      */
     function getQTBalance() public view returns (uint256) {
-        return balanceOfQT(address(this));
+        return qtToken.balanceOf(address(this));
     }
     
     /**
@@ -136,26 +144,4 @@ contract QTRewardDistributor {
         owner = newOwner;
     }
     
-    // Internal functions to interact with QT token
-    function balanceOfQT(address account) internal view returns (uint256) {
-        (bool success, bytes memory data) = qtToken.staticcall(
-            abi.encodeWithSignature("balanceOf(address)", account)
-        );
-        require(success, "QT token balance call failed");
-        return abi.decode(data, (uint256));
-    }
-    
-    function transferQT(address to, uint256 amount) internal returns (bool) {
-        (bool success, bytes memory data) = qtToken.call(
-            abi.encodeWithSignature("transfer(address,uint256)", to, amount)
-        );
-        return success && (data.length == 0 || abi.decode(data, (bool)));
-    }
-    
-    function transferFromQT(address from, address to, uint256 amount) internal returns (bool) {
-        (bool success, bytes memory data) = qtToken.call(
-            abi.encodeWithSignature("transferFrom(address,address,uint256)", from, to, amount)
-        );
-        return success && (data.length == 0 || abi.decode(data, (bool)));
-    }
 }

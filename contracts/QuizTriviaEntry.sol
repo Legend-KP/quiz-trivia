@@ -72,9 +72,11 @@ contract QuizTriviaEntry {
         // Emit event
         emit QuizStarted(msg.sender, uint256(mode), block.timestamp, requiredFee);
         
-        // Refund excess payment
+        // Refund excess payment using call() for better compatibility
         if (msg.value > requiredFee) {
-            payable(msg.sender).transfer(msg.value - requiredFee);
+            uint256 refundAmount = msg.value - requiredFee;
+            (bool success, ) = payable(msg.sender).call{value: refundAmount}("");
+            require(success, "Refund failed");
         }
     }
     
@@ -148,7 +150,8 @@ contract QuizTriviaEntry {
     function withdraw() external onlyOwner {
         uint256 balance = address(this).balance;
         require(balance > 0, "No funds to withdraw");
-        payable(owner).transfer(balance);
+        (bool success, ) = payable(owner).call{value: balance}("");
+        require(success, "Withdrawal failed");
     }
     
     /**

@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\BetModeVault.sol": {
-      "lastModificationDate": 1764234441683,
-      "contentHash": "c9a437a165cfed4a1394c67f7c95d777",
+      "lastModificationDate": 1766143473303,
+      "contentHash": "3253d1f5e77e63fe4a149df8d56b9e10",
       "sourceName": "contracts/BetModeVault.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -31,6 +31,7 @@
       },
       "imports": [
         "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol",
         "@openzeppelin/contracts/access/Ownable.sol",
         "@openzeppelin/contracts/utils/Pausable.sol",
         "@openzeppelin/contracts/utils/ReentrancyGuard.sol",
@@ -552,8 +553,8 @@
       ]
     },
     "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\DailyRewardDistributor.sol": {
-      "lastModificationDate": 1765230928589,
-      "contentHash": "c36c9d8a16ccf5fa6af1bd2facd211ed",
+      "lastModificationDate": 1766143424711,
+      "contentHash": "bafc2d6dd4987c3419e085146f53b449",
       "sourceName": "contracts/DailyRewardDistributor.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -579,7 +580,10 @@
           }
         }
       },
-      "imports": [],
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol"
+      ],
       "versionPragmas": [
         "^0.8.19"
       ],
@@ -588,8 +592,8 @@
       ]
     },
     "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\QTRewardDistributor.sol": {
-      "lastModificationDate": 1763025521439,
-      "contentHash": "3da9ff8b32f8762c217678596b9e3f8a",
+      "lastModificationDate": 1766143402853,
+      "contentHash": "990f3bc3847348cb322c98576de20c82",
       "sourceName": "contracts/QTRewardDistributor.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -615,7 +619,10 @@
           }
         }
       },
-      "imports": [],
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol"
+      ],
       "versionPragmas": [
         "^0.8.19"
       ],
@@ -660,8 +667,8 @@
       ]
     },
     "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\QuizTriviaEntry.sol": {
-      "lastModificationDate": 1761459287256,
-      "contentHash": "7864ff59447a02265182d63b93586058",
+      "lastModificationDate": 1766143448276,
+      "contentHash": "efede922e2c52b261780b5ea5169ac98",
       "sourceName": "contracts/QuizTriviaEntry.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -696,9 +703,198 @@
       ]
     },
     "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\SpinWheelQTDistributor.sol": {
-      "lastModificationDate": 1766092275655,
-      "contentHash": "8955a58ffd4a8999f5f4f78ef1c1a738",
+      "lastModificationDate": 1766143377441,
+      "contentHash": "c77935884144d5c2adb0dbb4ae3c3a63",
       "sourceName": "contracts/SpinWheelQTDistributor.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "SpinWheelQTDistributor"
+      ]
+    },
+    "C:\\Users\\LENOVO\\quiz-trivia\\node_modules\\@openzeppelin\\contracts\\token\\ERC20\\utils\\SafeERC20.sol": {
+      "lastModificationDate": 1760729598323,
+      "contentHash": "1fb9edee1d763745a62d0b1954998792",
+      "sourceName": "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../IERC20.sol",
+        "../../../interfaces/IERC1363.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "SafeERC20"
+      ]
+    },
+    "C:\\Users\\LENOVO\\quiz-trivia\\node_modules\\@openzeppelin\\contracts\\interfaces\\IERC1363.sol": {
+      "lastModificationDate": 1760729598085,
+      "contentHash": "a7fd0f05e36b0d0a21c75340c9c639ec",
+      "sourceName": "@openzeppelin/contracts/interfaces/IERC1363.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./IERC20.sol",
+        "./IERC165.sol"
+      ],
+      "versionPragmas": [
+        ">=0.6.2"
+      ],
+      "artifacts": [
+        "IERC1363"
+      ]
+    },
+    "C:\\Users\\LENOVO\\quiz-trivia\\node_modules\\@openzeppelin\\contracts\\interfaces\\IERC20.sol": {
+      "lastModificationDate": 1760729598109,
+      "contentHash": "68620db2da7583d9a4919096ac77f577",
+      "sourceName": "@openzeppelin/contracts/interfaces/IERC20.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../token/ERC20/IERC20.sol"
+      ],
+      "versionPragmas": [
+        ">=0.4.16"
+      ],
+      "artifacts": []
+    },
+    "C:\\Users\\LENOVO\\quiz-trivia\\node_modules\\@openzeppelin\\contracts\\interfaces\\IERC165.sol": {
+      "lastModificationDate": 1760729598093,
+      "contentHash": "947853028399b7de34bcc3704ee06e99",
+      "sourceName": "@openzeppelin/contracts/interfaces/IERC165.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../utils/introspection/IERC165.sol"
+      ],
+      "versionPragmas": [
+        ">=0.4.16"
+      ],
+      "artifacts": []
+    },
+    "C:\\Users\\LENOVO\\quiz-trivia\\node_modules\\@openzeppelin\\contracts\\utils\\introspection\\IERC165.sol": {
+      "lastModificationDate": 1760729598093,
+      "contentHash": "7074c93b1ea0a122063f26ddd1db1032",
+      "sourceName": "@openzeppelin/contracts/utils/introspection/IERC165.sol",
       "solcConfig": {
         "version": "0.8.20",
         "settings": {
@@ -725,10 +921,10 @@
       },
       "imports": [],
       "versionPragmas": [
-        "^0.8.19"
+        ">=0.4.16"
       ],
       "artifacts": [
-        "SpinWheelQTDistributor"
+        "IERC165"
       ]
     }
   }

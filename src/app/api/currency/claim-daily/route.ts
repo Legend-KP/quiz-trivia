@@ -126,27 +126,27 @@ export async function POST(req: NextRequest) {
 
     // All rewards are now QT tokens - no coin rewards
     // Update lastSpinAt for tracking cooldown
-    await accounts.updateOne(
-      { fid },
-      { $set: { lastSpinAt: now, updatedAt: now } }
-    );
+      await accounts.updateOne(
+        { fid },
+        { $set: { lastSpinAt: now, updatedAt: now } }
+      );
     
-    // Note: QT token transfer will be handled by the frontend
+      // Note: QT token transfer will be handled by the frontend
     // via the smart contract claimSpinReward function
 
     const after = await accounts.findOne({ fid });
 
     return new Response(
       JSON.stringify({
-        success: true,
-        balance: after?.balance ?? 0,
-        spinResult: {
-          id: spinResult.id,
+      success: true,
+      balance: after?.balance ?? 0,
+      spinResult: {
+        id: spinResult.id,
           qtAmount: spinResult.qtAmount,
-          label: spinResult.label,
+        label: spinResult.label,
           isToken: spinResult.isToken,
           requiresClaim: true // User must claim via smart contract
-        }
+      }
       }), 
       { 
         status: 200,
