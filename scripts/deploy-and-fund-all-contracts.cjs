@@ -86,7 +86,7 @@ async function main() {
   
   // ===== DEPLOY BET MODE VAULT =====
   console.log("1️⃣  Deploying BetModeVault...");
-  const BetModeVault = await ethers.getContractFactory("BetModeVault");
+  const BetModeVault = await ethers.getContractFactory("contracts/BetModeVault.sol:BetModeVault");
   const betModeVault = await BetModeVault.deploy(QT_TOKEN_ADDRESS, ADMIN_SIGNER_ADDRESS);
   await betModeVault.waitForDeployment();
   const betModeVaultAddress = await betModeVault.getAddress();
