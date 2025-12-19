@@ -6,11 +6,60 @@ import {
   getBetModeGamesCollection,
   getTimeAttemptsCollection,
   getChallengesCollection,
+  getAuditLogsCollection,
   type MasterUserDataDocument,
+  type AuditLogDocument,
 } from '~/lib/mongodb';
 import { getNeynarUser } from '~/lib/neynar';
+import {
+  verifyAdminAuth,
+  getClientIP,
+  validateFID,
+  sanitizeString,
+  validateWalletAddress,
+  checkRateLimit,
+} from '~/lib/admin-auth';
 
 export const runtime = 'nodejs';
+
+// Rate limiting: 5 sync operations per hour per IP
+const SYNC_RATE_LIMIT = 5;
+const SYNC_RATE_WINDOW = 3600000; // 1 hour
+
+/**
+ * Audit log for master data operations
+ */
+async function logAuditEvent(
+  action: string,
+  ip: string,
+  details: Record<string, any>,
+  success: boolean,
+  error?: string,
+  userAgent?: string
+) {
+  try {
+    const auditCollection = await getAuditLogsCollection();
+    const auditLog: AuditLogDocument = {
+      action,
+      ip,
+      userAgent: userAgent || undefined,
+      details,
+      success,
+      error: error || undefined,
+      timestamp: Date.now(),
+    };
+
+    // Store in audit collection (fire and forget - don't block request)
+    auditCollection.insertOne(auditLog).catch(err => {
+      console.error('Failed to store audit log:', err);
+    });
+
+    // Also log to console for immediate visibility
+    console.log(`[AUDIT] ${action} | IP: ${ip} | Success: ${success}`, details);
+  } catch (err) {
+    console.error('Failed to log audit event:', err);
+  }
+}
 
 /**
  * Sync Master User Data
@@ -21,21 +70,88 @@ export const runtime = 'nodejs';
  * Query params:
  * - fid: (optional) Sync specific user by FID
  * - all: (optional) Sync all users
+ * 
+ * Security:
+ * - Requires ADMIN_SECRET authentication
+ * - Rate limited: 5 requests per hour per IP
+ * - Input validation on all parameters
+ * - Audit logging for all operations
  */
 export async function POST(req: NextRequest) {
+  const clientIP = getClientIP(req);
+  const userAgent = req.headers.get('user-agent') || undefined;
+  const startTime = Date.now();
+
   try {
-    // Check for admin secret
-    const authHeader = req.headers.get('authorization');
-    const adminSecret = process.env.ADMIN_SECRET;
-    
-    if (!adminSecret || authHeader !== `Bearer ${adminSecret}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // 1. Authentication check
+    const authResult = verifyAdminAuth(req);
+    if (!authResult.valid) {
+      await logAuditEvent('SYNC_ATTEMPT_UNAUTHORIZED', clientIP, {}, false, authResult.error, userAgent);
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
     }
 
+    // 2. Rate limiting
+    const rateLimit = checkRateLimit(`sync:${clientIP}`, SYNC_RATE_LIMIT, SYNC_RATE_WINDOW);
+    if (!rateLimit.allowed) {
+      await logAuditEvent('SYNC_RATE_LIMIT_EXCEEDED', clientIP, {
+        resetAt: new Date(rateLimit.resetAt).toISOString(),
+      }, false, undefined, userAgent);
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded',
+          resetAt: new Date(rateLimit.resetAt).toISOString(),
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': SYNC_RATE_LIMIT.toString(),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': rateLimit.resetAt.toString(),
+          },
+        }
+      );
+    }
+
+    // 3. Input validation
     const { searchParams } = new URL(req.url);
     const fidParam = searchParams.get('fid');
     const syncAll = searchParams.get('all') === 'true';
 
+    // Validate that either fid or all is provided, but not both
+    if (!fidParam && !syncAll) {
+      await logAuditEvent('SYNC_INVALID_PARAMS', clientIP, {}, false, 'Missing fid or all param', userAgent);
+      return NextResponse.json(
+        { error: 'Must provide fid or all=true' },
+        { status: 400 }
+      );
+    }
+
+    if (fidParam && syncAll) {
+      await logAuditEvent('SYNC_INVALID_PARAMS', clientIP, {}, false, 'Both fid and all provided', userAgent);
+      return NextResponse.json(
+        { error: 'Cannot provide both fid and all=true' },
+        { status: 400 }
+      );
+    }
+
+    // Validate FID if provided
+    let usersToSync: number[] = [];
+    if (fidParam) {
+      const fidValidation = validateFID(fidParam);
+      if (!fidValidation.valid) {
+        await logAuditEvent('SYNC_INVALID_FID', clientIP, { fid: fidParam }, false, fidValidation.error, userAgent);
+        return NextResponse.json(
+          { error: fidValidation.error },
+          { status: 400 }
+        );
+      }
+      usersToSync = [fidValidation.value!];
+    }
+
+    // 4. Initialize collections
     const masterCollection = await getMasterUserDataCollection();
     const leaderboardCollection = await getLeaderboardCollection();
     const accountsCollection = await getCurrencyAccountsCollection();
@@ -47,17 +163,8 @@ export async function POST(req: NextRequest) {
     let synced = 0;
     let errors = 0;
 
-    // Get list of users to sync
-    let usersToSync: number[] = [];
-
-    if (fidParam) {
-      // Sync specific user
-      const fid = Number(fidParam);
-      if (Number.isNaN(fid)) {
-        return NextResponse.json({ error: 'Invalid fid' }, { status: 400 });
-      }
-      usersToSync = [fid];
-    } else if (syncAll) {
+    // 5. Get list of users to sync (if syncAll)
+    if (syncAll) {
       // Get all unique FIDs from all collections
       const allFids = new Set<number>();
 
@@ -81,16 +188,31 @@ export async function POST(req: NextRequest) {
       const challengeFids = await challengesCollection.distinct('challengerFid');
       challengeFids.forEach((fid: number) => allFids.add(fid));
       const opponentFids = await challengesCollection.distinct('opponentFid');
-      opponentFids.forEach((fid: number) => {
-        if (fid) allFids.add(fid);
+      opponentFids.forEach((fid: number | undefined) => {
+        if (fid && typeof fid === 'number') allFids.add(fid);
       });
 
       usersToSync = Array.from(allFids);
-    } else {
-      return NextResponse.json({ error: 'Must provide fid or all=true' }, { status: 400 });
+
+      // Limit batch size for safety (prevent DoS)
+      const MAX_BATCH_SIZE = 10000;
+      if (usersToSync.length > MAX_BATCH_SIZE) {
+        await logAuditEvent('SYNC_BATCH_TOO_LARGE', clientIP, {
+          requested: usersToSync.length,
+          max: MAX_BATCH_SIZE,
+        }, false, 'Batch size exceeds maximum', userAgent);
+        return NextResponse.json(
+          {
+            error: `Batch size too large. Maximum ${MAX_BATCH_SIZE} users per sync.`,
+            requested: usersToSync.length,
+            max: MAX_BATCH_SIZE,
+          },
+          { status: 400 }
+        );
+      }
     }
 
-    console.log(`🔄 Syncing ${usersToSync.length} users...`);
+    console.log(`🔄 Syncing ${usersToSync.length} users... (IP: ${clientIP})`);
 
     // Process each user
     for (const fid of usersToSync) {
@@ -101,8 +223,10 @@ export async function POST(req: NextRequest) {
         try {
           const neynarUser = await getNeynarUser(fid);
           if (neynarUser) {
-            username = neynarUser.username || username;
-            displayName = neynarUser.display_name;
+            username = sanitizeString(neynarUser.username || username, 100);
+            displayName = neynarUser.display_name
+              ? sanitizeString(neynarUser.display_name, 200)
+              : undefined;
           }
         } catch (err) {
           console.warn(`⚠️ Could not fetch Neynar user for fid ${fid}:`, err);
@@ -110,7 +234,13 @@ export async function POST(req: NextRequest) {
 
         // Get wallet address from currency account
         const account = await accountsCollection.findOne({ fid });
-        const walletAddress = account?.walletAddress || undefined;
+        let walletAddress: string | undefined = account?.walletAddress || undefined;
+        
+        // Validate wallet address format
+        if (walletAddress && !validateWalletAddress(walletAddress)) {
+          console.warn(`⚠️ Invalid wallet address format for fid ${fid}: ${walletAddress}`);
+          walletAddress = undefined; // Don't store invalid addresses
+        }
 
         // Count quizzes from leaderboard
         const weeklyQuizzes = await leaderboardCollection.countDocuments({
@@ -272,17 +402,43 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const duration = Date.now() - startTime;
+    
+    // Log successful sync
+    await logAuditEvent('SYNC_COMPLETED', clientIP, {
+      synced,
+      errors,
+      total: usersToSync.length,
+      duration,
+    }, true, undefined, userAgent);
+
     return NextResponse.json({
       success: true,
       synced,
       errors,
       total: usersToSync.length,
       message: `Synced ${synced} users, ${errors} errors`,
+      duration,
+    }, {
+      headers: {
+        'X-RateLimit-Limit': SYNC_RATE_LIMIT.toString(),
+        'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+        'X-RateLimit-Reset': rateLimit.resetAt.toString(),
+      },
     });
   } catch (error: any) {
+    const duration = Date.now() - startTime;
     console.error('Error syncing master user data:', error);
+    
+    // Log error
+    await logAuditEvent('SYNC_ERROR', clientIP, {
+      error: error.message,
+      duration,
+    }, false, error.message, userAgent);
+
+    // Don't leak internal error details
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
@@ -291,43 +447,131 @@ export async function POST(req: NextRequest) {
 /**
  * Get Master User Data
  * GET /api/admin/master-user-data?fid=12345
+ * 
+ * Security:
+ * - Requires ADMIN_SECRET authentication
+ * - Rate limited: 100 requests per minute per IP
+ * - Input validation on all parameters
+ * - Pagination support to prevent large responses
+ * - Audit logging for all operations
  */
 export async function GET(req: NextRequest) {
+  const clientIP = getClientIP(req);
+  const userAgent = req.headers.get('user-agent') || undefined;
+  const startTime = Date.now();
+
   try {
+    // 1. Authentication check
+    const authResult = verifyAdminAuth(req);
+    if (!authResult.valid) {
+      await logAuditEvent('GET_ATTEMPT_UNAUTHORIZED', clientIP, {}, false, authResult.error, userAgent);
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // 2. Rate limiting (more lenient for reads)
+    const rateLimit = checkRateLimit(`get:${clientIP}`, 100, 60000); // 100 per minute
+    if (!rateLimit.allowed) {
+      await logAuditEvent('GET_RATE_LIMIT_EXCEEDED', clientIP, {}, false, undefined, userAgent);
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded',
+          resetAt: new Date(rateLimit.resetAt).toISOString(),
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': '100',
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': rateLimit.resetAt.toString(),
+          },
+        }
+      );
+    }
+
+    // 3. Input validation
     const { searchParams } = new URL(req.url);
     const fidParam = searchParams.get('fid');
     const eligibleOnly = searchParams.get('eligible') === 'true';
+    const limitParam = searchParams.get('limit');
+    const offsetParam = searchParams.get('offset');
+
+    // Validate pagination parameters
+    const limit = limitParam ? Math.min(Math.max(1, Number(limitParam)), 1000) : 100; // Max 1000
+    const offset = offsetParam ? Math.max(0, Number(offsetParam)) : 0;
 
     const masterCollection = await getMasterUserDataCollection();
 
     if (fidParam) {
       // Get specific user
-      const fid = Number(fidParam);
-      if (Number.isNaN(fid)) {
-        return NextResponse.json({ error: 'Invalid fid' }, { status: 400 });
+      const fidValidation = validateFID(fidParam);
+      if (!fidValidation.valid) {
+        await logAuditEvent('GET_INVALID_FID', clientIP, { fid: fidParam }, false, fidValidation.error, userAgent);
+        return NextResponse.json(
+          { error: fidValidation.error },
+          { status: 400 }
+        );
       }
 
-      const user = await masterCollection.findOne({ fid });
+      const user = await masterCollection.findOne({ fid: fidValidation.value });
       if (!user) {
-        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        await logAuditEvent('GET_USER_NOT_FOUND', clientIP, { fid: fidValidation.value }, false, undefined, userAgent);
+        return NextResponse.json(
+          { error: 'User not found' },
+          { status: 404 }
+        );
       }
 
+      await logAuditEvent('GET_USER_SUCCESS', clientIP, { fid: fidValidation.value }, true, undefined, userAgent);
       return NextResponse.json({ user });
     } else {
-      // Get all users (with optional filter)
+      // Get all users (with optional filter and pagination)
       const query = eligibleOnly ? { eligibleForAirdrop: true } : {};
-      const users = await masterCollection.find(query).sort({ totalQuizzesPlayed: -1 }).toArray();
       const total = await masterCollection.countDocuments(query);
+      
+      const users = await masterCollection
+        .find(query)
+        .sort({ totalQuizzesPlayed: -1 })
+        .skip(offset)
+        .limit(limit)
+        .toArray();
+
+      await logAuditEvent('GET_LIST_SUCCESS', clientIP, {
+        eligibleOnly,
+        limit,
+        offset,
+        returned: users.length,
+        total,
+      }, true, undefined, userAgent);
 
       return NextResponse.json({
         users,
         total,
+        limit,
+        offset,
+        hasMore: offset + users.length < total,
+      }, {
+        headers: {
+          'X-RateLimit-Limit': '100',
+          'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+          'X-RateLimit-Reset': rateLimit.resetAt.toString(),
+        },
       });
     }
   } catch (error: any) {
+    const duration = Date.now() - startTime;
     console.error('Error fetching master user data:', error);
+    
+    await logAuditEvent('GET_ERROR', clientIP, {
+      error: error.message,
+      duration,
+    }, false, error.message, userAgent);
+
+    // Don't leak internal error details
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

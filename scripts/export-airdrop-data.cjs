@@ -36,6 +36,8 @@ async function exportAirdropData(options = {}) {
     const response = await fetch(url, {
       headers: {
         'Authorization': `Bearer ${ADMIN_SECRET}`,
+        'Content-Type': 'application/json',
+        'User-Agent': 'Quiz-Trivia-Export-Script/1.0',
       },
     });
 

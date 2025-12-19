@@ -53,6 +53,7 @@ async function syncMasterUserData(options = {}) {
       headers: {
         'Authorization': `Bearer ${ADMIN_SECRET}`,
         'Content-Type': 'application/json',
+        'User-Agent': 'Quiz-Trivia-Sync-Script/1.0',
       },
     });
 

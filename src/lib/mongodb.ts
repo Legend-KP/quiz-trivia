@@ -438,3 +438,25 @@ export async function getMasterUserDataCollection(): Promise<Collection<MasterUs
   const database = await getDb();
   return database.collection<MasterUserDataDocument>('master_user_data');
 }
+
+// ---------------- Audit Logging ----------------
+
+/**
+ * Audit Log Collection
+ * Purpose: Track all access and modifications to master user data for security
+ */
+export interface AuditLogDocument {
+  _id?: any;                      // MongoDB document ID
+  action: string;                 // Action performed (e.g., 'SYNC_COMPLETED', 'GET_USER_SUCCESS')
+  ip: string;                     // Client IP address
+  userAgent?: string;              // User agent string
+  details: Record<string, any>;   // Action-specific details
+  success: boolean;                // Whether action succeeded
+  error?: string;                  // Error message if failed
+  timestamp: number;              // Timestamp (ms epoch)
+}
+
+export async function getAuditLogsCollection(): Promise<Collection<AuditLogDocument>> {
+  const database = await getDb();
+  return database.collection<AuditLogDocument>('audit_logs');
+}
