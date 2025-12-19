@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import sdk from "@farcaster/miniapp-sdk";
+import QTTokenomicsPanel from "./TokenomicsPanel";
 
 /**
  * Bottom Navigation Component
  * 
  * Displays a fixed bottom navigation bar with three options:
- * - Left: Buy $QT (Opens swap interface to buy QT token)
+ * - Left: Buy $QT (Opens Tokenomics panel)
  * - Center: Home
  * - Right: Rewards
  */
@@ -22,27 +22,10 @@ export function BottomNavigation({
   onHomeClick,
   onRewardsClick
 }: BottomNavigationProps) {
-  const [isLoadingQT, setIsLoadingQT] = useState(false);
+  const [showTokenomicsPanel, setShowTokenomicsPanel] = useState(false);
 
-  // QT Token information
-  const QT_TOKEN_ADDRESS = "0x541529ADB3f344128aa87917fd2926E7D240FB07";
-  const CHAIN_ID = "8453"; // Base Mainnet
-  const TOKEN_ASSET_ID = `eip155:${CHAIN_ID}/erc20:${QT_TOKEN_ADDRESS}`;
-
-  const handleBuyQT = async () => {
-    setIsLoadingQT(true);
-    try {
-      // Open swap interface to buy QT token directly
-      await sdk.actions.swapToken({
-        sellToken: `eip155:${CHAIN_ID}/native`, // Base ETH
-        buyToken: TOKEN_ASSET_ID, // QT Token
-      });
-      console.log("Opening swap interface to buy QT token");
-    } catch (err) {
-      console.error("Failed to open swap interface:", err);
-    } finally {
-      setIsLoadingQT(false);
-    }
+  const handleQTClick = () => {
+    setShowTokenomicsPanel(true);
   };
 
   const handleHomeClick = () => {
@@ -71,44 +54,11 @@ export function BottomNavigation({
         <div className="flex items-center justify-around h-16 px-2">
           {/* Left: Buy $QT */}
           <button
-            onClick={handleBuyQT}
-            disabled={isLoadingQT}
-            className={`flex flex-col items-center justify-center flex-1 h-full mx-1 transition-all duration-200 rounded-2xl bg-white text-purple-600 font-bold shadow-lg ${
-              isLoadingQT
-                ? "opacity-50 cursor-not-allowed"
-                : "hover:bg-gray-100 active:scale-95"
-            }`}
+            onClick={handleQTClick}
+            className="flex flex-col items-center justify-center flex-1 h-full mx-1 transition-all duration-200 rounded-2xl bg-white text-purple-600 font-bold shadow-lg hover:bg-gray-100 active:scale-95"
           >
-            <div className="relative">
-              <span className="text-lg font-bold">$QT</span>
-              {isLoadingQT && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <svg
-                    className="animate-spin h-4 w-4 text-purple-600"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                </div>
-              )}
-            </div>
-            <span className="text-[10px] mt-0.5 font-medium">
-              {isLoadingQT ? "Opening..." : "Buy"}
-            </span>
+            <span className="text-lg font-bold">$QT</span>
+            <span className="text-[10px] mt-0.5 font-medium">Buy</span>
           </button>
 
           {/* Home */}
@@ -138,6 +88,12 @@ export function BottomNavigation({
           </button>
         </div>
       </div>
+
+      {/* Tokenomics Panel */}
+      <QTTokenomicsPanel 
+        isOpen={showTokenomicsPanel} 
+        onClose={() => setShowTokenomicsPanel(false)} 
+      />
     </div>
   );
 }
