@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
     let body;
     try {
       body = await req.json();
-    } catch (parseError) {
+    } catch (_parseError) {
       return new Response(
         JSON.stringify({ success: false, error: 'Invalid JSON in request body' }), 
         { status: 400, headers: { 'content-type': 'application/json' } }
@@ -89,10 +89,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let accounts, txns;
+    let accounts;
     try {
       accounts = await getCurrencyAccountsCollection();
-      txns = await getCurrencyTxnsCollection();
     } catch (dbError: any) {
       console.error('Database connection error:', dbError);
       return new Response(
