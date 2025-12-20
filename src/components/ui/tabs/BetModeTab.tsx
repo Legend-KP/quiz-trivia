@@ -890,15 +890,28 @@ const ERC20_ABI = [
           }
         }
         
-        // Step 2: Check if contract is paused before depositing
-        const isPaused = await publicClient.readContract({
-          address: contractAddress,
-          abi: BET_MODE_VAULT_ABI,
-          functionName: 'paused',
-        });
-        
-        if (isPaused) {
-          throw new Error('Bet Mode is currently paused. Please try again later.');
+        // Step 2: Check if contract is paused before depositing (optional - contract will revert if paused anyway)
+        try {
+          const isPaused = await publicClient.readContract({
+            address: contractAddress,
+            abi: BET_MODE_VAULT_ABI,
+            functionName: 'paused',
+          });
+          
+          if (isPaused) {
+            throw new Error('Bet Mode is currently paused. Please try again later.');
+          }
+        } catch (pauseCheckError: any) {
+          // If provider doesn't support readContract, just continue - contract will revert if paused
+          if (pauseCheckError.message?.includes('does not support') || pauseCheckError.message?.includes('UnsupportedProviderMethod')) {
+            console.warn('Could not check pause status (provider limitation), continuing with deposit...');
+          } else if (pauseCheckError.message?.includes('paused')) {
+            // Re-throw if actually paused
+            throw pauseCheckError;
+          } else {
+            // Other errors - log but continue
+            console.warn('Pause check failed, continuing with deposit:', pauseCheckError.message);
+          }
         }
         
         // Step 3: Call contract.deposit()
