@@ -103,7 +103,7 @@ const ERC20_ABI = [
     
   // Get QT token address from environment (client-side safe)
   // Fallback to hardcoded address if env var not set
-  const QT_TOKEN_ADDRESS = "0x541529ADB3f344128aa87917fd2926E7D240FB07";
+  const QT_TOKEN_ADDRESS = "0x361faAea711B20caF59726e5f478D745C187cB07";
   const qtTokenAddress = (process.env.NEXT_PUBLIC_QT_TOKEN_ADDRESS || QT_TOKEN_ADDRESS) as `0x${string}`;
   
   const [screen, setScreen] = useState<BetModeScreen>('entry');
@@ -917,9 +917,36 @@ const ERC20_ABI = [
         // Step 3: Call contract.deposit()
         setDepositStep('depositing');
         setIsDepositPending(true);
-        console.log('Depositing to contract...');
-        console.log('Amount:', formatUnits(amountWei, 18), 'QT');
-        console.log('Contract address:', contractAddress);
+        
+        // Verify contract address is correct (should be vault contract, not owner wallet)
+        const vaultAddress = getBetModeVaultAddress();
+        const ownerWalletAddress = '0xc6046a1a08C7DD17832C561d5ecb366d85b1fC8E'; // Known owner wallet to avoid
+        
+        console.log('🔍 Deposit Address Verification:');
+        console.log('  - Vault Contract Address (expected):', vaultAddress);
+        console.log('  - Contract Address (from state):', contractAddress);
+        console.log('  - User Wallet Address:', address);
+        console.log('  - Owner Wallet Address (should NOT match):', ownerWalletAddress);
+        console.log('  - Amount:', formatUnits(amountWei, 18), 'QT');
+        console.log('  - Amount (wei):', amountWei.toString());
+        
+        // CRITICAL: Ensure we're NOT using the owner wallet address
+        if (contractAddress.toLowerCase() === ownerWalletAddress.toLowerCase()) {
+          console.error('❌ CRITICAL ERROR: Contract address is owner wallet, not vault contract!');
+          console.error('  This will cause deposits to fail. Please check your environment variables.');
+          throw new Error('Invalid contract configuration. Contract address cannot be the owner wallet. Please contact support.');
+        }
+        
+        // Ensure we're using the vault contract address
+        if (contractAddress.toLowerCase() !== vaultAddress.toLowerCase()) {
+          console.error('❌ CRITICAL: Contract address mismatch!');
+          console.error('  Expected vault:', vaultAddress);
+          console.error('  Got:', contractAddress);
+          throw new Error('Invalid contract address. Please refresh and try again.');
+        }
+        
+        console.log('✅ Using correct vault contract address:', contractAddress);
+        console.log('📤 Initiating deposit transaction...');
         
         // Use wallet client's writeContract method directly to bypass wagmi's getChainId check
         const depositHash = await walletClient.writeContract({
@@ -984,7 +1011,7 @@ const ERC20_ABI = [
     
     const handleBuyQT = async () => {
       try {
-        const QT_TOKEN_ADDRESS = "0x541529ADB3f344128aa87917fd2926E7D240FB07";
+        const QT_TOKEN_ADDRESS = "0x361faAea711B20caF59726e5f478D745C187cB07";
         const CHAIN_ID = "8453"; // Base Mainnet
         const TOKEN_ASSET_ID = `eip155:${CHAIN_ID}/erc20:${QT_TOKEN_ADDRESS}`;
         
