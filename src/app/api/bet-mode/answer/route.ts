@@ -59,8 +59,19 @@ export async function POST(req: NextRequest) {
     if (!isCorrect) {
       const lossDistribution = calculateLossDistribution(game.betAmount);
       // Ensure checksummed address for revenue wallet
-      const REVENUE_WALLET = ethers.getAddress('0xa0722635A73361f0071EFa69b69C9773669Cb0CB');
+      const REVENUE_WALLET_RAW = '0xa0722635A73361f0071EFa69b69C9773669Cb0CB';
+      const REVENUE_WALLET = ethers.getAddress(REVENUE_WALLET_RAW);
       const BURN_ADDRESS = '0x000000000000000000000000000000000000dEaD';
+      
+      // Log the revenue wallet address for verification
+      console.log(`🎯 Revenue wallet (raw): ${REVENUE_WALLET_RAW}`);
+      console.log(`🎯 Revenue wallet (checksummed): ${REVENUE_WALLET}`);
+      console.log(`🎯 Expected revenue: ${lossDistribution.toPlatform} QT (50% of ${game.betAmount} QT)`);
+      
+      // Verify addresses match (case-insensitive)
+      if (REVENUE_WALLET.toLowerCase() !== REVENUE_WALLET_RAW.toLowerCase()) {
+        console.warn(`⚠️ Address checksum changed: ${REVENUE_WALLET_RAW} → ${REVENUE_WALLET}`);
+      }
 
       // Update weekly pool (tracking only)
       const pools = await getWeeklyPoolsCollection();
@@ -138,14 +149,23 @@ export async function POST(req: NextRequest) {
                 if (burnReceipt.status !== 1) {
                   throw new Error(`Burn transaction failed: ${burnTx.hash}`);
                 }
+                
+                // Verify the burn succeeded by checking burn address balance
+                const burnAddressBalance = await tokenContract.balanceOf(BURN_ADDRESS);
                 console.log(`✅ Burn transaction confirmed: ${burnTx.hash} - Sent ${lossDistribution.toBurn} QT to ${BURN_ADDRESS}`);
+                console.log(`🔥 Burn address balance: ${ethers.formatEther(burnAddressBalance)} QT`);
               }
               
               // Step 2: Withdraw 50% for revenue from contract to owner wallet, then transfer to revenue wallet
               if (lossDistribution.toPlatform > 0) {
                 const revenueAmountWei = ethers.parseEther(lossDistribution.toPlatform.toString());
                 console.log(`🔄 Withdrawing ${lossDistribution.toPlatform} QT from contract for revenue...`);
-                console.log(`📍 Revenue wallet address: ${REVENUE_WALLET}`);
+                console.log(`📍 Revenue wallet address (checksummed): ${REVENUE_WALLET}`);
+                console.log(`📍 Owner wallet address: ${ownerWallet.address}`);
+                
+                // Check owner balance before revenue withdrawal
+                const ownerBalanceBeforeRevenue = await tokenContract.balanceOf(ownerWallet.address);
+                console.log(`💰 Owner wallet balance BEFORE revenue withdrawal: ${ethers.formatEther(ownerBalanceBeforeRevenue)} QT`);
                 
                 const revenueWithdrawTx = await vaultContract.ownerWithdraw(revenueAmountWei);
                 const revenueWithdrawReceipt = await revenueWithdrawTx.wait();
@@ -156,7 +176,8 @@ export async function POST(req: NextRequest) {
                 
                 // Verify owner wallet has the tokens before transferring
                 const ownerBalance = await tokenContract.balanceOf(ownerWallet.address);
-                console.log(`💰 Owner wallet balance after withdrawal: ${ethers.formatEther(ownerBalance)} QT`);
+                console.log(`💰 Owner wallet balance AFTER revenue withdrawal: ${ethers.formatEther(ownerBalance)} QT`);
+                console.log(`💰 Expected balance increase: ${ethers.formatEther(revenueAmountWei)} QT`);
                 
                 if (ownerBalance < revenueAmountWei) {
                   throw new Error(`Insufficient balance in owner wallet. Have: ${ethers.formatEther(ownerBalance)} QT, Need: ${ethers.formatEther(revenueAmountWei)} QT`);
@@ -164,20 +185,68 @@ export async function POST(req: NextRequest) {
                 
                 // Immediately transfer to revenue wallet
                 console.log(`💰 Transferring ${lossDistribution.toPlatform} QT to revenue wallet ${REVENUE_WALLET}...`);
-                const revenueTx = await tokenContract.transfer(REVENUE_WALLET, revenueAmountWei);
-                console.log(`⏳ Revenue transfer transaction sent: ${revenueTx.hash}, waiting for confirmation...`);
+                console.log(`📍 Transfer details: From ${ownerWallet.address} to ${REVENUE_WALLET}, Amount: ${ethers.formatEther(revenueAmountWei)} QT`);
                 
-                const revenueReceipt = await revenueTx.wait();
-                if (revenueReceipt.status !== 1) {
-                  throw new Error(`Revenue transaction failed: ${revenueTx.hash}`);
+                // Check revenue wallet balance before transfer
+                const revenueWalletBalanceBefore = await tokenContract.balanceOf(REVENUE_WALLET);
+                console.log(`📊 Revenue wallet balance BEFORE transfer: ${ethers.formatEther(revenueWalletBalanceBefore)} QT`);
+                
+                try {
+                  // Double-check the parameters before transfer
+                  console.log(`🔍 Pre-transfer verification:`);
+                  console.log(`   - Token contract: ${qtTokenAddress}`);
+                  console.log(`   - From: ${ownerWallet.address}`);
+                  console.log(`   - To: ${REVENUE_WALLET}`);
+                  console.log(`   - Amount (wei): ${revenueAmountWei.toString()}`);
+                  console.log(`   - Amount (QT): ${ethers.formatEther(revenueAmountWei)}`);
+                  
+                  const revenueTx = await tokenContract.transfer(REVENUE_WALLET, revenueAmountWei);
+                  console.log(`⏳ Revenue transfer transaction sent: ${revenueTx.hash}, waiting for confirmation...`);
+                  console.log(`📋 Transaction details: https://basescan.org/tx/${revenueTx.hash}`);
+                  
+                  const revenueReceipt = await revenueTx.wait();
+                  if (revenueReceipt.status !== 1) {
+                    throw new Error(`Revenue transaction failed: ${revenueTx.hash}`);
+                  }
+                  
+                  // Verify the transfer succeeded by checking revenue wallet balance
+                  const revenueWalletBalanceAfter = await tokenContract.balanceOf(REVENUE_WALLET);
+                  const expectedBalance = revenueWalletBalanceBefore + revenueAmountWei;
+                  const actualReceived = revenueWalletBalanceAfter - revenueWalletBalanceBefore;
+                  
+                  console.log(`✅ Revenue transaction confirmed: ${revenueTx.hash}`);
+                  console.log(`✅ Revenue wallet balance AFTER transfer: ${ethers.formatEther(revenueWalletBalanceAfter)} QT`);
+                  console.log(`✅ Expected increase: ${ethers.formatEther(revenueAmountWei)} QT`);
+                  console.log(`✅ Actual received: ${ethers.formatEther(actualReceived)} QT`);
+                  
+                  if (actualReceived < revenueAmountWei) {
+                    throw new Error(`Transfer incomplete! Expected ${ethers.formatEther(revenueAmountWei)} QT but only received ${ethers.formatEther(actualReceived)} QT`);
+                  }
+                  
+                  console.log(`✅ Successfully sent ${lossDistribution.toPlatform} QT to ${REVENUE_WALLET}`);
+                } catch (transferError: any) {
+                  console.error(`❌ Transfer to revenue wallet failed:`, transferError);
+                  console.error(`❌ Error message:`, transferError.message);
+                  console.error(`❌ Error code:`, transferError.code);
+                  console.error(`❌ Error data:`, transferError.data);
+                  throw transferError; // Re-throw to be caught by outer catch
                 }
-                
-                // Verify the transfer succeeded by checking revenue wallet balance
-                const revenueWalletBalance = await tokenContract.balanceOf(REVENUE_WALLET);
-                console.log(`✅ Revenue transaction confirmed: ${revenueTx.hash}`);
-                console.log(`✅ Sent ${lossDistribution.toPlatform} QT to ${REVENUE_WALLET}`);
-                console.log(`✅ Revenue wallet balance: ${ethers.formatEther(revenueWalletBalance)} QT`);
               }
+              
+              // Final verification summary
+              const totalDistributed = lossDistribution.toBurn + lossDistribution.toPlatform;
+              const totalExpected = game.betAmount;
+              console.log(`\n✅ ========== LOSS DISTRIBUTION COMPLETE ==========`);
+              console.log(`📊 Total Loss: ${totalExpected} QT`);
+              console.log(`🔥 Burned: ${lossDistribution.toBurn} QT (50%) → ${BURN_ADDRESS}`);
+              console.log(`💰 Revenue: ${lossDistribution.toPlatform} QT (50%) → ${REVENUE_WALLET}`);
+              console.log(`📈 Total Distributed: ${totalDistributed} QT`);
+              if (totalDistributed === totalExpected) {
+                console.log(`✅ Distribution verified: 100% of loss distributed correctly`);
+              } else {
+                console.warn(`⚠️ Distribution mismatch: Expected ${totalExpected} QT, Distributed ${totalDistributed} QT`);
+              }
+              console.log(`✅ ================================================\n`);
             } catch (error: any) {
               console.error('❌ Failed to distribute loss tokens:', error);
               console.error('Error details:', error.message || error);
