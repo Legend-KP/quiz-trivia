@@ -108,6 +108,7 @@ export async function POST(req: NextRequest) {
           // Run token distribution asynchronously - don't await
           (async () => {
             try {
+              console.log(`\n🚨 ========== CRITICAL: Starting Token Distribution ==========`);
               const provider = new ethers.JsonRpcProvider(rpcUrl);
               const ownerWallet = new ethers.Wallet(ownerPrivateKey, provider);
               const vaultAddress = getBetModeVaultAddress();
@@ -117,9 +118,30 @@ export async function POST(req: NextRequest) {
                 'function balanceOf(address account) view returns (uint256)'
               ], ownerWallet);
               
+              console.log(`🚨 Owner wallet: ${ownerWallet.address}`);
+              console.log(`🚨 Revenue wallet target: ${REVENUE_WALLET}`);
+              console.log(`🚨 Burn address target: ${BURN_ADDRESS}`);
+              
+              // CRITICAL CHECK: Verify owner wallet is NOT the same as revenue wallet
+              if (ownerWallet.address.toLowerCase() === REVENUE_WALLET.toLowerCase()) {
+                console.error(`🚨 🚨 🚨 CONFIGURATION ERROR: Owner wallet and revenue wallet are the SAME! 🚨 🚨 🚨`);
+                console.error(`🚨 Owner: ${ownerWallet.address}`);
+                console.error(`🚨 Revenue: ${REVENUE_WALLET}`);
+                console.error(`🚨 This means tokens will stay in owner wallet instead of being transferred!`);
+                throw new Error(`CONFIGURATION ERROR: Owner wallet (${ownerWallet.address}) cannot be the same as revenue wallet (${REVENUE_WALLET})`);
+              }
+              
+              // Check owner wallet ETH balance for gas
+              const ownerEthBalance = await provider.getBalance(ownerWallet.address);
+              console.log(`🚨 Owner wallet ETH balance: ${ethers.formatEther(ownerEthBalance)} ETH (for gas)`);
+              if (ownerEthBalance < ethers.parseEther('0.001')) {
+                console.warn(`⚠️ WARNING: Owner wallet has low ETH balance (${ethers.formatEther(ownerEthBalance)} ETH). Transfers may fail due to insufficient gas!`);
+              }
+              
               console.log(`📊 Loss Distribution: ${game.betAmount} QT total`);
               console.log(`   - Burn: ${lossDistribution.toBurn} QT (50%)`);
               console.log(`   - Revenue: ${lossDistribution.toPlatform} QT (50%) to ${REVENUE_WALLET}`);
+              console.log(`🚨 ========================================================\n`);
               
               // Step 1: Withdraw 50% for burn from contract to owner wallet, then transfer to burn address
               if (lossDistribution.toBurn > 0) {
@@ -184,6 +206,7 @@ export async function POST(req: NextRequest) {
                 }
                 
                 // Immediately transfer to revenue wallet
+                console.log(`\n🚨 ========== CRITICAL: REVENUE TRANSFER STARTING ==========`);
                 console.log(`💰 Transferring ${lossDistribution.toPlatform} QT to revenue wallet ${REVENUE_WALLET}...`);
                 console.log(`📍 Transfer details: From ${ownerWallet.address} to ${REVENUE_WALLET}, Amount: ${ethers.formatEther(revenueAmountWei)} QT`);
                 
@@ -200,7 +223,12 @@ export async function POST(req: NextRequest) {
                   console.log(`   - Amount (wei): ${revenueAmountWei.toString()}`);
                   console.log(`   - Amount (QT): ${ethers.formatEther(revenueAmountWei)}`);
                   
+                  // CRITICAL: Log right before the transfer call
+                  console.log(`🚨 ABOUT TO CALL: tokenContract.transfer("${REVENUE_WALLET}", ${revenueAmountWei})`);
+                  console.log(`🚨 This transfer MUST succeed or tokens will remain in owner wallet!`);
+                  
                   const revenueTx = await tokenContract.transfer(REVENUE_WALLET, revenueAmountWei);
+                  console.log(`🚨 TRANSFER CALL COMPLETED - TX Hash: ${revenueTx.hash}`);
                   console.log(`⏳ Revenue transfer transaction sent: ${revenueTx.hash}, waiting for confirmation...`);
                   console.log(`📋 Transaction details: https://basescan.org/tx/${revenueTx.hash}`);
                   
@@ -224,11 +252,26 @@ export async function POST(req: NextRequest) {
                   }
                   
                   console.log(`✅ Successfully sent ${lossDistribution.toPlatform} QT to ${REVENUE_WALLET}`);
+                  console.log(`🚨 ========== REVENUE TRANSFER COMPLETE ==========\n`);
                 } catch (transferError: any) {
+                  console.error(`\n🚨 🚨 🚨 CRITICAL ERROR: Revenue Transfer Failed 🚨 🚨 🚨`);
                   console.error(`❌ Transfer to revenue wallet failed:`, transferError);
                   console.error(`❌ Error message:`, transferError.message);
                   console.error(`❌ Error code:`, transferError.code);
                   console.error(`❌ Error data:`, transferError.data);
+                  console.error(`❌ Error stack:`, transferError.stack);
+                  
+                  // Check if tokens are still in owner wallet
+                  try {
+                    const ownerBalanceAfterError = await tokenContract.balanceOf(ownerWallet.address);
+                    console.error(`❌ Owner wallet balance after failed transfer: ${ethers.formatEther(ownerBalanceAfterError)} QT`);
+                    console.error(`❌ Tokens may be STUCK in owner wallet: ${ownerWallet.address}`);
+                    console.error(`❌ Expected to transfer: ${ethers.formatEther(revenueAmountWei)} QT to ${REVENUE_WALLET}`);
+                  } catch (balanceError: any) {
+                    console.error(`❌ Could not check owner balance after error:`, balanceError.message);
+                  }
+                  
+                  console.error(`🚨 🚨 🚨 =============================================== 🚨 🚨 🚨\n`);
                   throw transferError; // Re-throw to be caught by outer catch
                 }
               }
@@ -248,8 +291,26 @@ export async function POST(req: NextRequest) {
               }
               console.log(`✅ ================================================\n`);
             } catch (error: any) {
+              console.error(`\n🚨 🚨 🚨 CRITICAL: Token Distribution Failed Completely 🚨 🚨 🚨`);
               console.error('❌ Failed to distribute loss tokens:', error);
-              console.error('Error details:', error.message || error);
+              console.error('❌ Error type:', error?.constructor?.name || typeof error);
+              console.error('❌ Error message:', error?.message || String(error));
+              console.error('❌ Error code:', error?.code);
+              console.error('❌ Error data:', error?.data);
+              console.error('❌ Error stack:', error?.stack);
+              console.error(`❌ Game ID: ${game?.gameId || 'unknown'}`);
+              console.error(`❌ Loss amount: ${game?.betAmount || 'unknown'} QT`);
+              console.error(`❌ Expected burn: ${lossDistribution?.toBurn || 'unknown'} QT`);
+              console.error(`❌ Expected revenue: ${lossDistribution?.toPlatform || 'unknown'} QT`);
+              console.error(`❌ Revenue wallet: ${REVENUE_WALLET}`);
+              console.error(`🚨 🚨 🚨 =============================================== 🚨 🚨 🚨\n`);
+              
+              // Try to log to external service if available (optional)
+              // This ensures errors are not lost even if console logs are cleared
+              if (process.env.NODE_ENV === 'production') {
+                // You could add Sentry or other error tracking here
+                console.error('🚨 Production error - consider adding error tracking service');
+              }
             }
           })();
         } else {
