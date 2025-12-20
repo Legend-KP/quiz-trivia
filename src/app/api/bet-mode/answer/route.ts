@@ -96,10 +96,9 @@ export async function POST(req: NextRequest) {
         if (ownerPrivateKey && qtTokenAddress) {
           // Run token distribution asynchronously - don't await
           (async () => {
-            let ownerWallet: ethers.Wallet | null = null;
             try {
               const provider = new ethers.JsonRpcProvider(rpcUrl);
-              ownerWallet = new ethers.Wallet(ownerPrivateKey, provider);
+              const ownerWallet = new ethers.Wallet(ownerPrivateKey, provider);
               const vaultAddress = getBetModeVaultAddress();
               const vaultContract = new ethers.Contract(vaultAddress, BET_MODE_VAULT_ABI, ownerWallet);
               const tokenContract = new ethers.Contract(qtTokenAddress, [
@@ -110,129 +109,73 @@ export async function POST(req: NextRequest) {
               console.log(`📊 Loss Distribution: ${game.betAmount} QT total`);
               console.log(`   - Burn: ${lossDistribution.toBurn} QT (50%)`);
               console.log(`   - Revenue: ${lossDistribution.toPlatform} QT (50%) to ${REVENUE_WALLET}`);
-              console.log(`📍 Owner wallet: ${ownerWallet.address}`);
               
-              // Check ETH balance for gas
-              const ethBalance = await provider.getBalance(ownerWallet.address);
-              console.log(`⛽ Owner wallet ETH balance: ${ethers.formatEther(ethBalance)} ETH`);
-              if (ethBalance < ethers.parseEther('0.001')) {
-                console.warn(`⚠️ Low ETH balance! May not have enough for gas fees.`);
-              }
-              
-              // Helper function to wait for transaction with retry
-              const waitForTx = async (txPromise: Promise<any>, description: string, maxRetries = 3): Promise<{ tx: any; receipt: any }> => {
-                for (let i = 0; i < maxRetries; i++) {
-                  try {
-                    const tx = await txPromise;
-                    console.log(`📤 ${description} tx sent: ${tx.hash}`);
-                    const receipt = await tx.wait();
-                    if (receipt.status !== 1) {
-                      throw new Error(`${description} transaction failed: ${tx.hash}`);
-                    }
-                    console.log(`✅ ${description} confirmed: ${tx.hash}`);
-                    return { tx, receipt };
-                  } catch (error: any) {
-                    if (i === maxRetries - 1) throw error;
-                    console.warn(`⚠️ ${description} attempt ${i + 1} failed, retrying...`, error.message);
-                    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2s before retry
-                  }
-                }
-                throw new Error(`${description} failed after ${maxRetries} attempts`);
-              };
-
               // Step 1: Withdraw 50% for burn from contract to owner wallet
               if (lossDistribution.toBurn > 0) {
-                try {
-                  const burnAmountWei = ethers.parseEther(lossDistribution.toBurn.toString());
-                  console.log(`🔄 [BURN] Withdrawing ${lossDistribution.toBurn} QT from contract...`);
-                  
-                  const { receipt: burnWithdrawReceipt } = await waitForTx(
-                    vaultContract.ownerWithdraw(burnAmountWei),
-                    'Burn withdrawal'
-                  );
-                  
-                  // Wait a bit to avoid nonce issues
-                  await new Promise(resolve => setTimeout(resolve, 1000));
-                  
-                  // Immediately transfer to burn address
-                  console.log(`🔥 [BURN] Transferring ${lossDistribution.toBurn} QT to burn address ${BURN_ADDRESS}...`);
-                  const { receipt: burnReceipt } = await waitForTx(
-                    tokenContract.transfer(BURN_ADDRESS, burnAmountWei),
-                    'Burn transfer'
-                  );
-                  console.log(`✅ [BURN] Complete! Hash: ${burnReceipt.hash || burnReceipt.transactionHash}`);
-                  console.log(`🔗 View on BaseScan: https://basescan.org/tx/${burnReceipt.hash || burnReceipt.transactionHash}`);
-                } catch (error: any) {
-                  console.error(`❌ [BURN] Failed:`, error);
-                  console.error(`❌ [BURN] Error stack:`, error.stack);
-                  throw error; // Re-throw to be caught by outer catch
+                const burnAmountWei = ethers.parseEther(lossDistribution.toBurn.toString());
+                console.log(`🔄 Withdrawing ${lossDistribution.toBurn} QT from contract for burn...`);
+                const burnWithdrawTx = await vaultContract.ownerWithdraw(burnAmountWei);
+                const burnWithdrawReceipt = await burnWithdrawTx.wait();
+                if (burnWithdrawReceipt.status !== 1) {
+                  throw new Error(`Burn withdrawal transaction failed: ${burnWithdrawTx.hash}`);
                 }
+                console.log(`✅ Burn withdrawal confirmed: ${burnWithdrawTx.hash}`);
+                
+                // Immediately transfer to burn address
+                console.log(`🔥 Transferring ${lossDistribution.toBurn} QT to burn address...`);
+                const burnTx = await tokenContract.transfer(BURN_ADDRESS, burnAmountWei);
+                const burnReceipt = await burnTx.wait();
+                if (burnReceipt.status !== 1) {
+                  throw new Error(`Burn transaction failed: ${burnTx.hash}`);
+                }
+                console.log(`✅ Burn transaction confirmed: ${burnTx.hash}`);
               }
               
               // Step 2: Withdraw 50% for revenue from contract to owner wallet, then transfer to revenue wallet
               if (lossDistribution.toPlatform > 0) {
-                try {
-                  const revenueAmountWei = ethers.parseEther(lossDistribution.toPlatform.toString());
-                  console.log(`🔄 [REVENUE] Withdrawing ${lossDistribution.toPlatform} QT from contract...`);
-                  console.log(`📍 [REVENUE] Target wallet: ${REVENUE_WALLET}`);
-                  
-                  const { receipt: revenueWithdrawReceipt } = await waitForTx(
-                    vaultContract.ownerWithdraw(revenueAmountWei),
-                    'Revenue withdrawal'
-                  );
-                  
-                  // Wait a bit to avoid nonce issues
-                  await new Promise(resolve => setTimeout(resolve, 1000));
-                  
-                  // Check owner wallet balance before transfer
-                  const ownerBalance = await tokenContract.balanceOf(ownerWallet.address);
-                  console.log(`💰 [REVENUE] Owner wallet balance: ${ethers.formatEther(ownerBalance)} QT`);
-                  
-                  if (ownerBalance < revenueAmountWei) {
-                    throw new Error(`Insufficient balance in owner wallet. Have: ${ethers.formatEther(ownerBalance)} QT, Need: ${lossDistribution.toPlatform} QT`);
-                  }
-                  
-                  // Immediately transfer to revenue wallet
-                  console.log(`💸 [REVENUE] Transferring ${lossDistribution.toPlatform} QT to revenue wallet ${REVENUE_WALLET}...`);
-                  console.log(`💸 [REVENUE] Amount in wei: ${revenueAmountWei.toString()}`);
-                  
-                  const { receipt: revenueReceipt } = await waitForTx(
-                    tokenContract.transfer(REVENUE_WALLET, revenueAmountWei),
-                    'Revenue transfer'
-                  );
-                  
-                  console.log(`✅ [REVENUE] Transfer confirmed! Hash: ${revenueReceipt.hash || revenueReceipt.transactionHash}`);
-                  console.log(`✅ [REVENUE] Successfully sent ${lossDistribution.toPlatform} QT to ${REVENUE_WALLET}`);
-                  console.log(`🔗 View on BaseScan: https://basescan.org/tx/${revenueReceipt.hash || revenueReceipt.transactionHash}`);
-                  
-                  // Verify transfer by checking revenue wallet balance
-                  const revenueWalletBalance = await tokenContract.balanceOf(REVENUE_WALLET);
-                  console.log(`✅ [REVENUE] Revenue wallet balance after transfer: ${ethers.formatEther(revenueWalletBalance)} QT`);
-                } catch (error: any) {
-                  console.error(`❌ [REVENUE] Failed:`, error);
-                  console.error(`❌ [REVENUE] Error message:`, error.message);
-                  console.error(`❌ [REVENUE] Error stack:`, error.stack);
-                  throw error; // Re-throw to be caught by outer catch
+                const revenueAmountWei = ethers.parseEther(lossDistribution.toPlatform.toString());
+                console.log(`🔄 [REVENUE] Withdrawing ${lossDistribution.toPlatform} QT from contract to owner wallet...`);
+                console.log(`📍 [REVENUE] Target revenue wallet: ${REVENUE_WALLET}`);
+                
+                // Step 2a: Withdraw from contract to owner wallet
+                const revenueWithdrawTx = await vaultContract.ownerWithdraw(revenueAmountWei);
+                console.log(`📤 [REVENUE] Withdrawal tx sent: ${revenueWithdrawTx.hash}`);
+                const revenueWithdrawReceipt = await revenueWithdrawTx.wait();
+                if (revenueWithdrawReceipt.status !== 1) {
+                  throw new Error(`Revenue withdrawal transaction failed: ${revenueWithdrawTx.hash}`);
                 }
+                console.log(`✅ [REVENUE] Withdrawal confirmed: ${revenueWithdrawTx.hash}`);
+                
+                // Step 2b: Verify owner wallet received the tokens
+                const ownerBalance = await tokenContract.balanceOf(ownerWallet.address);
+                console.log(`💰 [REVENUE] Owner wallet balance after withdrawal: ${ethers.formatEther(ownerBalance)} QT`);
+                
+                // Step 2c: Immediately transfer from owner wallet to revenue wallet
+                console.log(`💸 [REVENUE] Transferring ${lossDistribution.toPlatform} QT from owner wallet to revenue wallet ${REVENUE_WALLET}...`);
+                console.log(`💸 [REVENUE] Amount: ${revenueAmountWei.toString()} wei`);
+                
+                const revenueTx = await tokenContract.transfer(REVENUE_WALLET, revenueAmountWei);
+                console.log(`📤 [REVENUE] Transfer tx sent: ${revenueTx.hash}`);
+                const revenueReceipt = await revenueTx.wait();
+                if (revenueReceipt.status !== 1) {
+                  throw new Error(`Revenue transfer transaction failed: ${revenueTx.hash}`);
+                }
+                console.log(`✅ [REVENUE] Transfer confirmed: ${revenueTx.hash}`);
+                console.log(`✅ [REVENUE] Successfully sent ${lossDistribution.toPlatform} QT to ${REVENUE_WALLET}`);
+                console.log(`🔗 [REVENUE] View on BaseScan: https://basescan.org/tx/${revenueTx.hash}`);
+                
+                // Step 2d: Verify transfer by checking revenue wallet balance
+                const revenueWalletBalance = await tokenContract.balanceOf(REVENUE_WALLET);
+                const expectedBalance = ethers.formatEther(revenueWalletBalance);
+                console.log(`✅ [REVENUE] Revenue wallet (${REVENUE_WALLET}) balance: ${expectedBalance} QT`);
+                
+                // Verify the amount was actually received
+                const ownerBalanceAfter = await tokenContract.balanceOf(ownerWallet.address);
+                console.log(`💰 [REVENUE] Owner wallet balance after transfer: ${ethers.formatEther(ownerBalanceAfter)} QT`);
               }
             } catch (error: any) {
-              console.error('❌❌❌ CRITICAL: Failed to distribute loss tokens ❌❌❌');
-              console.error('Error message:', error.message || 'Unknown error');
-              console.error('Error code:', error.code);
-              console.error('Error data:', error.data);
-              console.error('Error stack:', error.stack);
-              console.error('Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
-              
-              // Try to send error notification (don't throw to avoid breaking the API response)
-              try {
-                const walletAddress = ownerWallet?.address || 'unknown';
-                console.error(`⚠️ Tokens may be stuck in owner wallet: ${walletAddress}`);
-                console.error(`⚠️ Please manually transfer:`);
-                console.error(`   - ${lossDistribution.toBurn} QT to burn address: ${BURN_ADDRESS}`);
-                console.error(`   - ${lossDistribution.toPlatform} QT to revenue wallet: ${REVENUE_WALLET}`);
-              } catch (e) {
-                // Ignore errors in error handling
-              }
+              console.error('❌ Failed to distribute loss tokens:', error);
+              console.error('Error details:', error.message || error);
             }
           })();
         } else {
