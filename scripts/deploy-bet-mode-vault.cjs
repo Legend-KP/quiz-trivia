@@ -11,7 +11,7 @@ async function main() {
   console.log("- Deployer Balance:", ethers.formatEther(await ethers.provider.getBalance(deployer.address)), "ETH");
   
   // Get required addresses from environment
-  const QT_TOKEN_ADDRESS = process.env.QT_TOKEN_ADDRESS || process.env.NEXT_PUBLIC_QT_TOKEN_ADDRESS || "0x361faAea711B20caF59726e5f478D745C187cB07";
+  const QT_TOKEN_ADDRESS = process.env.QT_TOKEN_ADDRESS || process.env.NEXT_PUBLIC_QT_TOKEN_ADDRESS;
   const ADMIN_SIGNER_ADDRESS = process.env.ADMIN_SIGNER_ADDRESS;
   
   if (!QT_TOKEN_ADDRESS) {

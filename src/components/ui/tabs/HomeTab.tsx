@@ -24,7 +24,7 @@ const ERC20_ABI = [
   },
 ] as const;
 
-const QT_TOKEN_ADDRESS = "0x361faAea711B20caF59726e5f478D745C187cB07";
+const QT_TOKEN_ADDRESS = "0x541529ADB3f344128aa87917fd2926E7D240FB07";
 
 // Type definitions
 interface QuizQuestion {
@@ -456,9 +456,6 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
               onStartWeeklyQuiz();
             }}
             userCompleted={weeklyUserCompleted}
-            isWalletConnected={isConnected && !!address}
-            walletBalance={walletBalance}
-            hasEnoughQT={walletBalance >= 1}
           />
 
           {/* Bet Mode */}

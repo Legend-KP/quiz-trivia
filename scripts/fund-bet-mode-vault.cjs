@@ -5,7 +5,7 @@ async function main() {
   console.log("💰 Funding BetModeVault Contract with QT Tokens...\n");
   
   // Configuration
-  const QT_TOKEN_ADDRESS = process.env.QT_TOKEN_ADDRESS || process.env.NEXT_PUBLIC_QT_TOKEN_ADDRESS || "0x361faAea711B20caF59726e5f478D745C187cB07";
+  const QT_TOKEN_ADDRESS = process.env.QT_TOKEN_ADDRESS || process.env.NEXT_PUBLIC_QT_TOKEN_ADDRESS || "0x541529ADB3f344128aa87917fd2926E7D240FB07";
   const BET_MODE_VAULT_ADDRESS = process.env.BET_MODE_VAULT_ADDRESS || process.env.NEXT_PUBLIC_BET_MODE_VAULT_ADDRESS || "0xD9DaF0183265cf600F0e2df6aD2dE4F0334B15B3";
   const AMOUNT_QT = 200_000_000; // 200 million QT tokens
   const RPC_URL = process.env.BASE_RPC_URL || "https://mainnet.base.org";
