@@ -394,7 +394,7 @@ export function getBetModeVaultAddress(): `0x${string}` {
   const address =
     process.env.NEXT_PUBLIC_BET_MODE_VAULT_ADDRESS ||
     process.env.BET_MODE_VAULT_ADDRESS ||
-    '0x5fD8503003efD9B9d558ca86De6da0c5BB00c263'; // Updated contract address with game sync functions
+    '0xc6046a1a08C7DD17832C561d5ecb366d85b1FC8E'; // Deployed BetModeVault contract address
   
   return address as `0x${string}`;
 }

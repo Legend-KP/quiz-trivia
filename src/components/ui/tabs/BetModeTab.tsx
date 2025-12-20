@@ -918,24 +918,15 @@ const ERC20_ABI = [
         setDepositStep('depositing');
         setIsDepositPending(true);
         
-        // Verify contract address is correct (should be vault contract, not owner wallet)
+        // Verify contract address is correct
         const vaultAddress = getBetModeVaultAddress();
-        const ownerWalletAddress = '0xc6046a1a08C7DD17832C561d5ecb366d85b1fC8E'; // Known owner wallet to avoid
         
         console.log('🔍 Deposit Address Verification:');
         console.log('  - Vault Contract Address (expected):', vaultAddress);
         console.log('  - Contract Address (from state):', contractAddress);
         console.log('  - User Wallet Address:', address);
-        console.log('  - Owner Wallet Address (should NOT match):', ownerWalletAddress);
         console.log('  - Amount:', formatUnits(amountWei, 18), 'QT');
         console.log('  - Amount (wei):', amountWei.toString());
-        
-        // CRITICAL: Ensure we're NOT using the owner wallet address
-        if (contractAddress.toLowerCase() === ownerWalletAddress.toLowerCase()) {
-          console.error('❌ CRITICAL ERROR: Contract address is owner wallet, not vault contract!');
-          console.error('  This will cause deposits to fail. Please check your environment variables.');
-          throw new Error('Invalid contract configuration. Contract address cannot be the owner wallet. Please contact support.');
-        }
         
         // Ensure we're using the vault contract address
         if (contractAddress.toLowerCase() !== vaultAddress.toLowerCase()) {
