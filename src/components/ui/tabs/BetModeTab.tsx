@@ -819,9 +819,14 @@ const ERC20_ABI = [
           },
         };
         
-        // Create wallet client directly from provider to bypass wagmi
+        // Create wallet client and public client directly from provider to bypass wagmi
         const walletClient = createWalletClient({
           account: address as `0x${string}`,
+          chain: base,
+          transport: custom(customProvider),
+        });
+        
+        const publicClient = createPublicClient({
           chain: base,
           transport: custom(customProvider),
         });
@@ -842,15 +847,11 @@ const ERC20_ABI = [
           console.log('Approval transaction hash:', approveHash);
           
           // Wait for approval transaction to be confirmed
-          const publicClient = createPublicClient({
-            chain: base,
-            transport: custom(customProvider),
-          });
           
           try {
             const receipt = await publicClient.waitForTransactionReceipt({
               hash: approveHash,
-              timeout: 60_000, // 60 seconds timeout
+              timeout: 120_000, // 120 seconds timeout
             });
             
             if (receipt.status !== 'success') {
@@ -858,21 +859,54 @@ const ERC20_ABI = [
             }
             
             console.log('Approval confirmed:', receipt);
+            
+            // Wait a bit more to ensure approval is fully processed
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            
+            // Verify approval was actually set using viem
+            const verifiedAllowance = await publicClient.readContract({
+              address: qtTokenAddress,
+              abi: ERC20_ABI,
+              functionName: 'allowance',
+              args: [address, contractAddress],
+            });
+            
+            console.log('Verified allowance:', formatUnits(verifiedAllowance, 18), 'QT');
+            console.log('Required amount:', formatUnits(amountWei, 18), 'QT');
+            
+            if (verifiedAllowance < amountWei) {
+              throw new Error(`Insufficient approval. Expected: ${formatUnits(amountWei, 18)} QT, Got: ${formatUnits(verifiedAllowance, 18)} QT`);
+            }
+            
+            console.log('✅ Approval verified successfully');
           } catch (approvalError: any) {
             console.error('Approval confirmation error:', approvalError);
             // If user rejected, throw error
             if (approvalError.message?.includes('User rejected') || approvalError.message?.includes('denied')) {
               throw new Error('Approval cancelled by user');
             }
-            // Otherwise, continue - approval might still be processing
-            console.warn('Approval confirmation failed, but continuing...');
+            // Don't continue if approval failed - this will cause deposit to fail
+            throw new Error(`Approval failed: ${approvalError.message || 'Unknown error'}`);
           }
         }
         
-        // Step 2: Call contract.deposit()
+        // Step 2: Check if contract is paused before depositing
+        const isPaused = await publicClient.readContract({
+          address: contractAddress,
+          abi: BET_MODE_VAULT_ABI,
+          functionName: 'paused',
+        });
+        
+        if (isPaused) {
+          throw new Error('Bet Mode is currently paused. Please try again later.');
+        }
+        
+        // Step 3: Call contract.deposit()
         setDepositStep('depositing');
         setIsDepositPending(true);
         console.log('Depositing to contract...');
+        console.log('Amount:', formatUnits(amountWei, 18), 'QT');
+        console.log('Contract address:', contractAddress);
         
         // Use wallet client's writeContract method directly to bypass wagmi's getChainId check
         const depositHash = await walletClient.writeContract({
@@ -894,6 +928,12 @@ const ERC20_ABI = [
         
       } catch (err: any) {
         console.error('Deposit error:', err);
+        console.error('Error details:', {
+          message: err.message,
+          code: err.code,
+          data: err.data,
+          shortMessage: err.shortMessage,
+        });
         
         let errorMessage = 'Failed to initiate deposit';
         
@@ -901,6 +941,16 @@ const ERC20_ABI = [
           errorMessage = 'Insufficient ETH for gas fees. Please add ETH to your wallet.';
         } else if (err.message?.includes('User rejected') || err.message?.includes('denied') || err.message?.includes('rejected')) {
           errorMessage = 'Transaction cancelled by user.';
+        } else if (err.message?.includes('paused')) {
+          errorMessage = 'Bet Mode is currently paused. Please try again later.';
+        } else if (err.message?.includes('Insufficient approval') || err.message?.includes('allowance')) {
+          errorMessage = 'Token approval failed. Please try approving again.';
+        } else if (err.message?.includes('InsufficientAmount') || err.message?.includes('MIN_DEPOSIT')) {
+          errorMessage = `Minimum deposit is ${formatQT(1000)}. Please deposit at least ${formatQT(1000)}.`;
+        } else if (err.message?.includes('TransferFailed') || err.message?.includes('transfer')) {
+          errorMessage = 'Token transfer failed. Please check your balance and try again.';
+        } else if (err.shortMessage?.includes('revert') || err.message?.includes('revert')) {
+          errorMessage = `Transaction reverted: ${err.shortMessage || err.message || 'Unknown error'}. Please check your balance and approval, then try again.`;
         } else if (err.message?.includes('network')) {
           errorMessage = 'Network error. Please check your connection.';
         } else if (err.shortMessage) {
@@ -2503,4 +2553,5 @@ const ERC20_ABI = [
 
     return null;
   }
+
 
