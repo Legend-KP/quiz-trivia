@@ -10,7 +10,7 @@ import { getDb } from '~/lib/mongodb';
 
 export const runtime = 'nodejs';
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     // Optional: Add admin authentication here
     // const authHeader = req.headers.get('authorization');

@@ -174,19 +174,21 @@ export async function POST(req: NextRequest) {
                 console.log(`🔗 View on BaseScan: https://basescan.org/tx/${burnTxHash}`);
                 
                 // FIX: Create burn record after successful burn
-                try {
-                  const burnRecords = await getBurnRecordsCollection();
-                  await burnRecords.insertOne({
-                    weekId: game.weekId,
-                    amount: lossDistribution.toBurn,
-                    txHash: burnTxHash,
-                    blockNumber: burnBlockNumber,
-                    timestamp: Date.now(),
-                  });
-                  console.log(`✅ Burn record created in database`);
-                } catch (dbError: any) {
-                  console.error('❌ Failed to create burn record:', dbError);
-                  // Don't throw - burn succeeded, record creation is secondary
+                if (burnTxHash && burnBlockNumber !== null) {
+                  try {
+                    const burnRecords = await getBurnRecordsCollection();
+                    await burnRecords.insertOne({
+                      weekId: game.weekId,
+                      amount: lossDistribution.toBurn,
+                      txHash: burnTxHash,
+                      blockNumber: burnBlockNumber,
+                      timestamp: Date.now(),
+                    });
+                    console.log(`✅ Burn record created in database`);
+                  } catch (dbError: any) {
+                    console.error('❌ Failed to create burn record:', dbError);
+                    // Don't throw - burn succeeded, record creation is secondary
+                  }
                 }
               }
               
