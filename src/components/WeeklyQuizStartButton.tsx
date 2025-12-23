@@ -22,6 +22,8 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
   hasEnoughQT = false,
 }) => {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isStarting, setIsStarting] = useState(false);
   
   // Get correct countdown based on quiz state
   const nextQuizTime = React.useMemo(() => {
@@ -40,19 +42,44 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
   const countdown = useCountdown(nextQuizTime);
 
   const handleStartQuiz = () => {
+    // Clear any previous errors when opening modal
+    setError(null);
     // Always show details modal first
     setIsDetailsModalOpen(true);
   };
 
-  const handleStartQuizConfirmed = () => {
+  const handleStartQuizConfirmed = async () => {
     if (quizState !== 'live' || userCompleted) {
       setIsDetailsModalOpen(false);
       return; // Don't start if not live or already completed
     }
 
-    setIsDetailsModalOpen(false);
-    // Start the quiz directly (currency deduction happens in onQuizStart callback)
-        onQuizStart();
+    // Additional safety check before attempting to start
+    if (!isWalletConnected) {
+      setError('Please connect your Farcaster wallet to participate in the Weekly Quiz.');
+      return;
+    }
+
+    if (!hasEnoughQT) {
+      setError(`You need to hold at least 1 QT token to start the Weekly Quiz.\n\nYour current balance: ${walletBalance.toFixed(4)} QT\nRequired: 1.0 QT\n\nPlease get QT tokens and try again.`);
+      return;
+    }
+
+    // Clear any previous errors
+    setError(null);
+    setIsStarting(true);
+
+    try {
+      // Call the onQuizStart callback which handles all validation
+      await onQuizStart();
+      // If successful, close modal and quiz will start
+      setIsDetailsModalOpen(false);
+    } catch (err: any) {
+      // Show error in the modal instead of alert
+      setError(err.message || 'Failed to start quiz. Please try again.');
+    } finally {
+      setIsStarting(false);
+    }
   };
 
   const getButtonText = () => {
@@ -181,7 +208,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
       if (!hasEnoughQT) {
         return {
           title: 'Insufficient QT Tokens',
-          message: `You need to hold at least 1 QT token to participate. Your current balance: ${walletBalance.toFixed(4)} QT.\n\nPlease get QT tokens and try again.`,
+          message: `You need to hold $QT token to participate in the Weekly Quiz.\n\nYour current balance: ${walletBalance.toFixed(4)} QT\nRequired: 1.0 QT\n\nPlease get QT tokens and try again.`,
           icon: '💰',
         };
       }
@@ -312,6 +339,40 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                     <p className="text-xs text-red-700 whitespace-pre-line">
                       {whyCantParticipate.message}
                     </p>
+                    {!isWalletConnected && (
+                      <p className="text-xs text-red-600 mt-2 font-medium">
+                        💡 Tip: Connect your wallet from the top right corner to participate.
+                      </p>
+                    )}
+                    {isWalletConnected && !hasEnoughQT && (
+                      <div className="text-xs text-red-600 mt-2 space-y-1">
+                        <p className="font-medium">💡 How to get QT tokens:</p>
+                        <p>• Purchase QT tokens from a DEX</p>
+                        <p>• Receive QT tokens as rewards from other quiz modes</p>
+                        <p>• Check your wallet balance and ensure you have at least 1 QT</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Error Message Section (from failed start attempt) */}
+                {error && (
+                  <div className="bg-red-50 border-2 border-red-300 rounded-lg p-3 animate-pulse">
+                    <div className="font-semibold text-red-800 mb-1.5 text-sm flex items-center gap-2">
+                      <span>⚠️</span>
+                      <span>Cannot Start Quiz</span>
+                    </div>
+                    <p className="text-xs text-red-700 whitespace-pre-line">
+                      {error}
+                    </p>
+                    {error.includes('QT token') && (
+                      <div className="text-xs text-red-600 mt-2 space-y-1">
+                        <p className="font-medium">💡 How to get QT tokens:</p>
+                        <p>• Purchase QT tokens from a DEX</p>
+                        <p>• Receive QT tokens as rewards from other quiz modes</p>
+                        <p>• Check your wallet balance and ensure you have at least 1 QT</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -339,14 +400,14 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                 {canStartQuiz && (
                   <button
                     onClick={handleStartQuizConfirmed}
-                    disabled={userCompleted}
+                    disabled={userCompleted || isStarting}
                     className={`flex-1 px-3 py-2 text-white font-bold text-sm rounded-lg transition min-w-[120px] ${
-                      userCompleted
+                      userCompleted || isStarting
                         ? 'bg-gray-400 cursor-not-allowed opacity-60'
                         : 'bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700'
                     }`}
                   >
-                    {userCompleted ? 'Already Completed ✓' : 'Start Quiz 🚀'}
+                    {isStarting ? 'Starting...' : userCompleted ? 'Already Completed ✓' : 'Start Quiz 🚀'}
                   </button>
                 )}
               </div>

@@ -421,21 +421,18 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
                 const quizId = currentWeeklyQuiz.id;
                 
                 if (!fid || !quizId) {
-                  alert('User not authenticated');
-                  return;
+                  throw new Error('User not authenticated. Please refresh the page and try again.');
                 }
 
                 // Check if user has connected wallet and QT tokens
                 if (!isConnected || !address) {
-                  alert('Please connect your Farcaster wallet to start the Weekly Quiz. You need to hold QT tokens to participate.');
-                  return;
+                  throw new Error('Please connect your Farcaster wallet to start the Weekly Quiz. You need to hold QT tokens to participate.');
                 }
 
                 // Check QT token balance (require at least 1 QT token)
                 const minRequiredQT = 1;
                 if (walletBalance < minRequiredQT) {
-                  alert(`You need to hold at least ${minRequiredQT} QT token to start the Weekly Quiz. Your current balance: ${walletBalance.toFixed(4)} QT.\n\nPlease get QT tokens and try again.`);
-                  return;
+                  throw new Error(`You need to hold at least ${minRequiredQT} QT token to start the Weekly Quiz.\n\nYour current balance: ${walletBalance.toFixed(4)} QT\n\nPlease get QT tokens and try again.`);
                 }
 
                 // Server-side check: Verify user hasn't already completed this quiz
@@ -443,19 +440,22 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
                 const checkData = await checkRes.json();
                 
                 if (checkData.completed) {
-                  alert('You have already completed this quiz. Each user can only take the quiz once per session.');
                   setWeeklyUserCompleted(true);
-                  return;
+                  throw new Error('You have already completed this quiz. Each user can only take the quiz once per session.');
                 }
 
-                // No coin deduction - Weekly Quiz now requires QT tokens instead
-              } catch (_e) {
-                alert('Failed to start quiz. Please try again.');
-                return;
+                // All checks passed - start the quiz
+                onStartWeeklyQuiz();
+              } catch (error: any) {
+                // Error will be handled by WeeklyQuizStartButton's error state
+                console.error('Failed to start weekly quiz:', error);
+                throw error; // Re-throw to let the component handle it
               }
-              onStartWeeklyQuiz();
             }}
             userCompleted={weeklyUserCompleted}
+            isWalletConnected={isConnected && !!address}
+            walletBalance={walletBalance}
+            hasEnoughQT={walletBalance >= 1}
           />
 
           {/* Bet Mode */}

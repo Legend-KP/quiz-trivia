@@ -177,3 +177,7 @@ queryTotalLosses().catch((error) => {
   process.exit(1);
 });
 
+
+
+
+
