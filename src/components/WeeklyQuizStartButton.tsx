@@ -61,7 +61,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
     }
 
     if (!hasEnoughQT) {
-      setError(`You need to hold at least 1 QT token to start the Weekly Quiz.\n\nYour current balance: ${walletBalance.toFixed(4)} QT\nRequired: 1.0 QT\n\nPlease get QT tokens and try again.`);
+      setError('You need to hold $QT token to participate in the Weekly Quiz.');
       return;
     }
 
@@ -208,7 +208,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
       if (!hasEnoughQT) {
         return {
           title: 'Insufficient QT Tokens',
-          message: `You need to hold $QT token to participate in the Weekly Quiz.\n\nYour current balance: ${walletBalance.toFixed(4)} QT\nRequired: 1.0 QT\n\nPlease get QT tokens and try again.`,
+          message: 'You need to hold $QT token to participate in the Weekly Quiz.',
           icon: '💰',
         };
       }
@@ -329,28 +329,20 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                   </p>
                 </div>
 
-                {/* Why Can't Participate Section */}
-                {whyCantParticipate && !canStartQuiz && (
+                {/* Why Can't Participate Section - Only show if user hasn't completed and can't start */}
+                {whyCantParticipate && !canStartQuiz && !userCompleted && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                    <div className="font-semibold text-red-800 mb-1.5 text-sm flex items-center gap-2">
+                    <div className="font-semibold text-red-800 mb-1.5 text-sm flex items-center justify-center gap-2">
                       <span>{whyCantParticipate.icon}</span>
                       <span>{whyCantParticipate.title}</span>
                     </div>
-                    <p className="text-xs text-red-700 whitespace-pre-line">
+                    <p className="text-xs text-red-700 text-center">
                       {whyCantParticipate.message}
                     </p>
                     {!isWalletConnected && (
-                      <p className="text-xs text-red-600 mt-2 font-medium">
+                      <p className="text-xs text-red-600 mt-2 font-medium text-center">
                         💡 Tip: Connect your wallet from the top right corner to participate.
                       </p>
-                    )}
-                    {isWalletConnected && !hasEnoughQT && (
-                      <div className="text-xs text-red-600 mt-2 space-y-1">
-                        <p className="font-medium">💡 How to get QT tokens:</p>
-                        <p>• Purchase QT tokens from a DEX</p>
-                        <p>• Receive QT tokens as rewards from other quiz modes</p>
-                        <p>• Check your wallet balance and ensure you have at least 1 QT</p>
-                      </div>
                     )}
                   </div>
                 )}
@@ -358,20 +350,26 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                 {/* Error Message Section (from failed start attempt) */}
                 {error && (
                   <div className="bg-red-50 border-2 border-red-300 rounded-lg p-3 animate-pulse">
-                    <div className="font-semibold text-red-800 mb-1.5 text-sm flex items-center gap-2">
-                      <span>⚠️</span>
-                      <span>Cannot Start Quiz</span>
-                    </div>
-                    <p className="text-xs text-red-700 whitespace-pre-line">
-                      {error}
-                    </p>
-                    {error.includes('QT token') && (
-                      <div className="text-xs text-red-600 mt-2 space-y-1">
-                        <p className="font-medium">💡 How to get QT tokens:</p>
-                        <p>• Purchase QT tokens from a DEX</p>
-                        <p>• Receive QT tokens as rewards from other quiz modes</p>
-                        <p>• Check your wallet balance and ensure you have at least 1 QT</p>
-                      </div>
+                    {error.includes('QT token') ? (
+                      <>
+                        <div className="font-semibold text-red-800 mb-1.5 text-sm flex items-center justify-center gap-2">
+                          <span>💰</span>
+                          <span>Insufficient QT Tokens</span>
+                        </div>
+                        <p className="text-xs text-red-700 text-center">
+                          {error}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="font-semibold text-red-800 mb-1.5 text-sm flex items-center gap-2">
+                          <span>⚠️</span>
+                          <span>Cannot Start Quiz</span>
+                        </div>
+                        <p className="text-xs text-red-700 whitespace-pre-line">
+                          {error}
+                        </p>
+                      </>
                     )}
                   </div>
                 )}
