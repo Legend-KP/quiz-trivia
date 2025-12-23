@@ -353,32 +353,45 @@
             <h2 className="text-xl font-bold text-black mb-6">{question.question}</h2>
 
             <div className="space-y-3">
-              {question.options.map((option, index) => (
-                <button
-                  key={index}
-                  onClick={() => !showResult && handleAnswerSubmit(index)}
-                  disabled={showResult}
-                  className={`w-full p-4 text-left rounded-lg border-2 transition-all duration-200 ${
-                    showResult
-                      ? index === question.correct
-                        ? 'bg-green-100 border-green-500 text-green-800'
-                        : selectedAnswer === index
-                        ? 'bg-red-100 border-red-500 text-red-800'
-                        : 'bg-gray-100 border-gray-300 text-gray-500'
-                      : 'bg-gray-50 border-gray-300 hover:border-blue-500 hover:bg-blue-50 text-black'
-                  }`}
-                >
-                  <div className="flex items-center">
-                    <span className="font-semibold mr-3">
-                      {String.fromCharCode(65 + index)}.
-                    </span>
-                    <span>{option}</span>
-                    {showResult && index === question.correct && (
-                      <Star className="ml-auto text-green-600" size={20} />
-                    )}
-                  </div>
-                </button>
-              ))}
+              {(() => {
+                // Filter and validate options: remove empty/invalid and limit to 4
+                const validOptions = question.options
+                  .map((opt, idx) => ({ option: opt, originalIndex: idx }))
+                  .filter((item) => item.option && typeof item.option === 'string' && item.option.trim().length > 0)
+                  .slice(0, 4);
+                
+                return validOptions.map((item, displayIndex) => {
+                  const isCorrect = item.originalIndex === question.correct;
+                  const isSelected = selectedAnswer === item.originalIndex;
+                  
+                  return (
+                    <button
+                      key={item.originalIndex}
+                      onClick={() => !showResult && handleAnswerSubmit(item.originalIndex)}
+                      disabled={showResult}
+                      className={`w-full p-4 text-left rounded-lg border-2 transition-all duration-200 ${
+                        showResult
+                          ? isCorrect
+                            ? 'bg-green-100 border-green-500 text-green-800'
+                            : isSelected
+                            ? 'bg-red-100 border-red-500 text-red-800'
+                            : 'bg-gray-100 border-gray-300 text-gray-500'
+                          : 'bg-gray-50 border-gray-300 hover:border-blue-500 hover:bg-blue-50 text-black'
+                      }`}
+                    >
+                      <div className="flex items-center">
+                        <span className="font-semibold mr-3">
+                          {String.fromCharCode(65 + displayIndex)}.
+                        </span>
+                        <span>{item.option}</span>
+                        {showResult && isCorrect && (
+                          <Star className="ml-auto text-green-600" size={20} />
+                        )}
+                      </div>
+                    </button>
+                  );
+                });
+              })()}
             </div>
 
             {showResult && (
