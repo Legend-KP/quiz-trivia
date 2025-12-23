@@ -110,34 +110,72 @@
       if (currentQuestion === config.questions.length - 1) {
         // Complete the quiz after showing result
         setTimeout(() => {
-          if (!startTime) {
-            console.error('Start time not set, using current time');
-            setStartTime(Date.now());
-          }
-          
           // Use functional updates to get latest state values
           setScore(currentScore => {
-            // Calculate paused time (result displays) - use refs to get latest values
-            let totalPaused = pausedTimeRef.current;
-            if (pauseStartTimeRef.current) {
-              totalPaused += (Date.now() - pauseStartTimeRef.current) / 1000; // Add current pause
+            // Calculate total elapsed time from quiz start to completion
+            const actualStartTime = startTimeRef.current;
+            if (!actualStartTime) {
+              console.error('Start time not set, using fallback');
+              // Fallback: use a reasonable estimate (10 questions * 30 seconds average = 5 minutes)
+              const fallbackTime = 300; // 5 minutes in seconds
+              const minutes = Math.floor(fallbackTime / 60);
+              const seconds = fallbackTime % 60;
+              const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+              
+              setAnswers(currentAnswers => {
+                onComplete(currentScore, [...currentAnswers, {
+                  questionId: question.id,
+                  selectedAnswer: answerIndex,
+                  correct: question.correct,
+                  isCorrect
+                }], timeString);
+                return currentAnswers;
+              });
+              return currentScore;
             }
             
-            // Total time minus paused time (only count active answering time) - use ref for startTime
-            const actualStartTime = startTimeRef.current || Date.now();
-            const totalTime = Math.floor((Date.now() - actualStartTime) / 1000 - totalPaused);
-            // Ensure minimum time of 1 second to avoid 0:00
-            const safeTotalTime = Math.max(totalTime, 1);
-            const timeString = `${Math.floor(safeTotalTime / 60)}:${(safeTotalTime % 60).toString().padStart(2, '0')}`;
+            // Calculate total paused time
+            // Each question result display is 3 seconds (except we're still in the last one)
+            // So for 10 questions, we have 9 pauses of 3 seconds each = 27 seconds
+            const questionsAnswered = currentQuestion + 1;
+            const resultDisplayPauses = (questionsAnswered - 1) * 3; // Pauses between questions
+            
+            // Add current pause if still active (the last question's result display)
+            let currentPause = 0;
+            if (pauseStartTimeRef.current) {
+              currentPause = (Date.now() - pauseStartTimeRef.current) / 1000;
+            }
+            
+            const totalPaused = resultDisplayPauses + currentPause;
+            
+            // Total elapsed time from start to now (in seconds)
+            const totalElapsed = (Date.now() - actualStartTime) / 1000;
+            
+            // Active time = total elapsed - paused time (time spent actually answering questions)
+            const activeTime = Math.max(Math.floor(totalElapsed - totalPaused), 1);
+            
+            // Format as MM:SS
+            const minutes = Math.floor(activeTime / 60);
+            const seconds = activeTime % 60;
+            const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            console.log('⏱️ Time calculation:', {
+              startTime: new Date(actualStartTime).toISOString(),
+              endTime: new Date().toISOString(),
+              totalElapsed: totalElapsed.toFixed(2),
+              totalPaused: totalPaused.toFixed(2),
+              activeTime,
+              timeString
+            });
             
             // Get latest answers state
             setAnswers(currentAnswers => {
               onComplete(currentScore, [...currentAnswers, {
-            questionId: question.id,
-            selectedAnswer: answerIndex,
-            correct: question.correct,
-            isCorrect
-          }], timeString);
+                questionId: question.id,
+                selectedAnswer: answerIndex,
+                correct: question.correct,
+                isCorrect
+              }], timeString);
               return currentAnswers;
             });
             
