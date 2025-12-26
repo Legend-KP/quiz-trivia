@@ -318,8 +318,8 @@
 
     // Main Quiz UI
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4">
-        <div className="max-w-2xl mx-auto pt-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4 overflow-y-auto">
+        <div className="max-w-2xl mx-auto pt-8 pb-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-white mb-2">Weekly Quiz Challenge</h1>
             <div className="text-white text-lg mb-2">Topic: {config.topic}</div>
@@ -352,7 +352,7 @@
           <div className="bg-white rounded-2xl p-8 shadow-2xl">
             <h2 className="text-xl font-bold text-black mb-6">{question.question}</h2>
 
-            <div className="space-y-3">
+            <div className="space-y-3 mb-4">
               {(() => {
                 // Filter and validate options: remove empty/invalid and limit to 4
                 const validOptions = question.options
@@ -379,13 +379,13 @@
                           : 'bg-gray-50 border-gray-300 hover:border-blue-500 hover:bg-blue-50 text-black'
                       }`}
                     >
-                      <div className="flex items-center">
-                        <span className="font-semibold mr-3">
+                      <div className="flex items-start">
+                        <span className="font-semibold mr-3 flex-shrink-0">
                           {String.fromCharCode(65 + displayIndex)}.
                         </span>
-                        <span>{item.option}</span>
+                        <span className="flex-1 break-words">{item.option}</span>
                         {showResult && isCorrect && (
-                          <Star className="ml-auto text-green-600" size={20} />
+                          <Star className="ml-auto text-green-600 flex-shrink-0" size={20} />
                         )}
                       </div>
                     </button>
