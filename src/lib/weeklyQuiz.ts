@@ -102,89 +102,89 @@ function getCurrentWeeklyQuiz(): WeeklyQuizConfig {
   
   return {
     id: getQuizIdFromDate(startDate),
-    topic: "Modular Blockchains & L2s", // Update this topic for each quiz
+    topic: "Zero-Knowledge Proofs", // Update this topic for each quiz
     startTime: startDate.toISOString(), // Tuesday or Friday 6 PM UTC
     endTime: endDate.toISOString(), // Next day 6 AM UTC (12-hour window)
     questions: [
     {
       id: 1,
-      question: "What does \"modular blockchain\" primarily mean?",
-      options: ["A blockchain optimized only for smart contracts", "A blockchain that separates execution, settlement, and data availability", "A chain that supports multiple virtual machines", "A blockchain that runs without validators"],
-      correct: 1,
+      question: "Which component primarily ensures succinct verification in zk-SNARKs?",
+      options: ["Trusted setup parameters", "Elliptic curve signatures", "Recursive hashing functions", "Polynomial commitment schemes"],
+      correct: 3,
       timeLimit: 45,
-      explanation: "A blockchain that separates execution, settlement, and data availability"
+      explanation: "Polynomial commitments allow large computations to be verified with very small proofs."
     },
     {
       id: 2,
-      question: "In Ethereum's modular stack, which layer provides economic finality?",
-      options: ["Execution layer", "Data availability layer", "Settlement layer", "Sequencer layer"],
+      question: "What is the main reason zk-STARKs are considered quantum-resistant?",
+      options: ["They rely on lattice-based cryptography", "They avoid elliptic curve assumptions", "They use hash-based cryptographic primitives", "They depend on symmetric encryption"],
       correct: 2,
       timeLimit: 45,
-      explanation: "Settlement layer"
+      explanation: "zk-STARKs rely mainly on hash functions, which are more resistant to quantum attacks."
     },
     {
       id: 3,
-      question: "What is the main role of rollups in Ethereum scaling?",
-      options: ["Increasing block size on L1", "Executing transactions off-chain and posting proofs on L1", "Replacing validators with sequencers", "Eliminating gas fees"],
+      question: "Which trade-off distinguishes zk-STARKs from zk-SNARKs most clearly?",
+      options: ["Faster proof generation but slower verification", "Larger proof sizes but no trusted setup", "Higher gas fees but better composability", "Lower security assumptions but weaker privacy"],
       correct: 1,
       timeLimit: 45,
-      explanation: "Executing transactions off-chain and posting proofs on L1"
+      explanation: "zk-STARKs avoid trusted setup but produce larger proofs than zk-SNARKs."
     },
     {
       id: 4,
-      question: "Which statement best describes Optimistic Rollups?",
-      options: ["They assume transactions are invalid unless proven correct", "They rely on fraud proofs to challenge incorrect execution", "They finalize transactions instantly", "They do not depend on Ethereum for security"],
-      correct: 1,
+      question: "Which Ethereum upgrade significantly improved ZK rollup scalability?",
+      options: ["Byzantium hard fork", "EIP-1559 fee market change", "EIP-4844 proto-danksharding", "The Merge to Proof of Stake"],
+      correct: 2,
       timeLimit: 45,
-      explanation: "They rely on fraud proofs to challenge incorrect execution"
+      explanation: "EIP-4844 introduced blobs, lowering data costs for rollups and improving scalability."
     },
     {
       id: 5,
-      question: "What differentiates zk-rollups from optimistic rollups?",
-      options: ["zk-rollups use sequencers, optimistic rollups don't", "zk-rollups rely on validity proofs instead of fraud proofs", "zk-rollups store all data off-chain", "zk-rollups cannot support smart contracts"],
-      correct: 1,
+      question: "In ZK rollups, what is posted to Layer 1 for verification?",
+      options: ["Encrypted user balances", "Compressed execution traces", "Full transaction calldata", "Validity proofs and state roots"],
+      correct: 3,
       timeLimit: 45,
-      explanation: "zk-rollups rely on validity proofs instead of fraud proofs"
+      explanation: "ZK rollups submit proofs and state roots to L1 to verify correctness without re-execution."
     },
     {
       id: 6,
-      question: "Why is Data Availability (DA) critical for rollups?",
-      options: ["It ensures faster transaction execution", "It allows anyone to reconstruct the rollup state", "It reduces gas costs on Ethereum", "It prevents MEV extraction"],
+      question: "Why are ZK proofs important for private DeFi applications?",
+      options: ["They eliminate the need for liquidity", "They hide transaction logic and balances", "They remove gas costs entirely", "They replace smart contracts"],
       correct: 1,
       timeLimit: 45,
-      explanation: "It allows anyone to reconstruct the rollup state"
+      explanation: "ZK proofs enable privacy while still allowing on-chain verification."
     },
     {
       id: 7,
-      question: "Which of the following is an example of a Data Availability-focused layer?",
-      options: ["Arbitrum", "Optimism", "Celestia", "Starknet"],
-      correct: 2,
+      question: "What is the biggest scalability challenge for ZK rollups today?",
+      options: ["High Layer 1 gas costs for proofs", "Slow block finality times", "Limited smart contract expressiveness", "Validator hardware requirements"],
+      correct: 0,
       timeLimit: 45,
-      explanation: "Celestia"
+      explanation: "Posting proofs and data to L1 is still costly, limiting scalability."
     },
     {
       id: 8,
-      question: "What problem do shared sequencers aim to solve?",
-      options: ["High gas fees on Ethereum", "Fragmented liquidity across rollups", "Lack of decentralization in DA layers", "Limited smart contract support"],
+      question: "What is the main purpose of a Zero-Knowledge Proof?",
+      options: ["To encrypt transaction data on-chain", "To prove a statement without revealing data", "To speed up block confirmation times", "To replace consensus mechanisms"],
       correct: 1,
       timeLimit: 45,
-      explanation: "Fragmented liquidity across rollups"
+      explanation: "ZK proofs allow verification of truth without revealing the underlying secret."
     },
     {
       id: 9,
-      question: "In a modular design, what does the execution layer primarily handle?",
-      options: ["Consensus and validator incentives", "Storing transaction data permanently", "Running transaction logic and state changes", "Providing cryptographic finality"],
-      correct: 2,
+      question: "Why are Zero-Knowledge Proofs useful for privacy-focused applications?",
+      options: ["They hide sensitive data while proving correctness", "They reduce transaction execution time", "They eliminate the need for validators", "They prevent smart contract execution"],
+      correct: 0,
       timeLimit: 45,
-      explanation: "Running transaction logic and state changes"
+      explanation: "ZK proofs protect user privacy while still allowing public verification."
     },
     {
       id: 10,
-      question: "What is a key trade-off when moving execution off L1 to rollups?",
-      options: ["Reduced security guarantees", "Increased reliance on smart contracts and proofs", "Loss of composability entirely", "Elimination of decentralization"],
-      correct: 1,
+      question: "What is the \"witness\" in a Zero-Knowledge Proof system?",
+      options: ["The private data proving the statement", "The public input for verification", "The final proof submitted on-chain", "The cryptographic verification key"],
+      correct: 0,
       timeLimit: 45,
-      explanation: "Increased reliance on smart contracts and proofs"
+      explanation: "The witness is the private input that satisfies the proof's condition."
     }
   ]
   };

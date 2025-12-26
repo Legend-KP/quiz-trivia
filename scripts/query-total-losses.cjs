@@ -181,3 +181,8 @@ queryTotalLosses().catch((error) => {
 
 
 
+
+
+
+
+
