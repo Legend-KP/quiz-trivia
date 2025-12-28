@@ -15,22 +15,23 @@ interface LeaderboardEntry {
   time: string;
   completedAt: number;
   rank?: number;
-  mode: 'CLASSIC' | 'TIME_MODE' | 'CHALLENGE';
+  mode: 'CLASSIC' | 'TIME_MODE';
 }
 
 export default function PublicLeaderboard() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   // Check URL params for mode parameter
-  const getInitialMode = (): 'ALL' | 'CLASSIC' | 'TIME_MODE' | 'CHALLENGE' => {
+  const getInitialMode = (): 'CLASSIC' | 'TIME_MODE' => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const mode = params.get('mode');
       if (mode === 'CLASSIC') return 'CLASSIC';
+      if (mode === 'TIME_MODE') return 'TIME_MODE';
     }
-    return 'ALL';
+    return 'CLASSIC';
   };
-  const [selectedMode, setSelectedMode] = useState<'ALL' | 'CLASSIC' | 'TIME_MODE' | 'CHALLENGE'>(getInitialMode());
+  const [selectedMode, setSelectedMode] = useState<'CLASSIC' | 'TIME_MODE'>(getInitialMode());
   const [stats, setStats] = useState({
     totalParticipants: 0,
     lastUpdated: ''
@@ -48,7 +49,7 @@ export default function PublicLeaderboard() {
         const idToUse = quizId || currentWeeklyQuiz.id;
         url = `/api/leaderboard?mode=CLASSIC&quizId=${idToUse}`;
       } else {
-        url = selectedMode === 'ALL' ? '/api/leaderboard' : `/api/leaderboard?mode=${selectedMode}`;
+        url = `/api/leaderboard?mode=${selectedMode}`;
       }
       
       const response = await fetch(url);
@@ -121,17 +122,14 @@ export default function PublicLeaderboard() {
             <Trophy className="text-yellow-500 mr-3" size={48} />
             <h1 className="text-4xl font-bold text-white">Quiz Trivia Leaderboard</h1>
           </div>
-          <p className="text-white text-lg opacity-90">Central DAO Presents</p>
         </div>
 
         {/* Mode Selector */}
         <div className="flex justify-center mb-8">
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2 flex gap-2">
             {[
-              { value: 'ALL', label: 'All Modes', icon: '🏆' },
               { value: 'CLASSIC', label: 'Weekly Quiz', icon: '📅' },
-              { value: 'TIME_MODE', label: 'Time Mode', icon: '⏱️' },
-              { value: 'CHALLENGE', label: 'Challenge', icon: '⚔️' }
+              { value: 'TIME_MODE', label: 'Time Mode', icon: '⏱️' }
             ].map((mode) => (
               <button
                 key={mode.value}
@@ -176,10 +174,10 @@ export default function PublicLeaderboard() {
         <div className="bg-white rounded-2xl p-8 shadow-2xl">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              🏆 {selectedMode === 'ALL' ? 'All Modes' : selectedMode === 'CLASSIC' ? 'Weekly Quiz' : selectedMode === 'TIME_MODE' ? 'Time Mode' : 'Challenge Mode'} Leaderboard
+              🏆 {selectedMode === 'CLASSIC' ? 'Weekly Quiz' : 'Time Mode'} Leaderboard
             </h2>
             <p className="text-gray-600">
-              {selectedMode === 'ALL' ? 'All Quiz Trivia Participants' : `${selectedMode === 'CLASSIC' ? 'Weekly Quiz' : selectedMode === 'TIME_MODE' ? 'Time Mode' : 'Challenge'} Participants`}
+              {selectedMode === 'CLASSIC' ? 'Weekly Quiz' : 'Time Mode'} Participants
             </p>
             {!loading && (
               <div className="mt-2 text-sm text-gray-500">
@@ -264,10 +262,10 @@ export default function PublicLeaderboard() {
           )}
 
           {/* Action Buttons */}
-          <div className="mt-6 text-center space-x-4">
+          <div className="mt-6 flex justify-center items-center gap-4">
             <button
               onClick={handleShare}
-              className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 flex items-center mx-auto"
+              className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 flex items-center"
             >
               <Share2 className="w-4 h-4 mr-2" />
               Share

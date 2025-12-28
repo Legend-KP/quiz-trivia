@@ -320,13 +320,15 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                     </p>
                   )}
                   {userCompleted && (
-                    <p className={`text-xs ${stateInfo.textColor} mb-1.5`}>
+                    <p className={`text-xs ${stateInfo.textColor}`}>
                       You&apos;ve already completed this quiz!
                     </p>
                   )}
-                  <p className={`text-xs font-medium ${stateInfo.textColor}`}>
-                    {stateInfo.message}: {countdown}
-                  </p>
+                  {!userCompleted && quizState !== 'ended' && (
+                    <p className={`text-xs font-medium ${stateInfo.textColor}`}>
+                      {stateInfo.message}: {countdown}
+                    </p>
+                  )}
                 </div>
 
                 {/* Why Can't Participate Section - Only show if user hasn't completed and can't start */}
