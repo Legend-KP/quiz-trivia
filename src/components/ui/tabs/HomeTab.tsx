@@ -342,7 +342,7 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
   // Convert balance from wei to QT (18 decimals)
   const walletBalance = walletBalanceRaw ? parseFloat(formatUnits(walletBalanceRaw, 18)) : 0;
 
-  // Determine if current user has already completed the current weekly quiz (single attempt enforcement)
+  // Determine if current user has already started or completed the current weekly quiz (single attempt enforcement)
   useEffect(() => {
     const fid = context?.user?.fid;
     const quizId = currentWeeklyQuiz.id;
@@ -353,20 +353,24 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
     let cancelled = false;
     (async () => {
       try {
-        // Server check
+        // Server check for completion
         const res = await fetch(`/api/leaderboard?mode=CLASSIC&quizId=${quizId}`);
         const data = await res.json();
         const exists = Array.isArray(data?.leaderboard) && data.leaderboard.some((e: any) => e.fid === fid);
-        // Local backup check
-        const lsKey = `weekly_completed_${quizId}_${fid}`;
-        const localDone = typeof window !== 'undefined' ? !!localStorage.getItem(lsKey) : false;
-        if (!cancelled) setWeeklyUserCompleted(exists || localDone);
+        // Local backup check - check both started and completed
+        const lsCompletedKey = `weekly_completed_${quizId}_${fid}`;
+        const lsStartedKey = `weekly_started_${quizId}_${fid}`;
+        const localCompleted = typeof window !== 'undefined' ? !!localStorage.getItem(lsCompletedKey) : false;
+        const localStarted = typeof window !== 'undefined' ? !!localStorage.getItem(lsStartedKey) : false;
+        if (!cancelled) setWeeklyUserCompleted(exists || localCompleted || localStarted);
       } catch (_e) {
         // Fallback to localStorage only
         try {
-          const lsKey = `weekly_completed_${quizId}_${fid}`;
-          const localDone = typeof window !== 'undefined' ? !!localStorage.getItem(lsKey) : false;
-          if (!cancelled) setWeeklyUserCompleted(localDone);
+          const lsCompletedKey = `weekly_completed_${quizId}_${fid}`;
+          const lsStartedKey = `weekly_started_${quizId}_${fid}`;
+          const localCompleted = typeof window !== 'undefined' ? !!localStorage.getItem(lsCompletedKey) : false;
+          const localStarted = typeof window !== 'undefined' ? !!localStorage.getItem(lsStartedKey) : false;
+          if (!cancelled) setWeeklyUserCompleted(localCompleted || localStarted);
         } catch (_e2) {
           if (!cancelled) setWeeklyUserCompleted(false);
         }

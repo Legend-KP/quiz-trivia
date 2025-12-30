@@ -48,7 +48,7 @@
       startTimeRef.current = startTime;
     }, [startTime]);
 
-    // Check if user has already completed this quiz (server-side check)
+    // Check if user has already completed or started this quiz (server-side + localStorage check)
     useEffect(() => {
       const checkCompletion = async () => {
         const fid = context?.user?.fid;
@@ -60,16 +60,38 @@
         }
 
         try {
+          // Check localStorage first (faster, works offline)
+          const lsKey = `weekly_started_${quizId}_${fid}`;
+          const lsCompletedKey = `weekly_completed_${quizId}_${fid}`;
+          const hasStarted = typeof window !== 'undefined' ? !!localStorage.getItem(lsKey) : false;
+          const hasCompletedLocal = typeof window !== 'undefined' ? !!localStorage.getItem(lsCompletedKey) : false;
+          
+          // Check server-side completion
           const res = await fetch(`/api/leaderboard/check?fid=${fid}&quizId=${quizId}`);
           const data = await res.json();
+          const hasCompletedServer = data.completed || false;
           
-          if (data.completed) {
+          // If user has started or completed (locally or on server), prevent access
+          if (hasStarted || hasCompletedLocal || hasCompletedServer) {
             setAlreadyCompleted(true);
             // Show alert and prevent quiz start
-            alert('You have already completed this quiz. Each user can only take the quiz once per session.');
+            alert('You have already started or completed this quiz. Each user can only take the quiz once.');
           }
         } catch (error) {
           console.error('Failed to check completion status:', error);
+          // Fallback to localStorage only if API fails
+          const fid = context?.user?.fid;
+          const quizId = config.id;
+          if (fid && quizId) {
+            const lsKey = `weekly_started_${quizId}_${fid}`;
+            const lsCompletedKey = `weekly_completed_${quizId}_${fid}`;
+            const hasStarted = typeof window !== 'undefined' ? !!localStorage.getItem(lsKey) : false;
+            const hasCompletedLocal = typeof window !== 'undefined' ? !!localStorage.getItem(lsCompletedKey) : false;
+            if (hasStarted || hasCompletedLocal) {
+              setAlreadyCompleted(true);
+              alert('You have already started or completed this quiz. Each user can only take the quiz once.');
+            }
+          }
         } finally {
           setCheckingCompletion(false);
         }
@@ -302,6 +324,14 @@
             </div>
             <button
               onClick={() => {
+                // Mark quiz as started in localStorage before starting
+                const fid = context?.user?.fid;
+                const quizId = config.id;
+                if (fid && quizId && typeof window !== 'undefined') {
+                  const lsKey = `weekly_started_${quizId}_${fid}`;
+                  localStorage.setItem(lsKey, Date.now().toString());
+                }
+                
                 setStartTime(Date.now()); // Set start time when quiz actually starts
                 questionStartTimeRef.current = Date.now(); // Initialize question start time
                 setStarted(true);
