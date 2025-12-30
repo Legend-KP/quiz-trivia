@@ -102,89 +102,89 @@ function getCurrentWeeklyQuiz(): WeeklyQuizConfig {
   
   return {
     id: getQuizIdFromDate(startDate),
-    topic: "Zero-Knowledge Proofs", // Update this topic for each quiz
+    topic: "Slashing", // Update this topic for each quiz
     startTime: startDate.toISOString(), // Tuesday or Friday 6 PM UTC
     endTime: endDate.toISOString(), // Next day 6 AM UTC (12-hour window)
     questions: [
     {
       id: 1,
-      question: "Which component primarily ensures succinct verification in zk-SNARKs?",
-      options: ["Trusted setup parameters", "Elliptic curve signatures", "Recursive hashing functions", "Polynomial commitment schemes"],
-      correct: 3,
+      question: "What is the primary goal of restaking in Ethereum ecosystems?",
+      options: ["To increase block size limits", "To reuse staked ETH for additional security services", "To replace validator rewards entirely", "To eliminate the need for Layer 2 networks"],
+      correct: 1,
       timeLimit: 45,
-      explanation: "Polynomial commitments allow large computations to be verified with very small proofs."
+      explanation: "Restaking allows the same staked ETH to secure multiple services beyond Ethereum consensus."
     },
     {
       id: 2,
-      question: "What is the main reason zk-STARKs are considered quantum-resistant?",
-      options: ["They rely on lattice-based cryptography", "They avoid elliptic curve assumptions", "They use hash-based cryptographic primitives", "They depend on symmetric encryption"],
-      correct: 2,
+      question: "Which risk is introduced by restaking compared to native Ethereum staking?",
+      options: ["Increased validator hardware requirements", "Loss of execution-layer finality", "Reduced transaction throughput", "Exposure to slashing from multiple protocols"],
+      correct: 3,
       timeLimit: 45,
-      explanation: "zk-STARKs rely mainly on hash functions, which are more resistant to quantum attacks."
+      explanation: "Validators can be slashed by multiple services if they misbehave."
     },
     {
       id: 3,
-      question: "Which trade-off distinguishes zk-STARKs from zk-SNARKs most clearly?",
-      options: ["Faster proof generation but slower verification", "Larger proof sizes but no trusted setup", "Higher gas fees but better composability", "Lower security assumptions but weaker privacy"],
+      question: "Which asset is most commonly restaked in Ethereum-based restaking protocols?",
+      options: ["Wrapped Ether", "Liquid staking tokens", "Governance tokens", "Stablecoins"],
       correct: 1,
       timeLimit: 45,
-      explanation: "zk-STARKs avoid trusted setup but produce larger proofs than zk-SNARKs."
+      explanation: "Liquid staking tokens represent staked ETH while remaining transferable, making them ideal for restaking."
     },
     {
       id: 4,
-      question: "Which Ethereum upgrade significantly improved ZK rollup scalability?",
-      options: ["Byzantium hard fork", "EIP-1559 fee market change", "EIP-4844 proto-danksharding", "The Merge to Proof of Stake"],
+      question: "What role do Actively Validated Services (AVSs) play in restaking systems?",
+      options: ["Issue new staking tokens", "Replace Ethereum validators", "Consume security from restaked assets", "Manage protocol governance"],
       correct: 2,
       timeLimit: 45,
-      explanation: "EIP-4844 introduced blobs, lowering data costs for rollups and improving scalability."
+      explanation: "AVSs are services that rely on restaked ETH for their security guarantees."
     },
     {
       id: 5,
-      question: "In ZK rollups, what is posted to Layer 1 for verification?",
-      options: ["Encrypted user balances", "Compressed execution traces", "Full transaction calldata", "Validity proofs and state roots"],
-      correct: 3,
+      question: "Why are liquid staking tokens commonly used in restaking?",
+      options: ["Allow capital to remain transferable", "Eliminate slashing risks", "Guarantee fixed yield returns", "Reduce Ethereum gas fees"],
+      correct: 0,
       timeLimit: 45,
-      explanation: "ZK rollups submit proofs and state roots to L1 to verify correctness without re-execution."
+      explanation: "LSTs keep capital liquid while still being staked and restaked."
     },
     {
       id: 6,
-      question: "Why are ZK proofs important for private DeFi applications?",
-      options: ["They eliminate the need for liquidity", "They hide transaction logic and balances", "They remove gas costs entirely", "They replace smart contracts"],
+      question: "What is the primary trade-off restaking introduces to Ethereum's security model?",
+      options: ["Reduced decentralization at the consensus layer", "Increased complexity & correlated slashing risk", "Lower validator participation rates", "Slower block finalization times"],
       correct: 1,
       timeLimit: 45,
-      explanation: "ZK proofs enable privacy while still allowing on-chain verification."
+      explanation: "Multiple slashing conditions increase systemic complexity and risk."
     },
     {
       id: 7,
-      question: "What is the biggest scalability challenge for ZK rollups today?",
-      options: ["High Layer 1 gas costs for proofs", "Slow block finality times", "Limited smart contract expressiveness", "Validator hardware requirements"],
+      question: "Which component typically defines the slashing rules in a restaking framework?",
+      options: ["Actively Validated Services (AVSs)", "Ethereum consensus layer", "Liquid staking providers", "Ethereum Improvement Proposals"],
       correct: 0,
       timeLimit: 45,
-      explanation: "Posting proofs and data to L1 is still costly, limiting scalability."
+      explanation: "Each AVS defines its own slashing conditions."
     },
     {
       id: 8,
-      question: "What is the main purpose of a Zero-Knowledge Proof?",
-      options: ["To encrypt transaction data on-chain", "To prove a statement without revealing data", "To speed up block confirmation times", "To replace consensus mechanisms"],
+      question: "Which mechanism helps enforce correct behavior in restaked services?",
+      options: ["Governance token voting", "Smart contract–enforced slashing", "Proof-of-work fallback systems", "Off-chain dispute arbitration"],
       correct: 1,
       timeLimit: 45,
-      explanation: "ZK proofs allow verification of truth without revealing the underlying secret."
+      explanation: "Smart contracts define and enforce penalties for misbehavior."
     },
     {
       id: 9,
-      question: "Why are Zero-Knowledge Proofs useful for privacy-focused applications?",
-      options: ["They hide sensitive data while proving correctness", "They reduce transaction execution time", "They eliminate the need for validators", "They prevent smart contract execution"],
-      correct: 0,
+      question: "Why is restaking considered a form of capital efficiency?",
+      options: ["It lowers transaction fees permanently", "One collateral securing multiple systems", "It increases block rewards per validator", "It reduces validator hardware costs"],
+      correct: 1,
       timeLimit: 45,
-      explanation: "ZK proofs protect user privacy while still allowing public verification."
+      explanation: "One collateral securing multiple systems"
     },
     {
       id: 10,
-      question: "What is the \"witness\" in a Zero-Knowledge Proof system?",
-      options: ["The private data proving the statement", "The public input for verification", "The final proof submitted on-chain", "The cryptographic verification key"],
-      correct: 0,
+      question: "What is a key risk introduced by restaking?",
+      options: ["Slower transaction speeds", "Higher gas fees", "Slashing across multiple protocols", "Reduced validator rewards"],
+      correct: 2,
       timeLimit: 45,
-      explanation: "The witness is the private input that satisfies the proof's condition."
+      explanation: "Validators may be penalized by more than one service."
     }
   ]
   };
