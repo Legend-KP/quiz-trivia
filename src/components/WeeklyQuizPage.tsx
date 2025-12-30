@@ -320,13 +320,13 @@
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4">
         <div className="max-w-2xl mx-auto pt-2 pb-20">
-          <div className="text-center mb-6">
-            <div className="flex justify-center items-center space-x-6 text-white">
+          <div className="mb-6 relative">
+            <div className="flex items-center text-white">
               <div className="flex items-center space-x-2">
                 <Trophy className="text-yellow-400" size={20} />
                 <span>Score: {score}</span>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 absolute left-1/2 transform -translate-x-1/2">
                 <Clock className="text-blue-400" size={20} />
                 <span className={timeLeft < 60 ? 'text-red-400 font-bold' : ''}>{formatTime(timeLeft)}</span>
               </div>
