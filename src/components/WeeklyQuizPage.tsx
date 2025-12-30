@@ -319,10 +319,8 @@
     // Main Quiz UI
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4">
-        <div className="max-w-2xl mx-auto pt-4 pb-20">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Weekly Quiz Challenge</h1>
-            <div className="text-white text-lg mb-2">Topic: {config.topic}</div>
+        <div className="max-w-2xl mx-auto pt-2 pb-20">
+          <div className="text-center mb-6">
             <div className="flex justify-center items-center space-x-6 text-white">
               <div className="flex items-center space-x-2">
                 <Trophy className="text-yellow-400" size={20} />
