@@ -318,7 +318,7 @@
 
     // Main Quiz UI
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4 overflow-y-auto" style={{ scrollBehavior: 'smooth' }}>
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-800 to-pink-700 p-4">
         <div className="max-w-2xl mx-auto pt-4 pb-20">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-white mb-2">Weekly Quiz Challenge</h1>
