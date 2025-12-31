@@ -1,0 +1,269 @@
+{
+  "quizId": "2025-12-30",
+  "queryDate": "2025-12-31T06:46:51.688Z",
+  "totalParticipants": 13,
+  "top10": [
+    {
+      "rank": 1,
+      "fid": 1428890,
+      "username": "urstrulyfade",
+      "displayName": "urstrulyfade",
+      "score": 10,
+      "time": "0:06",
+      "timeInSeconds": 6,
+      "completedAt": 1767124820787,
+      "pfpUrl": "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/aea03259-bc10-4d08-1f52-d2b4b7a66200/original"
+    },
+    {
+      "rank": 2,
+      "fid": 438631,
+      "username": "kushal-paliwal",
+      "displayName": "K P | Central DAO",
+      "score": 10,
+      "time": "0:21",
+      "timeInSeconds": 21,
+      "completedAt": 1767117870304,
+      "pfpUrl": "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/a39eeb86-f45b-4218-90f3-ed7784885500/original"
+    },
+    {
+      "rank": 3,
+      "fid": 314056,
+      "username": "valennn",
+      "displayName": "w3b.vall 🎱",
+      "score": 10,
+      "time": "1:31",
+      "timeInSeconds": 91,
+      "completedAt": 1767153533491,
+      "pfpUrl": "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/82fcd242-8b71-4197-b530-26b1a3826e00/original"
+    },
+    {
+      "rank": 4,
+      "fid": 863776,
+      "username": "siringan",
+      "displayName": "Siringan.bnb",
+      "score": 8.5,
+      "time": "0:07",
+      "timeInSeconds": 7,
+      "completedAt": 1767118028585,
+      "pfpUrl": "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/68b30a82-1d86-4db3-3ba2-82b370335d00/original"
+    },
+    {
+      "rank": 5,
+      "fid": 1075728,
+      "username": "hamadaafnan.base.eth",
+      "displayName": "Afnan Hamada",
+      "score": 8.5,
+      "time": "0:22",
+      "timeInSeconds": 22,
+      "completedAt": 1767130958758,
+      "pfpUrl": "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/95171b83-a1f8-424c-f47a-8044800b8d00/original"
+    },
+    {
+      "rank": 6,
+      "fid": 815610,
+      "username": "suyyash",
+      "displayName": "Suyyash",
+      "score": 8.5,
+      "time": "0:56",
+      "timeInSeconds": 56,
+      "completedAt": 1767125839596,
+      "pfpUrl": "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/909b179d-39ea-4462-023e-3b5635652100/original"
+    },
+    {
+      "rank": 7,
+      "fid": 1051182,
+      "username": "sianidamir",
+      "displayName": "Sianida Mir",
+      "score": 7,
+      "time": "0:12",
+      "timeInSeconds": 12,
+      "completedAt": 1767144513986,
+      "pfpUrl": "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/4363fbd7-b61a-47ef-cf3e-6f6d62d6cb00/original"
+    },
+    {
+      "rank": 8,
+      "fid": 1020251,
+      "username": "trenchverse",
+      "displayName": "Trenchy",
+      "score": 5.5,
+      "time": "0:28",
+      "timeInSeconds": 28,
+      "completedAt": 1767119025485,
+      "pfpUrl": "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/c32d8fb0-2a8a-40ab-a212-c1f06946df00/original"
+    },
+    {
+      "rank": 9,
+      "fid": 452857,
+      "username": "wiiisaaa.eth",
+      "displayName": "WISA",
+      "score": 5.5,
+      "time": "1:09",
+      "timeInSeconds": 69,
+      "completedAt": 1767119734446,
+      "pfpUrl": "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/02e5e47a-5e87-4121-cf3c-da0c6b1c6800/original"
+    },
+    {
+      "rank": 10,
+      "fid": 244137,
+      "username": "abiolaboss",
+      "displayName": "Abiola Tiamiyu",
+      "score": 5.5,
+      "time": "2:04",
+      "timeInSeconds": 124,
+      "completedAt": 1767119861864,
+      "pfpUrl": "https://i.imgur.com/LjwlEQp.jpg"
+    }
+  ],
+  "allParticipants": [
+    {
+      "rank": 1,
+      "fid": 1428890,
+      "username": "urstrulyfade",
+      "displayName": "urstrulyfade",
+      "score": 10,
+      "time": "0:06",
+      "timeInSeconds": 6,
+      "completedAt": 1767124820787,
+      "pfpUrl": "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/aea03259-bc10-4d08-1f52-d2b4b7a66200/original"
+    },
+    {
+      "rank": 2,
+      "fid": 438631,
+      "username": "kushal-paliwal",
+      "displayName": "K P | Central DAO",
+      "score": 10,
+      "time": "0:21",
+      "timeInSeconds": 21,
+      "completedAt": 1767117870304,
+      "pfpUrl": "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/a39eeb86-f45b-4218-90f3-ed7784885500/original"
+    },
+    {
+      "rank": 3,
+      "fid": 314056,
+      "username": "valennn",
+      "displayName": "w3b.vall 🎱",
+      "score": 10,
+      "time": "1:31",
+      "timeInSeconds": 91,
+      "completedAt": 1767153533491,
+      "pfpUrl": "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/82fcd242-8b71-4197-b530-26b1a3826e00/original"
+    },
+    {
+      "rank": 4,
+      "fid": 863776,
+      "username": "siringan",
+      "displayName": "Siringan.bnb",
+      "score": 8.5,
+      "time": "0:07",
+      "timeInSeconds": 7,
+      "completedAt": 1767118028585,
+      "pfpUrl": "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/68b30a82-1d86-4db3-3ba2-82b370335d00/original"
+    },
+    {
+      "rank": 5,
+      "fid": 1075728,
+      "username": "hamadaafnan.base.eth",
+      "displayName": "Afnan Hamada",
+      "score": 8.5,
+      "time": "0:22",
+      "timeInSeconds": 22,
+      "completedAt": 1767130958758,
+      "pfpUrl": "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/95171b83-a1f8-424c-f47a-8044800b8d00/original"
+    },
+    {
+      "rank": 6,
+      "fid": 815610,
+      "username": "suyyash",
+      "displayName": "Suyyash",
+      "score": 8.5,
+      "time": "0:56",
+      "timeInSeconds": 56,
+      "completedAt": 1767125839596,
+      "pfpUrl": "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/909b179d-39ea-4462-023e-3b5635652100/original"
+    },
+    {
+      "rank": 7,
+      "fid": 1051182,
+      "username": "sianidamir",
+      "displayName": "Sianida Mir",
+      "score": 7,
+      "time": "0:12",
+      "timeInSeconds": 12,
+      "completedAt": 1767144513986,
+      "pfpUrl": "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/4363fbd7-b61a-47ef-cf3e-6f6d62d6cb00/original"
+    },
+    {
+      "rank": 8,
+      "fid": 1020251,
+      "username": "trenchverse",
+      "displayName": "Trenchy",
+      "score": 5.5,
+      "time": "0:28",
+      "timeInSeconds": 28,
+      "completedAt": 1767119025485,
+      "pfpUrl": "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/c32d8fb0-2a8a-40ab-a212-c1f06946df00/original"
+    },
+    {
+      "rank": 9,
+      "fid": 452857,
+      "username": "wiiisaaa.eth",
+      "displayName": "WISA",
+      "score": 5.5,
+      "time": "1:09",
+      "timeInSeconds": 69,
+      "completedAt": 1767119734446,
+      "pfpUrl": "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/02e5e47a-5e87-4121-cf3c-da0c6b1c6800/original"
+    },
+    {
+      "rank": 10,
+      "fid": 244137,
+      "username": "abiolaboss",
+      "displayName": "Abiola Tiamiyu",
+      "score": 5.5,
+      "time": "2:04",
+      "timeInSeconds": 124,
+      "completedAt": 1767119861864,
+      "pfpUrl": "https://i.imgur.com/LjwlEQp.jpg"
+    },
+    {
+      "rank": 11,
+      "fid": 231533,
+      "username": "dribble",
+      "displayName": "Dribble 🎩",
+      "score": 4,
+      "time": "1:20",
+      "timeInSeconds": 80,
+      "completedAt": 1767119979376,
+      "pfpUrl": "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/8481985d-4a88-4acd-de61-71d066c3dd00/original"
+    },
+    {
+      "rank": 12,
+      "fid": 376919,
+      "username": "hemnkurd",
+      "displayName": "Hemn.eth",
+      "score": 2.5,
+      "time": "0:13",
+      "timeInSeconds": 13,
+      "completedAt": 1767130755793,
+      "pfpUrl": "https://tba-mobile.mypinata.cloud/ipfs/QmfMGxqo4r8iL2vcGNHcLYyJQ5v4gBVEutDWHidjaaMC4J?pinataGatewayToken=3nq0UVhtd3rYmgYDdb1I9qv7rHsw-_DzwdWkZPRQ-QW1avFI9dCS8knaSfq_R5_q"
+    },
+    {
+      "rank": 13,
+      "fid": 300143,
+      "username": "adlian",
+      "displayName": "Adlian",
+      "score": -3.5,
+      "time": "0:15",
+      "timeInSeconds": 15,
+      "completedAt": 1767153004901,
+      "pfpUrl": "https://ipfs.decentralized-content.com/ipfs/bafkreiafid36chonzuyib6sdvbdvj7zg2rf72u5kemnlztqdasgftlgmhi"
+    }
+  ],
+  "statistics": {
+    "averageScore": 6.3076923076923075,
+    "averageTime": 41.84615384615385,
+    "averageTimeFormatted": "0:41",
+    "highestScore": 10,
+    "lowestScore": -3.5
+  }
+}

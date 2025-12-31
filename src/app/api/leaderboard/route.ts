@@ -141,6 +141,12 @@ export async function POST(request: Request) {
       if (!time || time === '0:00' || timeInSec === 0) {
         return NextResponse.json({ error: 'Invalid completion time: time cannot be 0:00 for Weekly Quiz' }, { status: 400 });
       }
+      // Validate minimum time: 10 questions with 45 seconds each = minimum 7.5 minutes (450 seconds) if all answered instantly
+      // But accounting for reading time, minimum realistic time is around 2 minutes (120 seconds)
+      // However, we'll be lenient and only reject obviously impossible times (< 10 seconds for 10 questions)
+      if (timeInSec < 10) {
+        return NextResponse.json({ error: `Invalid completion time: ${time} is too short for 10 questions. Minimum time is 10 seconds.` }, { status: 400 });
+      }
     }
 
     const newEntry: LeaderboardEntry = {
@@ -163,6 +169,9 @@ export async function POST(request: Request) {
       if (existing) {
         return NextResponse.json({ success: false, error: 'already_submitted', message: 'User has already submitted for this quiz.' }, { status: 409 });
       }
+      // IMPORTANT: Weekly quiz data persists indefinitely - entries are never automatically deleted
+      // Old quiz leaderboards remain accessible by querying with the specific quizId
+      // Data is only removed via manual admin action (PUT /api/leaderboard with action='clearData')
       await collection.insertOne(newEntry);
     } else {
       // Fallback behavior when quizId is absent: upsert by fid+mode

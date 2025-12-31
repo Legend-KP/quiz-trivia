@@ -32,6 +32,7 @@
     const pauseStartTimeRef = useRef<number | null>(null); // Ref to track pause start for closure access
     const startTimeRef = useRef<number | null>(null); // Ref to track start time for closure access
     const questionStartTimeRef = useRef<number | null>(null); // Track when current question started (for timestamp-based timer)
+    const questionTimesRef = useRef<number[]>([]); // Track actual time spent on each question (excluding pauses)
     const [alreadyCompleted, setAlreadyCompleted] = useState(false);
     const [checkingCompletion, setCheckingCompletion] = useState(true);
 
@@ -104,6 +105,13 @@
       const question = config.questions[currentQuestion];
       if (!question) return; // Safety check
       
+      // Calculate time spent on this question (before pausing)
+      if (questionStartTimeRef.current) {
+        const questionTime = Math.floor((Date.now() - questionStartTimeRef.current) / 1000);
+        questionTimesRef.current.push(Math.max(questionTime, 0)); // Store actual time spent on this question
+        console.log(`⏱️ Question ${currentQuestion + 1} time: ${questionTime}s`);
+      }
+      
       const isCorrect = answerIndex === question.correct;
       // Weekly mode scoring: +1 for correct, -0.5 for wrong, 0 for unanswered/missed
       // Use functional update to avoid stale closure issues
@@ -156,25 +164,26 @@
               return currentScore;
             }
             
-            // Calculate total paused time
-            // Each question result display is 3 seconds (except we're still in the last one)
-            // So for 10 questions, we have 9 pauses of 3 seconds each = 27 seconds
-            const questionsAnswered = currentQuestion + 1;
-            const resultDisplayPauses = (questionsAnswered - 1) * 3; // Pauses between questions
+            // Calculate total active time by summing actual time spent on each question
+            // This is more accurate than subtracting pauses from total elapsed time
+            const questionTimes = questionTimesRef.current;
             
-            // Add current pause if still active (the last question's result display)
-            let currentPause = 0;
-            if (pauseStartTimeRef.current) {
-              currentPause = (Date.now() - pauseStartTimeRef.current) / 1000;
+            // Safety check: ensure we have times for all questions
+            if (questionTimes.length !== config.questions.length) {
+              console.warn(`⚠️ Missing question times: expected ${config.questions.length}, got ${questionTimes.length}`);
+              // If we're missing the last question's time, estimate it
+              if (questionTimes.length === config.questions.length - 1 && questionStartTimeRef.current) {
+                const lastQuestionTime = Math.floor((Date.now() - questionStartTimeRef.current) / 1000);
+                questionTimes.push(Math.max(lastQuestionTime, 0));
+                console.log(`⏱️ Added missing last question time: ${lastQuestionTime}s`);
+              }
             }
             
-            const totalPaused = resultDisplayPauses + currentPause;
+            const totalActiveTime = questionTimes.reduce((sum, time) => sum + time, 0);
             
-            // Total elapsed time from start to now (in seconds)
-            const totalElapsed = (Date.now() - actualStartTime) / 1000;
-            
-            // Active time = total elapsed - paused time (time spent actually answering questions)
-            const activeTime = Math.max(Math.floor(totalElapsed - totalPaused), 1);
+            // Ensure minimum time: even if all questions are answered instantly, there's processing time
+            // Minimum realistic time for 10 questions is at least 10 seconds (1 second per question minimum)
+            const activeTime = Math.max(totalActiveTime, 10);
             
             // Format as MM:SS
             const minutes = Math.floor(activeTime / 60);
@@ -182,12 +191,10 @@
             const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
             
             console.log('⏱️ Time calculation:', {
-              startTime: new Date(actualStartTime).toISOString(),
-              endTime: new Date().toISOString(),
-              totalElapsed: totalElapsed.toFixed(2),
-              totalPaused: totalPaused.toFixed(2),
-              activeTime,
-              timeString
+              questionTimes: questionTimes,
+              totalActiveTime,
+              timeString,
+              questionsAnswered: questionTimes.length
             });
             
             // Get latest answers state
@@ -219,13 +226,20 @@
           setShowResult(false);
           // Reset question start time for timestamp-based timer
           questionStartTimeRef.current = Date.now();
+          // Note: questionTimesRef is already updated in handleAnswerSubmit before moving to next question
         }, 3000);
       }
     }, [currentQuestion, score, answers, startTime, pausedTime, pauseStartTime, onComplete, config.questions]);
 
     const handleTimeUp = useCallback(() => {
+      // Record time spent on this question (full time limit since time ran out)
+      if (questionStartTimeRef.current) {
+        const questionTime = config.questions[currentQuestion]?.timeLimit || 45;
+        questionTimesRef.current.push(questionTime); // Store full time limit as time spent
+        console.log(`⏱️ Question ${currentQuestion + 1} time: ${questionTime}s (time up)`);
+      }
       handleAnswerSubmit(null);
-    }, [handleAnswerSubmit]);
+    }, [handleAnswerSubmit, currentQuestion, config.questions]);
 
     // Timestamp-based timer that continues even when app is in background
     useEffect(() => {
@@ -334,6 +348,7 @@
                 
                 setStartTime(Date.now()); // Set start time when quiz actually starts
                 questionStartTimeRef.current = Date.now(); // Initialize question start time
+                questionTimesRef.current = []; // Reset question times array
                 setStarted(true);
               }}
               className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700 transform hover:scale-105 transition-all"
