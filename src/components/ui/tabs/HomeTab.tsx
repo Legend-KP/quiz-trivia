@@ -6,7 +6,7 @@ import QuizStartButton from '~/components/QuizStartButton';
 import { QuizMode } from '~/lib/wallet';
 import WeeklyQuizPage from '~/components/WeeklyQuizPage';
 import WeeklyQuizStartButton from '~/components/WeeklyQuizStartButton';
-import { currentWeeklyQuiz } from '~/lib/weeklyQuiz';
+import { currentWeeklyQuiz, MIN_REQUIRED_QT, formatTokens } from '~/lib/weeklyQuiz';
 import { useQuizState } from '~/hooks/useWeeklyQuiz';
 import QuizResultsSubmitPage from '~/components/QuizResultsSubmitPage';
 import { BetModeTab } from './BetModeTab';
@@ -456,10 +456,13 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
                   throw new Error('Please connect your Farcaster wallet to start the Weekly Quiz. You need to hold QT tokens to participate.');
                 }
 
-                // Check QT token balance (require at least 1 QT token)
-                const minRequiredQT = 1;
-                if (walletBalance < minRequiredQT) {
-                  throw new Error(`You need to hold at least ${minRequiredQT} QT token to start the Weekly Quiz.\n\nYour current balance: ${walletBalance.toFixed(4)} QT\n\nPlease get QT tokens and try again.`);
+                // Check QT token balance (require at least 5M QT tokens)
+                if (walletBalance < MIN_REQUIRED_QT) {
+                  const requiredFormatted = formatTokens(MIN_REQUIRED_QT);
+                  const currentFormatted = formatTokens(walletBalance);
+                  const shortfall = MIN_REQUIRED_QT - walletBalance;
+                  const shortfallFormatted = formatTokens(shortfall);
+                  throw new Error(`❌ Insufficient QT Tokens\n\n📊 Required: ${requiredFormatted} QT\n💰 Your Balance: ${currentFormatted} QT\n📉 You Need: ${shortfallFormatted} QT more\n\n💡 Please add more QT tokens to your wallet to participate in the Weekly Quiz.`);
                 }
 
                 // Server-side check: Verify user hasn't already completed this quiz
@@ -482,7 +485,7 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
             userCompleted={weeklyUserCompleted}
             isWalletConnected={isConnected && !!address}
             walletBalance={walletBalance}
-            hasEnoughQT={walletBalance >= 1}
+            hasEnoughQT={walletBalance >= MIN_REQUIRED_QT}
           />
 
           {/* Bet Mode */}

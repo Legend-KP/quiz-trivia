@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { QuizState, currentWeeklyQuiz, getNextQuizStartTime } from '~/lib/weeklyQuiz';
+import { QuizState, currentWeeklyQuiz, getNextQuizStartTime, MIN_REQUIRED_QT, formatTokens } from '~/lib/weeklyQuiz';
 import { useCountdown } from '~/hooks/useWeeklyQuiz';
 
 interface WeeklyQuizStartButtonProps {
@@ -61,7 +61,11 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
     }
 
     if (!hasEnoughQT) {
-      setError('You need to hold $QT token to participate in the Weekly Quiz.');
+      const requiredFormatted = formatTokens(MIN_REQUIRED_QT);
+      const currentFormatted = formatTokens(walletBalance);
+      const shortfall = MIN_REQUIRED_QT - walletBalance;
+      const shortfallFormatted = formatTokens(shortfall);
+      setError(`❌ Insufficient QT Tokens\n\n📊 Required: ${requiredFormatted} QT\n💰 Your Balance: ${currentFormatted} QT\n📉 You Need: ${shortfallFormatted} QT more\n\n💡 Please add more QT tokens to your wallet to participate.`);
       return;
     }
 
@@ -206,9 +210,13 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
       }
 
       if (!hasEnoughQT) {
+        const requiredFormatted = formatTokens(MIN_REQUIRED_QT);
+        const currentFormatted = formatTokens(walletBalance);
+        const shortfall = MIN_REQUIRED_QT - walletBalance;
+        const shortfallFormatted = formatTokens(shortfall);
         return {
           title: 'Insufficient QT Tokens',
-          message: 'You need to hold $QT token to participate in the Weekly Quiz.',
+          message: `Required: ${requiredFormatted} QT\nYour Balance: ${currentFormatted} QT\nYou Need: ${shortfallFormatted} QT more\n\nPlease add more QT tokens to participate.`,
           icon: '💰',
         };
       }
@@ -346,20 +354,28 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                         💡 Tip: Connect your wallet from the top right corner to participate.
                       </p>
                     )}
+                    {!hasEnoughQT && isWalletConnected && (
+                      <p className="text-xs text-red-600 mt-2 font-medium text-center">
+                        💡 Tip: Add more QT tokens to your wallet to meet the requirement and participate in the Weekly Quiz.
+                      </p>
+                    )}
                   </div>
                 )}
 
                 {/* Error Message Section (from failed start attempt) */}
                 {error && (
                   <div className="bg-red-50 border-2 border-red-300 rounded-lg p-3 animate-pulse">
-                    {error.includes('QT token') ? (
+                    {error.includes('QT') || error.includes('Insufficient') ? (
                       <>
                         <div className="font-semibold text-red-800 mb-1.5 text-sm flex items-center justify-center gap-2">
                           <span>💰</span>
                           <span>Insufficient QT Tokens</span>
                         </div>
-                        <p className="text-xs text-red-700 text-center">
+                        <p className="text-xs text-red-700 text-center whitespace-pre-line">
                           {error}
+                        </p>
+                        <p className="text-xs text-red-600 mt-2 font-medium text-center">
+                          💡 Please add more QT tokens to your wallet to participate.
                         </p>
                       </>
                     ) : (
