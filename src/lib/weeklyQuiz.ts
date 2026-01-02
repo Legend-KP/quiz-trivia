@@ -102,89 +102,89 @@ function getCurrentWeeklyQuiz(): WeeklyQuizConfig {
   
   return {
     id: getQuizIdFromDate(startDate),
-    topic: "Slashing", // Update this topic for each quiz
+    topic: "DeFAI", // Update this topic for each quiz
     startTime: startDate.toISOString(), // Tuesday or Friday 6 PM UTC
     endTime: endDate.toISOString(), // Next day 6 AM UTC (12-hour window)
     questions: [
     {
       id: 1,
-      question: "What is the primary goal of restaking in Ethereum ecosystems?",
-      options: ["To increase block size limits", "To reuse staked ETH for additional security services", "To replace validator rewards entirely", "To eliminate the need for Layer 2 networks"],
+      question: "What enables AI agents to execute actions autonomously in DeFAI?",
+      options: ["De-centralized APIs", "Smart contracts", "Custodial wallets", "Oracles"],
       correct: 1,
       timeLimit: 45,
-      explanation: "Restaking allows the same staked ETH to secure multiple services beyond Ethereum consensus."
+      explanation: "Smart contracts allow AI agents to act without human intervention."
     },
     {
       id: 2,
-      question: "Which risk is introduced by restaking compared to native Ethereum staking?",
-      options: ["Increased validator hardware requirements", "Loss of execution-layer finality", "Reduced transaction throughput", "Exposure to slashing from multiple protocols"],
-      correct: 3,
+      question: "What is the primary trust assumption when using DeFAI agents?",
+      options: ["AI model accuracy", "Validator honesty", "Oracle reliability", "User governance votes"],
+      correct: 0,
       timeLimit: 45,
-      explanation: "Validators can be slashed by multiple services if they misbehave."
+      explanation: "Incorrect models can cause losses even if the protocol is secure."
     },
     {
       id: 3,
-      question: "Which asset is most commonly restaked in Ethereum-based restaking protocols?",
-      options: ["Wrapped Ether", "Liquid staking tokens", "Governance tokens", "Stablecoins"],
-      correct: 1,
+      question: "What is a major challenge in deploying AI agents fully on-chain?",
+      options: ["Limited block size", "Validator coordination", "Lack of consensus", "High computational costs"],
+      correct: 3,
       timeLimit: 45,
-      explanation: "Liquid staking tokens represent staked ETH while remaining transferable, making them ideal for restaking."
+      explanation: "AI computation is expensive on-chain, so most inference is off-chain."
     },
     {
       id: 4,
-      question: "What role do Actively Validated Services (AVSs) play in restaking systems?",
-      options: ["Issue new staking tokens", "Replace Ethereum validators", "Consume security from restaked assets", "Manage protocol governance"],
+      question: "Which component connects AI agents to blockchain state?",
+      options: ["Wallet signatures", "Validators", "Oracles and indexers", "Sequencers"],
       correct: 2,
       timeLimit: 45,
-      explanation: "AVSs are services that rely on restaked ETH for their security guarantees."
+      explanation: "Oracles/indexers feed blockchain data to AI models."
     },
     {
       id: 5,
-      question: "Why are liquid staking tokens commonly used in restaking?",
-      options: ["Allow capital to remain transferable", "Eliminate slashing risks", "Guarantee fixed yield returns", "Reduce Ethereum gas fees"],
+      question: "What systemic risk does DeFAI introduce to DeFi markets?",
+      options: ["Model-driven herd behavior", "Reduced decentralization", "Lower transaction throughput", "Higher validator costs"],
       correct: 0,
       timeLimit: 45,
-      explanation: "LSTs keep capital liquid while still being staked and restaked."
+      explanation: "Similar AI strategies can create correlated market moves."
     },
     {
       id: 6,
-      question: "What is the primary trade-off restaking introduces to Ethereum's security model?",
-      options: ["Reduced decentralization at the consensus layer", "Increased complexity & correlated slashing risk", "Lower validator participation rates", "Slower block finalization times"],
-      correct: 1,
+      question: "What is a key security concern with autonomous DeFAI agents?",
+      options: ["Gas price manipulation", "Validator collusion", "Private key custody", "Network latency"],
+      correct: 2,
       timeLimit: 45,
-      explanation: "Multiple slashing conditions increase systemic complexity and risk."
+      explanation: "Compromised keys can allow unrestricted on-chain actions."
     },
     {
       id: 7,
-      question: "Which component typically defines the slashing rules in a restaking framework?",
-      options: ["Actively Validated Services (AVSs)", "Ethereum consensus layer", "Liquid staking providers", "Ethereum Improvement Proposals"],
-      correct: 0,
+      question: "Which design choice improves DeFAI safety?",
+      options: ["Unlimited execution permissions", "Time-locked execution", "Fully centralized control", "Removing automation"],
+      correct: 1,
       timeLimit: 45,
-      explanation: "Each AVS defines its own slashing conditions."
+      explanation: "Time locks allow humans to intervene before execution."
     },
     {
       id: 8,
-      question: "Which mechanism helps enforce correct behavior in restaked services?",
-      options: ["Governance token voting", "Smart contract–enforced slashing", "Proof-of-work fallback systems", "Off-chain dispute arbitration"],
-      correct: 1,
+      question: "What differentiates DeFAI agents from traditional trading bots?",
+      options: ["Use of smart contracts and composability", "Faster execution speeds", "Access to private order books", "Guaranteed profitability"],
+      correct: 0,
       timeLimit: 45,
-      explanation: "Smart contracts define and enforce penalties for misbehavior."
+      explanation: "DeFAI agents operate permissionlessly and on-chain."
     },
     {
       id: 9,
-      question: "Why is restaking considered a form of capital efficiency?",
-      options: ["It lowers transaction fees permanently", "One collateral securing multiple systems", "It increases block rewards per validator", "It reduces validator hardware costs"],
+      question: "Which DeFAI risk arises from AI agents acting faster than humans?",
+      options: ["Validator censorship", "Market manipulation amplification", "Lower gas efficiency", "Reduced protocol composability"],
       correct: 1,
       timeLimit: 45,
-      explanation: "One collateral securing multiple systems"
+      explanation: "Fast AI agents can amplify volatility or exploit inefficiencies."
     },
     {
       id: 10,
-      question: "What is a key risk introduced by restaking?",
-      options: ["Slower transaction speeds", "Higher gas fees", "Slashing across multiple protocols", "Reduced validator rewards"],
+      question: "Which of the following is one of the most popular DeFAI protocols focused on AI-driven DeFi agents?",
+      options: ["Aave", "Uniswap", "Virtuals Protocol", "Compound"],
       correct: 2,
       timeLimit: 45,
-      explanation: "Validators may be penalized by more than one service."
+      explanation: "Virtuals Protocol is well-known for enabling tokenized AI agents that operate within DeFi and Web3 ecosystems."
     }
   ]
   };
