@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { getCurrencyAccountsCollection, getCurrencyTxnsCollection } from '~/lib/mongodb';
+import { getCurrencyAccountsCollection } from '~/lib/mongodb';
 import { createSpinWheelSignatureService } from '~/lib/spinWheelSignatureService';
 
 export const runtime = 'nodejs';
@@ -134,42 +134,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate secure signature for claim
-    let claimSignature = null;
-    try {
-      const signatureService = createSpinWheelSignatureService();
-      
-      // Generate unique nonce (timestamp + random to ensure uniqueness)
-      const nonce = Date.now() * 1000 + Math.floor(Math.random() * 1000);
-      
-      // Generate signature (valid for 5 minutes)
-      claimSignature = await signatureService.generateClaimSignature(
-        userAddress,
-        spinResult.qtAmount,
-        nonce,
-        300 // 5 minute expiry
-      );
+      // Generate secure signature for claim
+      let claimSignature = null;
+      try {
+        const signatureService = createSpinWheelSignatureService();
+        
+        // Generate unique nonce (timestamp + random to ensure uniqueness)
+        const nonce = Date.now() * 1000 + Math.floor(Math.random() * 1000);
+        
+        // Generate signature (valid for 5 minutes)
+        claimSignature = await signatureService.generateClaimSignature(
+          userAddress,
+          spinResult.qtAmount,
+          nonce,
+          300 // 5 minute expiry
+        );
 
-      // Store claim record in database to prevent double-claiming
-      // You may want to create a separate collection for pending claims
-      const txns = await getCurrencyTxnsCollection();
-      await txns.insertOne({
-        fid,
-        type: 'spin_wheel_pending',
-        qtAmount: spinResult.qtAmount,
-        userAddress,
-        nonce,
-        signature: claimSignature.signature,
-        deadline: claimSignature.deadline,
-        claimed: false,
-        createdAt: now,
-      });
-    } catch (sigError: any) {
-      console.error('Signature generation error:', sigError);
-      // If signature generation fails, still return spin result but without signature
-      // Frontend will need to handle this case
-      console.warn('⚠️ Signature generation failed, returning spin result without signature');
-    }
+        // Note: Replay protection is handled by the contract via signature hash tracking
+        // No need to store in database as the contract prevents signature reuse
+      } catch (sigError: any) {
+        console.error('Signature generation error:', sigError);
+        // If signature generation fails, still return spin result but without signature
+        // Frontend will need to handle this case
+        console.warn('⚠️ Signature generation failed, returning spin result without signature');
+      }
 
     // All rewards are now QT tokens - no coin rewards
     // Update lastSpinAt for tracking cooldown
