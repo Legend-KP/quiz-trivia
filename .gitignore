@@ -60,3 +60,4 @@ artifacts/
 cache/
 *.sol
 !contracts/*.sol
+scripts/test-full-signature-flow.cjs

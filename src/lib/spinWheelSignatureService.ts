@@ -85,11 +85,11 @@ export class SpinWheelSignatureService {
       ]
     );
 
-    // Sign the message hash
-    // signMessage() automatically adds the Ethereum message prefix: "\x19Ethereum Signed Message:\n32"
-    // This matches what the contract does with toEthSignedMessageHash()
-    // We pass the hash as bytes, and signMessage will add the prefix and sign it
-    const signature = await this.signer.signMessage(ethers.getBytes(messageHash));
+    // Sign the Ethereum-prefixed message hash
+    // The contract uses toEthSignedMessageHash() which adds "\x19Ethereum Signed Message:\n32" prefix
+    // We need to sign the same prefixed hash that the contract will verify
+    const ethSignedMessageHash = ethers.hashMessage(ethers.getBytes(messageHash));
+    const signature = this.signer.signingKey.sign(ethSignedMessageHash).serialized;
     
     // Debug logging (remove in production)
     if (process.env.NODE_ENV === 'development') {
@@ -139,10 +139,9 @@ export class SpinWheelSignatureService {
         ]
       );
 
-      const recoveredAddress = ethers.verifyMessage(
-        ethers.getBytes(messageHash),
-        signature
-      );
+      // Contract uses toEthSignedMessageHash(), so we need to verify with the prefixed hash
+      const ethSignedMessageHash = ethers.hashMessage(ethers.getBytes(messageHash));
+      const recoveredAddress = ethers.recoverAddress(ethSignedMessageHash, signature);
 
       return (
         recoveredAddress.toLowerCase() === this.signer.address.toLowerCase()
