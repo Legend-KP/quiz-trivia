@@ -139,6 +139,15 @@ export async function POST(req: NextRequest) {
       try {
         const signatureService = createSpinWheelSignatureService();
         
+        // Log for debugging
+        console.log('🔐 Generating signature:', {
+          userAddress,
+          qtAmount: spinResult.qtAmount,
+          contractAddress: signatureService['contractAddress'],
+          chainId: signatureService['chainId'],
+          signerAddress: signatureService.getSignerAddress(),
+        });
+        
         // Generate unique nonce (timestamp + random to ensure uniqueness)
         const nonce = Date.now() * 1000 + Math.floor(Math.random() * 1000);
         
@@ -150,10 +159,22 @@ export async function POST(req: NextRequest) {
           300 // 5 minute expiry
         );
 
+        // Verify signature locally before sending to frontend
+        const isValid = signatureService.verifySignature(claimSignature);
+        if (!isValid) {
+          console.error('❌ Generated signature failed local verification!');
+          throw new Error('Signature verification failed');
+        }
+        console.log('✅ Signature generated and verified locally');
+
         // Note: Replay protection is handled by the contract via signature hash tracking
         // No need to store in database as the contract prevents signature reuse
       } catch (sigError: any) {
-        console.error('Signature generation error:', sigError);
+        console.error('❌ Signature generation error:', sigError);
+        console.error('Error details:', {
+          message: sigError?.message,
+          stack: sigError?.stack,
+        });
         // If signature generation fails, still return spin result but without signature
         // Frontend will need to handle this case
         console.warn('⚠️ Signature generation failed, returning spin result without signature');

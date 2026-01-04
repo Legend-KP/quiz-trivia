@@ -84,7 +84,10 @@ export class SpinWheelSignatureService {
       ]
     );
 
-    // Sign the message
+    // Sign the message hash
+    // signMessage() automatically adds the Ethereum message prefix: "\x19Ethereum Signed Message:\n32"
+    // This matches what the contract does with toEthSignedMessageHash()
+    // We pass the hash as bytes, and signMessage will add the prefix and sign it
     const signature = await this.signer.signMessage(ethers.getBytes(messageHash));
 
     return {

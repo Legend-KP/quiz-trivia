@@ -492,66 +492,6 @@
         "Panic"
       ]
     },
-    "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\BetModeVaultFlattened.sol": {
-      "lastModificationDate": 1764226784477,
-      "contentHash": "cd756d7817c3be7a86b0ab03bc1f6db7",
-      "sourceName": "contracts/BetModeVaultFlattened.sol",
-      "solcConfig": {
-        "version": "0.8.20",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.20",
-        "^0.8.20",
-        "^0.8.20",
-        "^0.8.20",
-        "^0.8.20",
-        "^0.8.20",
-        "^0.8.20",
-        "^0.8.20",
-        "^0.8.20",
-        ">=0.4.16",
-        "^0.8.20",
-        "^0.8.20",
-        "^0.8.20"
-      ],
-      "artifacts": [
-        "BetModeVault",
-        "Context",
-        "ECDSA",
-        "IERC20",
-        "Math",
-        "MessageHashUtils",
-        "Ownable",
-        "Panic",
-        "Pausable",
-        "ReentrancyGuard",
-        "SafeCast",
-        "SignedMath",
-        "Strings"
-      ]
-    },
     "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\DailyRewardDistributor.sol": {
       "lastModificationDate": 1766143424711,
       "contentHash": "bafc2d6dd4987c3419e085146f53b449",
@@ -630,42 +570,6 @@
         "QTRewardDistributor"
       ]
     },
-    "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\QuizTriviaEntry-Fixed.sol": {
-      "lastModificationDate": 1761456943333,
-      "contentHash": "ff090a7bb25be105df56e4d9cf3a3a30",
-      "sourceName": "contracts/QuizTriviaEntry-Fixed.sol",
-      "solcConfig": {
-        "version": "0.8.20",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "QuizTriviaSignature"
-      ]
-    },
     "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\QuizTriviaEntry.sol": {
       "lastModificationDate": 1766143448276,
       "contentHash": "efede922e2c52b261780b5ea5169ac98",
@@ -700,45 +604,6 @@
       ],
       "artifacts": [
         "QuizTriviaEntry"
-      ]
-    },
-    "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\SpinWheelQTDistributor.sol": {
-      "lastModificationDate": 1766170220245,
-      "contentHash": "b8073637c3ed7b76829e568d639b2bf7",
-      "sourceName": "contracts/SpinWheelQTDistributor.sol",
-      "solcConfig": {
-        "version": "0.8.20",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
-        "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.19"
-      ],
-      "artifacts": [
-        "SpinWheelQTDistributor"
       ]
     },
     "C:\\Users\\LENOVO\\quiz-trivia\\node_modules\\@openzeppelin\\contracts\\token\\ERC20\\utils\\SafeERC20.sol": {
