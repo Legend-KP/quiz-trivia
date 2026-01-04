@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useMiniApp } from '@neynar/react';
 import SpinWheel from '~/components/SpinWheel';
 import { useQTClaim } from '~/hooks/useQTClaim';
-import { useSpinWheelQTClaim } from '~/hooks/useSpinWheelQTClaim';
+import { useSecureSpinWheelQTClaim } from '~/hooks/useSecureSpinWheelQTClaim';
 
 export function RewardsTab() {
   const { context } = useMiniApp();
@@ -20,7 +20,7 @@ export function RewardsTab() {
     refetchCanClaim 
   } = useQTClaim();
   
-  // Spin wheel QT claim hook
+  // Spin wheel QT claim hook (secure version with signature verification)
   const {
     claimSpinReward: claimSpinWheelReward,
     isPending: isSpinWheelPending,
@@ -28,7 +28,7 @@ export function RewardsTab() {
     isError: isSpinWheelError,
     error: spinWheelError,
     txHash: spinWheelTxHash
-  } = useSpinWheelQTClaim();
+  } = useSecureSpinWheelQTClaim();
   
   const [claimSuccess, setClaimSuccess] = useState(false);
 
@@ -46,11 +46,16 @@ export function RewardsTab() {
     const fid = context?.user?.fid;
     if (!fid) return { success: false, error: 'No user ID' };
     
+    // Check if wallet is connected
+    if (!address) {
+      return { success: false, error: 'Please connect your wallet to spin the wheel' };
+    }
+    
     try {
       const res = await fetch('/api/currency/claim-daily', { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ fid }) 
+        body: JSON.stringify({ fid, userAddress: address }) 
       });
       
       // Check if response is OK and is JSON
@@ -81,13 +86,22 @@ export function RewardsTab() {
     }
   };
 
-  const handleQTTokenWin = async (userAddress: string, qtAmount: number) => {
+  const handleQTTokenWin = async (userAddress: string, qtAmount: number, claimData?: any) => {
     try {
-      await claimSpinWheelReward(qtAmount);
-      return { 
-        success: true, 
-        txHash: spinWheelTxHash || undefined 
-      };
+      // If claimData (with signature) is provided, use it for secure claiming
+      if (claimData && claimData.signature) {
+        await claimSpinWheelReward(claimData);
+        return { 
+          success: true, 
+          txHash: spinWheelTxHash || undefined 
+        };
+      } else {
+        // Fallback: if no signature data, return error
+        return { 
+          success: false, 
+          error: 'Signature data missing. Please spin again.' 
+        };
+      }
     } catch (err: any) {
       return { 
         success: false, 

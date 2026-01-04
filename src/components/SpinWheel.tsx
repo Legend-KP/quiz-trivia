@@ -4,8 +4,8 @@ import wheelOptions from '~/config/wheelOptions';
 import { APP_URL, APP_NAME } from '~/lib/constants';
 
 interface SpinWheelProps {
-  onSpin: () => Promise<{ success: boolean; spinResult?: any; balance?: number; error?: string }>;
-  onQTTokenWin?: (userAddress: string, qtAmount: number) => Promise<{ success: boolean; txHash?: string; error?: string }>;
+  onSpin: () => Promise<{ success: boolean; spinResult?: any; balance?: number; error?: string; claim?: any }>;
+  onQTTokenWin?: (userAddress: string, qtAmount: number, claimData?: any) => Promise<{ success: boolean; txHash?: string; error?: string }>;
   userAddress?: string;
   disabled?: boolean;
 }
@@ -108,7 +108,8 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
         // All results are now QT tokens
           setResult({
             ...response.spinResult,
-            needsWalletClaim: true
+            needsWalletClaim: true,
+            claim: response.claim // Include signature data for secure claiming
           });
         
         setTimeout(() => {
@@ -148,9 +149,9 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
 
     try {
       setIsClaiming(true);
-      // This will trigger a wallet transaction
+      // This will trigger a wallet transaction with signature verification
       // The user will need to sign the transaction in their Farcaster wallet
-      const qtResponse = await onQTTokenWin(userAddress, result.qtAmount);
+      const qtResponse = await onQTTokenWin(userAddress, result.qtAmount, result.claim);
       
       if (qtResponse?.success) {
         // Wait a moment for transaction to be confirmed
