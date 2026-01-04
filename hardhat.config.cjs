@@ -31,8 +31,8 @@ const config = {
   },
   etherscan: {
     apiKey: {
-      base: process.env.BASESCAN_API_KEY || "VMZ25B4ZKF49UPSI6J1QYM261DQ98C85N3",
-      baseSepolia: process.env.BASESCAN_API_KEY || "VMZ25B4ZKF49UPSI6J1QYM261DQ98C85N3",
+      base: process.env.BASESCAN_API_KEY || "",
+      baseSepolia: process.env.BASESCAN_API_KEY || "",
     },
     customChains: [
       {

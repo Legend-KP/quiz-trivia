@@ -323,3 +323,65 @@ export function formatTokens(amount: number): string {
     return amount.toString();
   }
 }
+
+// Contract addresses for the 3 QT distributor contracts
+export const QT_DISTRIBUTOR_CONTRACTS = [
+  {
+    name: 'SpinWheelQTDistributor',
+    address: '0x3D59700B5EBb9bDdA7D5b16eD3A77315cF1B0e2B' as `0x${string}`,
+  },
+  {
+    name: 'DailyRewardDistributor',
+    address: '0xbC9e7dE46aA15eA26ba88aD87B76f6fa2EcCD4eD' as `0x${string}`,
+  },
+  {
+    name: 'QTRewardDistributor',
+    address: '0xB0EfA92d9Da5920905F69581bAC223C3bf7E44F5' as `0x${string}`,
+  },
+] as const;
+
+// Interface for contract balance data
+export interface ContractBalance {
+  name: string;
+  address: string;
+  balance: number;
+  balanceFormatted: string;
+}
+
+// Interface for all contract balances response
+export interface ContractBalancesResponse {
+  success: boolean;
+  contracts: ContractBalance[];
+  total: {
+    balance: number;
+    balanceFormatted: string;
+  };
+  timestamp?: string;
+  error?: string;
+}
+
+/**
+ * Fetch QT token balances from all 3 distributor contracts
+ */
+export async function fetchContractQTBalances(): Promise<ContractBalancesResponse> {
+  try {
+    const response = await fetch('/api/contracts/qt-balances', {
+      cache: 'no-store', // Always fetch fresh data
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch balances: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error fetching contract balances:', error);
+    return {
+      success: false,
+      contracts: [],
+      total: { balance: 0, balanceFormatted: '0' },
+      error: error.message || 'Failed to fetch contract balances',
+    };
+  }
+}

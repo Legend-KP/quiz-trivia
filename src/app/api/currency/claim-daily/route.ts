@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getCurrencyAccountsCollection, getCurrencyTxnsCollection } from '~/lib/mongodb';
+import { createSpinWheelSignatureService } from '~/lib/spinWheelSignatureService';
 
 export const runtime = 'nodejs';
 
@@ -124,33 +125,78 @@ export async function POST(req: NextRequest) {
     // Get random spin result
     const spinResult = getRandomSpinResult();
 
+    // Get user address from request (required for signature generation)
+    const userAddress = body.userAddress;
+    if (!userAddress) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'userAddress is required for signature generation' }),
+        { status: 400, headers: { 'content-type': 'application/json' } }
+      );
+    }
+
+    // Generate secure signature for claim
+    let claimSignature = null;
+    try {
+      const signatureService = createSpinWheelSignatureService();
+      
+      // Generate unique nonce (timestamp + random to ensure uniqueness)
+      const nonce = Date.now() * 1000 + Math.floor(Math.random() * 1000);
+      
+      // Generate signature (valid for 5 minutes)
+      claimSignature = await signatureService.generateClaimSignature(
+        userAddress,
+        spinResult.qtAmount,
+        nonce,
+        300 // 5 minute expiry
+      );
+
+      // Store claim record in database to prevent double-claiming
+      // You may want to create a separate collection for pending claims
+      const txns = await getCurrencyTxnsCollection();
+      await txns.insertOne({
+        fid,
+        type: 'spin_wheel_pending',
+        qtAmount: spinResult.qtAmount,
+        userAddress,
+        nonce,
+        signature: claimSignature.signature,
+        deadline: claimSignature.deadline,
+        claimed: false,
+        createdAt: now,
+      });
+    } catch (sigError: any) {
+      console.error('Signature generation error:', sigError);
+      // If signature generation fails, still return spin result but without signature
+      // Frontend will need to handle this case
+      console.warn('⚠️ Signature generation failed, returning spin result without signature');
+    }
+
     // All rewards are now QT tokens - no coin rewards
     // Update lastSpinAt for tracking cooldown
-      await accounts.updateOne(
-        { fid },
-        { $set: { lastSpinAt: now, updatedAt: now } }
-      );
-    
-      // Note: QT token transfer will be handled by the frontend
-    // via the smart contract claimSpinReward function
+    await accounts.updateOne(
+      { fid },
+      { $set: { lastSpinAt: now, updatedAt: now } }
+    );
 
     const after = await accounts.findOne({ fid });
 
     return new Response(
       JSON.stringify({
-      success: true,
-      balance: after?.balance ?? 0,
-      spinResult: {
-        id: spinResult.id,
+        success: true,
+        balance: after?.balance ?? 0,
+        spinResult: {
+          id: spinResult.id,
           qtAmount: spinResult.qtAmount,
-        label: spinResult.label,
+          label: spinResult.label,
           isToken: spinResult.isToken,
-          requiresClaim: true // User must claim via smart contract
-      }
-      }), 
-      { 
+          requiresClaim: true, // User must claim via smart contract
+        },
+        // Include signature data if generated successfully
+        claim: claimSignature || null,
+      }),
+      {
         status: 200,
-        headers: { 'content-type': 'application/json' } 
+        headers: { 'content-type': 'application/json' },
       }
     );
   } catch (err: any) {
