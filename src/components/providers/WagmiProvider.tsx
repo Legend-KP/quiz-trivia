@@ -51,10 +51,23 @@ function useFarcasterMiniAppAutoConnect() {
   return isFarcasterMiniApp;
 }
 
+// Get RPC URL with fallback to avoid rate limiting
+const getBaseRPCUrl = () => {
+  // Priority order: Alchemy > Custom > Free alternatives
+  if (process.env.NEXT_PUBLIC_ALCHEMY_BASE_RPC_URL) {
+    return process.env.NEXT_PUBLIC_ALCHEMY_BASE_RPC_URL;
+  }
+  if (process.env.NEXT_PUBLIC_BASE_RPC_URL) {
+    return process.env.NEXT_PUBLIC_BASE_RPC_URL;
+  }
+  // Use free RPC that doesn't rate limit
+  return 'https://base.llamarpc.com';
+};
+
 export const config = createConfig({
   chains: [base, optimism, mainnet, degen, unichain, celo],
   transports: {
-    [base.id]: http(),
+    [base.id]: http(getBaseRPCUrl()),
     [optimism.id]: http(),
     [mainnet.id]: http(),
     [degen.id]: http(),

@@ -72,6 +72,7 @@ export class SpinWheelSignatureService {
     const deadline = Math.floor(Date.now() / 1000) + deadlineSeconds;
 
     // Create message hash (must match contract exactly)
+    // Contract uses: keccak256(abi.encodePacked(msg.sender, rewardAmount, nonce, deadline, address(this), block.chainid))
     const messageHash = ethers.solidityPackedKeccak256(
       ['address', 'uint256', 'uint256', 'uint256', 'address', 'uint256'],
       [
@@ -89,6 +90,21 @@ export class SpinWheelSignatureService {
     // This matches what the contract does with toEthSignedMessageHash()
     // We pass the hash as bytes, and signMessage will add the prefix and sign it
     const signature = await this.signer.signMessage(ethers.getBytes(messageHash));
+    
+    // Debug logging (remove in production)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔐 Signature Debug:', {
+        userAddress,
+        rewardAmount: rewardAmountWei.toString(),
+        nonce: nonce.toString(),
+        deadline: deadline.toString(),
+        contractAddress: this.contractAddress,
+        chainId: this.chainId.toString(),
+        messageHash,
+        signature: signature.substring(0, 20) + '...',
+        signerAddress: this.signer.address,
+      });
+    }
 
     return {
       userAddress,
