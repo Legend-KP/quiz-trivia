@@ -186,7 +186,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
       if (quizState === 'upcoming') {
         return {
           title: 'Quiz Not Started',
-          message: 'This quiz hasn\'t started yet. Please wait for the quiz to go live.',
+          message: 'This quiz hasn&apos;t started yet. Please wait for the quiz to go live.',
           icon: '⏰',
         };
       }
@@ -367,7 +367,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                             <br />
                             • Refresh the page
                             <br />
-                            • Check that you're on Base network
+                            • Check that you&apos;re on Base network
                           </p>
                         )}
                       </div>
