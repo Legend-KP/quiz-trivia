@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAccount, useReadContract, usePublicClient } from 'wagmi';
 import { base } from 'wagmi/chains';
-import { formatUnits, isAddress } from 'viem';
+import { formatUnits } from 'viem';
 import { AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
 
 // ERC20 ABI with all standard functions
@@ -114,7 +114,7 @@ export default function QTBalanceChecker({ onBalanceVerified }: QTBalanceChecker
       
       if (!code || code === '0x') {
         setContractExists(false);
-        setDebugInfo(prev => ({
+        setDebugInfo((prev: any) => ({
           ...prev,
           error: 'Contract does not exist at this address on Base network',
           code: code || 'none'
@@ -136,7 +136,7 @@ export default function QTBalanceChecker({ onBalanceVerified }: QTBalanceChecker
       const balanceFormatted = parseFloat(formatUnits(balance as bigint, decimals));
       
       setManualBalance(balanceFormatted);
-      setDebugInfo(prev => ({
+      setDebugInfo((prev: any) => ({
         ...prev,
         manualCheck: true,
         rawBalance: balance?.toString(),
@@ -146,7 +146,7 @@ export default function QTBalanceChecker({ onBalanceVerified }: QTBalanceChecker
       
     } catch (error: any) {
       console.error('Manual balance check failed:', error);
-      setDebugInfo(prev => ({
+      setDebugInfo((prev: any) => ({
         ...prev,
         manualCheckError: error.message,
         errorDetails: error,
@@ -167,7 +167,7 @@ export default function QTBalanceChecker({ onBalanceVerified }: QTBalanceChecker
         });
         setContractExists(code !== '0x' && !!code);
         
-        setDebugInfo(prev => ({
+        setDebugInfo((prev: any) => ({
           ...prev,
           contractCode: code ? 'exists' : 'none',
           contractAddress: QT_TOKEN_ADDRESS,
