@@ -330,14 +330,17 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
   const isOnBaseNetwork = chainId === base.id;
 
   // Read QT token balance from wallet
+  // Note: We don't enforce chainId in the query to allow reading from any chain
+  // The contract will still only work on Base, but we can check balance from any chain
   const { data: walletBalanceRaw, error: balanceError, isLoading: isBalanceLoading, refetch: refetchBalance } = useReadContract({
     address: qtTokenAddress,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
-    chainId: base.id,
+    // Remove chainId requirement to allow reading from any connected chain
+    // chainId: base.id,
     query: {
-      enabled: !!address && !!qtTokenAddress && isConnected && typeof address === 'string' && isOnBaseNetwork,
+      enabled: !!address && !!qtTokenAddress && isConnected && typeof address === 'string',
       refetchInterval: 10000, // Refetch every 10 seconds
     },
   });
@@ -364,11 +367,15 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
       console.log('   Chain ID:', chainId);
       console.log('   Is on Base Network:', isOnBaseNetwork);
       console.log('   Raw Balance:', walletBalanceRaw?.toString());
+      console.log('   Parsed Balance:', walletBalance);
       console.log('   Is Loading:', isBalanceLoading);
       console.log('   Has Error:', !!balanceError);
-      console.log('   Query Enabled:', !!address && !!qtTokenAddress && isConnected && typeof address === 'string' && isOnBaseNetwork);
+      console.log('   Query Enabled:', !!address && !!qtTokenAddress && isConnected && typeof address === 'string');
+      if (balanceError) {
+        console.error('   Error Details:', balanceError);
+      }
     }
-  }, [address, isConnected, walletBalanceRaw, isBalanceLoading, balanceError, qtTokenAddress, chainId, isOnBaseNetwork]);
+  }, [address, isConnected, walletBalanceRaw, walletBalance, isBalanceLoading, balanceError, qtTokenAddress, chainId, isOnBaseNetwork]);
 
   // Convert balance from wei to QT (18 decimals)
   const walletBalance = walletBalanceRaw ? parseFloat(formatUnits(walletBalanceRaw, 18)) : 0;
@@ -517,6 +524,7 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
             isWalletConnected={isConnected && !!address}
             walletBalance={walletBalance}
             hasEnoughQT={walletBalance >= MIN_REQUIRED_QT}
+            onRefreshBalance={refetchBalance}
           />
 
           {/* Bet Mode */}

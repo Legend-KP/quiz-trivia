@@ -10,6 +10,7 @@ interface WeeklyQuizStartButtonProps {
   isWalletConnected?: boolean;
   walletBalance?: number;
   hasEnoughQT?: boolean;
+  onRefreshBalance?: () => void;
 }
 
 const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
@@ -20,6 +21,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
   isWalletConnected = false,
   walletBalance = 0,
   hasEnoughQT = false,
+  onRefreshBalance,
 }) => {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -360,15 +362,25 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                           💡 Tip: Add more QT tokens to your wallet to meet the requirement and participate in the Weekly Quiz.
                         </p>
                         {walletBalance === 0 && (
-                          <p className="text-center text-red-500">
-                            ⚠️ If you have QT tokens but see 0 balance, try:
-                            <br />
-                            • Disconnect and reconnect your wallet
-                            <br />
-                            • Refresh the page
-                            <br />
-                            • Check that you&apos;re on Base network
-                          </p>
+                          <div className="text-center text-red-500 space-y-1">
+                            <p className="font-semibold">⚠️ If you have QT tokens but see 0 balance:</p>
+                            <p>1. Open browser console (F12) and check for errors</p>
+                            <p>2. Check that your wallet is connected</p>
+                            <p>3. Verify you&apos;re on Base network (Chain ID: 8453)</p>
+                            <p>4. Try disconnecting and reconnecting your wallet</p>
+                            <p>5. Refresh the page</p>
+                            {onRefreshBalance && (
+                              <button
+                                onClick={onRefreshBalance}
+                                className="mt-2 px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition"
+                              >
+                                🔄 Refresh Balance
+                              </button>
+                            )}
+                            <p className="text-xs mt-2">
+                              Current Balance: {walletBalance.toFixed(4)} QT | Required: {formatTokens(MIN_REQUIRED_QT)} QT
+                            </p>
+                          </div>
                         )}
                       </div>
                     )}
