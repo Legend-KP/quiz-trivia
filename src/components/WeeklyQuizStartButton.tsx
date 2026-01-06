@@ -63,11 +63,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
     }
 
     if (!hasEnoughQT) {
-      const requiredFormatted = formatTokens(MIN_REQUIRED_QT);
-      const currentFormatted = formatTokens(walletBalance);
-      const shortfall = MIN_REQUIRED_QT - walletBalance;
-      const shortfallFormatted = formatTokens(shortfall);
-      setError(`❌ Insufficient QT Tokens\n\n📊 Required: ${requiredFormatted} QT\n💰 Your Balance: ${currentFormatted} QT\n📉 You Need: ${shortfallFormatted} QT more\n\n💡 Please add more QT tokens to your wallet to participate.`);
+      setError(`❌ Insufficient QT Tokens\n\n💰 Your Balance: ${walletBalance.toFixed(4)} QT\n\n💡 You need to hold QT tokens to participate in the Weekly Quiz. Please add QT tokens to your wallet and try again.`);
       return;
     }
 
@@ -212,13 +208,9 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
       }
 
       if (!hasEnoughQT) {
-        const requiredFormatted = formatTokens(MIN_REQUIRED_QT);
-        const currentFormatted = formatTokens(walletBalance);
-        const shortfall = MIN_REQUIRED_QT - walletBalance;
-        const shortfallFormatted = formatTokens(shortfall);
         return {
           title: 'Insufficient QT Tokens',
-          message: `Required: ${requiredFormatted} QT\nYour Balance: ${currentFormatted} QT\nYou Need: ${shortfallFormatted} QT more\n\nPlease add more QT tokens to participate.`,
+          message: `You need to hold QT tokens to participate in the Weekly Quiz.\n\nYour Balance: ${walletBalance.toFixed(4)} QT\n\nPlease add QT tokens to your wallet to participate.`,
           icon: '💰',
         };
       }
@@ -378,7 +370,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                               </button>
                             )}
                             <p className="text-xs mt-2">
-                              Current Balance: {walletBalance.toFixed(4)} QT | Required: {formatTokens(MIN_REQUIRED_QT)} QT
+                              Current Balance: {walletBalance.toFixed(4)} QT | Required: At least 1 QT
                             </p>
                           </div>
                         )}

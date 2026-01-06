@@ -519,13 +519,9 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
                   throw new Error('Please connect your Farcaster wallet to start the Weekly Quiz. You need to hold QT tokens to participate.');
                 }
 
-                // Check QT token balance (require at least 5M QT tokens)
+                // Check QT token balance (require at least 1 QT token)
                 if (walletBalance < MIN_REQUIRED_QT) {
-                  const requiredFormatted = formatTokens(MIN_REQUIRED_QT);
-                  const currentFormatted = formatTokens(walletBalance);
-                  const shortfall = MIN_REQUIRED_QT - walletBalance;
-                  const shortfallFormatted = formatTokens(shortfall);
-                  throw new Error(`❌ Insufficient QT Tokens\n\n📊 Required: ${requiredFormatted} QT\n💰 Your Balance: ${currentFormatted} QT\n📉 You Need: ${shortfallFormatted} QT more\n\n💡 Please add more QT tokens to your wallet to participate in the Weekly Quiz.`);
+                  throw new Error(`❌ Insufficient QT Tokens\n\n💰 Your Balance: ${walletBalance.toFixed(4)} QT\n\n💡 You need to hold QT tokens to participate in the Weekly Quiz. Please add QT tokens to your wallet and try again.`);
                 }
 
                 // Server-side check: Verify user hasn't already completed this quiz

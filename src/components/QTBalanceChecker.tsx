@@ -38,7 +38,7 @@ const ERC20_ABI = [
 
 // QT Token Address on Base
 const QT_TOKEN_ADDRESS = '0x361faAea711B20caF59726e5f478D745C187cB07' as `0x${string}`;
-const MIN_REQUIRED_QT = 5000000; // 5M QT
+const MIN_REQUIRED_QT = 1; // 1 QT minimum (user must hold QT tokens)
 
 interface QTBalanceCheckerProps {
   onBalanceVerified?: (hasEnough: boolean, balance: number) => void;
