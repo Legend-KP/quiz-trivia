@@ -2,7 +2,7 @@ const { run } = require("hardhat");
 
 async function main() {
   const CONTRACT_ADDRESS = "0x6DE14656a37D659ede5A928E371A298F880E194d";
-  const QT_TOKEN_ADDRESS = "0x541529ADB3f344128aa87917fd2926E7D240FB07";
+  const QT_TOKEN_ADDRESS = "0x361faAea711B20caF59726e5f478D745C187cB07";
   
   console.log("🔍 Verifying DailyRewardDistributor Contract on BaseScan...\n");
   console.log("📍 Contract Address:", CONTRACT_ADDRESS);

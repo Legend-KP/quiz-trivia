@@ -20,7 +20,7 @@ export function QTTokenBar() {
   const TOKEN_NAME = "Quiz Trivia Token";
   const TOKEN_LOGO_URL = "https://i.ibb.co/XZtWW7xP/Quiz-Trivia-Logo.png";
   
-  // CAIP-19 format: eip155:8453/erc20:0x541529ADB3f344128aa87917fd2926E7D240FB07
+  // CAIP-19 format: eip155:8453/erc20:0x361faAea711B20caF59726e5f478D745C187cB07
   const TOKEN_ASSET_ID = `eip155:${CHAIN_ID}/erc20:${QT_TOKEN_ADDRESS}`;
 
   const handleTokenClick = async () => {

@@ -2,7 +2,7 @@ const { ethers } = require("hardhat");
 require("dotenv").config();
 
 async function main() {
-  const ADDRESS = process.argv[2] || process.env.QT_DISTRIBUTOR_ADDRESS || "0x541529ADB3f344128aa87917fd2926E7D240FB07";
+  const ADDRESS = process.argv[2] || process.env.QT_DISTRIBUTOR_ADDRESS || "0x361faAea711B20caF59726e5f478D745C187cB07";
   
   console.log("🔍 Verifying contract at address:", ADDRESS);
   console.log("🔗 BaseScan:", `https://basescan.org/address/${ADDRESS}\n`);

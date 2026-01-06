@@ -7,7 +7,7 @@ const path = require("path");
  */
 async function main() {
   const contractAddress = "0xD9DaF0183265cf600F0e2df6aD2dE4F0334B15B3";
-  const qtTokenAddress = "0x541529ADB3f344128aa87917fd2926E7D240FB07";
+  const qtTokenAddress = "0x361faAea711B20caF59726e5f478D745C187cB07";
   const adminSignerAddress = "0x55b2ED149545bb4AF2977eeb0bfF91f030b8BD5F";
 
   // Read the standard JSON input from artifacts

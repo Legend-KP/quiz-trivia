@@ -13,7 +13,7 @@ async function main() {
   if (!process.env.QT_TOKEN_ADDRESS) {
     console.error("\n❌ Error: QT_TOKEN_ADDRESS environment variable is required");
     console.log("   Please set it in your .env file:");
-    console.log("   QT_TOKEN_ADDRESS=0x541529ADB3f344128aa87917fd2926E7D240FB07");
+    console.log("   QT_TOKEN_ADDRESS=0x361faAea711B20caF59726e5f478D745C187cB07");
     process.exit(1);
   }
   
