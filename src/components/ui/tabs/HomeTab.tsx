@@ -6,25 +6,10 @@ import QuizStartButton from '~/components/QuizStartButton';
 import { QuizMode } from '~/lib/wallet';
 import WeeklyQuizPage from '~/components/WeeklyQuizPage';
 import WeeklyQuizStartButton from '~/components/WeeklyQuizStartButton';
-import { currentWeeklyQuiz, MIN_REQUIRED_QT, formatTokens } from '~/lib/weeklyQuiz';
+import { currentWeeklyQuiz } from '~/lib/weeklyQuiz';
 import { useQuizState } from '~/hooks/useWeeklyQuiz';
 import QuizResultsSubmitPage from '~/components/QuizResultsSubmitPage';
 import { BetModeTab } from './BetModeTab';
-import { useAccount, useReadContract } from 'wagmi';
-import { base } from 'wagmi/chains';
-import { formatUnits } from 'viem';
-
-const ERC20_ABI = [
-  {
-    inputs: [{ internalType: 'address', name: 'account', type: 'address' }],
-    name: 'balanceOf',
-    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-] as const;
-
-const QT_TOKEN_ADDRESS = "0x361faAea711B20caF59726e5f478D745C187cB07";
 
 // Type definitions
 interface QuizQuestion {
@@ -317,95 +302,20 @@ const RulesPopup: React.FC<RulesPopupProps> = ({ onClose }) => {
   );
 };
 
-// Home Page Component
-const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartChallenge, onStartWeeklyQuiz, onStartBetMode }) => {
-  const _weeklyQuizState = useQuizState(currentWeeklyQuiz);
+// Simplified HomePage - Remove duplicate balance checking
+// Balance is now handled in WeeklyQuizStartButton component
+const HomePage: React.FC<HomePageProps> = ({ 
+  balance, 
+  onStartTimeMode, 
+  onStartWeeklyQuiz,
+  onStartBetMode 
+}) => {
+  const weeklyQuizState = useQuizState(currentWeeklyQuiz);
   const [weeklyUserCompleted, setWeeklyUserCompleted] = useState(false);
   const { actions, added, context } = useMiniApp();
   const attemptedAddRef = useRef(false);
-  const { address, isConnected, chainId } = useAccount();
-  const qtTokenAddress = (process.env.NEXT_PUBLIC_QT_TOKEN_ADDRESS || QT_TOKEN_ADDRESS) as `0x${string}`;
 
-  // Check if wallet is on Base network
-  const isOnBaseNetwork = chainId === base.id;
-
-  // Read QT token balance from wallet
-  // Must read from Base network since QT token only exists on Base
-  const { data: walletBalanceRaw, error: balanceError, isLoading: isBalanceLoading, refetch: refetchBalance, isError: isBalanceError } = useReadContract({
-    address: qtTokenAddress,
-    abi: ERC20_ABI,
-    functionName: 'balanceOf',
-    args: address ? [address] : undefined,
-    chainId: base.id, // Explicitly use Base network
-    query: {
-      enabled: !!address && !!qtTokenAddress && isConnected && typeof address === 'string',
-      refetchInterval: 10000, // Refetch every 10 seconds
-      retry: 2, // Retry failed requests (reduced to avoid long waits)
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 3000), // Exponential backoff
-      staleTime: 5000, // Consider data stale after 5 seconds
-    },
-  });
-
-  // Convert balance from wei to QT (18 decimals)
-  const walletBalance = walletBalanceRaw ? parseFloat(formatUnits(walletBalanceRaw, 18)) : 0;
-
-  // Log balance errors for debugging
-  useEffect(() => {
-    if (balanceError || isBalanceError) {
-      console.error('❌ Error reading QT wallet balance:', balanceError);
-      console.error('   Error Type:', balanceError?.name || 'Unknown');
-      console.error('   Error Message:', balanceError?.message || 'No message');
-      console.error('   Address:', address);
-      console.error('   QT Token Address:', qtTokenAddress);
-      console.error('   Is Connected:', isConnected);
-      console.error('   Chain ID:', chainId);
-      console.error('   Expected Chain ID (Base):', base.id);
-      console.error('   Is on Base Network:', isOnBaseNetwork);
-      console.error('   Is Loading:', isBalanceLoading);
-      console.error('   Raw Balance:', walletBalanceRaw);
-      
-      // Check for specific error types
-      if (balanceError?.message?.includes('fetch')) {
-        console.error('   ⚠️ Network/RPC error detected - check RPC endpoint');
-      }
-      if (balanceError?.message?.includes('chain')) {
-        console.error('   ⚠️ Chain mismatch error - wallet may not be on Base');
-      }
-    }
-  }, [balanceError, isBalanceError, address, qtTokenAddress, isConnected, chainId, isOnBaseNetwork, isBalanceLoading, walletBalanceRaw]);
-
-  // Log balance reading status
-  useEffect(() => {
-    if (address && isConnected) {
-      console.log('🔍 Wallet Balance Check:');
-      console.log('   Address:', address);
-      console.log('   QT Token Address:', qtTokenAddress);
-      console.log('   Chain ID:', chainId);
-      console.log('   Is on Base Network:', isOnBaseNetwork);
-      console.log('   Raw Balance:', walletBalanceRaw?.toString() || 'undefined');
-      console.log('   Parsed Balance:', walletBalance);
-      console.log('   Is Loading:', isBalanceLoading);
-      console.log('   Has Error:', !!balanceError || isBalanceError);
-      console.log('   Query Enabled:', !!address && !!qtTokenAddress && isConnected && typeof address === 'string');
-      
-      // If stuck loading for more than 10 seconds, log warning
-      if (isBalanceLoading && !walletBalanceRaw) {
-        const timeout = setTimeout(() => {
-          console.warn('⚠️ Balance query stuck in loading state - RPC may be slow or failing');
-          console.warn('   Try: 1) Check RPC endpoint 2) Refresh page 3) Check network connection');
-        }, 10000);
-        return () => clearTimeout(timeout);
-      }
-      
-      if (balanceError || isBalanceError) {
-        console.error('   Error Details:', balanceError);
-        console.error('   Error Type:', balanceError?.name);
-        console.error('   Error Message:', balanceError?.message);
-      }
-    }
-  }, [address, isConnected, walletBalanceRaw, walletBalance, isBalanceLoading, balanceError, isBalanceError, qtTokenAddress, chainId, isOnBaseNetwork]);
-
-  // Determine if current user has already started or completed the current weekly quiz (single attempt enforcement)
+  // Check if user already completed this weekly quiz
   useEffect(() => {
     const fid = context?.user?.fid;
     const quizId = currentWeeklyQuiz.id;
@@ -413,34 +323,62 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
       setWeeklyUserCompleted(false);
       return;
     }
+    
     let cancelled = false;
+    
     (async () => {
       try {
         // Server check for completion
         const res = await fetch(`/api/leaderboard?mode=CLASSIC&quizId=${quizId}`);
         const data = await res.json();
-        const exists = Array.isArray(data?.leaderboard) && data.leaderboard.some((e: any) => e.fid === fid);
-        // Local backup check - check both started and completed
+        const exists = Array.isArray(data?.leaderboard) && 
+          data.leaderboard.some((e: any) => e.fid === fid);
+        
+        // Local backup check
         const lsCompletedKey = `weekly_completed_${quizId}_${fid}`;
         const lsStartedKey = `weekly_started_${quizId}_${fid}`;
-        const localCompleted = typeof window !== 'undefined' ? !!localStorage.getItem(lsCompletedKey) : false;
-        const localStarted = typeof window !== 'undefined' ? !!localStorage.getItem(lsStartedKey) : false;
-        if (!cancelled) setWeeklyUserCompleted(exists || localCompleted || localStarted);
+        const localCompleted = typeof window !== 'undefined' ? 
+          !!localStorage.getItem(lsCompletedKey) : false;
+        const localStarted = typeof window !== 'undefined' ? 
+          !!localStorage.getItem(lsStartedKey) : false;
+        
+        if (!cancelled) {
+          setWeeklyUserCompleted(exists || localCompleted || localStarted);
+        }
       } catch (_e) {
         // Fallback to localStorage only
         try {
           const lsCompletedKey = `weekly_completed_${quizId}_${fid}`;
           const lsStartedKey = `weekly_started_${quizId}_${fid}`;
-          const localCompleted = typeof window !== 'undefined' ? !!localStorage.getItem(lsCompletedKey) : false;
-          const localStarted = typeof window !== 'undefined' ? !!localStorage.getItem(lsStartedKey) : false;
-          if (!cancelled) setWeeklyUserCompleted(localCompleted || localStarted);
+          const localCompleted = typeof window !== 'undefined' ? 
+            !!localStorage.getItem(lsCompletedKey) : false;
+          const localStarted = typeof window !== 'undefined' ? 
+            !!localStorage.getItem(lsStartedKey) : false;
+          if (!cancelled) {
+            setWeeklyUserCompleted(localCompleted || localStarted);
+          }
         } catch (_e2) {
           if (!cancelled) setWeeklyUserCompleted(false);
         }
       }
     })();
+    
     return () => { cancelled = true; };
-  }, [context?.user?.fid, _weeklyQuizState, currentWeeklyQuiz.id]);
+  }, [context?.user?.fid, weeklyQuizState, currentWeeklyQuiz.id]);
+
+  // Auto-prompt to add mini app
+  useEffect(() => {
+    if (!added && !attemptedAddRef.current) {
+      attemptedAddRef.current = true;
+      (async () => {
+        try {
+          await actions.addMiniApp();
+        } catch (_e) {
+          // User declined or error - ignore
+        }
+      })();
+    }
+  }, [added, actions]);
 
   // Auto-prompt to add the mini app if not yet added (once per session)
   useEffect(() => {
@@ -502,50 +440,11 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
             onQuizStart={onStartTimeMode}
           />
 
-          {/* Weekly Quiz - Second */}
+          {/* Weekly Quiz - Now with built-in balance verification */}
           <WeeklyQuizStartButton
-            quizState={_weeklyQuizState}
-            onQuizStart={async () => {
-              try {
-                const fid = context?.user?.fid;
-                const quizId = currentWeeklyQuiz.id;
-                
-                if (!fid || !quizId) {
-                  throw new Error('User not authenticated. Please refresh the page and try again.');
-                }
-
-                // Check if user has connected wallet and QT tokens
-                if (!isConnected || !address) {
-                  throw new Error('Please connect your Farcaster wallet to start the Weekly Quiz. You need to hold QT tokens to participate.');
-                }
-
-                // Check QT token balance (require at least 1 QT token)
-                if (walletBalance < MIN_REQUIRED_QT) {
-                  throw new Error(`❌ Insufficient QT Tokens\n\n💰 Your Balance: ${walletBalance.toFixed(4)} QT\n\n💡 You need to hold QT tokens to participate in the Weekly Quiz. Please add QT tokens to your wallet and try again.`);
-                }
-
-                // Server-side check: Verify user hasn't already completed this quiz
-                const checkRes = await fetch(`/api/leaderboard/check?fid=${fid}&quizId=${quizId}`);
-                const checkData = await checkRes.json();
-                
-                if (checkData.completed) {
-                  setWeeklyUserCompleted(true);
-                  throw new Error('You have already completed this quiz. Each user can only take the quiz once per session.');
-                }
-
-                // All checks passed - start the quiz
-                onStartWeeklyQuiz();
-              } catch (error: any) {
-                // Error will be handled by WeeklyQuizStartButton's error state
-                console.error('Failed to start weekly quiz:', error);
-                throw error; // Re-throw to let the component handle it
-              }
-            }}
+            quizState={weeklyQuizState}
+            onQuizStart={onStartWeeklyQuiz}
             userCompleted={weeklyUserCompleted}
-            isWalletConnected={isConnected && !!address}
-            walletBalance={walletBalance}
-            hasEnoughQT={walletBalance >= MIN_REQUIRED_QT}
-            onRefreshBalance={refetchBalance}
           />
 
           {/* Bet Mode */}
