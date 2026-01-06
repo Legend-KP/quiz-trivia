@@ -49,7 +49,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
-  const [backendVerified, setBackendVerified] = useState(false);
+  const [_backendVerified, setBackendVerified] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   
   // Get wallet connection info
@@ -343,7 +343,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
       if (quizState === 'upcoming') {
         return {
           title: 'Quiz Not Started',
-          message: 'This quiz hasn\'t started yet. Please wait for the quiz to go live.',
+          message: 'This quiz hasn&apos;t started yet. Please wait for the quiz to go live.',
           icon: '⏰',
         };
       }
@@ -531,7 +531,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                   )}
                   {userCompleted && (
                     <p className={`text-xs ${stateInfo.textColor}`}>
-                      You've already completed this quiz!
+                      You&apos;ve already completed this quiz!
                     </p>
                   )}
                   {!userCompleted && quizState !== 'ended' && (
