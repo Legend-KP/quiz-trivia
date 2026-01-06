@@ -1,37 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useAccount, useReadContract } from 'wagmi';
+import React, { useState } from 'react';
+import { useAccount } from 'wagmi';
 import { base } from 'wagmi/chains';
-import { formatUnits } from 'viem';
-import { QuizState, currentWeeklyQuiz, getNextQuizStartTime, MIN_REQUIRED_QT, formatTokens } from '~/lib/weeklyQuiz';
+import { QuizState, currentWeeklyQuiz, getNextQuizStartTime } from '~/lib/weeklyQuiz';
 import { useCountdown } from '~/hooks/useWeeklyQuiz';
-
-// ERC-20 ABI for reading balance
-const ERC20_ABI = [
-  {
-    inputs: [{ internalType: 'address', name: 'account', type: 'address' }],
-    name: 'balanceOf',
-    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'decimals',
-    outputs: [{ internalType: 'uint8', name: '', type: 'uint8' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'symbol',
-    outputs: [{ internalType: 'string', name: '', type: 'string' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-] as const;
-
-// QT Token Address on Base Network
-const QT_TOKEN_ADDRESS = '0x361faAea711B20caF59726e5f478D745C187cB07' as `0x${string}`;
 
 interface WeeklyQuizStartButtonProps {
   quizState: QuizState;
@@ -49,112 +20,10 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
-  const [_backendVerified, setBackendVerified] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
   
   // Get wallet connection info
   const { address, isConnected, chainId } = useAccount();
   const isOnBaseNetwork = chainId === base.id;
-
-  // Read token decimals
-  const { data: decimalsData } = useReadContract({
-    address: QT_TOKEN_ADDRESS,
-    abi: ERC20_ABI,
-    functionName: 'decimals',
-    chainId: base.id,
-  });
-
-  // Read token symbol
-  const { data: symbolData } = useReadContract({
-    address: QT_TOKEN_ADDRESS,
-    abi: ERC20_ABI,
-    functionName: 'symbol',
-    chainId: base.id,
-  });
-
-  // Read wallet balance
-  const { 
-    data: walletBalanceRaw, 
-    error: balanceError, 
-    isLoading: isBalanceLoading,
-    refetch: refetchBalance,
-  } = useReadContract({
-    address: QT_TOKEN_ADDRESS,
-    abi: ERC20_ABI,
-    functionName: 'balanceOf',
-    args: address ? [address] : undefined,
-    chainId: base.id,
-    query: {
-      enabled: Boolean(
-        address && 
-        QT_TOKEN_ADDRESS && 
-        isConnected && 
-        isOnBaseNetwork
-      ),
-      refetchInterval: 10000, // Refetch every 10 seconds
-      retry: 3,
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
-      staleTime: 5000,
-    },
-  });
-
-  // Calculate balance
-  const decimals = decimalsData || 18;
-  const walletBalance = walletBalanceRaw 
-    ? parseFloat(formatUnits(walletBalanceRaw, decimals))
-    : 0;
-
-  const hasEnoughQT = walletBalance >= MIN_REQUIRED_QT;
-
-  // Log balance status for debugging
-  useEffect(() => {
-    if (address && isConnected) {
-      console.log('🔍 QT Balance Check:', {
-        address,
-        chainId,
-        isOnBaseNetwork,
-        expectedChainId: base.id,
-        tokenAddress: QT_TOKEN_ADDRESS,
-        tokenSymbol: symbolData,
-        rawBalance: walletBalanceRaw?.toString(),
-        formattedBalance: walletBalance,
-        minRequired: MIN_REQUIRED_QT,
-        hasEnough: hasEnoughQT,
-        isLoading: isBalanceLoading,
-        hasError: !!balanceError,
-      });
-
-      if (balanceError) {
-        console.error('❌ Balance Read Error:', balanceError);
-      }
-    }
-  }, [address, isConnected, chainId, isOnBaseNetwork, walletBalanceRaw, walletBalance, hasEnoughQT, isBalanceLoading, balanceError, symbolData]);
-
-  // Backend verification
-  const verifyBalanceBackend = async () => {
-    if (!address) return false;
-    
-    setIsVerifying(true);
-    try {
-      const response = await fetch(`/api/verify-qt-balance?address=${address}`);
-      const data = await response.json();
-      
-      if (!response.ok) {
-        console.error('❌ Backend verification failed:', data.error);
-        throw new Error(data.error || 'Backend verification failed');
-      }
-
-      console.log('✅ Backend verification:', data);
-      setBackendVerified(data.hasEnoughTokens);
-      return data.hasEnoughTokens;
-    } catch (error: any) {
-      console.error('❌ Backend verification error:', error);
-      setError(`Backend verification failed: ${error.message}`);
-      return false;
-    } finally {
-      setIsVerifying(false);
-    }
-  };
   
   // Get correct countdown based on quiz state
   const nextQuizTime = React.useMemo(() => {
@@ -195,40 +64,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
         throw new Error(`❌ Wrong Network\n\nPlease switch to Base network (Chain ID: ${base.id}).\n\nCurrent chain: ${chainId}`);
       }
 
-      // 3. Check if balance is still loading
-      if (isBalanceLoading) {
-        throw new Error('⏳ Loading Balance\n\nPlease wait while we verify your QT token balance...');
-      }
-
-      // 4. Check for balance read errors
-      if (balanceError) {
-        throw new Error(`❌ Balance Read Error\n\n${balanceError.message}\n\n💡 Try refreshing the page or reconnecting your wallet.`);
-      }
-
-      // 5. Check QT token balance
-      if (!hasEnoughQT) {
-        const shortfall = MIN_REQUIRED_QT - walletBalance;
-        throw new Error(
-          `❌ Insufficient QT Tokens\n\n` +
-          `📊 Required: ${formatTokens(MIN_REQUIRED_QT)} QT\n` +
-          `💰 Your Balance: ${formatTokens(walletBalance)} QT\n` +
-          `📉 You Need: ${formatTokens(shortfall)} QT more\n\n` +
-          `💡 Please add more QT tokens to your wallet to participate in the Weekly Quiz.`
-        );
-      }
-
-      // 6. Backend verification (double-check)
-      console.log('🔐 Performing backend verification...');
-      const backendOK = await verifyBalanceBackend();
-      
-      if (!backendOK) {
-        throw new Error(
-          `❌ Backend Verification Failed\n\n` +
-          `Your balance could not be verified on the server. ` +
-          `Please try refreshing the page or contact support.`
-        );
-      }
-
+      // All checks passed - starting quiz (QT requirement removed)
       console.log('✅ All checks passed - starting quiz');
 
       // 7. Call the onQuizStart callback
@@ -326,7 +162,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
     }
   };
 
-  const canStartQuiz = quizState === 'live' && !userCompleted && isConnected && isOnBaseNetwork && hasEnoughQT;
+  const canStartQuiz = quizState === 'live' && !userCompleted && isConnected && isOnBaseNetwork;
   const stateInfo = getStateInfo();
 
   // Determine why user can't participate
@@ -373,29 +209,6 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
         };
       }
 
-      if (isBalanceLoading) {
-        return {
-          title: 'Loading Balance',
-          message: 'Please wait while we verify your QT token balance...',
-          icon: '⏳',
-        };
-      }
-
-      if (balanceError) {
-        return {
-          title: 'Balance Read Error',
-          message: `Unable to read your QT token balance. ${balanceError.message}`,
-          icon: '⚠️',
-        };
-      }
-
-      if (!hasEnoughQT) {
-        return {
-          title: 'Insufficient QT Tokens',
-          message: `You need ${formatTokens(MIN_REQUIRED_QT)} QT to participate.\n\nYour Balance: ${formatTokens(walletBalance)} QT\nYou Need: ${formatTokens(MIN_REQUIRED_QT - walletBalance)} QT more`,
-          icon: '💰',
-        };
-      }
     }
 
     return null;
@@ -482,42 +295,6 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                   <p className="text-xs text-yellow-700">4th-10th: 1M $QT each</p>
                 </div>
 
-                {/* Balance Status - Show when connected */}
-                {isConnected && (
-                  <div className={`rounded-lg p-3 ${hasEnoughQT ? 'bg-green-50' : 'bg-orange-50'}`}>
-                    <div className={`font-semibold mb-1.5 text-sm ${hasEnoughQT ? 'text-green-800' : 'text-orange-800'}`}>
-                      {hasEnoughQT ? '✅ QT Balance Verified' : '⚠️ QT Balance Check'}
-                    </div>
-                    {isBalanceLoading ? (
-                      <p className="text-xs text-gray-600">⏳ Checking balance...</p>
-                    ) : balanceError ? (
-                      <p className="text-xs text-red-600">❌ Error reading balance: {balanceError.message}</p>
-                    ) : (
-                      <>
-                        <p className="text-xs text-gray-700 mb-1">
-                          Your Balance: <span className="font-bold">{formatTokens(walletBalance)} QT</span>
-                        </p>
-                        <p className="text-xs text-gray-700">
-                          Required: <span className="font-bold">{formatTokens(MIN_REQUIRED_QT)} QT</span>
-                        </p>
-                        {!hasEnoughQT && (
-                          <p className="text-xs text-orange-700 mt-1">
-                            Need: <span className="font-bold">{formatTokens(MIN_REQUIRED_QT - walletBalance)} QT more</span>
-                          </p>
-                        )}
-                      </>
-                    )}
-                    {symbolData && (
-                      <p className="text-xs text-gray-500 mt-1">Token: {symbolData}</p>
-                    )}
-                    <button
-                      onClick={() => refetchBalance()}
-                      className="mt-2 text-xs text-blue-600 hover:text-blue-700 font-medium"
-                    >
-                      🔄 Refresh Balance
-                    </button>
-                  </div>
-                )}
 
                 {/* State Info */}
                 <div className={`${stateInfo.bgColor} rounded-lg p-3`}>
@@ -589,14 +366,14 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
               {canStartQuiz && (
                 <button
                   onClick={handleStartQuizConfirmed}
-                  disabled={isStarting || isVerifying}
+                  disabled={isStarting}
                   className={`flex-1 px-3 py-2 text-white font-bold text-sm rounded-lg transition ${
-                    isStarting || isVerifying
+                    isStarting
                       ? 'bg-gray-400 cursor-not-allowed opacity-60'
                       : 'bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700'
                   }`}
                 >
-                  {isStarting ? '🔄 Starting...' : isVerifying ? '🔐 Verifying...' : '🚀 Start Quiz'}
+                  {isStarting ? '🔄 Starting...' : '🚀 Start Quiz'}
                 </button>
               )}
             </div>

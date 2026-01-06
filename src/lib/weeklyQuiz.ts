@@ -21,8 +21,8 @@ export interface WeeklyQuizConfig {
 export type QuizState = 'upcoming' | 'live' | 'ended';
 
 // Minimum QT token requirement to participate in Weekly Quiz
-// User must hold at least 1 QT token (any amount > 0)
-export const MIN_REQUIRED_QT = 1; // 1 QT minimum
+// Set to 0 to allow everyone to participate (no QT requirement)
+export const MIN_REQUIRED_QT = 0; // No QT requirement - everyone can participate
 
 // Get current or next Tuesday/Friday at 6 PM UTC
 // Returns the quiz that is currently live, or the next upcoming quiz
