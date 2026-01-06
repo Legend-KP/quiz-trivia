@@ -330,18 +330,19 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
   const isOnBaseNetwork = chainId === base.id;
 
   // Read QT token balance from wallet
-  // Note: We don't enforce chainId in the query to allow reading from any chain
-  // The contract will still only work on Base, but we can check balance from any chain
-  const { data: walletBalanceRaw, error: balanceError, isLoading: isBalanceLoading, refetch: refetchBalance } = useReadContract({
+  // Must read from Base network since QT token only exists on Base
+  const { data: walletBalanceRaw, error: balanceError, isLoading: isBalanceLoading, refetch: refetchBalance, isError: isBalanceError } = useReadContract({
     address: qtTokenAddress,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
-    // Remove chainId requirement to allow reading from any connected chain
-    // chainId: base.id,
+    chainId: base.id, // Explicitly use Base network
     query: {
       enabled: !!address && !!qtTokenAddress && isConnected && typeof address === 'string',
       refetchInterval: 10000, // Refetch every 10 seconds
+      retry: 2, // Retry failed requests (reduced to avoid long waits)
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 3000), // Exponential backoff
+      staleTime: 5000, // Consider data stale after 5 seconds
     },
   });
 
@@ -350,16 +351,28 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
 
   // Log balance errors for debugging
   useEffect(() => {
-    if (balanceError) {
+    if (balanceError || isBalanceError) {
       console.error('❌ Error reading QT wallet balance:', balanceError);
+      console.error('   Error Type:', balanceError?.name || 'Unknown');
+      console.error('   Error Message:', balanceError?.message || 'No message');
       console.error('   Address:', address);
       console.error('   QT Token Address:', qtTokenAddress);
       console.error('   Is Connected:', isConnected);
       console.error('   Chain ID:', chainId);
       console.error('   Expected Chain ID (Base):', base.id);
       console.error('   Is on Base Network:', isOnBaseNetwork);
+      console.error('   Is Loading:', isBalanceLoading);
+      console.error('   Raw Balance:', walletBalanceRaw);
+      
+      // Check for specific error types
+      if (balanceError?.message?.includes('fetch')) {
+        console.error('   ⚠️ Network/RPC error detected - check RPC endpoint');
+      }
+      if (balanceError?.message?.includes('chain')) {
+        console.error('   ⚠️ Chain mismatch error - wallet may not be on Base');
+      }
     }
-  }, [balanceError, address, qtTokenAddress, isConnected, chainId, isOnBaseNetwork]);
+  }, [balanceError, isBalanceError, address, qtTokenAddress, isConnected, chainId, isOnBaseNetwork, isBalanceLoading, walletBalanceRaw]);
 
   // Log balance reading status
   useEffect(() => {
@@ -369,16 +382,28 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
       console.log('   QT Token Address:', qtTokenAddress);
       console.log('   Chain ID:', chainId);
       console.log('   Is on Base Network:', isOnBaseNetwork);
-      console.log('   Raw Balance:', walletBalanceRaw?.toString());
+      console.log('   Raw Balance:', walletBalanceRaw?.toString() || 'undefined');
       console.log('   Parsed Balance:', walletBalance);
       console.log('   Is Loading:', isBalanceLoading);
-      console.log('   Has Error:', !!balanceError);
+      console.log('   Has Error:', !!balanceError || isBalanceError);
       console.log('   Query Enabled:', !!address && !!qtTokenAddress && isConnected && typeof address === 'string');
-      if (balanceError) {
+      
+      // If stuck loading for more than 10 seconds, log warning
+      if (isBalanceLoading && !walletBalanceRaw) {
+        const timeout = setTimeout(() => {
+          console.warn('⚠️ Balance query stuck in loading state - RPC may be slow or failing');
+          console.warn('   Try: 1) Check RPC endpoint 2) Refresh page 3) Check network connection');
+        }, 10000);
+        return () => clearTimeout(timeout);
+      }
+      
+      if (balanceError || isBalanceError) {
         console.error('   Error Details:', balanceError);
+        console.error('   Error Type:', balanceError?.name);
+        console.error('   Error Message:', balanceError?.message);
       }
     }
-  }, [address, isConnected, walletBalanceRaw, walletBalance, isBalanceLoading, balanceError, qtTokenAddress, chainId, isOnBaseNetwork]);
+  }, [address, isConnected, walletBalanceRaw, walletBalance, isBalanceLoading, balanceError, isBalanceError, qtTokenAddress, chainId, isOnBaseNetwork]);
 
   // Determine if current user has already started or completed the current weekly quiz (single attempt enforcement)
   useEffect(() => {
