@@ -345,6 +345,9 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
     },
   });
 
+  // Convert balance from wei to QT (18 decimals)
+  const walletBalance = walletBalanceRaw ? parseFloat(formatUnits(walletBalanceRaw, 18)) : 0;
+
   // Log balance errors for debugging
   useEffect(() => {
     if (balanceError) {
@@ -376,9 +379,6 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
       }
     }
   }, [address, isConnected, walletBalanceRaw, walletBalance, isBalanceLoading, balanceError, qtTokenAddress, chainId, isOnBaseNetwork]);
-
-  // Convert balance from wei to QT (18 decimals)
-  const walletBalance = walletBalanceRaw ? parseFloat(formatUnits(walletBalanceRaw, 18)) : 0;
 
   // Determine if current user has already started or completed the current weekly quiz (single attempt enforcement)
   useEffect(() => {
