@@ -355,9 +355,22 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                       </p>
                     )}
                     {!hasEnoughQT && isWalletConnected && (
-                      <p className="text-xs text-red-600 mt-2 font-medium text-center">
-                        💡 Tip: Add more QT tokens to your wallet to meet the requirement and participate in the Weekly Quiz.
-                      </p>
+                      <div className="text-xs text-red-600 mt-2 space-y-1">
+                        <p className="font-medium text-center">
+                          💡 Tip: Add more QT tokens to your wallet to meet the requirement and participate in the Weekly Quiz.
+                        </p>
+                        {walletBalance === 0 && (
+                          <p className="text-center text-red-500">
+                            ⚠️ If you have QT tokens but see 0 balance, try:
+                            <br />
+                            • Disconnect and reconnect your wallet
+                            <br />
+                            • Refresh the page
+                            <br />
+                            • Check that you're on Base network
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}

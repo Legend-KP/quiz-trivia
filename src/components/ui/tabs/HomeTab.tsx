@@ -323,21 +323,52 @@ const HomePage: React.FC<HomePageProps> = ({ balance, onStartTimeMode, onStartCh
   const [weeklyUserCompleted, setWeeklyUserCompleted] = useState(false);
   const { actions, added, context } = useMiniApp();
   const attemptedAddRef = useRef(false);
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chainId } = useAccount();
   const qtTokenAddress = (process.env.NEXT_PUBLIC_QT_TOKEN_ADDRESS || QT_TOKEN_ADDRESS) as `0x${string}`;
 
+  // Check if wallet is on Base network
+  const isOnBaseNetwork = chainId === base.id;
+
   // Read QT token balance from wallet
-  const { data: walletBalanceRaw } = useReadContract({
+  const { data: walletBalanceRaw, error: balanceError, isLoading: isBalanceLoading, refetch: refetchBalance } = useReadContract({
     address: qtTokenAddress,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
     chainId: base.id,
     query: {
-      enabled: !!address && !!qtTokenAddress && isConnected && typeof address === 'string',
+      enabled: !!address && !!qtTokenAddress && isConnected && typeof address === 'string' && isOnBaseNetwork,
       refetchInterval: 10000, // Refetch every 10 seconds
     },
   });
+
+  // Log balance errors for debugging
+  useEffect(() => {
+    if (balanceError) {
+      console.error('❌ Error reading QT wallet balance:', balanceError);
+      console.error('   Address:', address);
+      console.error('   QT Token Address:', qtTokenAddress);
+      console.error('   Is Connected:', isConnected);
+      console.error('   Chain ID:', chainId);
+      console.error('   Expected Chain ID (Base):', base.id);
+      console.error('   Is on Base Network:', isOnBaseNetwork);
+    }
+  }, [balanceError, address, qtTokenAddress, isConnected, chainId, isOnBaseNetwork]);
+
+  // Log balance reading status
+  useEffect(() => {
+    if (address && isConnected) {
+      console.log('🔍 Wallet Balance Check:');
+      console.log('   Address:', address);
+      console.log('   QT Token Address:', qtTokenAddress);
+      console.log('   Chain ID:', chainId);
+      console.log('   Is on Base Network:', isOnBaseNetwork);
+      console.log('   Raw Balance:', walletBalanceRaw?.toString());
+      console.log('   Is Loading:', isBalanceLoading);
+      console.log('   Has Error:', !!balanceError);
+      console.log('   Query Enabled:', !!address && !!qtTokenAddress && isConnected && typeof address === 'string' && isOnBaseNetwork);
+    }
+  }, [address, isConnected, walletBalanceRaw, isBalanceLoading, balanceError, qtTokenAddress, chainId, isOnBaseNetwork]);
 
   // Convert balance from wei to QT (18 decimals)
   const walletBalance = walletBalanceRaw ? parseFloat(formatUnits(walletBalanceRaw, 18)) : 0;
