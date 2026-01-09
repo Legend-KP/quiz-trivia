@@ -208,6 +208,18 @@ const TIME_MODE_FALLBACK_QUESTIONS: QuizQuestion[] = [
   { id: 2018, question: 'What problem do shared sequencers aim to solve?', options: ['High gas fees on Ethereum', 'Fragmented liquidity across rollups', 'Lack of decentralization in DA layers', 'Limited smart contract support'], correct: 1, timeLimit: 45, explanation: 'Fragmented liquidity across rollups' },
   { id: 2019, question: 'In a modular design, what does the execution layer primarily handle?', options: ['Consensus and validator incentives', 'Storing transaction data permanently', 'Running transaction logic and state changes', 'Providing cryptographic finality'], correct: 2, timeLimit: 45, explanation: 'Running transaction logic and state changes' },
   { id: 2020, question: 'What is a key trade-off when moving execution off L1 to rollups?', options: ['Reduced security guarantees', 'Increased reliance on smart contracts and proofs', 'Loss of composability entirely', 'Elimination of decentralization'], correct: 1, timeLimit: 45, explanation: 'Increased reliance on smart contracts and proofs' },
+  
+  // Celo Questions
+  { id: 3001, question: 'What is Celo primarily designed for?', options: ['High-frequency trading', 'NFT gaming ecosystems', 'Mobile-first blockchain payments', 'Private enterprise blockchains'], correct: 2, timeLimit: 45, explanation: 'Celo focuses on mobile accessibility and real-world payments.' },
+  { id: 3002, question: 'Which consensus mechanism does Celo use?', options: ['Proof of Work', 'Delegated Proof of Stake', 'Proof of Stake with validators', 'Proof of Authority'], correct: 2, timeLimit: 45, explanation: 'Celo runs on a Proof of Stake validator-based system.' },
+  { id: 3003, question: 'Which token is used for governance on Celo?', options: ['cUSD', 'CELO', 'cEUR', 'Locked Gold'], correct: 1, timeLimit: 45, explanation: 'CELO holders participate in governance decisions.' },
+  { id: 3004, question: 'What does Celo\'s Ultralight Client aim to improve?', options: ['Validator performance', 'Smart contract execution', 'Mobile wallet efficiency', 'Governance voting speed'], correct: 2, timeLimit: 45, explanation: 'Ultralight clients enable low-resource mobile participation.' },
+  { id: 3005, question: 'Which component helps stabilize Celo\'s native stablecoins?', options: ['Algorithmic rebasing', 'Fiat custody banks', 'Overcollateralized crypto reserves', 'Centralized market makers'], correct: 2, timeLimit: 45, explanation: 'Crypto-backed reserves help stabilize value.' },
+  { id: 3006, question: 'What differentiates Celo from Ethereum L2s like Optimism or Base?', options: ['Celo operates as a standalone Layer 1', 'Celo uses rollup-based execution', 'Celo relies on Ethereum for settlement', 'Celo lacks smart contract support'], correct: 0, timeLimit: 45, explanation: 'Celo is a Layer 1, not an Ethereum rollup.' },
+  { id: 3007, question: 'Which feature allows Celo users to pay gas fees using stablecoins?', options: ['Fee delegation', 'Meta-transactions', 'Multi-currency gas payments', 'Gas abstraction via rollups'], correct: 2, timeLimit: 45, explanation: 'Celo supports multiple tokens (like cUSD) as gas.' },
+  { id: 3008, question: 'When did the Celo mainnet officially go live?', options: ['January 1, 2019', 'April 22, 2020', 'September 15, 2021', 'March 13, 2022'], correct: 1, timeLimit: 45, explanation: 'Celo launched its mainnet on Earth Day, April 22, 2020.' },
+  { id: 3009, question: 'Who is one of the co-founders of Celo?', options: ['Vitalik Buterin', 'Rene Reinsberg', 'Jesse Pollak', 'Anatoly Yakovenko'], correct: 1, timeLimit: 45, explanation: 'Rene Reinsberg is a co-founder of Celo, along with Marek Olszewski and Sep Kamvar.' },
+  { id: 3010, question: 'When did Celo integrate into the Farcaster ecosystem?', options: ['May 2024', 'December 2024', 'January 2025', 'May 2025'], correct: 3, timeLimit: 45, explanation: 'Celo support was added to Farcaster wallets and mini-apps around May 2025.' },
     
 ];
 
@@ -818,7 +830,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
                 const shareText =
                   mode === QuizMode.TIME_MODE
                     ? `⚡️ I just smashed Time Mode on ${APP_NAME} by @kushal-paliwal!\n${score} correct answers with ${accuracyPercent || 0}% accuracy — think you can beat it? 👀\nCome try it 👇`
-                    : `🧠 Weekly Challenge complete on ${APP_NAME} by @kushal-paliwal!\nScored ${formatScoreValue(
+                    : `🧠 Weekly Quiz Challenge on @celo on ${APP_NAME} by @kushal-paliwal!\nScored ${formatScoreValue(
                         score,
                       )}/${totalQuestions} — this one really tests your brain 🔥\nJump in and give it a go 👇`;
 

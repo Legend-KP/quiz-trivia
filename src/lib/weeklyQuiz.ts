@@ -106,89 +106,89 @@ function getCurrentWeeklyQuiz(): WeeklyQuizConfig {
   
   return {
     id: getQuizIdFromDate(startDate),
-    topic: "DeFAI", // Update this topic for each quiz
+    topic: "Celo", // Update this topic for each quiz
     startTime: startDate.toISOString(), // Tuesday or Friday 6 PM UTC
     endTime: endDate.toISOString(), // Next day 6 AM UTC (12-hour window)
     questions: [
     {
       id: 1,
-      question: "What enables AI agents to execute actions autonomously in DeFAI?",
-      options: ["De-centralized APIs", "Smart contracts", "Custodial wallets", "Oracles"],
-      correct: 1,
+      question: "What is Celo primarily designed for?",
+      options: ["High-frequency trading", "NFT gaming ecosystems", "Mobile-first blockchain payments", "Private enterprise blockchains"],
+      correct: 2,
       timeLimit: 45,
-      explanation: "Smart contracts allow AI agents to act without human intervention."
+      explanation: "Celo focuses on mobile accessibility and real-world payments."
     },
     {
       id: 2,
-      question: "What is the primary trust assumption when using DeFAI agents?",
-      options: ["AI model accuracy", "Validator honesty", "Oracle reliability", "User governance votes"],
-      correct: 0,
+      question: "Which consensus mechanism does Celo use?",
+      options: ["Proof of Work", "Delegated Proof of Stake", "Proof of Stake with validators", "Proof of Authority"],
+      correct: 2,
       timeLimit: 45,
-      explanation: "Incorrect models can cause losses even if the protocol is secure."
+      explanation: "Celo runs on a Proof of Stake validator-based system."
     },
     {
       id: 3,
-      question: "What is a major challenge in deploying AI agents fully on-chain?",
-      options: ["Limited block size", "Validator coordination", "Lack of consensus", "High computational costs"],
-      correct: 3,
+      question: "Which token is used for governance on Celo?",
+      options: ["cUSD", "CELO", "cEUR", "Locked Gold"],
+      correct: 1,
       timeLimit: 45,
-      explanation: "AI computation is expensive on-chain, so most inference is off-chain."
+      explanation: "CELO holders participate in governance decisions."
     },
     {
       id: 4,
-      question: "Which component connects AI agents to blockchain state?",
-      options: ["Wallet signatures", "Validators", "Oracles and indexers", "Sequencers"],
+      question: "What does Celo's Ultralight Client aim to improve?",
+      options: ["Validator performance", "Smart contract execution", "Mobile wallet efficiency", "Governance voting speed"],
       correct: 2,
       timeLimit: 45,
-      explanation: "Oracles/indexers feed blockchain data to AI models."
+      explanation: "Ultralight clients enable low-resource mobile participation."
     },
     {
       id: 5,
-      question: "What systemic risk does DeFAI introduce to DeFi markets?",
-      options: ["Model-driven herd behavior", "Reduced decentralization", "Lower transaction throughput", "Higher validator costs"],
-      correct: 0,
+      question: "Which component helps stabilize Celo's native stablecoins?",
+      options: ["Algorithmic rebasing", "Fiat custody banks", "Overcollateralized crypto reserves", "Centralized market makers"],
+      correct: 2,
       timeLimit: 45,
-      explanation: "Similar AI strategies can create correlated market moves."
+      explanation: "Crypto-backed reserves help stabilize value."
     },
     {
       id: 6,
-      question: "What is a key security concern with autonomous DeFAI agents?",
-      options: ["Gas price manipulation", "Validator collusion", "Private key custody", "Network latency"],
-      correct: 2,
+      question: "What differentiates Celo from Ethereum L2s like Optimism or Base?",
+      options: ["Celo operates as a standalone Layer 1", "Celo uses rollup-based execution", "Celo relies on Ethereum for settlement", "Celo lacks smart contract support"],
+      correct: 0,
       timeLimit: 45,
-      explanation: "Compromised keys can allow unrestricted on-chain actions."
+      explanation: "Celo is a Layer 1, not an Ethereum rollup."
     },
     {
       id: 7,
-      question: "Which design choice improves DeFAI safety?",
-      options: ["Unlimited execution permissions", "Time-locked execution", "Fully centralized control", "Removing automation"],
-      correct: 1,
+      question: "Which feature allows Celo users to pay gas fees using stablecoins?",
+      options: ["Fee delegation", "Meta-transactions", "Multi-currency gas payments", "Gas abstraction via rollups"],
+      correct: 2,
       timeLimit: 45,
-      explanation: "Time locks allow humans to intervene before execution."
+      explanation: "Celo supports multiple tokens (like cUSD) as gas."
     },
     {
       id: 8,
-      question: "What differentiates DeFAI agents from traditional trading bots?",
-      options: ["Use of smart contracts and composability", "Faster execution speeds", "Access to private order books", "Guaranteed profitability"],
-      correct: 0,
+      question: "When did the Celo mainnet officially go live?",
+      options: ["January 1, 2019", "April 22, 2020", "September 15, 2021", "March 13, 2022"],
+      correct: 1,
       timeLimit: 45,
-      explanation: "DeFAI agents operate permissionlessly and on-chain."
+      explanation: "Celo launched its mainnet on Earth Day, April 22, 2020."
     },
     {
       id: 9,
-      question: "Which DeFAI risk arises from AI agents acting faster than humans?",
-      options: ["Validator censorship", "Market manipulation amplification", "Lower gas efficiency", "Reduced protocol composability"],
+      question: "Who is one of the co-founders of Celo?",
+      options: ["Vitalik Buterin", "Rene Reinsberg", "Jesse Pollak", "Anatoly Yakovenko"],
       correct: 1,
       timeLimit: 45,
-      explanation: "Fast AI agents can amplify volatility or exploit inefficiencies."
+      explanation: "Rene Reinsberg is a co-founder of Celo, along with Marek Olszewski and Sep Kamvar."
     },
     {
       id: 10,
-      question: "Which of the following is one of the most popular DeFAI protocols focused on AI-driven DeFi agents?",
-      options: ["Aave", "Uniswap", "Virtuals Protocol", "Compound"],
-      correct: 2,
+      question: "When did Celo integrate into the Farcaster ecosystem?",
+      options: ["May 2024", "December 2024", "January 2025", "May 2025"],
+      correct: 3,
       timeLimit: 45,
-      explanation: "Virtuals Protocol is well-known for enabling tokenized AI agents that operate within DeFi and Web3 ecosystems."
+      explanation: "Celo support was added to Farcaster wallets and mini-apps around May 2025."
     }
   ]
   };
