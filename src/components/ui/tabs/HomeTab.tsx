@@ -220,6 +220,18 @@ const TIME_MODE_FALLBACK_QUESTIONS: QuizQuestion[] = [
   { id: 3008, question: 'When did the Celo mainnet officially go live?', options: ['January 1, 2019', 'April 22, 2020', 'September 15, 2021', 'March 13, 2022'], correct: 1, timeLimit: 45, explanation: 'Celo launched its mainnet on Earth Day, April 22, 2020.' },
   { id: 3009, question: 'Who is one of the co-founders of Celo?', options: ['Vitalik Buterin', 'Rene Reinsberg', 'Jesse Pollak', 'Anatoly Yakovenko'], correct: 1, timeLimit: 45, explanation: 'Rene Reinsberg is a co-founder of Celo, along with Marek Olszewski and Sep Kamvar.' },
   { id: 3010, question: 'When did Celo integrate into the Farcaster ecosystem?', options: ['May 2024', 'December 2024', 'January 2025', 'May 2025'], correct: 3, timeLimit: 45, explanation: 'Celo support was added to Farcaster wallets and mini-apps around May 2025.' },
+  
+  // zkEVM Questions
+  { id: 4001, question: 'What makes zkEVMs different from generic zk-rollups?', options: ['They use fraud proofs', 'They are fully private by default', 'They support EVM bytecode execution', 'They require trusted execution environments'], correct: 2, timeLimit: 45, explanation: 'zkEVMs can run existing Ethereum smart contracts directly.' },
+  { id: 4002, question: 'Which proof type is most commonly used in zkEVMs?', options: ['Fraud proofs', 'Validity proofs', 'State proofs', 'Optimistic proofs'], correct: 1, timeLimit: 45, explanation: 'zkEVMs rely on validity proofs to prove correct execution.' },
+  { id: 4003, question: 'Which recent improvement most directly enables faster zkEVM proof aggregation?', options: ['Parallelized prover architectures', 'Larger Ethereum block sizes', 'Reduced opcode count in the EVM', 'Increased validator set size'], correct: 0, timeLimit: 45, explanation: 'Parallelized provers allow multiple proofs to be generated and aggregated simultaneously, significantly speeding up zkEVM performance.' },
+  { id: 4004, question: 'In modern zkEVM designs, what is the main reason for separating execution traces from state transition proofs?', options: ['To reduce calldata size on Layer 1', 'To allow modular verification and optimization', 'To improve validator decentralization', 'To enable private transactions by default'], correct: 1, timeLimit: 45, explanation: 'Separating execution and state proofs allows modular design and more efficient proving systems.' },
+  { id: 4005, question: 'Which trade-off is most commonly accepted in current production zkEVMs?', options: ['Reduced decentralization for faster finality', 'Larger proof sizes for full EVM compatibility', 'Higher gas fees for better privacy', 'Lower security assumptions for scalability'], correct: 1, timeLimit: 45, explanation: 'Full EVM compatibility often results in larger proofs and higher proving costs.' },
+  { id: 4006, question: 'Recent zkEVM performance gains are MOST enabled by which compiler-level improvement?', options: ['Solidity bytecode minimization', 'High-level language transpilation', 'Circuit specialization and opcode optimization', 'Increased block gas limits'], correct: 2, timeLimit: 45, explanation: 'Optimized circuits and opcode-specific compilation reduce proof generation complexity.' },
+  { id: 4007, question: 'Which Ethereum upgrade significantly improved zkEVM data availability costs?', options: ['Byzantium', 'The Merge', 'EIP-4844 (Proto-Danksharding)', 'Shanghai'], correct: 2, timeLimit: 45, explanation: 'EIP-4844 introduced blobs, lowering DA costs for zk-rollups.' },
+  { id: 4008, question: 'What role does a sequencer typically play in a zkEVM system?', options: ['Generating validity proofs', 'Ordering and batching transactions', 'Verifying ZK proofs on-chain', 'Managing validator incentives'], correct: 1, timeLimit: 45, explanation: 'The sequencer orders transactions before they are proven and submitted to L1.' },
+  { id: 4009, question: 'Which component verifies zkEVM proofs on Ethereum Layer 1?', options: ['The consensus client', 'The zk prover', 'A verifier smart contract', 'The sequencer'], correct: 2, timeLimit: 45, explanation: 'Ethereum smart contracts verify zkEVM validity proofs on-chain.' },
+  { id: 4010, question: 'What is one benefit of recursive proofs in zkEVMs?', options: ['Reduced block confirmation time', 'Lower smart contract complexity', 'Aggregation of multiple proofs into one', 'Elimination of calldata entirely'], correct: 2, timeLimit: 45, explanation: 'Recursive proofs allow many proofs to be compressed into a single proof.' },
     
 ];
 
@@ -830,7 +842,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
                 const shareText =
                   mode === QuizMode.TIME_MODE
                     ? `⚡️ I just smashed Time Mode on ${APP_NAME} by @kushal-paliwal!\n${score} correct answers with ${accuracyPercent || 0}% accuracy — think you can beat it? 👀\nCome try it 👇`
-                    : `🧠 Weekly Quiz Challenge on @celo on ${APP_NAME} by @kushal-paliwal!\nScored ${formatScoreValue(
+                    : `🧠 Weekly Quiz Challenge on ZkEVMs on ${APP_NAME} by @kushal-paliwal!\nScored ${formatScoreValue(
                         score,
                       )}/${totalQuestions} — this one really tests your brain 🔥\nJump in and give it a go 👇`;
 

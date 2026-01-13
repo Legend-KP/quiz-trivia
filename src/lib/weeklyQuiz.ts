@@ -106,89 +106,89 @@ function getCurrentWeeklyQuiz(): WeeklyQuizConfig {
   
   return {
     id: getQuizIdFromDate(startDate),
-    topic: "Celo", // Update this topic for each quiz
+    topic: "ZkEVMs", // Update this topic for each quiz
     startTime: startDate.toISOString(), // Tuesday or Friday 6 PM UTC
     endTime: endDate.toISOString(), // Next day 6 AM UTC (12-hour window)
     questions: [
     {
       id: 1,
-      question: "What is Celo primarily designed for?",
-      options: ["High-frequency trading", "NFT gaming ecosystems", "Mobile-first blockchain payments", "Private enterprise blockchains"],
+      question: "What makes zkEVMs different from generic zk-rollups?",
+      options: ["They use fraud proofs", "They are fully private by default", "They support EVM bytecode execution", "They require trusted execution environments"],
       correct: 2,
       timeLimit: 45,
-      explanation: "Celo focuses on mobile accessibility and real-world payments."
+      explanation: "zkEVMs can run existing Ethereum smart contracts directly."
     },
     {
       id: 2,
-      question: "Which consensus mechanism does Celo use?",
-      options: ["Proof of Work", "Delegated Proof of Stake", "Proof of Stake with validators", "Proof of Authority"],
-      correct: 2,
+      question: "Which proof type is most commonly used in zkEVMs?",
+      options: ["Fraud proofs", "Validity proofs", "State proofs", "Optimistic proofs"],
+      correct: 1,
       timeLimit: 45,
-      explanation: "Celo runs on a Proof of Stake validator-based system."
+      explanation: "zkEVMs rely on validity proofs to prove correct execution."
     },
     {
       id: 3,
-      question: "Which token is used for governance on Celo?",
-      options: ["cUSD", "CELO", "cEUR", "Locked Gold"],
-      correct: 1,
+      question: "Which recent improvement most directly enables faster zkEVM proof aggregation?",
+      options: ["Parallelized prover architectures", "Larger Ethereum block sizes", "Reduced opcode count in the EVM", "Increased validator set size"],
+      correct: 0,
       timeLimit: 45,
-      explanation: "CELO holders participate in governance decisions."
+      explanation: "Parallelized provers allow multiple proofs to be generated and aggregated simultaneously, significantly speeding up zkEVM performance."
     },
     {
       id: 4,
-      question: "What does Celo's Ultralight Client aim to improve?",
-      options: ["Validator performance", "Smart contract execution", "Mobile wallet efficiency", "Governance voting speed"],
-      correct: 2,
+      question: "In modern zkEVM designs, what is the main reason for separating execution traces from state transition proofs?",
+      options: ["To reduce calldata size on Layer 1", "To allow modular verification and optimization", "To improve validator decentralization", "To enable private transactions by default"],
+      correct: 1,
       timeLimit: 45,
-      explanation: "Ultralight clients enable low-resource mobile participation."
+      explanation: "Separating execution and state proofs allows modular design and more efficient proving systems."
     },
     {
       id: 5,
-      question: "Which component helps stabilize Celo's native stablecoins?",
-      options: ["Algorithmic rebasing", "Fiat custody banks", "Overcollateralized crypto reserves", "Centralized market makers"],
-      correct: 2,
+      question: "Which trade-off is most commonly accepted in current production zkEVMs?",
+      options: ["Reduced decentralization for faster finality", "Larger proof sizes for full EVM compatibility", "Higher gas fees for better privacy", "Lower security assumptions for scalability"],
+      correct: 1,
       timeLimit: 45,
-      explanation: "Crypto-backed reserves help stabilize value."
+      explanation: "Full EVM compatibility often results in larger proofs and higher proving costs."
     },
     {
       id: 6,
-      question: "What differentiates Celo from Ethereum L2s like Optimism or Base?",
-      options: ["Celo operates as a standalone Layer 1", "Celo uses rollup-based execution", "Celo relies on Ethereum for settlement", "Celo lacks smart contract support"],
-      correct: 0,
+      question: "Recent zkEVM performance gains are MOST enabled by which compiler-level improvement?",
+      options: ["Solidity bytecode minimization", "High-level language transpilation", "Circuit specialization and opcode optimization", "Increased block gas limits"],
+      correct: 2,
       timeLimit: 45,
-      explanation: "Celo is a Layer 1, not an Ethereum rollup."
+      explanation: "Optimized circuits and opcode-specific compilation reduce proof generation complexity."
     },
     {
       id: 7,
-      question: "Which feature allows Celo users to pay gas fees using stablecoins?",
-      options: ["Fee delegation", "Meta-transactions", "Multi-currency gas payments", "Gas abstraction via rollups"],
+      question: "Which Ethereum upgrade significantly improved zkEVM data availability costs?",
+      options: ["Byzantium", "The Merge", "EIP-4844 (Proto-Danksharding)", "Shanghai"],
       correct: 2,
       timeLimit: 45,
-      explanation: "Celo supports multiple tokens (like cUSD) as gas."
+      explanation: "EIP-4844 introduced blobs, lowering DA costs for zk-rollups."
     },
     {
       id: 8,
-      question: "When did the Celo mainnet officially go live?",
-      options: ["January 1, 2019", "April 22, 2020", "September 15, 2021", "March 13, 2022"],
+      question: "What role does a sequencer typically play in a zkEVM system?",
+      options: ["Generating validity proofs", "Ordering and batching transactions", "Verifying ZK proofs on-chain", "Managing validator incentives"],
       correct: 1,
       timeLimit: 45,
-      explanation: "Celo launched its mainnet on Earth Day, April 22, 2020."
+      explanation: "The sequencer orders transactions before they are proven and submitted to L1."
     },
     {
       id: 9,
-      question: "Who is one of the co-founders of Celo?",
-      options: ["Vitalik Buterin", "Rene Reinsberg", "Jesse Pollak", "Anatoly Yakovenko"],
-      correct: 1,
+      question: "Which component verifies zkEVM proofs on Ethereum Layer 1?",
+      options: ["The consensus client", "The zk prover", "A verifier smart contract", "The sequencer"],
+      correct: 2,
       timeLimit: 45,
-      explanation: "Rene Reinsberg is a co-founder of Celo, along with Marek Olszewski and Sep Kamvar."
+      explanation: "Ethereum smart contracts verify zkEVM validity proofs on-chain."
     },
     {
       id: 10,
-      question: "When did Celo integrate into the Farcaster ecosystem?",
-      options: ["May 2024", "December 2024", "January 2025", "May 2025"],
-      correct: 3,
+      question: "What is one benefit of recursive proofs in zkEVMs?",
+      options: ["Reduced block confirmation time", "Lower smart contract complexity", "Aggregation of multiple proofs into one", "Elimination of calldata entirely"],
+      correct: 2,
       timeLimit: 45,
-      explanation: "Celo support was added to Farcaster wallets and mini-apps around May 2025."
+      explanation: "Recursive proofs allow many proofs to be compressed into a single proof."
     }
   ]
   };
