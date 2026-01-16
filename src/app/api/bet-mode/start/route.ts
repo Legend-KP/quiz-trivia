@@ -154,7 +154,6 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error('Bet Mode start error:', error);
     return NextResponse.json({ error: error.message || 'Failed to start game' }, { status: 500 });
   }
 }

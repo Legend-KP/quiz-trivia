@@ -62,9 +62,7 @@ const QTTokenomicsPanel = ({ isOpen, onClose }: TokenomicsPanelProps) => {
         sellToken: `eip155:${CHAIN_ID}/native`, // Base ETH
         buyToken: TOKEN_ASSET_ID, // QT Token
       });
-      console.log("Opening swap interface to buy QT token");
     } catch (err) {
-      console.error("Failed to open swap interface:", err);
     } finally {
       setIsLoadingBuy(false);
     }
@@ -76,7 +74,6 @@ const QTTokenomicsPanel = ({ isOpen, onClose }: TokenomicsPanelProps) => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Failed to copy address:", err);
     }
   };
 

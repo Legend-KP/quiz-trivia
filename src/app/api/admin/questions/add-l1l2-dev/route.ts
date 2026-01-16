@@ -202,7 +202,6 @@ export async function POST(_req: NextRequest) {
       warning: isDevelopment ? undefined : '⚠️ This endpoint should be disabled in production!',
     });
   } catch (error: any) {
-    console.error('Error adding L1/L2 questions:', error);
     return NextResponse.json({ error: error.message || 'Failed to add questions' }, { status: 500 });
   }
 }

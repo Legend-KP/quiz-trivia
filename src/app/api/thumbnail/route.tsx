@@ -152,7 +152,6 @@ export async function GET(request: NextRequest) {
   }
 
   const user = await getNeynarUser(fid).catch((error) => {
-    console.error("thumbnail:getNeynarUser", error);
     return null;
   });
 
@@ -173,7 +172,6 @@ export async function GET(request: NextRequest) {
       
       recentPlayers = timeModeEntries as LeaderboardEntry[];
     } catch (error) {
-      console.error("thumbnail:fetchRecentPlayers", error);
       // Continue without recent players if fetch fails
     }
   }

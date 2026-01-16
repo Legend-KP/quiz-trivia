@@ -101,7 +101,6 @@ export async function POST(req: NextRequest) {
         );
       }
     } catch (error) {
-      console.error('Error fetching contract balance:', error);
       return NextResponse.json(
         { error: 'Failed to fetch balance from contract' },
         { status: 500 }
@@ -112,7 +111,6 @@ export async function POST(req: NextRequest) {
     try {
       nonce = await contract.withdrawalNonces(walletAddress);
     } catch (error) {
-      console.error('Error fetching nonce:', error);
       return NextResponse.json(
         { error: 'Failed to fetch withdrawal nonce from contract' },
         { status: 500 }
@@ -169,7 +167,6 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error('❌ Error preparing withdrawal:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to prepare withdrawal' },
       { status: 500 }

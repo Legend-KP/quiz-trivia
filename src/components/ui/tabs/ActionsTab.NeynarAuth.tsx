@@ -118,7 +118,6 @@ export function ActionsTab() {
     try {
       await haptics.impactOccurred(selectedHapticIntensity);
     } catch (error) {
-      console.error('Haptic feedback failed:', error);
     }
   }, [haptics, selectedHapticIntensity]);
 

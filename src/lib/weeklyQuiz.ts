@@ -106,89 +106,89 @@ function getCurrentWeeklyQuiz(): WeeklyQuizConfig {
   
   return {
     id: getQuizIdFromDate(startDate),
-    topic: "ZkEVMs", // Update this topic for each quiz
+    topic: "RWAs, and It's Recent Developments", // Update this topic for each quiz
     startTime: startDate.toISOString(), // Tuesday or Friday 6 PM UTC
     endTime: endDate.toISOString(), // Next day 6 AM UTC (12-hour window)
     questions: [
     {
       id: 1,
-      question: "What makes zkEVMs different from generic zk-rollups?",
-      options: ["They use fraud proofs", "They are fully private by default", "They support EVM bytecode execution", "They require trusted execution environments"],
+      question: "Why do many RWA protocols operate segmented or gated liquidity pools today?",
+      options: ["Pricing determinism", "Settlement finality", "Regulatory exposure", "Oracle update latency"],
       correct: 2,
       timeLimit: 45,
-      explanation: "zkEVMs can run existing Ethereum smart contracts directly."
+      explanation: "Gated pools help protocols comply with regulations like KYC/AML by restricting access."
     },
     {
       id: 2,
-      question: "Which proof type is most commonly used in zkEVMs?",
-      options: ["Fraud proofs", "Validity proofs", "State proofs", "Optimistic proofs"],
+      question: "What change most improved yield continuity in tokenized treasury products?",
+      options: ["Redemption batching", "NAV refresh cadence", "Stablecoin pairing", "Shorter asset duration"],
       correct: 1,
       timeLimit: 45,
-      explanation: "zkEVMs rely on validity proofs to prove correct execution."
+      explanation: "More frequent NAV updates ensure yield accrual is reflected smoothly on-chain."
     },
     {
       id: 3,
-      question: "Which recent improvement most directly enables faster zkEVM proof aggregation?",
-      options: ["Parallelized prover architectures", "Larger Ethereum block sizes", "Reduced opcode count in the EVM", "Increased validator set size"],
-      correct: 0,
+      question: "Which asset class currently dominates on-chain RWA TVL?",
+      options: ["Commodities", "Trade receivables", "Real estate", "Government debt"],
+      correct: 3,
       timeLimit: 45,
-      explanation: "Parallelized provers allow multiple proofs to be generated and aggregated simultaneously, significantly speeding up zkEVM performance."
+      explanation: "Tokenized government debt (like U.S. Treasuries) makes up the majority of on-chain RWA value."
     },
     {
       id: 4,
-      question: "In modern zkEVM designs, what is the main reason for separating execution traces from state transition proofs?",
-      options: ["To reduce calldata size on Layer 1", "To allow modular verification and optimization", "To improve validator decentralization", "To enable private transactions by default"],
-      correct: 1,
+      question: "Why are SPVs still widely used in RWA tokenization structures?",
+      options: ["Cost reduction", "Operational scale", "Tax efficiency", "Legal insulation"],
+      correct: 3,
       timeLimit: 45,
-      explanation: "Separating execution and state proofs allows modular design and more efficient proving systems."
+      explanation: "SPVs isolate legal risk and protect token holders from direct liability."
     },
     {
       id: 5,
-      question: "Which trade-off is most commonly accepted in current production zkEVMs?",
-      options: ["Reduced decentralization for faster finality", "Larger proof sizes for full EVM compatibility", "Higher gas fees for better privacy", "Lower security assumptions for scalability"],
-      correct: 1,
+      question: "What factor most enabled institutional RWA deployment on public chains?",
+      options: ["Custody standards", "Rollup maturity", "Gas predictability", "Product regulation"],
+      correct: 3,
       timeLimit: 45,
-      explanation: "Full EVM compatibility often results in larger proofs and higher proving costs."
+      explanation: "Clear regulatory frameworks allow institutions to legally issue and manage RWAs on-chain."
     },
     {
       id: 6,
-      question: "Recent zkEVM performance gains are MOST enabled by which compiler-level improvement?",
-      options: ["Solidity bytecode minimization", "High-level language transpilation", "Circuit specialization and opcode optimization", "Increased block gas limits"],
+      question: "What most limits RWA composability across DeFi protocols?",
+      options: ["Liquidity depth", "Execution speed", "Transfer controls", "Oracle accuracy"],
       correct: 2,
       timeLimit: 45,
-      explanation: "Optimized circuits and opcode-specific compilation reduce proof generation complexity."
+      explanation: "Compliance-based transfer restrictions limit permissionless composability in DeFi."
     },
     {
       id: 7,
-      question: "Which Ethereum upgrade significantly improved zkEVM data availability costs?",
-      options: ["Byzantium", "The Merge", "EIP-4844 (Proto-Danksharding)", "Shanghai"],
-      correct: 2,
+      question: "Why do many tokenized fund RWAs restrict secondary market transfers?",
+      options: ["Compliance enforcement", "Price stability", "Liquidity protection", "Gas optimization"],
+      correct: 0,
       timeLimit: 45,
-      explanation: "EIP-4844 introduced blobs, lowering DA costs for zk-rollups."
+      explanation: "Transfer limits help ensure only compliant participants can hold the asset."
     },
     {
       id: 8,
-      question: "What role does a sequencer typically play in a zkEVM system?",
-      options: ["Generating validity proofs", "Ordering and batching transactions", "Verifying ZK proofs on-chain", "Managing validator incentives"],
-      correct: 1,
+      question: "What risk is MOST difficult to eliminate in on-chain RWA lending markets?",
+      options: ["Oracle manipulation", "Liquidation latency", "Smart contract risk", "Legal enforceability"],
+      correct: 3,
       timeLimit: 45,
-      explanation: "The sequencer orders transactions before they are proven and submitted to L1."
+      explanation: "Enforcing legal claims on real-world assets remains complex and jurisdiction-dependent."
     },
     {
       id: 9,
-      question: "Which component verifies zkEVM proofs on Ethereum Layer 1?",
-      options: ["The consensus client", "The zk prover", "A verifier smart contract", "The sequencer"],
+      question: "Why are RWAs typically integrated into DeFi as yield-bearing primitives rather than volatile collateral?",
+      options: ["Faster settlement", "Higher TVL caps", "Predictable cashflows", "Lower volatility"],
       correct: 2,
       timeLimit: 45,
-      explanation: "Ethereum smart contracts verify zkEVM validity proofs on-chain."
+      explanation: "RWAs generate stable, predictable yields, making them ideal yield instruments."
     },
     {
       id: 10,
-      question: "What is one benefit of recursive proofs in zkEVMs?",
-      options: ["Reduced block confirmation time", "Lower smart contract complexity", "Aggregation of multiple proofs into one", "Elimination of calldata entirely"],
-      correct: 2,
+      question: "Which factor most constrains global scalability of RWAs across jurisdictions?",
+      options: ["Capital efficiency", "Chain interoperability", "Custodial infrastructure", "Regulatory fragmentation"],
+      correct: 3,
       timeLimit: 45,
-      explanation: "Recursive proofs allow many proofs to be compressed into a single proof."
+      explanation: "Different legal and regulatory rules across countries limit global RWA expansion."
     }
   ]
   };
@@ -377,7 +377,7 @@ export async function fetchContractQTBalances(): Promise<ContractBalancesRespons
     const data = await response.json();
     return data;
   } catch (error: any) {
-    console.error('Error fetching contract balances:', error);
+    // console.error('Error fetching contract balances:', error);
     return {
       success: false,
       contracts: [],

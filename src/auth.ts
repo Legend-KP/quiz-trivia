@@ -201,15 +201,12 @@ declare module 'next-auth' {
 
 function getDomainFromUrl(urlString: string | undefined): string {
   if (!urlString) {
-    console.warn('NEXTAUTH_URL is not set, using localhost:3000 as fallback');
     return 'localhost:3000';
   }
   try {
     const url = new URL(urlString);
     return url.hostname;
   } catch (error) {
-    console.error('Invalid NEXTAUTH_URL:', urlString, error);
-    console.warn('Using localhost:3000 as fallback');
     return 'localhost:3000';
   }
 }
@@ -256,7 +253,6 @@ export const authOptions: AuthOptions = {
         const nonce = credentials?.nonce;
 
         if (!nonce) {
-          console.error('No nonce or CSRF token provided for Neynar auth');
           return null;
         }
 
@@ -293,7 +289,6 @@ export const authOptions: AuthOptions = {
 
           // Validate that the provided FID matches the verified FID
           if (credentials?.fid && parseInt(credentials.fid) !== fid) {
-            console.error('FID mismatch in Neynar auth');
             return null;
           }
 
@@ -306,7 +301,6 @@ export const authOptions: AuthOptions = {
             user: credentials?.user ? JSON.parse(credentials.user) : undefined,
           };
         } catch (error) {
-          console.error('Error in Neynar auth:', error);
           return null;
         }
       },
@@ -368,7 +362,6 @@ export const getSession = async () => {
   try {
     return await getServerSession(authOptions);
   } catch (error) {
-    console.error('Error getting server session:', error);
     return null;
   }
 };

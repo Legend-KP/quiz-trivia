@@ -232,6 +232,18 @@ const TIME_MODE_FALLBACK_QUESTIONS: QuizQuestion[] = [
   { id: 4008, question: 'What role does a sequencer typically play in a zkEVM system?', options: ['Generating validity proofs', 'Ordering and batching transactions', 'Verifying ZK proofs on-chain', 'Managing validator incentives'], correct: 1, timeLimit: 45, explanation: 'The sequencer orders transactions before they are proven and submitted to L1.' },
   { id: 4009, question: 'Which component verifies zkEVM proofs on Ethereum Layer 1?', options: ['The consensus client', 'The zk prover', 'A verifier smart contract', 'The sequencer'], correct: 2, timeLimit: 45, explanation: 'Ethereum smart contracts verify zkEVM validity proofs on-chain.' },
   { id: 4010, question: 'What is one benefit of recursive proofs in zkEVMs?', options: ['Reduced block confirmation time', 'Lower smart contract complexity', 'Aggregation of multiple proofs into one', 'Elimination of calldata entirely'], correct: 2, timeLimit: 45, explanation: 'Recursive proofs allow many proofs to be compressed into a single proof.' },
+  
+  // RWA Questions
+  { id: 5001, question: 'Why do many RWA protocols operate segmented or gated liquidity pools today?', options: ['Pricing determinism', 'Settlement finality', 'Regulatory exposure', 'Oracle update latency'], correct: 2, timeLimit: 45, explanation: 'Gated pools help protocols comply with regulations like KYC/AML by restricting access.' },
+  { id: 5002, question: 'What change most improved yield continuity in tokenized treasury products?', options: ['Redemption batching', 'NAV refresh cadence', 'Stablecoin pairing', 'Shorter asset duration'], correct: 1, timeLimit: 45, explanation: 'More frequent NAV updates ensure yield accrual is reflected smoothly on-chain.' },
+  { id: 5003, question: 'Which asset class currently dominates on-chain RWA TVL?', options: ['Commodities', 'Trade receivables', 'Real estate', 'Government debt'], correct: 3, timeLimit: 45, explanation: 'Tokenized government debt (like U.S. Treasuries) makes up the majority of on-chain RWA value.' },
+  { id: 5004, question: 'Why are SPVs still widely used in RWA tokenization structures?', options: ['Cost reduction', 'Operational scale', 'Tax efficiency', 'Legal insulation'], correct: 3, timeLimit: 45, explanation: 'SPVs isolate legal risk and protect token holders from direct liability.' },
+  { id: 5005, question: 'What factor most enabled institutional RWA deployment on public chains?', options: ['Custody standards', 'Rollup maturity', 'Gas predictability', 'Product regulation'], correct: 3, timeLimit: 45, explanation: 'Clear regulatory frameworks allow institutions to legally issue and manage RWAs on-chain.' },
+  { id: 5006, question: 'What most limits RWA composability across DeFi protocols?', options: ['Liquidity depth', 'Execution speed', 'Transfer controls', 'Oracle accuracy'], correct: 2, timeLimit: 45, explanation: 'Compliance-based transfer restrictions limit permissionless composability in DeFi.' },
+  { id: 5007, question: 'Why do many tokenized fund RWAs restrict secondary market transfers?', options: ['Compliance enforcement', 'Price stability', 'Liquidity protection', 'Gas optimization'], correct: 0, timeLimit: 45, explanation: 'Transfer limits help ensure only compliant participants can hold the asset.' },
+  { id: 5008, question: 'What risk is MOST difficult to eliminate in on-chain RWA lending markets?', options: ['Oracle manipulation', 'Liquidation latency', 'Smart contract risk', 'Legal enforceability'], correct: 3, timeLimit: 45, explanation: 'Enforcing legal claims on real-world assets remains complex and jurisdiction-dependent.' },
+  { id: 5009, question: 'Why are RWAs typically integrated into DeFi as yield-bearing primitives rather than volatile collateral?', options: ['Faster settlement', 'Higher TVL caps', 'Predictable cashflows', 'Lower volatility'], correct: 2, timeLimit: 45, explanation: 'RWAs generate stable, predictable yields, making them ideal yield instruments.' },
+  { id: 5010, question: 'Which factor most constrains global scalability of RWAs across jurisdictions?', options: ['Capital efficiency', 'Chain interoperability', 'Custodial infrastructure', 'Regulatory fragmentation'], correct: 3, timeLimit: 45, explanation: 'Different legal and regulatory rules across countries limit global RWA expansion.' },
     
 ];
 
@@ -539,31 +551,31 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
       // Weekly Quiz: use quizId
       const quizIdToUse = quizId || currentQuizId || currentWeeklyQuiz.id;
       url = `/api/leaderboard?mode=CLASSIC&quizId=${quizIdToUse}`;
-      console.log('🔍 Fetching CLASSIC leaderboard for quizId:', quizIdToUse);
+      // console.log('🔍 Fetching CLASSIC leaderboard for quizId:', quizIdToUse);
     } else if (mode === QuizMode.TIME_MODE) {
       // Time Mode: no quizId
       url = `/api/leaderboard?mode=TIME_MODE`;
-      console.log('🔍 Fetching TIME_MODE leaderboard');
+      // console.log('🔍 Fetching TIME_MODE leaderboard');
     } else {
       // Challenge mode or other
       url = `/api/leaderboard?mode=${mode}`;
-      console.log('🔍 Fetching leaderboard for mode:', mode);
+      // console.log('🔍 Fetching leaderboard for mode:', mode);
     }
     
     try {
       const response = await fetch(url);
       const data = await response.json();
-      console.log('📥 Leaderboard response:', data);
+      // console.log('📥 Leaderboard response:', data);
       
       if (data.leaderboard) {
-        console.log(`📊 Setting leaderboard with ${data.leaderboard.length} entries`);
+        // console.log(`📊 Setting leaderboard with ${data.leaderboard.length} entries`);
         setLeaderboard(data.leaderboard);
       } else {
-        console.warn('⚠️ No leaderboard data in response');
+        // console.warn('⚠️ No leaderboard data in response');
         setLeaderboard([]);
       }
     } catch (error) {
-      console.error('❌ Failed to fetch leaderboard:', error);
+      // console.error('❌ Failed to fetch leaderboard:', error);
       // Set empty leaderboard on error to prevent crashes
       setLeaderboard([]);
     } finally {
@@ -574,28 +586,28 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
   const submitScore = useCallback(async () => {
     // Time Mode submits via /api/time/submit, not here
     if (mode === QuizMode.TIME_MODE) {
-      console.log('🚫 Skipping score submission for TIME_MODE (already submitted via /api/time/submit)');
+      // console.log('🚫 Skipping score submission for TIME_MODE (already submitted via /api/time/submit)');
       setSubmitted(true);
       return;
     }
     
     if (!context?.user?.fid || submitted) {
-      console.log('🚫 Skipping score submission:', { 
-        hasFid: !!context?.user?.fid, 
-        submitted, 
-        user: context?.user 
-      });
+      // console.log('🚫 Skipping score submission:', { 
+      //   hasFid: !!context?.user?.fid, 
+      //   submitted, 
+      //   user: context?.user 
+      // });
       return;
     }
 
-    console.log('📝 Starting score submission:', {
-      fid: context.user.fid,
-      username: context.user.username,
-      displayName: context.user.displayName,
-      score,
-      totalTime,
-      mode
-    });
+    // console.log('📝 Starting score submission:', {
+    //   fid: context.user.fid,
+    //   username: context.user.username,
+    //   displayName: context.user.displayName,
+    //   score,
+    //   totalTime,
+    //   mode
+    // });
 
     setSubmitting(true);
     try {
@@ -618,7 +630,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
         payload.quizId = currentQuizId;
       }
 
-      console.log('📤 Sending payload:', payload);
+      // console.log('📤 Sending payload:', payload);
 
       const response = await fetch('/api/leaderboard', {
         method: 'POST',
@@ -629,10 +641,10 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
       });
 
       const data = await response.json();
-      console.log('📥 Response received:', data);
+      // console.log('📥 Response received:', data);
       
       if (response.ok && data.success) {
-        console.log('✅ Score submitted successfully');
+        // console.log('✅ Score submitted successfully');
         setLeaderboard(data.leaderboard || []);
         setSubmitted(true);
         try {
@@ -642,12 +654,12 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
           }
         } catch (_e) {}
       } else {
-        console.warn('❌ Score submission failed:', data.error);
+        // console.warn('❌ Score submission failed:', data.error);
         // Still mark as submitted to prevent retries
         setSubmitted(true);
       }
     } catch (error) {
-      console.error('❌ Failed to submit score:', error);
+      // console.error('❌ Failed to submit score:', error);
       // Mark as submitted even on error to prevent infinite retries
       setSubmitted(true);
     } finally {
@@ -667,7 +679,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
     const checkQuizId = () => {
       const newQuizId = currentWeeklyQuiz.id;
       if (newQuizId !== currentQuizId) {
-        console.log('🔄 New weekly quiz started! Refreshing leaderboard...', newQuizId);
+        // console.log('🔄 New weekly quiz started! Refreshing leaderboard...', newQuizId);
         setCurrentQuizId(newQuizId);
         fetchLeaderboard(newQuizId);
       }
@@ -854,7 +866,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
                     ],
                   });
                 } catch (err) {
-                  console.error('Failed to open Farcaster composer:', err);
+                  // console.error('Failed to open Farcaster composer:', err);
                   const text = encodeURIComponent(shareText);
                   const url = encodeURIComponent(buildShareUrl());
                   const warpcastUrl = `https://warpcast.com/~/compose?text=${text}%20${url}`;

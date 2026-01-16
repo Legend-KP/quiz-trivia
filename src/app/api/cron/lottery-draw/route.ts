@@ -262,7 +262,6 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error('Lottery draw cron error:', error);
     return NextResponse.json({ error: error.message || 'Lottery draw failed' }, { status: 500 });
   }
 }

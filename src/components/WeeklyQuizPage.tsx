@@ -79,7 +79,6 @@
             alert('You have already started or completed this quiz. Each user can only take the quiz once.');
           }
         } catch (error) {
-          console.error('Failed to check completion status:', error);
           // Fallback to localStorage only if API fails
           const fid = context?.user?.fid;
           const quizId = config.id;
@@ -109,7 +108,6 @@
       if (questionStartTimeRef.current) {
         const questionTime = Math.floor((Date.now() - questionStartTimeRef.current) / 1000);
         questionTimesRef.current.push(Math.max(questionTime, 0)); // Store actual time spent on this question
-        console.log(`⏱️ Question ${currentQuestion + 1} time: ${questionTime}s`);
       }
       
       const isCorrect = answerIndex === question.correct;
@@ -145,7 +143,6 @@
             // Calculate total elapsed time from quiz start to completion
             const actualStartTime = startTimeRef.current;
             if (!actualStartTime) {
-              console.error('Start time not set, using fallback');
               // Fallback: use a reasonable estimate (10 questions * 30 seconds average = 5 minutes)
               const fallbackTime = 300; // 5 minutes in seconds
               const minutes = Math.floor(fallbackTime / 60);
@@ -170,12 +167,10 @@
             
             // Safety check: ensure we have times for all questions
             if (questionTimes.length !== config.questions.length) {
-              console.warn(`⚠️ Missing question times: expected ${config.questions.length}, got ${questionTimes.length}`);
               // If we're missing the last question's time, estimate it
               if (questionTimes.length === config.questions.length - 1 && questionStartTimeRef.current) {
                 const lastQuestionTime = Math.floor((Date.now() - questionStartTimeRef.current) / 1000);
                 questionTimes.push(Math.max(lastQuestionTime, 0));
-                console.log(`⏱️ Added missing last question time: ${lastQuestionTime}s`);
               }
             }
             
@@ -190,12 +185,6 @@
             const seconds = activeTime % 60;
             const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
             
-            console.log('⏱️ Time calculation:', {
-              questionTimes: questionTimes,
-              totalActiveTime,
-              timeString,
-              questionsAnswered: questionTimes.length
-            });
             
             // Get latest answers state
             setAnswers(currentAnswers => {
@@ -236,7 +225,6 @@
       if (questionStartTimeRef.current) {
         const questionTime = config.questions[currentQuestion]?.timeLimit || 45;
         questionTimesRef.current.push(questionTime); // Store full time limit as time spent
-        console.log(`⏱️ Question ${currentQuestion + 1} time: ${questionTime}s (time up)`);
       }
       handleAnswerSubmit(null);
     }, [handleAnswerSubmit, currentQuestion, config.questions]);

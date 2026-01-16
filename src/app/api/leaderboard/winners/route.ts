@@ -54,7 +54,6 @@ export async function GET(request: Request) {
     });
     
   } catch (error) {
-    console.error('Failed to fetch winners:', error);
     return NextResponse.json({ 
       error: 'Failed to fetch winners',
       quizId,
@@ -98,7 +97,6 @@ export async function POST(request: Request) {
     });
     
   } catch (error) {
-    console.error('Failed to process winners:', error);
     return NextResponse.json({ 
       error: 'Failed to process winners'
     }, { status: 500 });

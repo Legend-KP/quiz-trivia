@@ -37,8 +37,6 @@ export function ShareButton({ buttonText, cast, className = '', isLoading = fals
       fetch(`/api/best-friends?fid=${context.user.fid}`)
         .then(res => res.json())
         .then(data => setBestFriends(data.bestFriends))
-        .catch(err => console.error('Failed to fetch best friends:', err))
-        .finally(() => setIsLoadingBestFriends(false));
     }
   }, [cast.bestFriends, context?.user?.fid]);
 
@@ -100,7 +98,6 @@ export function ShareButton({ buttonText, cast, className = '', isLoading = fals
         close: cast.close,
       });
     } catch (error) {
-      console.error('Failed to share:', error);
     } finally {
       setIsProcessing(false);
     }

@@ -14,7 +14,6 @@ export async function GET(_req: NextRequest) {
     
     return NextResponse.json({ address: platformWallet });
   } catch (error: any) {
-    console.error('Platform wallet fetch error:', error);
     // Return null instead of error to prevent console errors
     return NextResponse.json({ address: null });
   }

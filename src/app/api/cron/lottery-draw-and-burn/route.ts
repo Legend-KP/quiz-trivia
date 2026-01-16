@@ -20,7 +20,6 @@ export async function GET(req: NextRequest) {
     }
 
     // Step 1: Execute lottery draw
-    console.log('🎲 Starting lottery draw...');
     const drawReq = new NextRequest(req.url, {
       method: 'GET',
       headers: {
@@ -32,21 +31,17 @@ export async function GET(req: NextRequest) {
     const drawResult = await drawResponse.json();
 
     if (!drawResponse.ok) {
-      console.error('❌ Lottery draw failed:', drawResult);
       return NextResponse.json(
         { error: 'Lottery draw failed', details: drawResult },
         { status: drawResponse.status }
       );
     }
 
-    console.log('✅ Lottery draw completed:', drawResult);
 
     // Step 2: Wait 30 seconds before burn (as per original schedule)
-    console.log('⏳ Waiting 30 seconds before burn...');
     await new Promise((resolve) => setTimeout(resolve, 30000));
 
     // Step 3: Execute burn
-    console.log('🔥 Starting burn...');
     const burnReq = new NextRequest(req.url, {
       method: 'GET',
       headers: {
@@ -58,7 +53,6 @@ export async function GET(req: NextRequest) {
     const burnResult = await burnResponse.json();
 
     if (!burnResponse.ok) {
-      console.error('❌ Burn failed:', burnResult);
       return NextResponse.json(
         {
           error: 'Burn failed',
@@ -69,7 +63,6 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    console.log('✅ Burn completed:', burnResult);
 
     return NextResponse.json({
       success: true,
@@ -78,7 +71,6 @@ export async function GET(req: NextRequest) {
       message: 'Lottery draw and burn completed successfully',
     });
   } catch (error: any) {
-    console.error('❌ Combined cron job error:', error);
     return NextResponse.json(
       { error: error.message || 'Combined cron job failed' },
       { status: 500 }

@@ -23,7 +23,6 @@ export async function POST(req: NextRequest) {
 
     return await snapshotGET(cronReq);
   } catch (error: any) {
-    console.error('Admin trigger snapshot error:', error);
     return NextResponse.json({ error: error.message || 'Failed to trigger snapshot' }, { status: 500 });
   }
 }

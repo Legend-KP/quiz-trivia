@@ -34,7 +34,6 @@ export async function GET(request: Request) {
       user,
     });
   } catch (error) {
-    console.error('Error in session-signers API:', error);
     return NextResponse.json(
       { error: 'Failed to fetch signers' },
       { status: 500 }

@@ -31,7 +31,6 @@ export function QTTokenBar() {
       // Use Farcaster SDK viewToken action to open token in wallet
       await sdk.actions.viewToken({ token: TOKEN_ASSET_ID });
     } catch (err) {
-      console.error("Failed to open token in wallet:", err);
       setError("Failed to open wallet. Please try again.");
       
       // Clear error after 3 seconds

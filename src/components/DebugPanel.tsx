@@ -17,7 +17,6 @@ export const DebugPanel: React.FC<DebugPanelProps> = ({ userAddress }) => {
       const count = await getUserQuizCount(userAddress);
       setQuizCount(count);
     } catch (error) {
-      console.error('Failed to get quiz count:', error);
     } finally {
       setIsLoading(false);
     }

@@ -23,7 +23,6 @@ export async function POST(req: NextRequest) {
 
     return await burnGET(cronReq);
   } catch (error: any) {
-    console.error('Admin trigger burn error:', error);
     return NextResponse.json({ error: error.message || 'Failed to trigger burn' }, { status: 500 });
   }
 }

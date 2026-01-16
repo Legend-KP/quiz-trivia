@@ -23,7 +23,6 @@ export async function POST(req: NextRequest) {
 
     return await lotteryDrawGET(cronReq);
   } catch (error: any) {
-    console.error('Admin trigger lottery draw error:', error);
     return NextResponse.json({ error: error.message || 'Failed to trigger lottery draw' }, { status: 500 });
   }
 }

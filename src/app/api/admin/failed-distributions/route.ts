@@ -56,7 +56,6 @@ export async function GET(_req: NextRequest) {
       })),
     });
   } catch (error: any) {
-    console.error('Failed to fetch failed distributions:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to fetch failed distributions' },
       { status: 500 }
@@ -101,7 +100,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error: any) {
-    console.error('Failed to update failed distribution:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to update failed distribution' },
       { status: 500 }

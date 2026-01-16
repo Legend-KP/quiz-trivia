@@ -31,7 +31,6 @@ const QuizResultsSubmitPage: React.FC<QuizResultsSubmitPageProps> = ({
     const handleFrameTransaction = (event: MessageEvent) => {
       const data = event.data;
       if (typeof data === "object" && data !== null && "type" in data && data.type === "farcaster:frame-transaction") {
-        console.log("✅ Frame Wallet transaction confirmed");
         setTransactionState(TransactionState.SUCCESS);
         
         // Wait a moment to show success state
@@ -77,7 +76,6 @@ const QuizResultsSubmitPage: React.FC<QuizResultsSubmitPageProps> = ({
       }, 2000);
       
     } catch (err) {
-      console.error('Score submission error:', err);
       
       // On error, directly redirect to leaderboard
       setIsModalOpen(false);

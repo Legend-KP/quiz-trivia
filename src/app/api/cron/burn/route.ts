@@ -105,7 +105,6 @@ export async function GET(req: NextRequest) {
       verifyLink: `https://basescan.org/tx/${receipt.hash}`,
     });
   } catch (error: any) {
-    console.error('Burn cron error:', error);
     return NextResponse.json({ error: error.message || 'Burn failed' }, { status: 500 });
   }
 }

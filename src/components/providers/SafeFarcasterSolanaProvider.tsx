@@ -43,26 +43,26 @@ export function SafeFarcasterSolanaProvider({ endpoint, children }: SafeFarcaste
     };
   }, [isClient]);
 
-  useEffect(() => {
-    let errorShown = false;
-    const origError = console.error;
-    console.error = (...args) => {
-      if (
-        typeof args[0] === "string" &&
-        args[0].includes("WalletConnectionError: could not get Solana provider")
-      ) {
-        if (!errorShown) {
-          origError(...args);
-          errorShown = true;
-        }
-        return;
-      }
-      origError(...args);
-    };
-    return () => {
-      console.error = origError;
-    };
-  }, []);
+  // useEffect(() => {
+  //   let errorShown = false;
+  //   const origError = console.error;
+  //   console.error = (...args) => {
+  //     if (
+  //       typeof args[0] === "string" &&
+  //       args[0].includes("WalletConnectionError: could not get Solana provider")
+  //     ) {
+  //       if (!errorShown) {
+  //         origError(...args);
+  //         errorShown = true;
+  //       }
+  //       return;
+  //     }
+  //     origError(...args);
+  //   };
+  //   return () => {
+  //     console.error = origError;
+  //   };
+  // }, []);
 
   if (!isClient || !checked) {
     return null;

@@ -25,17 +25,14 @@ let isListening = false;
  */
 function initializeContract() {
   if (!CONTRACT_ADDRESS) {
-    console.warn('⚠️ BET_MODE_VAULT_ADDRESS not configured. Event listeners disabled.');
     return false;
   }
 
   try {
     provider = new ethers.JsonRpcProvider(RPC_URL);
     contract = new ethers.Contract(CONTRACT_ADDRESS, BET_MODE_VAULT_ABI, provider);
-    console.log('✅ Contract initialized:', CONTRACT_ADDRESS);
     return true;
   } catch (error) {
-    console.error('❌ Failed to initialize contract:', error);
     return false;
   }
 }
@@ -86,17 +83,11 @@ async function handleDepositEvent(
     const amountInQT = parseFloat(ethers.formatEther(amount));
     const userAddress = ethers.getAddress(user);
 
-    console.log('💰 Deposit event detected:', {
-      user: userAddress,
-      amount: amountInQT,
-      txHash,
-    });
 
     // Find user by wallet address
     const userDoc = await findUserByWalletAddress(userAddress);
 
     if (!userDoc) {
-      console.warn('⚠️ User not found for address:', userAddress);
       // Log the transaction for manual reconciliation with pending status
       // Use fid: 0 as a placeholder for unknown users
       const transactions = await getQTTransactionsCollection();
@@ -160,9 +151,7 @@ async function handleDepositEvent(
       createdAt: Number(timestamp) * 1000, // Convert to milliseconds timestamp
     });
 
-    console.log(`✅ Deposit processed for user ${fid}: ${amountInQT} QT`);
   } catch (error) {
-    console.error('❌ Error handling deposit event:', error);
     await sendAlertToAdmin('Deposit Event Error', {
       user,
       amount: amount.toString(),
@@ -188,17 +177,11 @@ async function handleWithdrawalEvent(
     const amountInQT = parseFloat(ethers.formatEther(amount));
     const userAddress = ethers.getAddress(user);
 
-    console.log('💸 Withdrawal event detected:', {
-      user: userAddress,
-      amount: amountInQT,
-      txHash,
-    });
 
     // Find user by wallet address
     const userDoc = await findUserByWalletAddress(userAddress);
 
     if (!userDoc) {
-      console.warn('⚠️ User not found for address:', userAddress);
       // Log the transaction for manual reconciliation with pending status
       // Use fid: 0 as a placeholder for unknown users
       const transactions = await getQTTransactionsCollection();
@@ -251,9 +234,7 @@ async function handleWithdrawalEvent(
       createdAt: Number(timestamp) * 1000, // Convert to milliseconds timestamp
     });
 
-    console.log(`✅ Withdrawal processed for user ${fid}: ${amountInQT} QT`);
   } catch (error) {
-    console.error('❌ Error handling withdrawal event:', error);
     await sendAlertToAdmin('Withdrawal Event Error', {
       user,
       amount: amount.toString(),
@@ -267,7 +248,6 @@ async function handleWithdrawalEvent(
  * Send alert to admin (Discord, email, etc.)
  */
 async function sendAlertToAdmin(title: string, data: any) {
-  console.error('🚨 ADMIN ALERT:', title, data);
 
   // Send to Discord webhook if configured
   if (process.env.DISCORD_WEBHOOK_URL) {
@@ -280,7 +260,6 @@ async function sendAlertToAdmin(title: string, data: any) {
         }),
       });
     } catch (error) {
-      console.error('Failed to send Discord alert:', error);
     }
   }
 }
@@ -290,16 +269,13 @@ async function sendAlertToAdmin(title: string, data: any) {
  */
 export function startEventListeners() {
   if (isListening) {
-    console.log('⚠️ Event listeners already running');
     return;
   }
 
   if (!initializeContract() || !contract || !provider) {
-    console.warn('⚠️ Cannot start event listeners - contract not initialized');
     return;
   }
 
-  console.log('🎧 Starting event listeners...');
 
   // Listen for Deposited events
   contract.on('Deposited', async (user, amount, newBalance, timestamp, event) => {
@@ -327,7 +303,6 @@ export function startEventListeners() {
   });
 
   isListening = true;
-  console.log('✅ Event listeners started');
 }
 
 /**
@@ -339,7 +314,6 @@ export function stopEventListeners() {
   contract.removeAllListeners('Deposited');
   contract.removeAllListeners('Withdrawn');
   isListening = false;
-  console.log('🛑 Event listeners stopped');
 }
 
 /**
@@ -356,7 +330,6 @@ export async function processHistoricalEvents(fromBlock: number, toBlock: number
     throw new Error('Contract not initialized');
   }
 
-  console.log(`📜 Processing historical events from block ${fromBlock} to ${toBlock}...`);
 
   // Get Deposited events
   const depositFilter = contract.filters.Deposited();
@@ -393,6 +366,5 @@ export async function processHistoricalEvents(fromBlock: number, toBlock: number
     }
   }
 
-  console.log(`✅ Processed ${depositEvents.length} deposits and ${withdrawEvents.length} withdrawals`);
 }
 

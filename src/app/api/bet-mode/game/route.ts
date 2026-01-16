@@ -50,7 +50,6 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error('Bet Mode game fetch error:', error);
     return NextResponse.json({ error: error.message || 'Failed to fetch game' }, { status: 500 });
   }
 }

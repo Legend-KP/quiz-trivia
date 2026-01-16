@@ -153,7 +153,6 @@ export function useSecureSpinWheelQTClaim(): UseSecureSpinWheelQTClaimReturn {
           throw new Error('Claim signature has expired. Please spin again.');
         }
 
-        console.log(`Claiming ${claimData.rewardAmountReadable} QT for user ${address}`);
 
         // Call smart contract with signature
         writeContract({
@@ -168,7 +167,6 @@ export function useSecureSpinWheelQTClaim(): UseSecureSpinWheelQTClaimReturn {
           ],
         });
       } catch (err: any) {
-        console.error('Error claiming QT tokens:', err);
         setError(err);
         throw err;
       }

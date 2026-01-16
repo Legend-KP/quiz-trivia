@@ -190,7 +190,6 @@ export async function POST(req: NextRequest) {
       message: 'L1/L2 Rotation & Modular Scaling questions added successfully',
     });
   } catch (error: any) {
-    console.error('Error adding L1/L2 questions:', error);
     return NextResponse.json({ error: error.message || 'Failed to add questions' }, { status: 500 });
   }
 }

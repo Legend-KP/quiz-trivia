@@ -23,7 +23,6 @@ export async function POST(req: NextRequest) {
 
     return await combinedGET(cronReq);
   } catch (error: any) {
-    console.error('Admin trigger lottery draw and burn error:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to trigger lottery draw and burn' },
       { status: 500 }

@@ -56,7 +56,6 @@ export async function POST(req: NextRequest) {
       unlockedAmount: activeGame.betAmount,
     });
   } catch (error: any) {
-    console.error('Clear active game error:', error);
     return NextResponse.json({ error: error.message || 'Failed to clear active game' }, { status: 500 });
   }
 }

@@ -94,7 +94,6 @@ export async function POST(req: NextRequest) {
     try {
       accounts = await getCurrencyAccountsCollection();
     } catch (dbError: any) {
-      console.error('Database connection error:', dbError);
       return new Response(
         JSON.stringify({ success: false, error: 'Database connection failed', details: dbError?.message }),
         { status: 500, headers: { 'content-type': 'application/json' } }
@@ -140,13 +139,6 @@ export async function POST(req: NextRequest) {
         const signatureService = createSpinWheelSignatureService();
         
         // Log for debugging
-        console.log('🔐 Generating signature:', {
-          userAddress,
-          qtAmount: spinResult.qtAmount,
-          contractAddress: signatureService['contractAddress'],
-          chainId: signatureService['chainId'],
-          signerAddress: signatureService.getSignerAddress(),
-        });
         
         // Generate unique nonce (timestamp + random to ensure uniqueness)
         const nonce = Date.now() * 1000 + Math.floor(Math.random() * 1000);
@@ -162,22 +154,14 @@ export async function POST(req: NextRequest) {
         // Verify signature locally before sending to frontend
         const isValid = signatureService.verifySignature(claimSignature);
         if (!isValid) {
-          console.error('❌ Generated signature failed local verification!');
           throw new Error('Signature verification failed');
         }
-        console.log('✅ Signature generated and verified locally');
 
         // Note: Replay protection is handled by the contract via signature hash tracking
         // No need to store in database as the contract prevents signature reuse
       } catch (sigError: any) {
-        console.error('❌ Signature generation error:', sigError);
-        console.error('Error details:', {
-          message: sigError?.message,
-          stack: sigError?.stack,
-        });
         // If signature generation fails, still return spin result but without signature
         // Frontend will need to handle this case
-        console.warn('⚠️ Signature generation failed, returning spin result without signature');
       }
 
     // All rewards are now QT tokens - no coin rewards
@@ -209,7 +193,6 @@ export async function POST(req: NextRequest) {
       }
     );
   } catch (err: any) {
-    console.error('Error in claim-daily route:', err);
     return new Response(
       JSON.stringify({ 
         success: false,

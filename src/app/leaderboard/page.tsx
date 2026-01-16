@@ -62,7 +62,6 @@ export default function PublicLeaderboard() {
         });
       }
     } catch (error) {
-      console.error('Failed to fetch leaderboard:', error);
       setLeaderboard([]);
     } finally {
       setLoading(false);
@@ -83,7 +82,6 @@ export default function PublicLeaderboard() {
       const checkQuizId = () => {
         const newQuizId = currentWeeklyQuiz.id;
         if (newQuizId !== currentQuizId) {
-          console.log('🔄 New weekly quiz started! Refreshing leaderboard...', newQuizId);
           setCurrentQuizId(newQuizId);
           fetchLeaderboard(newQuizId);
         }
@@ -102,7 +100,6 @@ export default function PublicLeaderboard() {
         embeds: ['https://quiz-trivia-mu.vercel.app/'],
       });
     } catch (err) {
-      console.error('Failed to open Farcaster composer:', err);
       // Fallback to Warpcast compose URL
       const text = encodeURIComponent("🎉 I'm playing Quiz Trivia by @kushal-paliwal — fun, fast, and addictive.\nJump in and see how you rank 👇");
       const url = encodeURIComponent('https://quiz-trivia-mu.vercel.app/');

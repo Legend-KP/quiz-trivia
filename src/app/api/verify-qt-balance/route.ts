@@ -51,7 +51,6 @@ export async function GET(req: NextRequest) {
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
-    console.error('Error verifying QT balance:', error);
     return NextResponse.json(
       {
         success: false,

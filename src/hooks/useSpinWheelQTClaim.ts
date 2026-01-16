@@ -265,7 +265,6 @@ export function useSpinWheelQTClaim(): UseSpinWheelQTClaimReturn {
         throw new Error('Spin wheel contract not configured. Please set NEXT_PUBLIC_SPIN_WHEEL_QT_DISTRIBUTOR_ADDRESS');
       }
 
-      console.log(`Claiming ${qtAmount} QT for user ${address}`);
 
       // Call smart contract
       writeContract({
@@ -276,7 +275,6 @@ export function useSpinWheelQTClaim(): UseSpinWheelQTClaimReturn {
       });
 
     } catch (err) {
-      console.error('Error claiming QT tokens:', err);
       throw err;
     }
   };

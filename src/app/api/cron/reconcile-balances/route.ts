@@ -111,18 +111,6 @@ export async function POST(req: NextRequest) {
             difference: balanceDifference,
           });
 
-          console.error(`❌ Balance mismatch for user ${fid}:`, {
-            contract: {
-              balance: contractBalance,
-              deposits: contractDeposits,
-              withdrawals: contractWithdrawals,
-            },
-            database: {
-              balance: dbBalance,
-              deposits: dbDeposits,
-              withdrawals: dbWithdrawals,
-            },
-          });
 
           // Log mismatch for investigation
           await db.collection('reconciliation_logs').insertOne({
@@ -156,7 +144,6 @@ export async function POST(req: NextRequest) {
           }
         }
       } catch (error) {
-        console.error(`Error reconciling user ${user.fid || 'unknown'}:`, error);
       }
     }
 
@@ -164,8 +151,6 @@ export async function POST(req: NextRequest) {
     const contractTotalBalance = await contract.getContractBalance();
     const contractTotalBalanceQT = parseFloat(ethers.formatEther(contractTotalBalance));
 
-    console.log(`✅ Reconciliation complete. Mismatches found: ${mismatches}/${users.length}`);
-    console.log(`📊 Contract Total Balance: ${contractTotalBalanceQT} QT`);
 
     return NextResponse.json({
       success: true,
@@ -176,7 +161,6 @@ export async function POST(req: NextRequest) {
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
-    console.error('❌ Reconciliation error:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to reconcile balances' },
       { status: 500 }

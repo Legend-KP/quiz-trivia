@@ -148,7 +148,6 @@ export async function POST(req: NextRequest) {
       message: 'Database is up to date',
     });
   } catch (error: any) {
-    console.error('Deposit sync error:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to sync deposit' },
       { status: 500 }

@@ -18,7 +18,6 @@ async function getWalletQTBalance(walletAddress: string): Promise<number> {
     const qtTokenAddress = process.env.QT_TOKEN_ADDRESS;
 
     if (!qtTokenAddress) {
-      console.warn('QT_TOKEN_ADDRESS not configured');
       return 0;
     }
 
@@ -36,7 +35,6 @@ async function getWalletQTBalance(walletAddress: string): Promise<number> {
     // QT token has 18 decimals
     return parseFloat(ethers.formatUnits(balance, 18));
   } catch (error) {
-    console.error('Error fetching wallet QT balance:', error);
     return 0;
   }
 }
@@ -63,7 +61,6 @@ export async function GET(req: NextRequest) {
       windowState = getBetModeWindowState();
       weekId = getCurrentWeekId();
     } catch (windowError: any) {
-      console.error('Error getting window state:', windowError);
       throw new Error(`Failed to calculate window state: ${windowError.message}`);
     }
 
@@ -73,7 +70,6 @@ export async function GET(req: NextRequest) {
       const accounts = await getCurrencyAccountsCollection();
       account = await accounts.findOne({ fid });
     } catch (dbError: any) {
-      console.error('Error fetching user account:', dbError);
       throw new Error(`Database error: ${dbError.message || 'Failed to fetch user account'}`);
     }
 
@@ -98,9 +94,7 @@ export async function GET(req: NextRequest) {
       const pools = await getWeeklyPoolsCollection();
       weeklyPool = await pools.findOne({ weekId });
     } catch (dbError: any) {
-      console.error('Error fetching game/pool data:', dbError);
       // Don't throw - allow partial data to be returned
-      console.warn('Continuing with partial data due to database error');
     }
 
     return NextResponse.json({
@@ -144,8 +138,6 @@ export async function GET(req: NextRequest) {
         : null,
     });
   } catch (error: any) {
-    console.error('Bet Mode status error:', error);
-    console.error('Error stack:', error.stack);
     
     // Provide more detailed error message
     let errorMessage = 'Failed to get Bet Mode status';

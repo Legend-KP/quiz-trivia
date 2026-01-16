@@ -17,13 +17,9 @@ export function initializeBetModeServices() {
   if (contractAddress) {
     try {
       startEventListeners();
-      console.log('✅ Bet Mode contract event listeners started');
     } catch (error) {
-      console.error('❌ Failed to start event listeners:', error);
     }
   } else {
-    console.warn('⚠️ BET_MODE_VAULT_ADDRESS not configured. Event listeners disabled.');
-    console.warn('   Bet Mode will use legacy deposit/withdrawal flow.');
   }
 }
 

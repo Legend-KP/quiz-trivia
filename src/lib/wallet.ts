@@ -93,8 +93,6 @@ export async function startQuizTransactionWithWagmi(
   try {
     onStateChange?.(TransactionState.CONNECTING);
     
-    console.log('🎮 Starting quiz with micro transaction...');
-    console.log('📝 Mode:', mode);
     
     // Get wallet client
     const client = await getWalletClient(config);
@@ -104,18 +102,15 @@ export async function startQuizTransactionWithWagmi(
     
     // Get user address
     const userAddress = client.account.address;
-    console.log('👤 User address:', userAddress);
     
     // Verify we're on Base Mainnet
     try {
       const chainId = await client.getChainId();
-      console.log('🔗 Current chain ID:', chainId);
       
       if (chainId !== 8453) {
         throw new WalletError('Please switch to Base Mainnet to start a quiz');
       }
     } catch (chainError) {
-      console.warn('Could not verify chain ID:', chainError);
       // Continue anyway - some wallets don't support getChainId
     }
     
@@ -123,12 +118,10 @@ export async function startQuizTransactionWithWagmi(
     
     // Get required fee for the quiz mode (FREE!)
     const requiredFee = getRequiredFeeInWei(mode);
-    console.log('💰 Required fee:', ethers.formatEther(requiredFee), 'ETH (FREE!)');
     
     // Check user's balance (only need gas for transaction)
     const provider = new ethers.BrowserProvider(client.transport);
     const balance = await provider.getBalance(userAddress);
-    console.log('💳 User balance:', ethers.formatEther(balance), 'ETH');
     
     // Only check if user has enough for gas (very small amount)
     const minGasBalance = ethers.parseEther('0.00001'); // ~$0.00001 for gas (Base network is very cheap!)
@@ -143,12 +136,6 @@ export async function startQuizTransactionWithWagmi(
       args: [Number(mode)],
     });
     
-    console.log('📝 Sending micro transaction...');
-    console.log('Transaction data:', {
-      to: CONTRACT_ADDRESS,
-      data: txData,
-      value: requiredFee.toString()
-    });
     
     // Send transaction with payment
     const txHash = await client.sendTransaction({
@@ -158,13 +145,11 @@ export async function startQuizTransactionWithWagmi(
       chain: null,
     });
     
-    console.log('✅ Transaction sent! Hash:', txHash);
     onStateChange?.(TransactionState.SUCCESS);
     
     return txHash;
     
   } catch (error) {
-    console.error('❌ Quiz start failed:', error);
     
     let errorMessage = 'Unable to start quiz. Please try again in a moment.';
     
@@ -207,9 +192,7 @@ export async function recordQuizCompletion(
     
     const tx = await contract.recordQuizCompletion(userAddress, mode, score);
     await tx.wait();
-    console.log('✅ Quiz completion recorded');
   } catch (error: any) {
-    console.error('❌ Failed to record completion:', error);
     throw new WalletError(`Failed to record completion: ${error.message}`);
   }
 }
@@ -225,7 +208,6 @@ export async function getUserQuizCount(userAddress: string): Promise<number> {
     const count = await contract.getUserQuizCount(userAddress);
     return count.toNumber();
   } catch (error: any) {
-    console.warn('Failed to get user quiz count:', error.message);
     return 0; // Default to 0 for new users
   }
 }
@@ -257,7 +239,6 @@ export async function getUserQuizStats(userAddress: string): Promise<{
       challengeQuizzes: stats[3].toNumber(),
     };
   } catch (error: any) {
-    console.warn('Failed to get user quiz stats:', error.message);
     return {
       quizCount: 0,
       totalQuizzes: 0,
@@ -286,7 +267,6 @@ export async function isWalletConnected(): Promise<boolean> {
     const accounts = await provider.listAccounts();
     return accounts.length > 0;
   } catch (error) {
-    console.warn('Failed to check wallet connection:', error);
     return false;
   }
 }
@@ -302,7 +282,6 @@ export async function getCurrentWalletAddress(): Promise<string | null> {
     const accounts = await provider.listAccounts();
     return accounts.length > 0 ? accounts[0].address : null;
   } catch (error) {
-    console.warn('Failed to get wallet address:', error);
     return null;
   }
 }

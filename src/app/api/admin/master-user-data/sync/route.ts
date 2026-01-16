@@ -51,13 +51,10 @@ async function logAuditEvent(
 
     // Store in audit collection (fire and forget - don't block request)
     auditCollection.insertOne(auditLog).catch(err => {
-      console.error('Failed to store audit log:', err);
     });
 
     // Also log to console for immediate visibility
-    console.log(`[AUDIT] ${action} | IP: ${ip} | Success: ${success}`, details);
   } catch (err) {
-    console.error('Failed to log audit event:', err);
   }
 }
 
@@ -212,7 +209,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    console.log(`🔄 Syncing ${usersToSync.length} users... (IP: ${clientIP})`);
 
     // Process each user
     for (const fid of usersToSync) {
@@ -229,7 +225,6 @@ export async function POST(req: NextRequest) {
               : undefined;
           }
         } catch (err) {
-          console.warn(`⚠️ Could not fetch Neynar user for fid ${fid}:`, err);
         }
 
         // Get wallet address from currency account
@@ -238,7 +233,6 @@ export async function POST(req: NextRequest) {
         
         // Validate wallet address format
         if (walletAddress && !validateWalletAddress(walletAddress)) {
-          console.warn(`⚠️ Invalid wallet address format for fid ${fid}: ${walletAddress}`);
           walletAddress = undefined; // Don't store invalid addresses
         }
 
@@ -397,7 +391,6 @@ export async function POST(req: NextRequest) {
 
         synced++;
       } catch (err: any) {
-        console.error(`❌ Error syncing user ${fid}:`, err);
         errors++;
       }
     }
@@ -428,7 +421,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     const duration = Date.now() - startTime;
-    console.error('Error syncing master user data:', error);
     
     // Log error
     await logAuditEvent('SYNC_ERROR', clientIP, {
@@ -562,7 +554,6 @@ export async function GET(req: NextRequest) {
     }
   } catch (error: any) {
     const duration = Date.now() - startTime;
-    console.error('Error fetching master user data:', error);
     
     await logAuditEvent('GET_ERROR', clientIP, {
       error: error.message,

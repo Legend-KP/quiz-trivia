@@ -60,7 +60,6 @@ export async function GET(_req: NextRequest) {
       })),
     });
   } catch (error: any) {
-    console.error('Question check error:', error);
     return NextResponse.json({ error: error.message || 'Failed to check questions' }, { status: 500 });
   }
 }

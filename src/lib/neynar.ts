@@ -22,7 +22,6 @@ export async function getNeynarUser(fid: number) {
     const usersResponse = await client.fetchBulkUsers({ fids: [fid] });
     return usersResponse.users[0] || null;
   } catch (error) {
-    console.error('Error getting Neynar user:', error);
     return null;
   }
 }
@@ -40,10 +39,8 @@ export async function sendManualNotification(fid: number, title: string, body: s
       }
     });
     
-    console.log('Notification sent:', result);
     return { success: true };
   } catch (error) {
-    console.error('Error sending notification:', error);
     return { success: false, error };
   }
 }

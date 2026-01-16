@@ -96,7 +96,6 @@ export async function GET(request: Request) {
       quizId: quizId || null,
     });
       } catch (_mongodbError) {
-      console.error('MongoDB GET failed:', _mongodbError);
       let filteredFallback = globalFallbackStorage;
       if (mode) filteredFallback = filteredFallback.filter(entry => entry.mode === mode);
       if (quizId) filteredFallback = filteredFallback.filter(entry => entry.quizId === quizId);
@@ -206,7 +205,6 @@ export async function POST(request: Request) {
       mode,
     });
       } catch (_mongodbError) {
-      console.error('MongoDB POST failed:', _mongodbError);
 
       // Fallback to in-memory only as a last resort (non-persistent)
       try {

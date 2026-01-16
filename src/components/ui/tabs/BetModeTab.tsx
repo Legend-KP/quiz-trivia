@@ -190,7 +190,6 @@ const ERC20_ABI = [
         setWalletBalance(balance);
         setWalletBalanceError(null);
       } catch (err: any) {
-        console.warn('Error parsing wallet balance:', err);
         setWalletBalanceError('Failed to read wallet balance');
         setWalletBalance(0);
       }
@@ -202,7 +201,6 @@ const ERC20_ABI = [
   // Log balance errors for debugging
   useEffect(() => {
     if (balanceError) {
-      console.warn('Error reading wallet balance from contract:', balanceError);
     }
   }, [balanceError]);
     
@@ -232,7 +230,6 @@ const ERC20_ABI = [
   // Handle writeContract errors
   useEffect(() => {
     if (writeContractError) {
-      console.error('Write contract error:', writeContractError);
       setError(writeContractError.message || 'Transaction failed. Please try again.');
       setDepositing(false);
       setIsDepositPending(false);
@@ -340,7 +337,6 @@ const ERC20_ABI = [
           }
         }
       } catch (err: any) {
-        console.error('Failed to fetch status:', err);
         
         // Set default status on error to prevent infinite loading
         const defaultStatus: BetModeStatus = {
@@ -409,14 +405,12 @@ const ERC20_ABI = [
            context?.client);
         
         if (isInFarcasterClient) {
-          console.log('Auto-connecting wallet for deposit...');
           try {
             connect({ 
               connector: connectors[0],
               chainId: base.id,
             });
           } catch (error) {
-            console.error('Auto-connection failed:', error);
           }
         }
       }
@@ -484,7 +478,6 @@ const ERC20_ABI = [
         }
       } catch (err) {
         // Silently handle - not critical
-        console.error('Failed to clear active game on entry:', err);
       }
     };
     
@@ -559,7 +552,6 @@ const ERC20_ABI = [
           const now = Date.now();
           // Debounce: only sync if enough time has passed since last sync
           if (now - lastSyncTime.current < SYNC_DEBOUNCE_MS) {
-            console.log('Sync debounced, skipping...');
             return;
           }
           
@@ -579,7 +571,6 @@ const ERC20_ABI = [
                 }
               });
             }).catch((syncError) => {
-              console.warn('Manual sync failed, will rely on event listener:', syncError);
             });
           }
         }, 3000);
@@ -650,7 +641,6 @@ const ERC20_ABI = [
         const now = Date.now();
         // Debounce: only sync if enough time has passed since last sync
         if (now - lastSyncTime.current < SYNC_DEBOUNCE_MS) {
-          console.log('Sync debounced, skipping...');
           return;
         }
         
@@ -667,11 +657,9 @@ const ERC20_ABI = [
             });
             const syncData = await syncRes.json();
             if (syncData.synced) {
-              console.log('Balance synced successfully:', syncData);
               fetchStatus(); // Refresh status after sync
             }
           } catch (syncError) {
-            console.warn('Manual sync failed, will rely on event listener:', syncError);
           }
         }
       };
@@ -704,7 +692,6 @@ const ERC20_ABI = [
     const handleDeposit = async () => {
       // Prevent double-click / multiple simultaneous calls
       if (depositing || isDepositPending || isDepositConfirming || isDepositInProgress.current) {
-        console.log('Deposit already in progress, ignoring duplicate call');
         return;
       }
       
@@ -759,14 +746,12 @@ const ERC20_ABI = [
         const targetChainId = base.id;
         if (currentChainId && currentChainId !== targetChainId && switchChain) {
           try {
-            console.log('Switching to Base chain...');
             await switchChain({ chainId: targetChainId });
             // Wait for chain switch to complete
             await new Promise((resolve) => setTimeout(resolve, 2000));
           } catch (switchError: any) {
             // If user rejects or switch fails, continue anyway
             if (!switchError.message?.includes('User rejected')) {
-              console.warn('Chain switch failed, continuing anyway:', switchError);
             }
           }
         }
@@ -784,16 +769,13 @@ const ERC20_ABI = [
         try {
           const farcasterProvider = await sdk.wallet.getEthereumProvider();
           if (farcasterProvider) {
-            console.log('Using Farcaster SDK provider');
             provider = farcasterProvider;
           }
         } catch (e) {
-          console.warn('Farcaster SDK provider not available:', e);
         }
         
         // Try window.ethereum (standard Web3 provider)
         if (!provider && typeof window !== 'undefined' && window.ethereum) {
-          console.log('Using window.ethereum provider');
           provider = window.ethereum;
         }
         
@@ -833,7 +815,6 @@ const ERC20_ABI = [
         
         if (currentAllowance < amountWei) {
           setDepositStep('approving');
-          console.log('Requesting approval...');
           
           // Use wallet client's writeContract method directly to bypass wagmi's getChainId check
           const approveHash = await walletClient.writeContract({
@@ -844,7 +825,6 @@ const ERC20_ABI = [
             args: [contractAddress, amountWei],
           });
           
-          console.log('Approval transaction hash:', approveHash);
           
           // Wait for approval transaction to be confirmed
           
@@ -858,7 +838,6 @@ const ERC20_ABI = [
               throw new Error('Approval transaction failed');
             }
             
-            console.log('Approval confirmed:', receipt);
             
             // Wait a bit more to ensure approval is fully processed
             await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -871,16 +850,12 @@ const ERC20_ABI = [
               args: [address, contractAddress],
             });
             
-            console.log('Verified allowance:', formatUnits(verifiedAllowance, 18), 'QT');
-            console.log('Required amount:', formatUnits(amountWei, 18), 'QT');
             
             if (verifiedAllowance < amountWei) {
               throw new Error(`Insufficient approval. Expected: ${formatUnits(amountWei, 18)} QT, Got: ${formatUnits(verifiedAllowance, 18)} QT`);
             }
             
-            console.log('✅ Approval verified successfully');
           } catch (approvalError: any) {
-            console.error('Approval confirmation error:', approvalError);
             // If user rejected, throw error
             if (approvalError.message?.includes('User rejected') || approvalError.message?.includes('denied')) {
               throw new Error('Approval cancelled by user');
@@ -904,13 +879,11 @@ const ERC20_ABI = [
         } catch (pauseCheckError: any) {
           // If provider doesn't support readContract, just continue - contract will revert if paused
           if (pauseCheckError.message?.includes('does not support') || pauseCheckError.message?.includes('UnsupportedProviderMethod')) {
-            console.warn('Could not check pause status (provider limitation), continuing with deposit...');
           } else if (pauseCheckError.message?.includes('paused')) {
             // Re-throw if actually paused
             throw pauseCheckError;
           } else {
             // Other errors - log but continue
-            console.warn('Pause check failed, continuing with deposit:', pauseCheckError.message);
           }
         }
         
@@ -921,23 +894,12 @@ const ERC20_ABI = [
         // Verify contract address is correct
         const vaultAddress = getBetModeVaultAddress();
         
-        console.log('🔍 Deposit Address Verification:');
-        console.log('  - Vault Contract Address (expected):', vaultAddress);
-        console.log('  - Contract Address (from state):', contractAddress);
-        console.log('  - User Wallet Address:', address);
-        console.log('  - Amount:', formatUnits(amountWei, 18), 'QT');
-        console.log('  - Amount (wei):', amountWei.toString());
         
         // Ensure we're using the vault contract address
         if (contractAddress.toLowerCase() !== vaultAddress.toLowerCase()) {
-          console.error('❌ CRITICAL: Contract address mismatch!');
-          console.error('  Expected vault:', vaultAddress);
-          console.error('  Got:', contractAddress);
           throw new Error('Invalid contract address. Please refresh and try again.');
         }
         
-        console.log('✅ Using correct vault contract address:', contractAddress);
-        console.log('📤 Initiating deposit transaction...');
         
         // Use wallet client's writeContract method directly to bypass wagmi's getChainId check
         const depositHash = await walletClient.writeContract({
@@ -948,7 +910,6 @@ const ERC20_ABI = [
           args: [amountWei],
         });
         
-        console.log('Deposit transaction hash:', depositHash);
         
         // Store hash in state so useWaitForTransactionReceipt can track it
         setDepositTxHash(depositHash);
@@ -958,13 +919,6 @@ const ERC20_ABI = [
         setDepositStep('confirming');
         
       } catch (err: any) {
-        console.error('Deposit error:', err);
-        console.error('Error details:', {
-          message: err.message,
-          code: err.code,
-          data: err.data,
-          shortMessage: err.shortMessage,
-        });
         
         let errorMessage = 'Failed to initiate deposit';
         
@@ -1009,7 +963,6 @@ const ERC20_ABI = [
         // Open QT token in Farcaster wallet where user can buy it
         await sdk.actions.viewToken({ token: TOKEN_ASSET_ID });
       } catch (err: any) {
-        console.error('Failed to open QT token:', err);
         setError('Failed to open wallet. Please try again.');
       }
     };
@@ -1137,7 +1090,6 @@ const ERC20_ABI = [
           });
         } catch (clearErr) {
           // Continue even if clearing fails - start endpoint will handle it
-          console.error('Failed to clear active game:', clearErr);
         }
 
         const res = await fetch('/api/bet-mode/start', {
@@ -1217,7 +1169,6 @@ const ERC20_ABI = [
           });
         } catch (err) {
           // Silently handle - not critical
-          console.error('Failed to clear active game:', err);
         }
       }
       
@@ -1270,7 +1221,6 @@ const ERC20_ABI = [
             embeds: [buildShareUrl()],
           });
         } catch (err) {
-          console.error('Failed to open Farcaster composer:', err);
           const text = encodeURIComponent(shareText);
           const url = encodeURIComponent(buildShareUrl());
           const warpcastUrl = `https://warpcast.com/~/compose?text=${text}%20${url}`;
@@ -1279,7 +1229,6 @@ const ERC20_ABI = [
           }
         }
       } catch (err) {
-        console.error('Failed to share result:', err);
         setError('Failed to open Farcaster to share your result. Please try again.');
       }
     };
@@ -1287,7 +1236,6 @@ const ERC20_ABI = [
     const handleWithdraw = async () => {
       // Prevent double-click / multiple simultaneous calls
       if (withdrawing || isWithdrawInProgress.current || withdrawStep !== 'input') {
-        console.log('Withdrawal already in progress, ignoring duplicate call');
         return;
       }
       
@@ -1417,7 +1365,6 @@ const ERC20_ABI = [
 
         // If there's a balance mismatch, try to sync first (only once)
         if (!res.ok && data.needsSync && address && fid) {
-          console.log('Balance mismatch detected, attempting to sync...');
           try {
             const syncRes = await fetch('/api/bet-mode/deposit/sync', {
               method: 'POST',
@@ -1431,7 +1378,6 @@ const ERC20_ABI = [
             const syncData = await syncRes.json();
             if (syncData.success && syncData.synced) {
               // Retry withdrawal after sync (only once)
-              console.log('Balance synced, retrying withdrawal...');
               await fetchStatus(); // Refresh status
               
               // Wait a moment for DB to update
@@ -1466,7 +1412,6 @@ const ERC20_ABI = [
 
         // Step 2: Call contract.withdraw()
         setWithdrawStep('withdrawing');
-        console.log('Withdrawing from contract...');
 
         // Get wallet provider directly to bypass wagmi's getChainId check
         // Try Farcaster SDK first, then fallback to window.ethereum
@@ -1477,7 +1422,6 @@ const ERC20_ABI = [
             provider = farcasterProvider;
           }
         } catch (e) {
-          console.warn('Farcaster SDK provider not available, using window.ethereum');
         }
         
         if (!provider && window.ethereum) {
@@ -1522,14 +1466,12 @@ const ERC20_ABI = [
           args: [BigInt(amountWei), BigInt(nonce), signature as `0x${string}`],
         });
 
-        console.log('Withdrawal transaction hash:', withdrawHash);
         setWithdrawTxHash(withdrawHash);
 
         // Step 3: Wait for confirmation (handled by useWaitForTransactionReceipt)
         setWithdrawStep('confirming');
 
       } catch (err: any) {
-        console.error('Withdrawal error:', err);
         
         // Reset transaction progress flag on error
         isWithdrawInProgress.current = false;

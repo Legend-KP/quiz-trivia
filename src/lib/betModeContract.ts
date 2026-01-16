@@ -20,7 +20,6 @@ function getContractWithOwner(): {
   const rpcUrl = process.env.BASE_RPC_URL || 'https://mainnet.base.org';
 
   if (!ownerPrivateKey) {
-    console.warn('⚠️ CONTRACT_OWNER_PRIVATE_KEY not configured - contract sync disabled');
     return null;
   }
 
@@ -31,7 +30,6 @@ function getContractWithOwner(): {
     
     return { contract, provider };
   } catch (error) {
-    console.error('❌ Failed to initialize contract:', error);
     return null;
   }
 }
@@ -48,13 +46,11 @@ export async function creditWinnings(
 ): Promise<string | null> {
   // Skip if wallet address not provided
   if (!userAddress) {
-    console.log('⚠️ Contract sync skipped - wallet address not provided');
     return null;
   }
 
   const contractSetup = getContractWithOwner();
   if (!contractSetup) {
-    console.warn('⚠️ Contract sync skipped - owner wallet not configured');
     return null;
   }
 
@@ -64,24 +60,19 @@ export async function creditWinnings(
     // Convert QT amount to wei (18 decimals)
     const amountWei = ethers.parseEther(profitAmount.toString());
     
-    console.log(`🔄 Crediting winnings: ${userAddress} -> ${profitAmount} QT (${amountWei.toString()} wei)`);
     
     // Call contract function
     const tx = await contract.creditWinnings(userAddress, amountWei);
-    console.log(`📤 Transaction sent: ${tx.hash}`);
     
     // Wait for confirmation
     const receipt = await tx.wait();
     
     if (receipt.status === 1) {
-      console.log(`✅ Winnings credited successfully: ${tx.hash}`);
       return tx.hash;
     } else {
-      console.error(`❌ Transaction failed: ${tx.hash}`);
       return null;
     }
   } catch (error: any) {
-    console.error('❌ Error crediting winnings:', error);
     // Don't throw - log error for manual reconciliation
     return null;
   }
@@ -99,13 +90,11 @@ export async function debitLoss(
 ): Promise<string | null> {
   // Skip if wallet address not provided
   if (!userAddress) {
-    console.log('⚠️ Contract sync skipped - wallet address not provided');
     return null;
   }
 
   const contractSetup = getContractWithOwner();
   if (!contractSetup) {
-    console.warn('⚠️ Contract sync skipped - owner wallet not configured');
     return null;
   }
 
@@ -115,24 +104,19 @@ export async function debitLoss(
     // Convert QT amount to wei (18 decimals)
     const amountWei = ethers.parseEther(betAmount.toString());
     
-    console.log(`🔄 Debiting loss: ${userAddress} -> ${betAmount} QT (${amountWei.toString()} wei)`);
     
     // Call contract function
     const tx = await contract.debitLoss(userAddress, amountWei);
-    console.log(`📤 Transaction sent: ${tx.hash}`);
     
     // Wait for confirmation
     const receipt = await tx.wait();
     
     if (receipt.status === 1) {
-      console.log(`✅ Loss debited successfully: ${tx.hash}`);
       return tx.hash;
     } else {
-      console.error(`❌ Transaction failed: ${tx.hash}`);
       return null;
     }
   } catch (error: any) {
-    console.error('❌ Error debiting loss:', error);
     // Don't throw - log error for manual reconciliation
     return null;
   }
@@ -150,7 +134,6 @@ export async function adjustBalance(
 ): Promise<string | null> {
   const contractSetup = getContractWithOwner();
   if (!contractSetup) {
-    console.warn('⚠️ Contract sync skipped - owner wallet not configured');
     return null;
   }
 
@@ -160,24 +143,19 @@ export async function adjustBalance(
     // Convert QT amount to wei (18 decimals)
     const balanceWei = ethers.parseEther(newBalance.toString());
     
-    console.log(`🔄 Adjusting balance: ${userAddress} -> ${newBalance} QT (${balanceWei.toString()} wei)`);
     
     // Call contract function
     const tx = await contract.adjustBalance(userAddress, balanceWei);
-    console.log(`📤 Transaction sent: ${tx.hash}`);
     
     // Wait for confirmation
     const receipt = await tx.wait();
     
     if (receipt.status === 1) {
-      console.log(`✅ Balance adjusted successfully: ${tx.hash}`);
       return tx.hash;
     } else {
-      console.error(`❌ Transaction failed: ${tx.hash}`);
       return null;
     }
   } catch (error: any) {
-    console.error('❌ Error adjusting balance:', error);
     // Don't throw - log error for manual reconciliation
     return null;
   }
@@ -197,7 +175,6 @@ export async function getUserWalletAddress(fid: number): Promise<string | null> 
     // Check if walletAddress field exists in account document
     return (account as any)?.walletAddress || null;
   } catch (error) {
-    console.error('❌ Error getting user wallet address:', error);
     return null;
   }
 }

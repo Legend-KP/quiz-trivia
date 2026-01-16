@@ -82,7 +82,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(signer);
   } catch (error) {
-    console.error('Error registering signed key:', error);
     return NextResponse.json(
       { error: 'Failed to register signed key' },
       { status: 500 }

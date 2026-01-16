@@ -95,8 +95,6 @@ function ConnectionControls({
         </Button>
         <Button
           onClick={() => {
-            console.log("Manual Farcaster connection attempt");
-            console.log("Connectors:", connectors.map((c, i) => `${i}: ${c.name}`));
             connect({ connector: connectors[0] });
           }}
           className="w-full"
@@ -176,24 +174,13 @@ export function WalletTab() {
        context?.client);
     
     if (context?.user?.fid && !isConnected && connectors.length > 0 && isInFarcasterClient) {
-      console.log("Attempting auto-connection with Farcaster context...");
-      console.log("- User FID:", context.user.fid);
-      console.log("- Available connectors:", connectors.map((c, i) => `${i}: ${c.name}`));
-      console.log("- Using connector:", connectors[0].name);
-      console.log("- In Farcaster client:", isInFarcasterClient);
       
       // Use the first connector (farcasterMiniApp) for auto-connection
       try {
         connect({ connector: connectors[0] });
       } catch (error) {
-        console.error("Auto-connection failed:", error);
       }
     } else {
-      console.log("Auto-connection conditions not met:");
-      console.log("- Has context:", !!context?.user?.fid);
-      console.log("- Is connected:", isConnected);
-      console.log("- Has connectors:", connectors.length > 0);
-      console.log("- In Farcaster client:", isInFarcasterClient);
     }
   }, [context?.user?.fid, isConnected, connectors, connect, context?.client]);
 

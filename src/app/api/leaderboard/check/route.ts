@@ -35,7 +35,6 @@ export async function GET(request: Request) {
       entry: existing || null
     });
   } catch (error) {
-    console.error('Failed to check completion status:', error);
     return NextResponse.json({ 
       error: 'Failed to check completion status',
       completed: false 

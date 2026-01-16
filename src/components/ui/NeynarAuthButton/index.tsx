@@ -132,7 +132,6 @@ export function NeynarAuthButton() {
       const signerData = await response.json();
       return signerData;
     } catch (error) {
-      console.error('❌ Error creating signer:', error);
       // throw error;
     }
   }, []);
@@ -161,7 +160,6 @@ export function NeynarAuthButton() {
           await backendSignIn('neynar', signInData);
         }
       } catch (error) {
-        console.error('❌ Error updating session with signers:', error);
       }
     },
     [useBackendFlow, message, signature, nonce]
@@ -178,7 +176,6 @@ export function NeynarAuthButton() {
         }
         return null;
       } catch (error) {
-        console.error('Error fetching user data:', error);
         return null;
       }
     },
@@ -218,7 +215,6 @@ export function NeynarAuthButton() {
 
         return data;
       } catch (error) {
-        console.error('❌ Error generating signed key request:', error);
         // throw error;
       }
     },
@@ -275,11 +271,9 @@ export function NeynarAuthButton() {
             return signerData.signers;
           }
         } else {
-          console.error('❌ Failed to fetch signers');
           // throw new Error('Failed to fetch signers');
         }
       } catch (error) {
-        console.error('❌ Error fetching signers:', error);
         // throw error;
       } finally {
         setSignersLoading(false);
@@ -346,7 +340,6 @@ export function NeynarAuthButton() {
             await fetchAllSigners(message, signature);
           }
         } catch (error) {
-          console.error('❌ Error polling signer:', error);
         }
       }, 2000); // Poll every 2 second
 
@@ -374,10 +367,8 @@ export function NeynarAuthButton() {
           const data = await response.json();
           setNonce(data.nonce);
         } else {
-          console.error('Failed to fetch nonce');
         }
       } catch (error) {
-        console.error('Error generating nonce:', error);
       }
     };
 
@@ -417,7 +408,6 @@ export function NeynarAuthButton() {
 
   // Error callback
   const onErrorCallback = useCallback((error?: Error | null) => {
-    console.error('❌ Sign in error:', error);
   }, []);
 
   const signInState = useSignIn({
@@ -523,7 +513,6 @@ export function NeynarAuthButton() {
             setDialogStep('signin');
           }
         } catch (error) {
-          console.error('❌ Error in signer flow:', error);
           // On error, reset to signin step and hide dialog
           setDialogStep('signin');
           setSignersLoading(false);
@@ -541,7 +530,6 @@ export function NeynarAuthButton() {
   // Backend flow using NextAuth
   const handleBackendSignIn = useCallback(async () => {
     if (!nonce) {
-      console.error('❌ No nonce available for backend sign-in');
       return;
     }
 
@@ -561,13 +549,10 @@ export function NeynarAuthButton() {
         setMessage(result.message);
         setSignature(result.signature);
       } else {
-        console.error('❌ NextAuth sign-in failed:', nextAuthResult);
       }
     } catch (e) {
       if (e instanceof SignInCore.RejectedByUser) {
-        console.log('ℹ️ Sign-in rejected by user');
       } else {
-        console.error('❌ Backend sign-in error:', e);
       }
     } finally {
       setSignersLoading(false);
@@ -615,7 +600,6 @@ export function NeynarAuthButton() {
       // Reset signer flow flag
       signerFlowStartedRef.current = false;
     } catch (error) {
-      console.error('❌ Error during sign out:', error);
       // Optionally handle error state
     } finally {
       setSignersLoading(false);

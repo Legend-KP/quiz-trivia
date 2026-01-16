@@ -93,17 +93,6 @@ export class SpinWheelSignatureService {
     
     // Debug logging (remove in production)
     if (process.env.NODE_ENV === 'development') {
-      console.log('🔐 Signature Debug:', {
-        userAddress,
-        rewardAmount: rewardAmountWei.toString(),
-        nonce: nonce.toString(),
-        deadline: deadline.toString(),
-        contractAddress: this.contractAddress,
-        chainId: this.chainId.toString(),
-        messageHash,
-        signature: signature.substring(0, 20) + '...',
-        signerAddress: this.signer.address,
-      });
     }
 
     return {
@@ -147,7 +136,6 @@ export class SpinWheelSignatureService {
         recoveredAddress.toLowerCase() === this.signer.address.toLowerCase()
       );
     } catch (error) {
-      console.error('Signature verification error:', error);
       return false;
     }
   }

@@ -116,10 +116,8 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
           setShowResult(true);
         }, 3000); // Show result after animation
       } else {
-        console.error('Spin failed:', response.error);
       }
     } catch (error) {
-      console.error('Spin error:', error);
     } finally {
       setTimeout(() => {
         setIsSpinning(false);
@@ -205,7 +203,6 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
         }
       }
     } catch (err) {
-      console.error('Failed to open Farcaster composer:', err);
       // Fallback to Warpcast compose URL
       const text = encodeURIComponent(shareText);
       const url = encodeURIComponent(shareUrl);

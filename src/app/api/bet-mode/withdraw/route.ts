@@ -140,7 +140,6 @@ export async function POST(req: NextRequest) {
       newBalance: updatedAccount?.qtBalance || 0,
     });
   } catch (error: any) {
-    console.error('Withdrawal error:', error);
     return NextResponse.json({ error: error.message || 'Failed to process withdrawal' }, { status: 500 });
   }
 }

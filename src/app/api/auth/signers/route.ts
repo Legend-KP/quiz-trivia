@@ -29,7 +29,6 @@ export async function GET(request: Request) {
       signers,
     });
   } catch (error) {
-    console.error('Error fetching signers:', error);
     return NextResponse.json(
       { error: 'Failed to fetch signers' },
       { status: 500 }

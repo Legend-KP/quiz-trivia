@@ -110,7 +110,6 @@ export async function GET(req: NextRequest) {
       activeGamesClosed: activeGames.length,
     });
   } catch (error: any) {
-    console.error('Snapshot cron error:', error);
     return NextResponse.json({ error: error.message || 'Snapshot failed' }, { status: 500 });
   }
 }

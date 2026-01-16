@@ -66,10 +66,6 @@ export async function POST(req: NextRequest) {
     if (qtTokenAddress && tx.to?.toLowerCase() !== qtTokenAddress.toLowerCase()) {
       // This is not a QT token transfer - might be native ETH or wrong token
       // We'll check Transfer events anyway, but log a warning
-      console.warn('Transaction to address does not match QT token contract:', {
-        txTo: tx.to,
-        expectedToken: qtTokenAddress,
-      });
     }
 
     // Try to parse ERC20 Transfer event
@@ -164,7 +160,6 @@ export async function POST(req: NextRequest) {
       txHash,
     });
   } catch (error: any) {
-    console.error('Deposit verification error:', error);
     return NextResponse.json({ error: error.message || 'Failed to verify deposit' }, { status: 500 });
   }
 }

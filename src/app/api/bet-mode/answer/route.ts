@@ -114,13 +114,9 @@ export async function POST(req: NextRequest) {
                 'function estimateGas(address to, uint256 amount) view returns (uint256)',
               ], ownerWallet);
               
-              console.log(`📊 Loss Distribution: ${game.betAmount} QT total`);
-              console.log(`   - Burn: ${lossDistribution.toBurn} QT (50%)`);
-              console.log(`   - Revenue: ${lossDistribution.toPlatform} QT (50%) to ${REVENUE_WALLET}`);
               
               // Check owner wallet ETH balance for gas
               const ownerEthBalance = await provider.getBalance(ownerWallet.address);
-              console.log(`⛽ Owner wallet ETH balance: ${ethers.formatEther(ownerEthBalance)} ETH`);
               if (ownerEthBalance < ethers.parseEther('0.001')) {
                 throw new Error('Insufficient ETH in owner wallet for gas fees. Need at least 0.001 ETH.');
               }
@@ -128,14 +124,11 @@ export async function POST(req: NextRequest) {
               // Step 1: Withdraw 50% for burn from contract to owner wallet
               if (lossDistribution.toBurn > 0) {
                 const burnAmountWei = ethers.parseEther(lossDistribution.toBurn.toString());
-                console.log(`🔄 Withdrawing ${lossDistribution.toBurn} QT from contract for burn...`);
                 
                 // Estimate gas for burn withdrawal
                 try {
                   const gasEstimate = await vaultContract.ownerWithdraw.estimateGas(burnAmountWei);
-                  console.log(`⛽ Estimated gas for burn withdrawal: ${gasEstimate.toString()}`);
                 } catch (gasError: any) {
-                  console.warn(`⚠️ Gas estimation failed for burn withdrawal:`, gasError.message);
                 }
                 
                 const burnWithdrawTx = await vaultContract.ownerWithdraw(burnAmountWei);
@@ -143,17 +136,13 @@ export async function POST(req: NextRequest) {
                 if (burnWithdrawReceipt.status !== 1) {
                   throw new Error(`Burn withdrawal transaction failed: ${burnWithdrawTx.hash}`);
                 }
-                console.log(`✅ Burn withdrawal confirmed: ${burnWithdrawTx.hash}`);
                 
                 // Immediately transfer to burn address
-                console.log(`🔥 Transferring ${lossDistribution.toBurn} QT to burn address...`);
                 
                 // Estimate gas for burn transfer
                 try {
                   const gasEstimate = await tokenContract.transfer.estimateGas(BURN_ADDRESS, burnAmountWei);
-                  console.log(`⛽ Estimated gas for burn transfer: ${gasEstimate.toString()}`);
                 } catch (gasError: any) {
-                  console.warn(`⚠️ Gas estimation failed for burn transfer:`, gasError.message);
                   // If gas estimation fails, it might be due to insufficient balance or other issues
                   // Check owner wallet token balance
                   const ownerTokenBalance = await tokenContract.balanceOf(ownerWallet.address);
@@ -164,14 +153,11 @@ export async function POST(req: NextRequest) {
                 
                 const burnTx = await tokenContract.transfer(BURN_ADDRESS, burnAmountWei);
                 burnTxHash = burnTx.hash;
-                console.log(`📤 Burn transfer tx sent: ${burnTxHash}`);
                 const burnReceipt = await burnTx.wait();
                 if (burnReceipt.status !== 1) {
                   throw new Error(`Burn transaction failed: ${burnTxHash}`);
                 }
                 burnBlockNumber = burnReceipt.blockNumber;
-                console.log(`✅ Burn transaction confirmed: ${burnTxHash}`);
-                console.log(`🔗 View on BaseScan: https://basescan.org/tx/${burnTxHash}`);
                 
                 // FIX: Create burn record after successful burn
                 if (burnTxHash && burnBlockNumber !== null) {
@@ -184,9 +170,7 @@ export async function POST(req: NextRequest) {
                       blockNumber: burnBlockNumber,
                       timestamp: Date.now(),
                     });
-                    console.log(`✅ Burn record created in database`);
                   } catch (dbError: any) {
-                    console.error('❌ Failed to create burn record:', dbError);
                     // Don't throw - burn succeeded, record creation is secondary
                   }
                 }
@@ -195,80 +179,54 @@ export async function POST(req: NextRequest) {
               // Step 2: Withdraw 50% for revenue from contract to owner wallet, then transfer to revenue wallet
               if (lossDistribution.toPlatform > 0) {
                 const revenueAmountWei = ethers.parseEther(lossDistribution.toPlatform.toString());
-                console.log(`🔄 [REVENUE] Withdrawing ${lossDistribution.toPlatform} QT from contract to owner wallet...`);
-                console.log(`📍 [REVENUE] Target revenue wallet: ${REVENUE_WALLET}`);
                 
                 // Step 2a: Withdraw from contract to owner wallet
                 // Estimate gas for revenue withdrawal
                 try {
                   const gasEstimate = await vaultContract.ownerWithdraw.estimateGas(revenueAmountWei);
-                  console.log(`⛽ Estimated gas for revenue withdrawal: ${gasEstimate.toString()}`);
                 } catch (gasError: any) {
-                  console.warn(`⚠️ Gas estimation failed for revenue withdrawal:`, gasError.message);
                 }
                 
                 const revenueWithdrawTx = await vaultContract.ownerWithdraw(revenueAmountWei);
-                console.log(`📤 [REVENUE] Withdrawal tx sent: ${revenueWithdrawTx.hash}`);
                 const revenueWithdrawReceipt = await revenueWithdrawTx.wait();
                 if (revenueWithdrawReceipt.status !== 1) {
                   throw new Error(`Revenue withdrawal transaction failed: ${revenueWithdrawTx.hash}`);
                 }
-                console.log(`✅ [REVENUE] Withdrawal confirmed: ${revenueWithdrawTx.hash}`);
                 
                 // Step 2b: Verify owner wallet received the tokens
                 const ownerBalance = await tokenContract.balanceOf(ownerWallet.address);
-                console.log(`💰 [REVENUE] Owner wallet balance after withdrawal: ${ethers.formatEther(ownerBalance)} QT`);
                 if (ownerBalance < revenueAmountWei) {
                   throw new Error(`Owner wallet did not receive expected tokens. Have: ${ethers.formatEther(ownerBalance)} QT, Expected: ${lossDistribution.toPlatform} QT`);
                 }
                 
                 // Step 2c: Immediately transfer from owner wallet to revenue wallet
-                console.log(`💸 [REVENUE] Transferring ${lossDistribution.toPlatform} QT from owner wallet to revenue wallet ${REVENUE_WALLET}...`);
-                console.log(`💸 [REVENUE] Amount: ${revenueAmountWei.toString()} wei`);
                 
                 // Estimate gas for revenue transfer
                 try {
                   const gasEstimate = await tokenContract.transfer.estimateGas(REVENUE_WALLET, revenueAmountWei);
-                  console.log(`⛽ Estimated gas for revenue transfer: ${gasEstimate.toString()}`);
                 } catch (gasError: any) {
-                  console.error(`⚠️ Gas estimation failed for revenue transfer:`, gasError.message);
                   throw new Error(`Cannot estimate gas for revenue transfer: ${gasError.message}`);
                 }
                 
                 const revenueTx = await tokenContract.transfer(REVENUE_WALLET, revenueAmountWei);
                 revenueTxHash = revenueTx.hash;
-                console.log(`📤 [REVENUE] Transfer tx sent: ${revenueTxHash}`);
                 const revenueReceipt = await revenueTx.wait();
                 if (revenueReceipt.status !== 1) {
                   throw new Error(`Revenue transfer transaction failed: ${revenueTxHash}`);
                 }
-                console.log(`✅ [REVENUE] Transfer confirmed: ${revenueTxHash}`);
-                console.log(`✅ [REVENUE] Successfully sent ${lossDistribution.toPlatform} QT to ${REVENUE_WALLET}`);
-                console.log(`🔗 [REVENUE] View on BaseScan: https://basescan.org/tx/${revenueTxHash}`);
                 
                 // Step 2d: Verify transfer by checking revenue wallet balance
                 const revenueWalletBalance = await tokenContract.balanceOf(REVENUE_WALLET);
                 const expectedBalance = ethers.formatEther(revenueWalletBalance);
-                console.log(`✅ [REVENUE] Revenue wallet (${REVENUE_WALLET}) balance: ${expectedBalance} QT`);
                 
                 // Verify the amount was actually received
                 const ownerBalanceAfter = await tokenContract.balanceOf(ownerWallet.address);
-                console.log(`💰 [REVENUE] Owner wallet balance after transfer: ${ethers.formatEther(ownerBalanceAfter)} QT`);
               }
               
               // FIX: Only call debitLoss() AFTER both distributions succeed
-              console.log('✅ All token distributions completed successfully');
-              console.log('🔄 Updating contract balance tracking...');
               await debitLoss(walletAddress, game.betAmount);
-              console.log('✅ Contract balance updated successfully');
               
             } catch (error: any) {
-              console.error('❌ Failed to distribute loss tokens:', error);
-              console.error('Error details:', error.message || error);
-              console.error('Game ID:', gameId);
-              console.error('FID:', numFid);
-              console.error('Bet Amount:', game.betAmount);
-              console.error('Loss Distribution:', lossDistribution);
               
               // FIX: Store failed distribution in database for manual processing
               try {
@@ -288,9 +246,7 @@ export async function POST(req: NextRequest) {
                   createdAt: Date.now(),
                   updatedAt: Date.now(),
                 });
-                console.log('✅ Failed distribution logged to database for manual processing');
               } catch (dbError: any) {
-                console.error('❌ Failed to log failed distribution to database:', dbError);
               }
               
               // Alert: Consider sending notification to admins
@@ -298,7 +254,6 @@ export async function POST(req: NextRequest) {
             }
           })();
         } else {
-          console.warn('⚠️ Contract owner private key or QT token address not configured - skipping token distribution');
           
           // Store failed distribution due to missing config
           try {
@@ -316,13 +271,11 @@ export async function POST(req: NextRequest) {
               updatedAt: Date.now(),
             });
           } catch (dbError: any) {
-            console.error('❌ Failed to log failed distribution:', dbError);
           }
         }
       } else {
         // No distribution needed, but still update contract balance
         debitLoss(walletAddress, game.betAmount).catch((error) => {
-          console.error('❌ Failed to sync loss to contract:', error);
         });
       }
 
@@ -383,7 +336,6 @@ export async function POST(req: NextRequest) {
       // Sync winnings to contract (async - don't block response)
       // Only credit the profit, not the full payout (betAmount was already deducted)
       creditWinnings(walletAddress, profit).catch((error) => {
-        console.error('❌ Failed to sync winnings to contract:', error);
       });
 
 
@@ -458,7 +410,6 @@ export async function POST(req: NextRequest) {
         : null,
     });
   } catch (error: any) {
-    console.error('Bet Mode answer error:', error);
     return NextResponse.json({ error: error.message || 'Failed to process answer' }, { status: 500 });
   }
 }

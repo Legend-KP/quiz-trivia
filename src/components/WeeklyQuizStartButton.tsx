@@ -65,7 +65,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
       }
 
       // All checks passed - starting quiz (QT requirement removed)
-      console.log('✅ All checks passed - starting quiz');
+      // console.log('✅ All checks passed - starting quiz');
 
       // 7. Call the onQuizStart callback
       await onQuizStart();
@@ -74,7 +74,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
       setIsDetailsModalOpen(false);
 
     } catch (err: any) {
-      console.error('❌ Quiz start error:', err);
+      // console.error('❌ Quiz start error:', err);
       setError(err.message || 'Failed to start quiz. Please try again.');
     } finally {
       setIsStarting(false);

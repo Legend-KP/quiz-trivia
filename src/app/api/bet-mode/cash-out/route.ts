@@ -62,7 +62,6 @@ export async function POST(req: NextRequest) {
     // Sync winnings to contract (async - don't block response)
     // Only credit the profit, not the full payout (betAmount was already deducted)
     creditWinnings(walletAddress, profit).catch((error) => {
-      console.error('❌ Failed to sync winnings to contract:', error);
     });
 
 
@@ -99,7 +98,6 @@ export async function POST(req: NextRequest) {
       newBalance: updatedAccount?.qtBalance || 0,
     });
   } catch (error: any) {
-    console.error('Bet Mode cash out error:', error);
     return NextResponse.json({ error: error.message || 'Failed to cash out' }, { status: 500 });
   }
 }

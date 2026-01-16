@@ -145,7 +145,6 @@ export default function QTBalanceChecker({ onBalanceVerified }: QTBalanceChecker
       }));
       
     } catch (error: any) {
-      console.error('Manual balance check failed:', error);
       setDebugInfo((prev: any) => ({
         ...prev,
         manualCheckError: error.message,
@@ -173,7 +172,6 @@ export default function QTBalanceChecker({ onBalanceVerified }: QTBalanceChecker
           contractAddress: QT_TOKEN_ADDRESS,
         }));
       } catch (error: any) {
-        console.error('Contract verification failed:', error);
         setContractExists(false);
       }
     };

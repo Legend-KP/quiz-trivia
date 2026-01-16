@@ -31,13 +31,11 @@ export async function POST(request: Request) {
       });
     } catch (e) {
       if (e instanceof Errors.InvalidTokenError) {
-        console.info('Invalid token:', e.message);
         return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
       }
       throw e;
     }
   } catch (error) {
-    console.error('Token validation error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 },

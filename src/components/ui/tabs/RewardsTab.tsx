@@ -61,7 +61,6 @@ export function RewardsTab() {
       // Check if response is OK and is JSON
       if (!res.ok) {
         const text = await res.text();
-        console.error('API error response:', text);
         return { success: false, error: `API error: ${res.status} ${res.statusText}` };
       }
       
@@ -69,7 +68,6 @@ export function RewardsTab() {
       const contentType = res.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         const text = await res.text();
-        console.error('Non-JSON response:', text.substring(0, 200));
         return { success: false, error: 'Server returned non-JSON response' };
       }
       
@@ -81,7 +79,6 @@ export function RewardsTab() {
       
       return data;
     } catch (error) {
-      console.error('Spin wheel error:', error);
       return { success: false, error: error instanceof Error ? error.message : 'Failed to spin wheel' };
     }
   };

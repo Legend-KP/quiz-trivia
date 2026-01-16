@@ -37,7 +37,6 @@ async function getContractQTBalance(contractAddress: string): Promise<number> {
     // QT token has 18 decimals
     return parseFloat(ethers.formatUnits(balance, 18));
   } catch (error) {
-    console.error(`Error fetching balance for ${contractAddress}:`, error);
     return 0;
   }
 }
@@ -77,7 +76,6 @@ export async function GET(req: NextRequest) {
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
-    console.error('Error fetching contract balances:', error);
     return NextResponse.json(
       {
         success: false,
