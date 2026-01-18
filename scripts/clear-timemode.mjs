@@ -16,25 +16,29 @@ dotenv.config({ path: join(__dirname, '..', '.env.local') });
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
-  //console.error('❌ MONGODB_URI environment variable is not set');
-  //console.log('💡 Add it to your .env.local file or run with:');
-  //console.log('   MONGODB_URI="your-connection-string" node scripts/clear-timemode.mjs');
-  //process.exit(1);
+  console.error('❌ MONGODB_URI environment variable is not set');
+  console.log('💡 Add it to your .env.local file or run with:');
+  console.log('   MONGODB_URI="your-connection-string" node scripts/clear-timemode.mjs');
+  process.exit(1);
 }
 
 async function clearTimeModeLeaderboard() {
   const client = new MongoClient(MONGODB_URI);
   
   try {
-    //console.log('🔌 Connecting to MongoDB...');
+    console.log('🔌 Connecting to MongoDB...');
     await client.connect();
-    //console.log('✅ Connected!');
+    console.log('✅ Connected!');
     
     const db = client.db('quiz-trivia');
     const collection = db.collection('leaderboard');
     
+    // Check current entries first
+    const currentCount = await collection.countDocuments({ mode: 'TIME_MODE' });
+    console.log(`📊 Current Time Mode entries: ${currentCount}`);
+    
     // Delete all TIME_MODE entries (without quizId)
-    //console.log('🗑️  Deleting Time Mode entries...');
+    console.log('🗑️  Deleting Time Mode entries...');
     const result = await collection.deleteMany({ 
       mode: 'TIME_MODE',
       $or: [
@@ -47,13 +51,13 @@ async function clearTimeModeLeaderboard() {
     
     // Verify
     const remaining = await collection.countDocuments({ mode: 'TIME_MODE' });
-    //console.log(`📊 Remaining Time Mode entries: ${remaining}`);
+    console.log(`📊 Remaining Time Mode entries: ${remaining}`);
     
   } catch (error) {
-   // console.error('❌ Error:', error.message);
+    console.error('❌ Error:', error.message);
   } finally {
     await client.close();
-    //console.log('🔌 Connection closed');
+    console.log('🔌 Connection closed');
   }
 }
 

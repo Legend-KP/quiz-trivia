@@ -21,7 +21,10 @@
     "deploy:raw": "vercel --prod",
     "cleanup": "node scripts/cleanup.js",
     "migrate:leaderboard": "node scripts/migrate-leaderboard.js",
-    "clear:timemode": "node scripts/clear-timemode.mjs"
+    "clear:timemode": "node scripts/clear-timemode.mjs",
+    "clear:time-attempts": "node scripts/clear-time-attempts.mjs",
+    "clear:timemode-all": "node scripts/clear-all-timemode-data.mjs",
+    "check:leaderboard": "node scripts/check-leaderboard.mjs"
   },
   "dependencies": {
     "@farcaster/auth-client": ">=0.3.0 <1.0.0",
