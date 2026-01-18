@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Clock, Trophy, Star, X } from 'lucide-react';
 import { useMiniApp } from '@neynar/react';
 import { APP_URL, APP_TITLE_IMAGE_URL, APP_NAME } from '~/lib/constants';
@@ -907,14 +907,37 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context
   const [error, setError] = useState<string | null>(null);
   const { actions } = useMiniApp();
   
-  // Contest countdown: 72 hours starting NOW
-  const [contestEndTime] = useState<number>(() => {
-    // Contest starts NOW and runs for 72 hours
+  // ✅ FIXED: Contest end time - SAME for ALL users
+  // Set your actual contest end date/time here
+  const CONTEST_END_TIME = useMemo(() => {
+    // Contest ends 72 hours from January 18, 2026 11:30 PM IST
+    // January 18, 2026 11:30 PM IST = January 18, 2026 6:00 PM UTC
+    const contestStart = new Date('2026-01-18T18:00:00.000Z').getTime();
+    return contestStart + (72 * 60 * 60 * 1000); // +72 hours
+  }, []);
+  
+  // ✅ FIXED: Calculate time left dynamically
+  const [contestTimeLeft, setContestTimeLeft] = useState<number>(() => {
     const now = Date.now();
-    const contestEnd = now + (72 * 60 * 60 * 1000); // 72 hours from now
-    return contestEnd;
+    return Math.max(0, Math.floor((CONTEST_END_TIME - now) / 1000));
   });
-  const [contestTimeLeft, setContestTimeLeft] = useState<number>(72 * 60 * 60); // 72 hours in seconds
+
+  // ✅ FIXED: Update contest countdown every second
+  useEffect(() => {
+    const updateContestCountdown = () => {
+      const now = Date.now();
+      const timeLeft = Math.max(0, Math.floor((CONTEST_END_TIME - now) / 1000));
+      setContestTimeLeft(timeLeft);
+    };
+    
+    // Update immediately
+    updateContestCountdown();
+    
+    // Update every second
+    const interval = setInterval(updateContestCountdown, 1000);
+    
+    return () => clearInterval(interval);
+  }, [CONTEST_END_TIME]);
 
   // Utility function to shuffle an array using Fisher-Yates algorithm
   const shuffleArray = useCallback((array: QuizQuestion[]): QuizQuestion[] => {
