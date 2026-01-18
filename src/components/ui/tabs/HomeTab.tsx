@@ -907,11 +907,13 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context
   const [error, setError] = useState<string | null>(null);
   const { actions } = useMiniApp();
   
-  // Contest countdown: 72 hours from now (you can adjust the start time)
+  // Contest countdown: 72 hours from 11:30PM IST on 18/01/2026
   const [contestEndTime] = useState<number>(() => {
-    // Set contest end time to 72 hours from now
-    // In production, you'd want to set this to a specific timestamp
-    return Date.now() + (72 * 60 * 60 * 1000);
+    // Contest starts: 18 Jan 2026 23:30 IST (18:00 UTC)
+    // Contest ends: 21 Jan 2026 23:30 IST (72 hours later)
+    const contestStart = new Date('2026-01-18T18:00:00.000Z').getTime(); // 11:30PM IST
+    const contestEnd = contestStart + (72 * 60 * 60 * 1000); // 72 hours later
+    return contestEnd;
   });
   const [contestTimeLeft, setContestTimeLeft] = useState<number>(72 * 60 * 60); // 72 hours in seconds
 
@@ -1065,14 +1067,14 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context
           <>
             <div className="bg-white rounded-2xl p-8 shadow-2xl text-center">
               <h2 className="text-2xl font-bold mb-2 text-gray-800">Time Mode • 45s</h2>
-              <p className="text-gray-600 mb-6">Answer as many as you can. Costs 10 coins to start.</p>
+              <p className="text-gray-600 mb-6">Answer as many as you can.</p>
               {error && <div className="mb-4 text-red-600 font-semibold">{error}</div>}
               <button onClick={startRun} className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700">Start</button>
             </div>
             
             {/* Contest Popup */}
             <div className="bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl p-8 shadow-2xl text-center mt-6">
-              <h2 className="text-2xl font-bold mb-4 text-white">⚡ Time Mode Contest</h2>
+              <h2 className="text-2xl font-bold mb-4 text-white">⚡ Time Mode Contest is LIVE!</h2>
               
               {/* Countdown Timer */}
               <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 mb-6">
