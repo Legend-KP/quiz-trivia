@@ -21,6 +21,8 @@ interface LeaderboardEntry {
 export default function PublicLeaderboard() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null); // ✅ FIX #3: Add error state
+  
   // Check URL params for mode parameter
   const getInitialMode = (): 'CLASSIC' | 'TIME_MODE' => {
     if (typeof window !== 'undefined') {
@@ -37,11 +39,13 @@ export default function PublicLeaderboard() {
     lastUpdated: ''
   });
   const [currentQuizId, setCurrentQuizId] = useState<string | null>(null);
-  const { actions } = useMiniApp();
+  const { actions, context } = useMiniApp(); // ✅ FIX #9: Get user context
 
-  const fetchLeaderboard = useCallback(async (quizId?: string | null) => {
+  // ✅ FIX #1, #3, #7: Add all dependencies, error handling, and AbortController support
+  const fetchLeaderboard = useCallback(async (quizId?: string | null, signal?: AbortSignal) => {
     try {
       setLoading(true);
+      setError(null); // Clear previous errors
       let url: string;
       
       // For CLASSIC mode (weekly quiz), always filter by current quizId
@@ -52,7 +56,14 @@ export default function PublicLeaderboard() {
         url = `/api/leaderboard?mode=${selectedMode}`;
       }
       
-      const response = await fetch(url);
+      const response = await fetch(url, { signal }); // ✅ FIX #7: Pass abort signal
+      
+      if (signal?.aborted) return; // Don't process if aborted
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: Failed to fetch leaderboard`);
+      }
+      
       const data = await response.json();
       if (data.leaderboard) {
         setLeaderboard(data.leaderboard);
@@ -61,37 +72,61 @@ export default function PublicLeaderboard() {
           lastUpdated: data.lastUpdated || new Date().toISOString()
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (error.name === 'AbortError') return; // Ignore abort errors
+      console.error('Leaderboard fetch error:', error);
+      setError('Failed to load leaderboard. Please refresh the page.');
       setLeaderboard([]);
     } finally {
       setLoading(false);
     }
-  }, [selectedMode]);
+  }, [selectedMode, currentWeeklyQuiz.id]); // ✅ FIX #1: Add missing dependency
 
+  // ✅ FIX #7: Abort previous fetch on mode change
   useEffect(() => {
-    fetchLeaderboard();
+    const controller = new AbortController();
+    fetchLeaderboard(undefined, controller.signal);
+    
     // Initialize quizId for CLASSIC mode
     if (selectedMode === 'CLASSIC') {
       setCurrentQuizId(currentWeeklyQuiz.id);
     }
+    
+    return () => controller.abort(); // Cancel fetch on unmount or mode change
   }, [fetchLeaderboard, selectedMode]);
 
-  // Monitor quizId changes - refresh leaderboard when new weekly quiz starts (only for CLASSIC mode)
+  // ✅ FIX #2: Check only on page visibility change (not every 5 seconds)
   useEffect(() => {
     if (selectedMode === 'CLASSIC') {
-      const checkQuizId = () => {
-        const newQuizId = currentWeeklyQuiz.id;
-        if (newQuizId !== currentQuizId) {
-          setCurrentQuizId(newQuizId);
-          fetchLeaderboard(newQuizId);
+      const handleVisibilityChange = () => {
+        if (!document.hidden) {
+          const newQuizId = currentWeeklyQuiz.id;
+          if (newQuizId !== currentQuizId) {
+            setCurrentQuizId(newQuizId);
+            fetchLeaderboard(newQuizId);
+          }
         }
       };
       
-      // Check every 5 seconds for quizId changes (when new quiz starts)
-      const interval = setInterval(checkQuizId, 5000);
-      return () => clearInterval(interval);
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
     }
   }, [selectedMode, currentQuizId, fetchLeaderboard]);
+
+  // ✅ FIX #4: Better mode switching with state preservation
+  const handleModeSwitch = (newMode: 'CLASSIC' | 'TIME_MODE') => {
+    setSelectedMode(newMode);
+    setLeaderboard([]); // Clear old data immediately
+    setLoading(true); // Show loading state
+    setError(null); // Clear any errors
+    
+    // Update URL without reload
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('mode', newMode);
+      window.history.pushState({}, '', url);
+    }
+  };
 
   const handleShare = async () => {
     try {
@@ -130,7 +165,7 @@ export default function PublicLeaderboard() {
             ].map((mode) => (
               <button
                 key={mode.value}
-                onClick={() => setSelectedMode(mode.value as any)}
+                onClick={() => handleModeSwitch(mode.value as any)} // ✅ FIX #4: Use handleModeSwitch
                 className={`px-4 py-2 rounded-lg font-semibold transition-all duration-200 ${
                   selectedMode === mode.value
                     ? 'bg-white text-gray-800 shadow-lg'
@@ -183,19 +218,37 @@ export default function PublicLeaderboard() {
             )}
           </div>
 
+          {/* ✅ FIX #6: Better loading indicator during mode switch */}
           {loading ? (
             <div className="text-center py-8">
               <div className="spinner h-8 w-8 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading leaderboard...</p>
+              <p className="text-gray-600">
+                Loading {selectedMode === 'CLASSIC' ? 'Weekly Quiz' : 'Time Mode'} leaderboard...
+              </p>
+            </div>
+          ) : error ? (
+            // ✅ FIX #5: Show error state separately from empty state
+            <div className="text-center py-8">
+              <div className="text-red-500 text-4xl mb-4">⚠️</div>
+              <p className="text-red-600 font-semibold mb-2">{error}</p>
+              <button
+                onClick={() => fetchLeaderboard()}
+                className="mt-4 inline-block bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-2 px-6 rounded-lg hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200"
+              >
+                🔄 Retry
+              </button>
             </div>
           ) : leaderboard.length === 0 ? (
+            // ✅ FIX #5: Better empty state message
             <div className="text-center py-8">
-              <p className="text-gray-500">No participants yet. Be the first to complete the quiz!</p>
+              <div className="text-gray-400 text-4xl mb-4">🏆</div>
+              <p className="text-gray-500 mb-2">No participants yet for {selectedMode === 'CLASSIC' ? 'Weekly Quiz' : 'Time Mode'}!</p>
+              <p className="text-gray-400 text-sm mb-4">Be the first to complete the quiz and claim the top spot.</p>
               <Link 
                 href="/" 
                 className="mt-4 inline-block bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-2 px-6 rounded-lg hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200"
               >
-                Take the Quiz
+                🚀 Take the Quiz
               </Link>
             </div>
           ) : (
@@ -206,15 +259,26 @@ export default function PublicLeaderboard() {
                 scrollbarColor: '#94a3b8 #e2e8f0'
               }}
             >
-              {leaderboard.map((player) => (
-                <div
-                  key={player.fid}
-                  className={`flex items-center justify-between p-4 rounded-lg border-2 ${
-                    player.rank && player.rank <= 3
-                      ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-300'
-                      : 'bg-gray-50 border-gray-200'
-                  }`}
-                >
+              {leaderboard.map((player) => {
+                const userFid = context?.user?.fid;
+                const isCurrentUser = player.fid === userFid;
+                
+                return (
+                  <div
+                    key={player.fid}
+                    className={`relative flex items-center justify-between p-4 rounded-lg border-2 ${
+                      isCurrentUser
+                        ? 'bg-blue-100 border-blue-500 ring-2 ring-blue-400' // ✅ FIX #9: Highlight user's entry
+                        : player.rank && player.rank <= 3
+                          ? 'bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-300'
+                          : 'bg-gray-50 border-gray-200'
+                    }`}
+                  >
+                    {isCurrentUser && (
+                      <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                        YOU
+                      </div>
+                    )}
                   <div className="flex items-center space-x-4">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
                       player.rank === 1 ? 'bg-yellow-500 text-yellow-900' :
@@ -239,7 +303,10 @@ export default function PublicLeaderboard() {
                           {player.displayName || player.username}
                         </div>
                         <div className="text-sm text-gray-500">@{player.username}</div>
-                        
+                        <div className="text-xs text-gray-400 flex items-center">
+                          <Clock className="w-3 h-3 mr-1" />
+                          Completed in {player.time}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -251,7 +318,8 @@ export default function PublicLeaderboard() {
                     </div>
                   </div>
                 </div>
-              ))}
+              );
+            })}
             </div>
           )}
 

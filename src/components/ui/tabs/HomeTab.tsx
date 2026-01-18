@@ -350,6 +350,31 @@ const HomePage: React.FC<HomePageProps> = ({
   const [weeklyUserCompleted, setWeeklyUserCompleted] = useState(false);
   const { actions, added, context } = useMiniApp();
   const attemptedAddRef = useRef(false);
+  
+  // Contest countdown timer for Time Mode
+  const CONTEST_END_TIME = useMemo(() => {
+    const contestStart = new Date('2026-01-18T18:00:00.000Z').getTime();
+    return contestStart + (72 * 60 * 60 * 1000);
+  }, []);
+  
+  const [contestTimeLeft, setContestTimeLeft] = useState<number>(() => {
+    const now = Date.now();
+    return Math.max(0, Math.floor((CONTEST_END_TIME - now) / 1000));
+  });
+  
+  // Update contest countdown every second
+  useEffect(() => {
+    const updateContestCountdown = () => {
+      const now = Date.now();
+      const timeLeft = Math.max(0, Math.floor((CONTEST_END_TIME - now) / 1000));
+      setContestTimeLeft(timeLeft);
+    };
+    
+    updateContestCountdown();
+    const interval = setInterval(updateContestCountdown, 1000);
+    
+    return () => clearInterval(interval);
+  }, [CONTEST_END_TIME]);
 
   // Check if user already completed this weekly quiz
   useEffect(() => {
@@ -474,6 +499,7 @@ const HomePage: React.FC<HomePageProps> = ({
             mode={QuizMode.TIME_MODE}
             modeName="Time Mode"
             onQuizStart={onStartTimeMode}
+            isContestLive={contestTimeLeft > 0}
           />
 
           {/* Weekly Quiz - Now with built-in balance verification */}
