@@ -239,10 +239,7 @@ export default function PublicLeaderboard() {
                           {player.displayName || player.username}
                         </div>
                         <div className="text-sm text-gray-500">@{player.username}</div>
-                        <div className="text-xs text-gray-400 flex items-center">
-                          <Clock className="w-3 h-3 mr-1" />
-                          Completed in {player.time}
-                        </div>
+                        
                       </div>
                     </div>
                   </div>
