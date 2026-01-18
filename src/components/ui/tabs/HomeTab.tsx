@@ -907,12 +907,11 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context
   const [error, setError] = useState<string | null>(null);
   const { actions } = useMiniApp();
   
-  // Contest countdown: 72 hours from 11:30PM IST on 18/01/2026
+  // Contest countdown: 72 hours starting NOW
   const [contestEndTime] = useState<number>(() => {
-    // Contest starts: 18 Jan 2026 23:30 IST (18:00 UTC)
-    // Contest ends: 21 Jan 2026 23:30 IST (72 hours later)
-    const contestStart = new Date('2026-01-18T18:00:00.000Z').getTime(); // 11:30PM IST
-    const contestEnd = contestStart + (72 * 60 * 60 * 1000); // 72 hours later
+    // Contest starts NOW and runs for 72 hours
+    const now = Date.now();
+    const contestEnd = now + (72 * 60 * 60 * 1000); // 72 hours from now
     return contestEnd;
   });
   const [contestTimeLeft, setContestTimeLeft] = useState<number>(72 * 60 * 60); // 72 hours in seconds
