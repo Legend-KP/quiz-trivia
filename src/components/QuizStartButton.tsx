@@ -26,7 +26,7 @@ const QuizStartButton: React.FC<QuizStartButtonProps> = ({
       case QuizMode.CLASSIC:
         return 'Classic Quiz 🧠';
       case QuizMode.TIME_MODE:
-        return isContestLive ? 'Time Mode ⏱️ 🔴 LIVE' : 'Time Mode ⏱️';
+        return isContestLive ? 'Time Mode ⏱️' : 'Time Mode ⏱️';
       case QuizMode.CHALLENGE:
         return 'Challenge Mode';
       default:
