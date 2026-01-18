@@ -1040,6 +1040,13 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const formatContestTime = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours}h ${mins}m ${secs}s`;
+  };
+
   const q = questions[qIndex];
 
   return (
