@@ -277,7 +277,7 @@ const WeeklyQuizStartButton: React.FC<WeeklyQuizStartButtonProps> = ({
                     🧩 Weekly Quiz Challenge
                   </div>
                   <p className="text-xs text-blue-700 mb-1">
-                    • 10 questions with 45 seconds per question
+                    • 10 questions with 30 seconds per question
                   </p>
                   <p className="text-xs text-blue-700">
                     • Runs every Tuesday & Friday, 6 PM – 6 AM UTC

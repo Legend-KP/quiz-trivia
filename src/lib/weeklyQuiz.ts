@@ -115,7 +115,7 @@ function getCurrentWeeklyQuiz(): WeeklyQuizConfig {
       question: "Why do many RWA protocols operate segmented or gated liquidity pools today?",
       options: ["Pricing determinism", "Settlement finality", "Regulatory exposure", "Oracle update latency"],
       correct: 2,
-      timeLimit: 45,
+      timeLimit: 30,
       explanation: "Gated pools help protocols comply with regulations like KYC/AML by restricting access."
     },
     {
@@ -123,7 +123,7 @@ function getCurrentWeeklyQuiz(): WeeklyQuizConfig {
       question: "What change most improved yield continuity in tokenized treasury products?",
       options: ["Redemption batching", "NAV refresh cadence", "Stablecoin pairing", "Shorter asset duration"],
       correct: 1,
-      timeLimit: 45,
+      timeLimit: 30,
       explanation: "More frequent NAV updates ensure yield accrual is reflected smoothly on-chain."
     },
     {
@@ -131,7 +131,7 @@ function getCurrentWeeklyQuiz(): WeeklyQuizConfig {
       question: "Which asset class currently dominates on-chain RWA TVL?",
       options: ["Commodities", "Trade receivables", "Real estate", "Government debt"],
       correct: 3,
-      timeLimit: 45,
+      timeLimit: 30,
       explanation: "Tokenized government debt (like U.S. Treasuries) makes up the majority of on-chain RWA value."
     },
     {
@@ -139,7 +139,7 @@ function getCurrentWeeklyQuiz(): WeeklyQuizConfig {
       question: "Why are SPVs still widely used in RWA tokenization structures?",
       options: ["Cost reduction", "Operational scale", "Tax efficiency", "Legal insulation"],
       correct: 3,
-      timeLimit: 45,
+      timeLimit: 30,
       explanation: "SPVs isolate legal risk and protect token holders from direct liability."
     },
     {
@@ -147,7 +147,7 @@ function getCurrentWeeklyQuiz(): WeeklyQuizConfig {
       question: "What factor most enabled institutional RWA deployment on public chains?",
       options: ["Custody standards", "Rollup maturity", "Gas predictability", "Product regulation"],
       correct: 3,
-      timeLimit: 45,
+      timeLimit: 30,
       explanation: "Clear regulatory frameworks allow institutions to legally issue and manage RWAs on-chain."
     },
     {
@@ -155,7 +155,7 @@ function getCurrentWeeklyQuiz(): WeeklyQuizConfig {
       question: "What most limits RWA composability across DeFi protocols?",
       options: ["Liquidity depth", "Execution speed", "Transfer controls", "Oracle accuracy"],
       correct: 2,
-      timeLimit: 45,
+      timeLimit: 30,
       explanation: "Compliance-based transfer restrictions limit permissionless composability in DeFi."
     },
     {
@@ -163,7 +163,7 @@ function getCurrentWeeklyQuiz(): WeeklyQuizConfig {
       question: "Why do many tokenized fund RWAs restrict secondary market transfers?",
       options: ["Compliance enforcement", "Price stability", "Liquidity protection", "Gas optimization"],
       correct: 0,
-      timeLimit: 45,
+      timeLimit: 30,
       explanation: "Transfer limits help ensure only compliant participants can hold the asset."
     },
     {
@@ -171,7 +171,7 @@ function getCurrentWeeklyQuiz(): WeeklyQuizConfig {
       question: "What risk is MOST difficult to eliminate in on-chain RWA lending markets?",
       options: ["Oracle manipulation", "Liquidation latency", "Smart contract risk", "Legal enforceability"],
       correct: 3,
-      timeLimit: 45,
+      timeLimit: 30,
       explanation: "Enforcing legal claims on real-world assets remains complex and jurisdiction-dependent."
     },
     {
@@ -179,7 +179,7 @@ function getCurrentWeeklyQuiz(): WeeklyQuizConfig {
       question: "Why are RWAs typically integrated into DeFi as yield-bearing primitives rather than volatile collateral?",
       options: ["Faster settlement", "Higher TVL caps", "Predictable cashflows", "Lower volatility"],
       correct: 2,
-      timeLimit: 45,
+      timeLimit: 30,
       explanation: "RWAs generate stable, predictable yields, making them ideal yield instruments."
     },
     {
@@ -187,7 +187,7 @@ function getCurrentWeeklyQuiz(): WeeklyQuizConfig {
       question: "Which factor most constrains global scalability of RWAs across jurisdictions?",
       options: ["Capital efficiency", "Chain interoperability", "Custodial infrastructure", "Regulatory fragmentation"],
       correct: 3,
-      timeLimit: 45,
+      timeLimit: 30,
       explanation: "Different legal and regulatory rules across countries limit global RWA expansion."
     }
   ]
