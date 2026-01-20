@@ -880,7 +880,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
                 const shareText =
                   mode === QuizMode.TIME_MODE
                     ? `⚡️ I just smashed Time Mode on ${APP_NAME} by @kushal-paliwal!\n${score} correct answers with ${accuracyPercent || 0}% accuracy — think you can beat it? 👀\nCome try it 👇`
-                    : `🧠 Weekly Quiz Challenge on RWAs, and It's Recent Developments on ${APP_NAME} by @kushal-paliwal!\nScored ${formatScoreValue(
+                    : `🧠 Weekly Quiz Challenge on Privacy & MEV in Ethereum on ${APP_NAME} by @kushal-paliwal!\nScored ${formatScoreValue(
                         score,
                       )}/${totalQuestions} — this one really tests your brain 🔥\nJump in and give it a go 👇`;
 

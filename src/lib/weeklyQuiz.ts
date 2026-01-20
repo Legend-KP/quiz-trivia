@@ -106,89 +106,89 @@ function getCurrentWeeklyQuiz(): WeeklyQuizConfig {
   
   return {
     id: getQuizIdFromDate(startDate),
-    topic: "RWAs, and It's Recent Developments", // Update this topic for each quiz
+    topic: "Privacy & MEV in Ethereum", // Update this topic for each quiz
     startTime: startDate.toISOString(), // Tuesday or Friday 6 PM UTC
     endTime: endDate.toISOString(), // Next day 6 AM UTC (12-hour window)
     questions: [
     {
       id: 1,
-      question: "Why do many RWA protocols operate segmented or gated liquidity pools today?",
-      options: ["Pricing determinism", "Settlement finality", "Regulatory exposure", "Oracle update latency"],
-      correct: 2,
+      question: "Which tool is commonly used to obscure the origin of Ethereum transactions?",
+      options: ["Chainlink", "Tornado Cash", "Flashbots", "Plasma"],
+      correct: 1,
       timeLimit: 30,
-      explanation: "Gated pools help protocols comply with regulations like KYC/AML by restricting access."
+      explanation: "Tornado Cash mixes funds to break transaction linkability."
     },
     {
       id: 2,
-      question: "What change most improved yield continuity in tokenized treasury products?",
-      options: ["Redemption batching", "NAV refresh cadence", "Stablecoin pairing", "Shorter asset duration"],
+      question: "What is a \"stealth address\"?",
+      options: ["A private validator node", "A one-time anonymous receiving address", "A multisig wallet without anonymous receiving address", "A burner contract address"],
       correct: 1,
       timeLimit: 30,
-      explanation: "More frequent NAV updates ensure yield accrual is reflected smoothly on-chain."
+      explanation: "Stealth addresses generate unique one-time receiving addresses for privacy."
     },
     {
       id: 3,
-      question: "Which asset class currently dominates on-chain RWA TVL?",
-      options: ["Commodities", "Trade receivables", "Real estate", "Government debt"],
-      correct: 3,
+      question: "Which privacy issue does MEV (Maximal Extractable Value) create?",
+      options: ["Hidden validator identities", "Leak transaction intent in the public mempool", "Lower smart contract security", "Transaction censorship"],
+      correct: 1,
       timeLimit: 30,
-      explanation: "Tokenized government debt (like U.S. Treasuries) makes up the majority of on-chain RWA value."
+      explanation: "MEV bots can read pending transactions, exposing user intent."
     },
     {
       id: 4,
-      question: "Why are SPVs still widely used in RWA tokenization structures?",
-      options: ["Cost reduction", "Operational scale", "Tax efficiency", "Legal insulation"],
-      correct: 3,
+      question: "What technology helps hide the amount transferred in a crypto transaction?",
+      options: ["Ring signatures", "Homomorphic encryption", "Shielded transactions", "Merkle proofs"],
+      correct: 2,
       timeLimit: 30,
-      explanation: "SPVs isolate legal risk and protect token holders from direct liability."
+      explanation: "Shielded transfers encrypt transaction values."
     },
     {
       id: 5,
-      question: "What factor most enabled institutional RWA deployment on public chains?",
-      options: ["Custody standards", "Rollup maturity", "Gas predictability", "Product regulation"],
-      correct: 3,
+      question: "Why are TEEs (Trusted Execution Environments) used in privacy protocols?",
+      options: ["Increase node count", "Secure off-chain computation inside hardware enclaves", "Speed up mempool processing speed", "Replace private keys"],
+      correct: 1,
       timeLimit: 30,
-      explanation: "Clear regulatory frameworks allow institutions to legally issue and manage RWAs on-chain."
+      explanation: "TEEs act as secure \"black boxes\" for confidential computation."
     },
     {
       id: 6,
-      question: "What most limits RWA composability across DeFi protocols?",
-      options: ["Liquidity depth", "Execution speed", "Transfer controls", "Oracle accuracy"],
+      question: "Why is FHE (Fully Homomorphic Encryption) currently impractical for Ethereum?",
+      options: ["It is not quantum-resistant", "Gas fees for homomorphic computation are too high", "It requires extremely heavy computation, too slow for real-time use", "Validators can't execute encrypted data"],
       correct: 2,
       timeLimit: 30,
-      explanation: "Compliance-based transfer restrictions limit permissionless composability in DeFi."
+      explanation: "FHE is slow due to encrypted computation noise growth."
     },
     {
       id: 7,
-      question: "Why do many tokenized fund RWAs restrict secondary market transfers?",
-      options: ["Compliance enforcement", "Price stability", "Liquidity protection", "Gas optimization"],
-      correct: 0,
+      question: "Which attack can reveal relationships between addresses even without identity info?",
+      options: ["Spam attack", "Network partition", "Graph clustering attack", "DoS attack"],
+      correct: 2,
       timeLimit: 30,
-      explanation: "Transfer limits help ensure only compliant participants can hold the asset."
+      explanation: "Clustering heuristics reveal wallet linkages from on-chain patterns."
     },
     {
       id: 8,
-      question: "What risk is MOST difficult to eliminate in on-chain RWA lending markets?",
-      options: ["Oracle manipulation", "Liquidation latency", "Smart contract risk", "Legal enforceability"],
-      correct: 3,
+      question: "Why do zk-rollups improve privacy even before implementing full ZK privacy features?",
+      options: ["They use anonymous validators", "They batch transactions, reducing data leakage", "They encrypt calldata by default", "They hide gas fees"],
+      correct: 1,
       timeLimit: 30,
-      explanation: "Enforcing legal claims on real-world assets remains complex and jurisdiction-dependent."
+      explanation: "Batching obscures individual transaction details."
     },
     {
       id: 9,
-      question: "Why are RWAs typically integrated into DeFi as yield-bearing primitives rather than volatile collateral?",
-      options: ["Faster settlement", "Higher TVL caps", "Predictable cashflows", "Lower volatility"],
+      question: "Which layer of Ethereum leaks the MOST information for privacy?",
+      options: ["Execution layer", "Consensus layer", "Mempool layer", "Fee market"],
       correct: 2,
       timeLimit: 30,
-      explanation: "RWAs generate stable, predictable yields, making them ideal yield instruments."
+      explanation: "The public mempool exposes pending transactions in real time."
     },
     {
       id: 10,
-      question: "Which factor most constrains global scalability of RWAs across jurisdictions?",
-      options: ["Capital efficiency", "Chain interoperability", "Custodial infrastructure", "Regulatory fragmentation"],
-      correct: 3,
+      question: "Which property does a Zero-Knowledge Proof provide?",
+      options: ["Encrypted block production", "Proving correctness without revealing data", "Faster gas calculations", "Validator anonymity"],
+      correct: 1,
       timeLimit: 30,
-      explanation: "Different legal and regulatory rules across countries limit global RWA expansion."
+      explanation: "ZKPs prove correctness while hiding private information."
     }
   ]
   };
