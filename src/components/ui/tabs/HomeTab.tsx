@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Clock, Trophy, Star, X } from 'lucide-react';
 import { useMiniApp } from '@neynar/react';
 import { APP_URL, APP_TITLE_IMAGE_URL, APP_NAME } from '~/lib/constants';
@@ -350,31 +350,6 @@ const HomePage: React.FC<HomePageProps> = ({
   const [weeklyUserCompleted, setWeeklyUserCompleted] = useState(false);
   const { actions, added, context } = useMiniApp();
   const attemptedAddRef = useRef(false);
-  
-  // Contest countdown timer for Time Mode
-  const CONTEST_END_TIME = useMemo(() => {
-    const contestStart = new Date('2026-01-18T18:00:00.000Z').getTime();
-    return contestStart + (72 * 60 * 60 * 1000);
-  }, []);
-  
-  const [contestTimeLeft, setContestTimeLeft] = useState<number>(() => {
-    const now = Date.now();
-    return Math.max(0, Math.floor((CONTEST_END_TIME - now) / 1000));
-  });
-  
-  // Update contest countdown every second
-  useEffect(() => {
-    const updateContestCountdown = () => {
-      const now = Date.now();
-      const timeLeft = Math.max(0, Math.floor((CONTEST_END_TIME - now) / 1000));
-      setContestTimeLeft(timeLeft);
-    };
-    
-    updateContestCountdown();
-    const interval = setInterval(updateContestCountdown, 1000);
-    
-    return () => clearInterval(interval);
-  }, [CONTEST_END_TIME]);
 
   // Check if user already completed this weekly quiz
   useEffect(() => {
@@ -499,7 +474,6 @@ const HomePage: React.FC<HomePageProps> = ({
             mode={QuizMode.TIME_MODE}
             modeName="Time Mode"
             onQuizStart={onStartTimeMode}
-            isContestLive={contestTimeLeft > 0}
           />
 
           {/* Weekly Quiz - Now with built-in balance verification */}
@@ -932,38 +906,6 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { actions } = useMiniApp();
-  
-  // ✅ FIXED: Contest end time - SAME for ALL users
-  // Set your actual contest end date/time here
-  const CONTEST_END_TIME = useMemo(() => {
-    // Contest ends 72 hours from January 18, 2026 11:30 PM IST
-    // January 18, 2026 11:30 PM IST = January 18, 2026 6:00 PM UTC
-    const contestStart = new Date('2026-01-18T18:00:00.000Z').getTime();
-    return contestStart + (72 * 60 * 60 * 1000); // +72 hours
-  }, []);
-  
-  // ✅ FIXED: Calculate time left dynamically
-  const [contestTimeLeft, setContestTimeLeft] = useState<number>(() => {
-    const now = Date.now();
-    return Math.max(0, Math.floor((CONTEST_END_TIME - now) / 1000));
-  });
-
-  // ✅ FIXED: Update contest countdown every second
-  useEffect(() => {
-    const updateContestCountdown = () => {
-      const now = Date.now();
-      const timeLeft = Math.max(0, Math.floor((CONTEST_END_TIME - now) / 1000));
-      setContestTimeLeft(timeLeft);
-    };
-    
-    // Update immediately
-    updateContestCountdown();
-    
-    // Update every second
-    const interval = setInterval(updateContestCountdown, 1000);
-    
-    return () => clearInterval(interval);
-  }, [CONTEST_END_TIME]);
 
   // Utility function to shuffle an array using Fisher-Yates algorithm
   const shuffleArray = useCallback((array: QuizQuestion[]): QuizQuestion[] => {
@@ -1090,13 +1032,6 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const formatContestTime = (seconds: number): string => {
-    const hours = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hours}h ${mins}m ${secs}s`;
-  };
-
   const q = questions[qIndex];
 
   return (
@@ -1112,47 +1047,12 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context
         </div>
 
         {!started ? (
-          <>
-            <div className="bg-white rounded-2xl p-8 shadow-2xl text-center">
-              <h2 className="text-2xl font-bold mb-2 text-gray-800">Time Mode • 45s</h2>
-              <p className="text-gray-600 mb-6">Answer as many as you can.</p>
-              {error && <div className="mb-4 text-red-600 font-semibold">{error}</div>}
-              <button onClick={startRun} className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700">Start</button>
-            </div>
-            
-            {/* Contest Popup */}
-            <div className="bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl p-8 shadow-2xl text-center mt-6">
-              <h2 className="text-2xl font-bold mb-4 text-white">⚡ Time Mode Contest is LIVE!</h2>
-              
-              {/* Countdown Timer */}
-              <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 mb-6">
-                <div className="text-sm text-white/80 mb-1">Contest Ends In</div>
-                <div className="text-3xl font-black text-white">
-                  {formatContestTime(contestTimeLeft)}
-                </div>
-              </div>
-              
-              {/* Rules */}
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-left">
-                <div className="space-y-3">
-                  <div className="flex items-start space-x-3">
-                    <span className="text-white text-lg">⏰</span>
-                    <p className="text-white text-sm">72 hours to compete</p>
-                  </div>
-                  
-                  <div className="flex items-start space-x-3">
-                    <span className="text-white text-lg">🏆</span>
-                    <p className="text-white text-sm">Top 10 players take the prizes</p>
-                  </div>
-                  
-                  <div className="flex items-start space-x-3">
-                    <span className="text-white text-lg">💰</span>
-                    <p className="text-white text-sm">25M $QT prize pool</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </>
+          <div className="bg-white rounded-2xl p-8 shadow-2xl text-center">
+            <h2 className="text-2xl font-bold mb-2 text-gray-800">Time Mode • 45s</h2>
+            <p className="text-gray-600 mb-6">Answer as many as you can.</p>
+            {error && <div className="mb-4 text-red-600 font-semibold">{error}</div>}
+            <button onClick={startRun} className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700">Start</button>
+          </div>
         ) : !q ? (
           <div className="text-center text-white">Loading questions…</div>
         ) : (
