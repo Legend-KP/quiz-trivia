@@ -6,7 +6,7 @@ import { useAccount, useConnect, useWriteContract, useWaitForTransactionReceipt,
 // Daily Reward Contract (1,000 QT per day)
 // Always use the new 1K QT contract - override old 10K contract if set
 const OLD_10K_CONTRACT = '0xb8AD9216A88E2f9a24c7e2207dE4e69101031f02';
-const NEW_1K_CONTRACT = '0x6DE14656a37D659ede5A928E371A298F880E194d';
+const NEW_1K_CONTRACT = '0xED19A7dF3526d9B830A3463d4b93004127dbF6A6'; // Updated daily claim contract address
 const envAddress = process.env.NEXT_PUBLIC_QT_DISTRIBUTOR_ADDRESS as `0x${string}`;
 const QT_DISTRIBUTOR_ADDRESS = (
   envAddress && envAddress.toLowerCase() !== OLD_10K_CONTRACT.toLowerCase()
