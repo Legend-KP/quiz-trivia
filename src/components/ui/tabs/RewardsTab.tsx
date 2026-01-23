@@ -17,6 +17,7 @@ export function RewardsTab() {
     isProcessing, 
     error, 
     isConfirmed,
+    lastClaimDate,
     refetchCanClaim 
   } = useQTClaim();
   
@@ -262,12 +263,30 @@ export function RewardsTab() {
               🔗 Connect Your Wallet to Unlock Rewards
             </button>
           ) : !canClaim ? (
-            <button
-              disabled
-              className="w-full bg-gray-300 text-gray-500 font-bold py-3 px-6 rounded-xl cursor-not-allowed"
-            >
-              ✅ You&apos;ve Already Claimed Today! See You Tomorrow! 🌟
-            </button>
+            <div className="space-y-2">
+              <button
+                disabled
+                className="w-full bg-gray-300 text-gray-500 font-bold py-3 px-6 rounded-xl cursor-not-allowed"
+              >
+                ✅ You&apos;ve Already Claimed Today! See You Tomorrow! 🌟
+              </button>
+              {/* Debug info - only show in development */}
+              {process.env.NODE_ENV === 'development' && lastClaimDate !== null && (
+                <div className="text-xs text-gray-500 text-center">
+                  Last claim date: {lastClaimDate} (days since epoch)
+                  <br />
+                  Today: {Math.floor(Date.now() / 1000 / 86400)}
+                  <br />
+                  Wallet: {address?.slice(0, 10)}...
+                  <button
+                    onClick={() => refetchCanClaim()}
+                    className="ml-2 text-blue-500 underline"
+                  >
+                    Refresh
+                  </button>
+                </div>
+              )}
+            </div>
           ) : (
             <button
               onClick={handleDailyClaim}
@@ -293,6 +312,19 @@ export function RewardsTab() {
             <p className="text-center text-xs text-gray-500 mt-3">
               ⏰ One claim per day! Set a reminder and come back tomorrow for another surprise! 🎯
             </p>
+          )}
+          
+          {/* Manual refresh button for troubleshooting */}
+          {address && (
+            <button
+              onClick={() => {
+                refetchCanClaim();
+                alert('Claim status refreshed! Check if you can claim now.');
+              }}
+              className="w-full mt-2 text-xs text-blue-500 underline hover:text-blue-700"
+            >
+              🔄 Refresh Claim Status
+            </button>
           )}
         </div>
 

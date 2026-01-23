@@ -169,6 +169,17 @@ export function useQTClaim() {
     },
   });
 
+  // Get last claim date for debugging
+  const { data: lastClaimDate } = useReadContract({
+    address: address ? QT_DISTRIBUTOR_ADDRESS : undefined,
+    abi: QT_DISTRIBUTOR_ABI,
+    functionName: 'lastClaimDate',
+    args: address ? [address] : undefined,
+    query: {
+      enabled: !!address,
+    },
+  });
+
   // Get reward amount
   const { data: rewardAmount } = useReadContract({
     address: QT_DISTRIBUTOR_ADDRESS,
@@ -249,6 +260,19 @@ export function useQTClaim() {
     }
   };
 
+  // Debug: Log claim status
+  useEffect(() => {
+    if (address && canClaim !== undefined) {
+      console.log('[Daily Claim Debug]', {
+        address,
+        canClaim,
+        lastClaimDate: lastClaimDate ? Number(lastClaimDate) : null,
+        contractAddress: QT_DISTRIBUTOR_ADDRESS,
+        today: Math.floor(Date.now() / 1000 / 86400), // Days since epoch
+      });
+    }
+  }, [address, canClaim, lastClaimDate]);
+
   return {
     claimQTReward,
     isProcessing: isProcessing || isPending || isConfirming,
@@ -258,6 +282,7 @@ export function useQTClaim() {
     txHash: hash || txHash,
     isConfirmed,
     canClaim: canClaim ?? false,
+    lastClaimDate: lastClaimDate ? Number(lastClaimDate) : null, // Expose for debugging
     rewardAmount: rewardAmount ? Number(rewardAmount) / 1e18 : 1000, // Default to 1,000 QT if not available
     refetchCanClaim
   };
