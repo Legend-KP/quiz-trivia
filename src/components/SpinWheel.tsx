@@ -145,6 +145,12 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
       return;
     }
 
+    // Check if claim data (signature) is available
+    if (!result.claim || !result.claim.signature) {
+      alert('Claim signature is missing. Please spin the wheel again to get a new signature.');
+      return;
+    }
+
     try {
       setIsClaiming(true);
       // This will trigger a wallet transaction with signature verification
@@ -160,10 +166,36 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
           setShowSuccessPopup(true);
         }, 1500);
       } else {
-        alert(`Failed to claim QT tokens: ${qtResponse?.error || 'Unknown error'}`);
+        // Provide more detailed error message
+        const errorMsg = qtResponse?.error || 'Unknown error';
+        let userFriendlyMsg = errorMsg;
+        
+        // Check for common error patterns
+        if (errorMsg.toLowerCase().includes('insufficient contract balance') || 
+            errorMsg.toLowerCase().includes('insufficient')) {
+          userFriendlyMsg = 'The reward contract is temporarily out of tokens. Please contact support or try again later.';
+        } else if (errorMsg.toLowerCase().includes('signature') || 
+                   errorMsg.toLowerCase().includes('expired')) {
+          userFriendlyMsg = 'The claim signature has expired. Please spin the wheel again to get a new signature.';
+        } else if (errorMsg.toLowerCase().includes('cooldown')) {
+          userFriendlyMsg = 'You need to wait before claiming again. Please check the cooldown timer.';
+        }
+        
+        alert(`Failed to claim QT tokens: ${userFriendlyMsg}`);
       }
-    } catch (_error) {
-      alert('Failed to claim QT tokens. Please try again.');
+    } catch (error: any) {
+      let errorMsg = 'Failed to claim QT tokens. Please try again.';
+      if (error?.message) {
+        if (error.message.toLowerCase().includes('insufficient')) {
+          errorMsg = 'The reward contract is temporarily out of tokens. Please contact support or try again later.';
+        } else if (error.message.toLowerCase().includes('signature') || 
+                   error.message.toLowerCase().includes('expired')) {
+          errorMsg = 'The claim signature has expired. Please spin the wheel again to get a new signature.';
+        } else {
+          errorMsg = `Failed to claim QT tokens: ${error.message}`;
+        }
+      }
+      alert(errorMsg);
     } finally {
       setIsClaiming(false);
     }
@@ -318,7 +350,8 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onSpin, onQTTokenWin, userAddress
                   <span className="font-bold text-yellow-600">You won {result.qtAmount?.toLocaleString() || result.label} QT Tokens!</span>
                   </div>
                 </div>
-            {result.isToken && (
+            {/* Show claim button if result has qtAmount and requires claim (all spin results require claim) */}
+            {(result.qtAmount || result.requiresClaim || result.isToken) && (
               <div className="bg-yellow-100 border border-yellow-400 rounded-lg p-4">
                 <p className="text-yellow-700 text-sm mb-4">
                   To claim your tokens, you need to sign a transaction with your wallet.

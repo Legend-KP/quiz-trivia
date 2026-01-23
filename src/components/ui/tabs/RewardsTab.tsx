@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useMiniApp } from '@neynar/react';
 import SpinWheel from '~/components/SpinWheel';
 import { useQTClaim } from '~/hooks/useQTClaim';
@@ -24,6 +24,7 @@ export function RewardsTab() {
   const {
     claimSpinReward: claimSpinWheelReward,
     isPending: isSpinWheelPending,
+    isConfirming: isSpinWheelConfirming,
     isSuccess: isSpinWheelSuccess,
     isError: isSpinWheelError,
     error: spinWheelError,
@@ -87,7 +88,12 @@ export function RewardsTab() {
     try {
       // If claimData (with signature) is provided, use it for secure claiming
       if (claimData && claimData.signature) {
-        await claimSpinWheelReward(claimData);
+        // Trigger the transaction
+        claimSpinWheelReward(claimData);
+        
+        // Return success immediately - the transaction will be handled by wagmi hooks
+        // The actual success/failure will be tracked via isSpinWheelSuccess/isSpinWheelError
+        // The SpinWheel component will need to check these states or wait for user interaction
         return { 
           success: true, 
           txHash: spinWheelTxHash || undefined 
@@ -96,16 +102,33 @@ export function RewardsTab() {
         // Fallback: if no signature data, return error
         return { 
           success: false, 
-          error: 'Signature data missing. Please spin again.' 
+          error: 'Signature data missing. Please spin again to get a new signature.' 
         };
       }
     } catch (err: any) {
+      // Provide user-friendly error messages
+      let errorMsg = err?.message || 'Failed to claim QT tokens';
+      
+      if (errorMsg.toLowerCase().includes('insufficient contract balance') || 
+          errorMsg.toLowerCase().includes('insufficient')) {
+        errorMsg = 'The reward contract is temporarily out of tokens. Please contact support or try again later.';
+      } else if (errorMsg.toLowerCase().includes('signature') || 
+                 errorMsg.toLowerCase().includes('expired')) {
+        errorMsg = 'The claim signature has expired. Please spin the wheel again to get a new signature.';
+      } else if (errorMsg.toLowerCase().includes('cooldown')) {
+        errorMsg = 'You need to wait before claiming again. Please check the cooldown timer.';
+      } else if (errorMsg.toLowerCase().includes('user rejected') || 
+                 errorMsg.toLowerCase().includes('user denied')) {
+        errorMsg = 'Transaction was cancelled. Please try again if you want to claim your reward.';
+      }
+      
       return { 
         success: false, 
-        error: err?.message || 'Failed to claim QT tokens' 
+        error: errorMsg
       };
     }
   };
+  
 
   const handleDailyClaim = async () => {
     if (!address) {
@@ -119,14 +142,40 @@ export function RewardsTab() {
     }
 
     setClaimSuccess(false);
-    const result = await claimQTReward(address);
-    
-    if (result.success) {
-      setClaimSuccess(true);
-      // Refetch claim status after a delay
-      setTimeout(() => {
-        refetchCanClaim();
-      }, 2000);
+    try {
+      const result = await claimQTReward(address);
+      
+      if (result.success) {
+        setClaimSuccess(true);
+        // Refetch claim status after a delay
+        setTimeout(() => {
+          refetchCanClaim();
+        }, 2000);
+      } else {
+        // Show error message if claim failed
+        let errorMsg = result.error || 'Failed to claim daily reward';
+        
+        // Provide user-friendly error messages
+        if (errorMsg.toLowerCase().includes('insufficient contract balance') || 
+            errorMsg.toLowerCase().includes('insufficient')) {
+          errorMsg = 'The daily reward contract is temporarily out of tokens. Please contact support or try again later.';
+        } else if (errorMsg.toLowerCase().includes('already claimed')) {
+          errorMsg = 'You have already claimed your daily reward today. Come back tomorrow!';
+        } else if (errorMsg.toLowerCase().includes('user rejected') || 
+                   errorMsg.toLowerCase().includes('user denied')) {
+          errorMsg = 'Transaction was cancelled. Please try again if you want to claim your reward.';
+        }
+        
+        alert(`⚠️ ${errorMsg}`);
+      }
+    } catch (err: any) {
+      let errorMsg = err?.message || 'Failed to claim daily reward';
+      
+      if (errorMsg.toLowerCase().includes('insufficient')) {
+        errorMsg = 'The daily reward contract is temporarily out of tokens. Please contact support or try again later.';
+      }
+      
+      alert(`⚠️ ${errorMsg}`);
     }
   };
 
@@ -197,7 +246,11 @@ export function RewardsTab() {
 
           {error && (
             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-center text-sm">
-              ⚠️ Oops! Something went wrong. Don&apos;t worry, your reward is safe. Try again in a moment!
+              ⚠️ {error.includes('insufficient') 
+                ? 'The daily reward contract is temporarily out of tokens. Please contact support or try again later.'
+                : error.includes('already claimed')
+                ? 'You have already claimed your daily reward today. Come back tomorrow!'
+                : 'Oops! Something went wrong. Don\'t worry, your reward is safe. Try again in a moment!'}
             </div>
           )}
 
