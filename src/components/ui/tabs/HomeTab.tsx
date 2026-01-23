@@ -877,7 +877,7 @@ const ResultsPage: React.FC<ResultsPageProps> = ({
               }}
               className="bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-purple-600 hover:to-pink-700 transform hover:scale-105 transition-all duration-200"
             >
-              📣 Share on Farcaster
+              📣 Share (+1000 $QT)
             </button>
             <button
               onClick={() => window.location.href = '/'}
