@@ -106,89 +106,89 @@ function getCurrentWeeklyQuiz(): WeeklyQuizConfig {
   
   return {
     id: getQuizIdFromDate(startDate),
-    topic: "Privacy & MEV in Ethereum", // Update this topic for each quiz
+    topic: "Arbitrum Edition", // Update this topic for each quiz
     startTime: startDate.toISOString(), // Tuesday or Friday 6 PM UTC
     endTime: endDate.toISOString(), // Next day 6 AM UTC (12-hour window)
     questions: [
     {
       id: 1,
-      question: "Which tool is commonly used to obscure the origin of Ethereum transactions?",
-      options: ["Chainlink", "Tornado Cash", "Flashbots", "Plasma"],
-      correct: 1,
+      question: "What primarily differentiates Arbitrum Nitro from earlier Arbitrum implementations?",
+      options: ["New consensus mechanism", "Fraud-proof removal", "WASM-based execution", "Data availability change"],
+      correct: 2,
       timeLimit: 30,
-      explanation: "Tornado Cash mixes funds to break transaction linkability."
+      explanation: "Nitro introduced a WASM-based prover/execution environment, making Arbitrum faster and more efficient."
     },
     {
       id: 2,
-      question: "What is a \"stealth address\"?",
-      options: ["A private validator node", "A one-time anonymous receiving address", "A multisig wallet without anonymous receiving address", "A burner contract address"],
-      correct: 1,
+      question: "Why does Arbitrum rely on an optimistic execution model instead of validity proofs?",
+      options: ["Lower gas fees", "Faster withdrawals", "EVM compatibility", "Reduced prover cost"],
+      correct: 3,
       timeLimit: 30,
-      explanation: "Stealth addresses generate unique one-time receiving addresses for privacy."
+      explanation: "Optimistic rollups avoid expensive proving systems, reducing costs and improving scalability."
     },
     {
       id: 3,
-      question: "Which privacy issue does MEV (Maximal Extractable Value) create?",
-      options: ["Hidden validator identities", "Leak transaction intent in the public mempool", "Lower smart contract security", "Transaction censorship"],
-      correct: 1,
+      question: "What role do validators play in Arbitrum's security model?",
+      options: ["Block production", "State finalization", "Challenge initiation", "Sequencer rotation"],
+      correct: 2,
       timeLimit: 30,
-      explanation: "MEV bots can read pending transactions, exposing user intent."
+      explanation: "Validators monitor for incorrect state claims and can initiate challenges to secure the rollup."
     },
     {
       id: 4,
-      question: "What technology helps hide the amount transferred in a crypto transaction?",
-      options: ["Ring signatures", "Homomorphic encryption", "Shielded transactions", "Merkle proofs"],
+      question: "Why is the Arbitrum sequencer currently centralized?",
+      options: ["Consensus limitations", "Regulatory constraints", "Performance optimization", "Token economics"],
       correct: 2,
       timeLimit: 30,
-      explanation: "Shielded transfers encrypt transaction values."
+      explanation: "A centralized sequencer allows faster tx ordering and improved UX while decentralization is being developed."
     },
     {
       id: 5,
-      question: "Why are TEEs (Trusted Execution Environments) used in privacy protocols?",
-      options: ["Increase node count", "Secure off-chain computation inside hardware enclaves", "Speed up mempool processing speed", "Replace private keys"],
-      correct: 1,
+      question: "What is the main purpose of Arbitrum Stylus?",
+      options: ["Enable zk execution", "Support non-EVM chains", "Allow multi-language smart contracts", "Improve L1 data compression"],
+      correct: 2,
       timeLimit: 30,
-      explanation: "TEEs act as secure \"black boxes\" for confidential computation."
+      explanation: "Stylus lets developers write smart contracts in languages like Rust, C, and C++, expanding Arbitrum's capabilities."
     },
     {
       id: 6,
-      question: "Why is FHE (Fully Homomorphic Encryption) currently impractical for Ethereum?",
-      options: ["It is not quantum-resistant", "Gas fees for homomorphic computation are too high", "It requires extremely heavy computation, too slow for real-time use", "Validators can't execute encrypted data"],
-      correct: 2,
+      question: "Which factor most limits Arbitrum's withdrawal finality today?",
+      options: ["L1 congestion", "Fraud proof window", "Sequencer batching", "Oracle latency"],
+      correct: 1,
       timeLimit: 30,
-      explanation: "FHE is slow due to encrypted computation noise growth."
+      explanation: "Withdrawals must wait through the fraud-proof challenge window, which delays finality."
     },
     {
       id: 7,
-      question: "Which attack can reveal relationships between addresses even without identity info?",
-      options: ["Spam attack", "Network partition", "Graph clustering attack", "DoS attack"],
-      correct: 2,
+      question: "Why does Arbitrum post calldata to Ethereum L1?",
+      options: ["Fee optimization", "State reconstruction", "Decentralized sequencing", "Liquidity bridging"],
+      correct: 1,
       timeLimit: 30,
-      explanation: "Clustering heuristics reveal wallet linkages from on-chain patterns."
+      explanation: "Posting calldata ensures Ethereum can always reconstruct the rollup state, even if Arbitrum goes offline."
     },
     {
       id: 8,
-      question: "Why do zk-rollups improve privacy even before implementing full ZK privacy features?",
-      options: ["They use anonymous validators", "They batch transactions, reducing data leakage", "They encrypt calldata by default", "They hide gas fees"],
+      question: "What recent improvement most reduced gas costs for Arbitrum users?",
+      options: ["Native account abstraction", "Nitro compression", "Stylus deployment", "Token incentives"],
       correct: 1,
       timeLimit: 30,
-      explanation: "Batching obscures individual transaction details."
+      explanation: "Nitro introduced major calldata compression improvements, lowering transaction fees significantly."
     },
     {
       id: 9,
-      question: "Which layer of Ethereum leaks the MOST information for privacy?",
-      options: ["Execution layer", "Consensus layer", "Mempool layer", "Fee market"],
-      correct: 2,
+      question: "How does Arbitrum Orbit primarily extend the ecosystem?",
+      options: ["Enables sovereign L2s", "Adds shared security", "Introduces zk rollups", "Replaces Ethereum DA"],
+      correct: 0,
       timeLimit: 30,
-      explanation: "The public mempool exposes pending transactions in real time."
+      explanation: "Orbit enables developers to deploy their own customizable L2 or L3 chains using Arbitrum tech."
     },
     {
       id: 10,
-      question: "Which property does a Zero-Knowledge Proof provide?",
-      options: ["Encrypted block production", "Proving correctness without revealing data", "Faster gas calculations", "Validator anonymity"],
-      correct: 1,
+      question: "What is the biggest long-term risk to Arbitrum's decentralization roadmap?",
+      options: ["Validator cartelization", "MEV leakage", "Sequencer dependency", "Token inflation"],
+      correct: 2,
       timeLimit: 30,
-      explanation: "ZKPs prove correctness while hiding private information."
+      explanation: "Arbitrum still depends on a centralized sequencer, which poses a decentralization bottleneck long term."
     }
   ]
   };
