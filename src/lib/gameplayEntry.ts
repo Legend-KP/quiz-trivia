@@ -1,9 +1,16 @@
 /**
  * GameplayEntry contract integration (Celo Mainnet)
  * Users pay 0.05 USDT to submit score via submitScore()
+ *
+ * Optional: set NEXT_PUBLIC_GAMEPLAY_ENTRY_ADDRESS in .env / Vercel to override.
  */
 
-export const GAMEPLAY_ENTRY_ADDRESS = '0xbb7fe4B68Da02f6993652d458239c6F47Fd14D37' as const;
+const DEFAULT_GAMEPLAY_ENTRY = '0xbb7fe4B68Da02f6993652d458239c6F47Fd14D37';
+export const GAMEPLAY_ENTRY_ADDRESS = (
+  typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_GAMEPLAY_ENTRY_ADDRESS?.trim()
+    ? process.env.NEXT_PUBLIC_GAMEPLAY_ENTRY_ADDRESS.trim()
+    : DEFAULT_GAMEPLAY_ENTRY
+) as `0x${string}`;
 export const USDT_ADDRESS_CELO = '0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e' as const;
 export const ENTRY_FEE = 50_000n; // 0.05 USDT (6 decimals)
 export const CELO_CHAIN_ID = 42220;

@@ -96,13 +96,14 @@ export async function startQuizTransactionWithWagmi(
       if (chainId !== CELO_CHAIN_ID) {
         await switchChain(config, { chainId: CELO_CHAIN_ID });
       }
-    } catch (chainError) {
-      // If switch fails, user may need to add Celo manually
+    } catch (chainErr: unknown) {
+      const msg = chainErr instanceof Error ? chainErr.message : 'Could not switch network';
+      throw new WalletError(`Switch to Celo failed: ${msg}. Add Celo Mainnet in your wallet and try again.`);
     }
 
     const provider = new ethers.BrowserProvider(client.transport);
 
-    // Check USDT balance
+    // Check USDT balance (must be on Celo)
     const usdtContract = new ethers.Contract(USDT_ADDRESS_CELO, USDT_ABI, provider);
     const usdtBalance = await usdtContract.balanceOf(userAddress);
     if (usdtBalance < ENTRY_FEE) {
@@ -149,18 +150,29 @@ export async function startQuizTransactionWithWagmi(
 
     onStateChange?.(TransactionState.SUCCESS);
     return txHash;
-  } catch (error) {
+  } catch (error: unknown) {
     let errorMessage = 'Unable to submit score. Please try again.';
 
     if (error instanceof WalletError) {
       errorMessage = error.message;
     } else if (error instanceof Error) {
-      if (error.message.includes('User rejected') || error.message.includes('rejected')) {
-        errorMessage = 'You rejected the transaction. Please try again and approve the transaction.';
-      } else if (error.message.includes('insufficient') || error.message.includes('Insufficient')) {
-        errorMessage = error.message;
-      } else if (error.message.includes('Please wait')) {
+      const m = error.message;
+      if (m.includes('User rejected') || m.includes('rejected')) {
+        errorMessage = 'You rejected the transaction. Please approve in your wallet.';
+      } else if (m.includes('insufficient') || m.includes('Insufficient')) {
+        errorMessage = m;
+      } else if (m.includes('Please wait')) {
         errorMessage = 'Please wait 10 seconds before submitting again (rate limit).';
+      } else if (m.includes('connect') || m.includes('wallet')) {
+        errorMessage = m;
+      } else if (m.includes('Switch to Celo') || m.includes('Celo')) {
+        errorMessage = m;
+      } else {
+        // Surface the real error so user can see what failed
+        errorMessage = m || errorMessage;
+      }
+      if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+        console.error('[GameplayEntry] transaction error:', error);
       }
     }
 
