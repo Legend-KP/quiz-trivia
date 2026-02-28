@@ -909,6 +909,11 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context
   const { actions } = useMiniApp();
   const config = useConfig();
 
+  // Clear any stale error when this screen mounts (e.g. from a previous visit or shared state)
+  useEffect(() => {
+    setError(null);
+  }, []);
+
   // Utility function to shuffle an array using Fisher-Yates algorithm
   const shuffleArray = useCallback((array: QuizQuestion[]): QuizQuestion[] => {
     const shuffled = [...array];
