@@ -118,10 +118,23 @@ export async function startQuizTransactionWithWagmi(
       throw new WalletError('Insufficient CELO for gas. You need a small amount of CELO for transaction fees.');
     }
 
-    // Check if we need to approve USDT
+    // Check if we need to approve USDT (some USDT implementations require approve(0) before increasing)
     const allowance = await usdtContract.allowance(userAddress, GAMEPLAY_ENTRY_ADDRESS);
     if (allowance < ENTRY_FEE) {
       onStateChange?.(TransactionState.CONFIRMING);
+      // USDT-safe: set to 0 first if current allowance is non-zero, then set to ENTRY_FEE
+      if (allowance > 0n) {
+        const approveZeroData = encodeFunctionData({
+          abi: USDT_ABI,
+          functionName: 'approve',
+          args: [GAMEPLAY_ENTRY_ADDRESS, 0n],
+        });
+        await client.sendTransaction({
+          to: USDT_ADDRESS_CELO as `0x${string}`,
+          data: approveZeroData,
+          chain: null,
+        });
+      }
       const approveData = encodeFunctionData({
         abi: USDT_ABI,
         functionName: 'approve',
@@ -160,6 +173,8 @@ export async function startQuizTransactionWithWagmi(
       const m = error.message;
       if (m.includes('User rejected') || m.includes('rejected')) {
         errorMessage = 'You rejected the transaction. Please approve in your wallet.';
+      } else if (m.includes('CALL_EXCEPTION') || m.includes('missing revert data') || m.includes('execution reverted')) {
+        errorMessage = 'Transaction failed on chain. Ensure you have at least 0.05 USDT and some CELO for gas on Celo Mainnet, then try again.';
       } else if (m.includes('insufficient') || m.includes('Insufficient')) {
         errorMessage = m;
       } else if (m.includes('Please wait')) {
