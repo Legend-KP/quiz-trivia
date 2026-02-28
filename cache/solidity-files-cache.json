@@ -835,6 +835,43 @@
       "artifacts": [
         "SecureSpinWheelQTDistributor"
       ]
+    },
+    "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\GameplayEntry.sol": {
+      "lastModificationDate": 1772280241182,
+      "contentHash": "89ffdf4881c47c08954af1714175b487",
+      "sourceName": "contracts/GameplayEntry.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "GameplayEntry",
+        "IERC20"
+      ]
     }
   }
 }

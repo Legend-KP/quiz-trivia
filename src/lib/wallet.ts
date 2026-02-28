@@ -1,6 +1,14 @@
 import { ethers } from 'ethers';
-import { getWalletClient } from 'wagmi/actions';
+import { getWalletClient, switchChain } from 'wagmi/actions';
 import { encodeFunctionData } from 'viem';
+import {
+  GAMEPLAY_ENTRY_ADDRESS,
+  USDT_ADDRESS_CELO,
+  ENTRY_FEE,
+  CELO_CHAIN_ID,
+  GAMEPLAY_ENTRY_ABI,
+  USDT_ABI,
+} from './gameplayEntry';
 
 // Extend Window interface to include ethereum
 declare global {
@@ -10,28 +18,9 @@ declare global {
   }
 }
 
-// Contract configuration - RESTORED MICRO TRANSACTION CONTRACT
-export const CONTRACT_ADDRESS = '0xAa23aCDaf5B0B7C2eBF2ff0E059c85bbD33FA7fd'; // NEWLY DEPLOYED micro transaction contract
-export const CONTRACT_ABI = [
-  {"inputs":[],"stateMutability":"nonpayable","type":"constructor"},
-  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":true,"internalType":"uint256","name":"mode","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"score","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"QuizCompleted","type":"event"},
-  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":true,"internalType":"uint256","name":"mode","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"feePaid","type":"uint256"}],"name":"QuizStarted","type":"event"},
-  {"inputs":[],"name":"CHALLENGE_FEE","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"CLASSIC_FEE","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"TIME_MODE_FEE","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"getBalance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[{"internalType":"enum QuizTriviaEntry.QuizMode","name":"mode","type":"uint8"}],"name":"getRequiredFee","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"pure","type":"function"},
-  {"inputs":[],"name":"getStats","outputs":[{"internalType":"uint256","name":"total","type":"uint256"},{"internalType":"uint256","name":"classic","type":"uint256"},{"internalType":"uint256","name":"time","type":"uint256"},{"internalType":"uint256","name":"challenge","type":"uint256"},{"internalType":"uint256","name":"fees","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserQuizCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[{"internalType":"enum QuizTriviaEntry.QuizMode","name":"","type":"uint8"}],"name":"modeCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-  {"inputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"enum QuizTriviaEntry.QuizMode","name":"mode","type":"uint8"},{"internalType":"uint256","name":"score","type":"uint256"}],"name":"recordQuizCompletion","outputs":[],"stateMutability":"nonpayable","type":"function"},
-  {"inputs":[{"internalType":"enum QuizTriviaEntry.QuizMode","name":"mode","type":"uint8"}],"name":"startQuiz","outputs":[],"stateMutability":"payable","type":"function"},
-  {"inputs":[],"name":"totalFeesCollected","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"totalQuizzes","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"userQuizCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-  {"inputs":[],"name":"withdraw","outputs":[],"stateMutability":"nonpayable","type":"function"}
-] as const;
+// GameplayEntry contract on Celo Mainnet - users pay 0.05 USDT to submit score
+export const CONTRACT_ADDRESS = GAMEPLAY_ENTRY_ADDRESS;
+export const CONTRACT_ABI = GAMEPLAY_ENTRY_ABI;
 
 // Quiz modes matching the smart contract
 export enum QuizMode {
@@ -83,137 +72,138 @@ export async function getContract(provider: ethers.BrowserProvider): Promise<eth
 }
 
 /**
- * Start a quiz with micro transaction payment
+ * Submit score via GameplayEntry contract on Celo.
+ * User pays 0.05 USDT to submit. Requires USDT approval first.
  */
 export async function startQuizTransactionWithWagmi(
-  mode: QuizMode,
+  _mode: QuizMode,
   config: any,
   onStateChange?: (state: TransactionState) => void
 ): Promise<string> {
   try {
     onStateChange?.(TransactionState.CONNECTING);
-    
-    
-    // Get wallet client
+
     const client = await getWalletClient(config);
     if (!client) {
       throw new WalletError('Please connect your wallet first');
     }
-    
-    // Get user address
+
     const userAddress = client.account.address;
-    
-    // Verify we're on Base Mainnet
+
+    // Switch to Celo Mainnet if needed
     try {
       const chainId = await client.getChainId();
-      
-      if (chainId !== 8453) {
-        throw new WalletError('Please switch to Base Mainnet to start a quiz');
+      if (chainId !== CELO_CHAIN_ID) {
+        await switchChain(config, { chainId: CELO_CHAIN_ID });
       }
     } catch (chainError) {
-      // Continue anyway - some wallets don't support getChainId
+      // If switch fails, user may need to add Celo manually
     }
-    
-    onStateChange?.(TransactionState.CONFIRMING);
-    
-    // Get required fee for the quiz mode (FREE!)
-    const requiredFee = getRequiredFeeInWei(mode);
-    
-    // Check user's balance (only need gas for transaction)
+
     const provider = new ethers.BrowserProvider(client.transport);
-    const balance = await provider.getBalance(userAddress);
-    
-    // Only check if user has enough for gas (very small amount)
-    const minGasBalance = ethers.parseEther('0.00001'); // ~$0.00001 for gas (Base network is very cheap!)
-    if (balance < minGasBalance) {
-      throw new WalletError(`Insufficient balance for gas fees. You need at least ${ethers.formatEther(minGasBalance)} ETH for transaction gas.`);
+
+    // Check USDT balance
+    const usdtContract = new ethers.Contract(USDT_ADDRESS_CELO, USDT_ABI, provider);
+    const usdtBalance = await usdtContract.balanceOf(userAddress);
+    if (usdtBalance < ENTRY_FEE) {
+      throw new WalletError('Insufficient USDT balance. You need at least 0.05 USDT to submit your score.');
     }
-    
-    // Prepare transaction data
-    const txData = encodeFunctionData({
+
+    // Check CELO balance for gas
+    const celoBalance = await provider.getBalance(userAddress);
+    const minGasBalance = ethers.parseEther('0.001');
+    if (celoBalance < minGasBalance) {
+      throw new WalletError('Insufficient CELO for gas. You need a small amount of CELO for transaction fees.');
+    }
+
+    // Check if we need to approve USDT
+    const allowance = await usdtContract.allowance(userAddress, GAMEPLAY_ENTRY_ADDRESS);
+    if (allowance < ENTRY_FEE) {
+      onStateChange?.(TransactionState.CONFIRMING);
+      const approveData = encodeFunctionData({
+        abi: USDT_ABI,
+        functionName: 'approve',
+        args: [GAMEPLAY_ENTRY_ADDRESS, ENTRY_FEE],
+      });
+      await client.sendTransaction({
+        to: USDT_ADDRESS_CELO as `0x${string}`,
+        data: approveData,
+      });
+    }
+
+    onStateChange?.(TransactionState.CONFIRMING);
+
+    // Submit score (transfers 0.05 USDT to contract)
+    const submitData = encodeFunctionData({
       abi: CONTRACT_ABI,
-      functionName: 'startQuiz',
-      args: [Number(mode)],
+      functionName: 'submitScore',
+      args: [],
     });
-    
-    
-    // Send transaction with payment
+
     const txHash = await client.sendTransaction({
       to: CONTRACT_ADDRESS as `0x${string}`,
-      data: txData,
-      value: requiredFee,
-      chain: null,
+      data: submitData,
     });
-    
+
     onStateChange?.(TransactionState.SUCCESS);
-    
     return txHash;
-    
   } catch (error) {
-    
-    let errorMessage = 'Unable to start quiz. Please try again in a moment.';
-    
+    let errorMessage = 'Unable to submit score. Please try again.';
+
     if (error instanceof WalletError) {
       errorMessage = error.message;
     } else if (error instanceof Error) {
-      if (error.message.includes('User rejected')) {
+      if (error.message.includes('User rejected') || error.message.includes('rejected')) {
         errorMessage = 'You rejected the transaction. Please try again and approve the transaction.';
-      } else if (error.message.includes('insufficient funds')) {
-        errorMessage = 'Insufficient funds. Please add ETH to your wallet.';
-      } else if (error.message.includes('network')) {
-        errorMessage = 'Network error. Please check your connection and try again.';
+      } else if (error.message.includes('insufficient') || error.message.includes('Insufficient')) {
+        errorMessage = error.message;
+      } else if (error.message.includes('Please wait')) {
+        errorMessage = 'Please wait 10 seconds before submitting again (rate limit).';
       }
     }
-    
+
     onStateChange?.(TransactionState.ERROR);
     throw new WalletError(errorMessage);
   }
 }
 
 /**
- * Get required fee in wei for a quiz mode
+ * Get required fee (0.05 USDT for GameplayEntry)
  */
 export function getRequiredFeeInWei(_mode: QuizMode): bigint {
-  // FREE entry: 0 ETH (no payment required)
-  return BigInt(0);
+  return ENTRY_FEE;
 }
 
 /**
- * Record quiz completion
+ * Record quiz completion - GameplayEntry uses recordGameplayCompletion which is
+ * only callable by the game server. Frontend should not call this.
  */
 export async function recordQuizCompletion(
-  userAddress: string,
-  mode: QuizMode,
-  score: number
+  _userAddress: string,
+  _mode: QuizMode,
+  _score: number
 ): Promise<void> {
-  try {
-    const provider = await connectWallet();
-    const contract = await getContract(provider);
-    
-    const tx = await contract.recordQuizCompletion(userAddress, mode, score);
-    await tx.wait();
-  } catch (error: any) {
-    throw new WalletError(`Failed to record completion: ${error.message}`);
-  }
+  throw new WalletError(
+    'Completion is recorded by the game server after you submit. Use submitScore to pay and submit.'
+  );
 }
 
 /**
- * Get user's quiz count
+ * Get user's submission count (GameplayEntry)
  */
 export async function getUserQuizCount(userAddress: string): Promise<number> {
   try {
     const provider = await connectWallet();
     const contract = await getContract(provider);
-    
-    const count = await contract.getUserQuizCount(userAddress);
-    return count.toNumber();
+    const count = await contract.getUserSubmissionCount(userAddress);
+    return Number(count);
   } catch (error: any) {
-    return 0; // Default to 0 for new users
+    return 0;
   }
 }
 
 /**
- * Get user's quiz statistics
+ * Get user's quiz statistics (GameplayEntry)
  */
 export async function getUserQuizStats(userAddress: string): Promise<{
   quizCount: number;
@@ -225,18 +215,16 @@ export async function getUserQuizStats(userAddress: string): Promise<{
   try {
     const provider = await connectWallet();
     const contract = await getContract(provider);
-    
     const [quizCount, stats] = await Promise.all([
-      contract.getUserQuizCount(userAddress),
-      contract.getStats()
+      contract.getUserSubmissionCount(userAddress),
+      contract.getStats(),
     ]);
-    
     return {
-      quizCount: quizCount.toNumber(),
-      totalQuizzes: stats[0].toNumber(),
-      classicQuizzes: stats[1].toNumber(),
-      timeQuizzes: stats[2].toNumber(),
-      challengeQuizzes: stats[3].toNumber(),
+      quizCount: Number(quizCount),
+      totalQuizzes: Number(stats[0]),
+      classicQuizzes: 0,
+      timeQuizzes: 0,
+      challengeQuizzes: 0,
     };
   } catch (error: any) {
     return {

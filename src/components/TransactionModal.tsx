@@ -32,7 +32,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
         return {
           title: 'Submitting Score',
           icon: '✍️',
-          message: 'Almost there! Please sign the message to submit your quiz score (no payment required).',
+          message: 'Please approve the transaction to pay 0.05 USDT and submit your score.',
           showSpinner: true
         };
       
@@ -105,12 +105,12 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
               {transactionHash}
             </p>
             <a
-              href={`https://sepolia.basescan.org/tx/${transactionHash}`}
+              href={`https://celoscan.io/tx/${transactionHash}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-green-600 hover:text-green-800 underline mt-1 inline-block"
             >
-              View on BaseScan ↗
+              View on CeloScan ↗
             </a>
           </div>
         )}
@@ -153,7 +153,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
         {state === TransactionState.CONFIRMING && (
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-xs text-blue-800">
-              💡 <strong>Tip:</strong> This signature creates a permanent record of your quiz score on the blockchain - no payment required!
+              💡 <strong>Tip:</strong> You'll pay 0.05 USDT to submit your score on Celo. Ensure you have USDT and CELO for gas.
             </p>
           </div>
         )}
