@@ -90,9 +90,10 @@ export async function startQuizTransactionWithWagmi(
 
     const userAddress = client.account.address;
 
-    // Switch to Celo Mainnet if needed
+    // Switch to Celo Mainnet if needed (get chain via RPC so connectors without getChainId work, e.g. Farcaster)
     try {
-      const chainId = await client.getChainId();
+      const chainIdHex = await client.request({ method: 'eth_chainId' });
+      const chainId = typeof chainIdHex === 'string' ? parseInt(chainIdHex, 16) : Number(chainIdHex);
       if (chainId !== CELO_CHAIN_ID) {
         await switchChain(config, { chainId: CELO_CHAIN_ID });
       }
