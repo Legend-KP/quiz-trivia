@@ -24,17 +24,33 @@ const config = {
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 8453,
     },
-    // Add other networks as needed
+    celo: {
+      url: "https://forno.celo.org",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainId: 42220,
+    },
     localhost: {
       url: "http://127.0.0.1:8545",
     },
+  },
+  sourcify: {
+    enabled: false,
   },
   etherscan: {
     apiKey: {
       base: process.env.BASESCAN_API_KEY || "VMZ25B4ZKF49UPSI6J1QYM261DQ98C85N3",
       baseSepolia: process.env.BASESCAN_API_KEY || "VMZ25B4ZKF49UPSI6J1QYM261DQ98C85N3",
+      celo: process.env.CELOSCAN_API_KEY || process.env.ETHERSCAN_API_KEY || "",
     },
     customChains: [
+      {
+        network: "celo",
+        chainId: 42220,
+        urls: {
+          apiURL: "https://api.etherscan.io/v2/api",
+          browserURL: "https://celoscan.io",
+        },
+      },
       {
         network: "base",
         chainId: 8453,

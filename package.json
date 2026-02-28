@@ -24,7 +24,9 @@
     "clear:timemode": "node scripts/clear-timemode.mjs",
     "clear:time-attempts": "node scripts/clear-time-attempts.mjs",
     "clear:timemode-all": "node scripts/clear-all-timemode-data.mjs",
-    "check:leaderboard": "node scripts/check-leaderboard.mjs"
+    "check:leaderboard": "node scripts/check-leaderboard.mjs",
+    "deploy:gameplay-celo": "npx hardhat run scripts/deploy-gameplay-entry-celo.cjs --network celo",
+    "verify:gameplay-celo": "node scripts/verify-gameplay-entry-celo.cjs"
   },
   "dependencies": {
     "@farcaster/auth-client": ">=0.3.0 <1.0.0",

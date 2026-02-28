@@ -240,26 +240,22 @@ export async function startQuizTransactionWithWagmi(
     const usdtContract = new ethers.Contract(USDT_ADDRESS_CELO, USDT_ABI, provider);
     const gameplayContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 
-    // Optional contract state checks — if reads fail (e.g. not deployed, ABI mismatch), skip and proceed
+    // Optional: check paused and rate limit (v5 — skip if reads fail)
     try {
-      const [isPaused, canSubmit] = await Promise.all([
-        gameplayContract.paused(),
-        gameplayContract.canUserSubmit(userAddress),
-      ]);
+      const isPaused = await gameplayContract.paused();
       if (isPaused) {
         throw new WalletError('Contract is temporarily paused. Please try again later.');
       }
-      if (!canSubmit) {
-        const limitSec = await gameplayContract.RATE_LIMIT_SECONDS().catch(() => 10n);
-        const lastTime = await gameplayContract.lastSubmissionTime(userAddress).catch(() => 0n);
-        const now = Math.floor(Date.now() / 1000);
-        const waitSec = lastTime > 0n ? Number(lastTime) + Number(limitSec) - now : Number(limitSec);
-        const waitMsg = waitSec > 0 ? ` Please wait ${Math.ceil(waitSec)} seconds and try again.` : ' Please try again in a moment.';
-        throw new WalletError('Rate limit: you submitted too recently.' + waitMsg);
+      const canPayNow = await gameplayContract.canPay(userAddress);
+      if (!canPayNow) {
+        const waitSec = await gameplayContract.secondsUntilCanPay(userAddress);
+        throw new WalletError(
+          `Rate limit: please wait ${Number(waitSec)} seconds before paying again.`
+        );
       }
     } catch (e) {
       if (e instanceof WalletError) throw e;
-      // Pre-checks failed (e.g. missing revert data, contract not at address, ABI mismatch) — skip and let submitScore run
+      // Pre-check failed — skip and let pay() run
     }
 
     // Check USDT balance
@@ -321,21 +317,21 @@ export async function startQuizTransactionWithWagmi(
       }
     } catch (e) {
       if (e instanceof WalletError) throw e;
-      // Allowance read failed — proceed; submitScore will revert on-chain if allowance is wrong
+      // Allowance read failed — proceed; pay() will revert on-chain if allowance is wrong
     }
 
     onStateChange?.(TransactionState.CONFIRMING);
 
-    // Submit score — transfers 0.05 USDT to contract
-    const submitData = encodeFunctionData({
+    // Pay 0.05 USDT to contract (v4: pay() instead of submitScore())
+    const payData = encodeFunctionData({
       abi: CONTRACT_ABI,
-      functionName: 'submitScore',
+      functionName: 'pay',
       args: [],
     });
 
     const txHash = await client.sendTransaction({
       to: CONTRACT_ADDRESS as `0x${string}`,
-      data: submitData,
+      data: payData,
       chain: null,
     });
 
@@ -403,7 +399,7 @@ export async function recordQuizCompletion(
   _score: number
 ): Promise<void> {
   throw new WalletError(
-    'Score completion is recorded by the game server. Call submitScore() to pay and submit.'
+    'Pay 0.05 USDT via pay() to enter. Score is recorded by your app/backend.'
   );
 }
 
@@ -411,7 +407,7 @@ export async function getUserQuizCount(userAddress: string): Promise<number> {
   try {
     const provider = await connectWallet();
     const contract = await getContract(provider);
-    const count = await contract.getUserSubmissionCount(userAddress);
+    const count = await contract.getPayCount(userAddress);
     return Number(count);
   } catch {
     return 0;
@@ -428,13 +424,13 @@ export async function getUserQuizStats(userAddress: string): Promise<{
   try {
     const provider = await connectWallet();
     const contract = await getContract(provider);
-    const [quizCount, stats] = await Promise.all([
-      contract.getUserSubmissionCount(userAddress),
-      contract.getStats(),
+    const [quizCount, totalPayments] = await Promise.all([
+      contract.getPayCount(userAddress),
+      contract.totalPayments(),
     ]);
     return {
       quizCount: Number(quizCount),
-      totalQuizzes: Number(stats[0]),
+      totalQuizzes: Number(totalPayments),
       classicQuizzes: 0,
       timeQuizzes: 0,
       challengeQuizzes: 0,
