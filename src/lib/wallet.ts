@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { getWalletClient } from 'wagmi/actions';
+import { getWalletClient, switchChain } from 'wagmi/actions';
 import { encodeFunctionData } from 'viem';
 import {
   GAMEPLAY_ENTRY_ADDRESS,
@@ -46,6 +46,34 @@ export class WalletError extends Error {
   }
 }
 
+/** Celo Mainnet chain ID (used so wagmi does not call connector.getChainId) */
+const CELO_MAINNET_CHAIN_ID = CELO_CHAIN_ID;
+
+/**
+ * Get current chain ID without relying on connector.getChainId (works with Farcaster and other connectors that don't implement it).
+ * Tries in order: eth_chainId RPC → client.chain.id → net_version RPC.
+ */
+async function getSafeChainId(client: { request: (args: { method: string }) => Promise<unknown>; chain?: { id: number } }): Promise<number> {
+  try {
+    const chainIdHex = await client.request({ method: 'eth_chainId' });
+    const id = typeof chainIdHex === 'string' ? parseInt(chainIdHex, 16) : Number(chainIdHex);
+    if (Number.isInteger(id) && id > 0) return id;
+  } catch {
+    // ignore
+  }
+  if (client.chain?.id != null && client.chain.id > 0) {
+    return client.chain.id;
+  }
+  try {
+    const netVersion = await client.request({ method: 'net_version' });
+    const id = typeof netVersion === 'string' ? parseInt(netVersion, 10) : Number(netVersion);
+    if (Number.isInteger(id) && id > 0) return id;
+  } catch {
+    // ignore
+  }
+  throw new WalletError('Could not detect chain. Please switch to Celo Mainnet in your wallet.');
+}
+
 /**
  * Connect to wallet and return provider
  */
@@ -83,27 +111,31 @@ export async function startQuizTransactionWithWagmi(
   try {
     onStateChange?.(TransactionState.CONNECTING);
 
-    const client = await getWalletClient(config);
+    // Fix: pass chainId so wagmi does not call connector.getChainId() (Farcaster connector doesn't implement it)
+    let client: Awaited<ReturnType<typeof getWalletClient>>;
+    try {
+      client = await getWalletClient(config, { chainId: CELO_MAINNET_CHAIN_ID });
+    } catch {
+      client = await getWalletClient(config);
+    }
+    if (!client) {
+      client = await getWalletClient(config);
+    }
     if (!client) {
       throw new WalletError('Please connect your wallet first');
     }
 
     const userAddress = client.account.address;
 
-    // Check we're on Celo Mainnet (Chain ID 42220). Use RPC only — do not call switchChain here
-    // because some connectors (e.g. Farcaster) don't implement getChainId and switchChain would throw.
-    let currentChainId: number;
+    // Switch to Celo Mainnet if needed (use safe chain detection — no connector.getChainId)
     try {
-      const chainIdHex = await client.request({ method: 'eth_chainId' });
-      currentChainId = typeof chainIdHex === 'string' ? parseInt(chainIdHex, 16) : Number(chainIdHex);
+      const chainId = await getSafeChainId(client);
+      if (chainId !== CELO_CHAIN_ID) {
+        await switchChain(config, { chainId: CELO_CHAIN_ID });
+      }
     } catch (chainErr: unknown) {
-      const msg = chainErr instanceof Error ? chainErr.message : 'Could not read network';
-      throw new WalletError(`Could not detect network: ${msg}. Please try again.`);
-    }
-    if (currentChainId !== CELO_CHAIN_ID) {
-      throw new WalletError(
-        `Wrong network. Please switch to Celo Mainnet (Chain ID ${CELO_CHAIN_ID}) in your wallet, then try again.`
-      );
+      const msg = chainErr instanceof Error ? chainErr.message : chainErr instanceof WalletError ? chainErr.message : 'Could not switch network';
+      throw new WalletError(`Switch to Celo failed: ${msg}. Add Celo Mainnet in your wallet and try again.`);
     }
 
     const provider = new ethers.BrowserProvider(client.transport);
