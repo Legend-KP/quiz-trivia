@@ -906,6 +906,7 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context
   const [submitting, setSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isStarting, setIsStarting] = useState(false);
   const { actions } = useMiniApp();
   const config = useConfig();
 
@@ -958,17 +959,24 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context
   }, [shuffleArray]);
 
   const startRun = useCallback(async () => {
-    try {
-      setError(null);
+    setError(null);
+    if (isStarting) return;
+    setIsStarting(true);
 
+    try {
       // First: on-chain payment via GameplayEntry (0.05 USDT on Celo)
       try {
         await startQuizTransactionWithWagmi(QuizMode.TIME_MODE, config);
-      } catch (err: any) {
-        const msg =
-          err && typeof err === 'object' && 'message' in err
-            ? (err as any).message
-            : 'Unable to process payment. Please try again.';
+      } catch (err: unknown) {
+        let msg = 'Unable to process payment. Please try again.';
+        if (err && typeof err === 'object' && 'message' in err) {
+          const raw = String((err as { message: string }).message);
+          if (raw.includes('missing revert data') || raw.includes('CALL_EXCEPTION')) {
+            msg = 'Transaction failed on Celo. Check you have 0.05 USDT and some CELO for gas, then try again.';
+          } else {
+            msg = raw;
+          }
+        }
         setError(msg);
         return;
       }
@@ -983,22 +991,21 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context
         setError(d?.error || 'Unable to start Time Mode');
         return;
       }
-      // setSessionId(d.sessionId);
       setTimeLeft(d.durationSec || 45);
       setStarted(true);
 
-      // ✨ Fetch and shuffle questions when starting the game
       if (questions.length < 5) {
         await fetchMoreQuestions();
       } else {
-        // ✨ If questions already exist, shuffle them for a new game
         setQuestions((prev) => shuffleArray(prev));
-        setQIndex(0); // Reset to first question
+        setQIndex(0);
       }
     } catch (_e) {
       setError('Network error');
+    } finally {
+      setIsStarting(false);
     }
-  }, [config, context?.user?.fid, fetchMoreQuestions, questions.length, shuffleArray]);
+  }, [config, context?.user?.fid, fetchMoreQuestions, questions.length, shuffleArray, isStarting]);
 
   // countdown
   useEffect(() => {
@@ -1074,8 +1081,25 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context
           <div className="bg-white rounded-2xl p-8 shadow-2xl text-center">
             <h2 className="text-2xl font-bold mb-2 text-gray-800">Time Mode • 45s</h2>
             <p className="text-gray-600 mb-6">Answer as many as you can.</p>
-            {error && <div className="mb-4 text-red-600 font-semibold">{error}</div>}
-            <button onClick={startRun} className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700">Start</button>
+            {error && (
+              <div className="mb-4 flex flex-col items-center gap-2">
+                <span className="text-red-600 font-semibold">{error}</span>
+                <button
+                  type="button"
+                  onClick={() => setError(null)}
+                  className="text-sm text-gray-500 hover:text-gray-700 underline"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
+            <button
+              onClick={startRun}
+              disabled={isStarting}
+              className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700 disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {isStarting ? 'Processing payment…' : 'Start'}
+            </button>
           </div>
         ) : !q ? (
           <div className="text-center text-white">Loading questions…</div>
