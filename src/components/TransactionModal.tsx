@@ -153,7 +153,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
         {state === TransactionState.CONFIRMING && (
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-xs text-blue-800">
-              💡 <strong>Tip:</strong> You'll pay 0.05 USDT to submit your score on Celo. Ensure you have USDT and CELO for gas.
+              💡 <strong>Tip:</strong> You will pay 0.05 USDT to submit your score on Celo. Ensure you have USDT and CELO for gas.
             </p>
           </div>
         )}
