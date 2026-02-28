@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { getWalletClient, switchChain } from 'wagmi/actions';
+import { getWalletClient } from 'wagmi/actions';
 import { encodeFunctionData } from 'viem';
 import {
   GAMEPLAY_ENTRY_ADDRESS,
@@ -10,7 +10,6 @@ import {
   USDT_ABI,
 } from './gameplayEntry';
 
-// Extend Window interface to include ethereum
 declare global {
   interface Window {
     ethereum?: any;
@@ -18,18 +17,15 @@ declare global {
   }
 }
 
-// GameplayEntry contract on Celo Mainnet - users pay 0.05 USDT to submit score
 export const CONTRACT_ADDRESS = GAMEPLAY_ENTRY_ADDRESS;
 export const CONTRACT_ABI = GAMEPLAY_ENTRY_ABI;
 
-// Quiz modes matching the smart contract
 export enum QuizMode {
   CLASSIC = 0,
   TIME_MODE = 1,
   CHALLENGE = 2,
 }
 
-// Transaction states for UI feedback
 export enum TransactionState {
   IDLE = 'idle',
   CONNECTING = 'connecting',
@@ -38,7 +34,6 @@ export enum TransactionState {
   ERROR = 'error',
 }
 
-// Custom error class for wallet-related errors
 export class WalletError extends Error {
   constructor(message: string) {
     super(message);
@@ -46,43 +41,117 @@ export class WalletError extends Error {
   }
 }
 
-/** Celo Mainnet chain ID (used so wagmi does not call connector.getChainId) */
-const CELO_MAINNET_CHAIN_ID = CELO_CHAIN_ID;
+// ─────────────────────────────────────────────────────────────
+// ROOT CAUSE EXPLANATION
+//
+// "r.connector.getChainId is not a function" happens because:
+//
+// 1. getWalletClient(config) → wagmi calls connector.getChainId() internally
+// 2. switchChain(config, ...) → ALSO calls connector.getChainId() internally
+//
+// Farcaster's connector (and some WalletConnect modes) never implement
+// getChainId, so BOTH of these throw the error.
+//
+// THE FIX:
+// - Never import or call wagmi's switchChain() — it triggers getChainId
+// - Always pass chainId to getWalletClient to minimize internal connector calls
+// - Detect chain via eth_chainId RPC directly on the client transport
+// - Switch chain via wallet_switchEthereumChain RPC directly (not wagmi)
+// ─────────────────────────────────────────────────────────────
 
 /**
- * Get current chain ID without relying on connector.getChainId (works with Farcaster and other connectors that don't implement it).
- * Tries in order: eth_chainId RPC → client.chain.id → net_version RPC.
+ * Detect chain ID purely via RPC — never touches connector.getChainId
  */
-async function getSafeChainId(client: { request: (args: { method: string }) => Promise<unknown>; chain?: { id: number } }): Promise<number> {
+async function getSafeChainId(client: any): Promise<number> {
+  // Method 1: eth_chainId RPC (most reliable, works on all connectors)
   try {
-    const chainIdHex = await client.request({ method: 'eth_chainId' });
-    const id = typeof chainIdHex === 'string' ? parseInt(chainIdHex, 16) : Number(chainIdHex);
-    if (Number.isInteger(id) && id > 0) return id;
+    const hex = await client.request({ method: 'eth_chainId' });
+    const id = typeof hex === 'string' ? parseInt(hex, 16) : Number(hex);
+    if (id > 0) return id;
   } catch {
-    // ignore
+    /* fall through */
   }
-  if (client.chain?.id != null && client.chain.id > 0) {
-    return client.chain.id;
-  }
+
+  // Method 2: client.chain.id (wagmi v2 sometimes populates this)
+  if (client?.chain?.id > 0) return client.chain.id;
+
+  // Method 3: net_version RPC as last resort
   try {
-    const netVersion = await client.request({ method: 'net_version' });
-    const id = typeof netVersion === 'string' ? parseInt(netVersion, 10) : Number(netVersion);
-    if (Number.isInteger(id) && id > 0) return id;
+    const v = await client.request({ method: 'net_version' });
+    const id = Number(v);
+    if (id > 0) return id;
   } catch {
-    // ignore
+    /* fall through */
   }
-  throw new WalletError('Could not detect chain. Please switch to Celo Mainnet in your wallet.');
+
+  throw new WalletError(
+    'Could not detect your network. Please make sure your wallet is on Celo Mainnet and try again.'
+  );
 }
 
 /**
- * Connect to wallet and return provider
+ * Switch to Celo Mainnet using raw RPC calls.
+ * NEVER uses wagmi switchChain() — that also internally calls connector.getChainId.
+ */
+async function switchToCeloViaRPC(client: any): Promise<void> {
+  const celoChainHex = '0x' + CELO_CHAIN_ID.toString(16); // 0xa4ec
+
+  try {
+    await client.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: celoChainHex }],
+    });
+    return;
+  } catch (switchError: any) {
+    const code = switchError?.code ?? switchError?.data?.originalError?.code;
+
+    // 4902 = chain not added to the wallet yet — add it then retry
+    if (code === 4902 || switchError?.message?.includes('4902')) {
+      try {
+        await client.request({
+          method: 'wallet_addEthereumChain',
+          params: [
+            {
+              chainId: celoChainHex,
+              chainName: 'Celo Mainnet',
+              nativeCurrency: { name: 'CELO', symbol: 'CELO', decimals: 18 },
+              rpcUrls: ['https://forno.celo.org'],
+              blockExplorerUrls: ['https://celoscan.io'],
+            },
+          ],
+        });
+        return;
+      } catch {
+        throw new WalletError(
+          'Could not add Celo Mainnet to your wallet. Please add it manually:\n' +
+            'RPC: https://forno.celo.org | Chain ID: 42220'
+        );
+      }
+    }
+
+    // 4001 = user rejected the switch
+    if (code === 4001 || switchError?.message?.includes('rejected')) {
+      throw new WalletError(
+        'You rejected the network switch. Please switch to Celo Mainnet in your wallet and try again.'
+      );
+    }
+
+    // Farcaster embedded wallets don't support wallet_switchEthereumChain
+    // Just inform the user — we cannot force it
+    throw new WalletError(
+      `Please switch your wallet to Celo Mainnet (Chain ID ${CELO_CHAIN_ID}) and try again.`
+    );
+  }
+}
+
+/**
+ * Connect to wallet and return provider (for read-only calls)
  */
 export async function connectWallet(): Promise<ethers.BrowserProvider> {
   try {
     if (!window.ethereum) {
-      throw new Error('No wallet found. Please install MetaMask or connect your Farcaster wallet.');
+      throw new Error('No wallet found. Please install MetaMask or use a Farcaster wallet.');
     }
-    
     const provider = new ethers.BrowserProvider(window.ethereum);
     await provider.send('eth_requestAccounts', []);
     return provider;
@@ -100,8 +169,13 @@ export async function getContract(provider: ethers.BrowserProvider): Promise<eth
 }
 
 /**
- * Submit score via GameplayEntry contract on Celo.
- * User pays 0.05 USDT to submit. Requires USDT approval first.
+ * Submit score — user pays 0.05 USDT
+ *
+ * Fixes applied:
+ * ✅ getWalletClient called with chainId to prevent connector.getChainId() call
+ * ✅ Chain detection via eth_chainId RPC only — not connector API
+ * ✅ Chain switching via wallet_switchEthereumChain RPC — not wagmi switchChain()
+ * ✅ switchChain import removed entirely from this file
  */
 export async function startQuizTransactionWithWagmi(
   _mode: QuizMode,
@@ -111,54 +185,68 @@ export async function startQuizTransactionWithWagmi(
   try {
     onStateChange?.(TransactionState.CONNECTING);
 
-    // Fix: pass chainId so wagmi does not call connector.getChainId() (Farcaster connector doesn't implement it)
-    let client: Awaited<ReturnType<typeof getWalletClient>>;
+    // ✅ KEY FIX: Pass chainId so wagmi skips calling connector.getChainId()
+    let client: any;
     try {
-      client = await getWalletClient(config, { chainId: CELO_MAINNET_CHAIN_ID });
+      client = await getWalletClient(config, { chainId: CELO_CHAIN_ID });
     } catch {
-      client = await getWalletClient(config);
+      // Fallback: some connectors fail even with chainId hint
+      try {
+        client = await getWalletClient(config);
+      } catch {
+        throw new WalletError('Please connect your wallet and try again.');
+      }
     }
+
     if (!client) {
-      client = await getWalletClient(config);
-    }
-    if (!client) {
-      throw new WalletError('Please connect your wallet first');
+      throw new WalletError('Please connect your wallet first.');
     }
 
     const userAddress = client.account.address;
 
-    // Switch to Celo Mainnet if needed (use safe chain detection — no connector.getChainId)
-    try {
-      const chainId = await getSafeChainId(client);
-      if (chainId !== CELO_CHAIN_ID) {
-        await switchChain(config, { chainId: CELO_CHAIN_ID });
+    // ✅ Detect chain via RPC — never via connector API
+    const currentChainId = await getSafeChainId(client);
+
+    if (currentChainId !== CELO_CHAIN_ID) {
+      // ✅ Switch via raw RPC — never via wagmi switchChain()
+      await switchToCeloViaRPC(client);
+
+      // Verify the switch worked
+      const chainAfterSwitch = await getSafeChainId(client);
+      if (chainAfterSwitch !== CELO_CHAIN_ID) {
+        throw new WalletError(
+          `Still on wrong network (Chain ID: ${chainAfterSwitch}). ` +
+            `Please manually switch to Celo Mainnet (Chain ID: ${CELO_CHAIN_ID}).`
+        );
       }
-    } catch (chainErr: unknown) {
-      const msg = chainErr instanceof Error ? chainErr.message : chainErr instanceof WalletError ? chainErr.message : 'Could not switch network';
-      throw new WalletError(`Switch to Celo failed: ${msg}. Add Celo Mainnet in your wallet and try again.`);
     }
 
     const provider = new ethers.BrowserProvider(client.transport);
-
-    // Check USDT balance (must be on Celo)
     const usdtContract = new ethers.Contract(USDT_ADDRESS_CELO, USDT_ABI, provider);
+
+    // Check USDT balance
     const usdtBalance = await usdtContract.balanceOf(userAddress);
     if (usdtBalance < ENTRY_FEE) {
-      throw new WalletError('Insufficient USDT balance. You need at least 0.05 USDT to submit your score.');
+      throw new WalletError(
+        'Insufficient USDT balance. You need at least 0.05 USDT on Celo Mainnet.'
+      );
     }
 
-    // Check CELO balance for gas
+    // Check CELO gas balance
     const celoBalance = await provider.getBalance(userAddress);
-    const minGasBalance = ethers.parseEther('0.001');
-    if (celoBalance < minGasBalance) {
-      throw new WalletError('Insufficient CELO for gas. You need a small amount of CELO for transaction fees.');
+    if (celoBalance < ethers.parseEther('0.001')) {
+      throw new WalletError(
+        'Insufficient CELO for gas. Please add a small amount of CELO to your wallet.'
+      );
     }
 
-    // Check if we need to approve USDT (some USDT implementations require approve(0) before increasing)
+    // Handle USDT allowance
     const allowance = await usdtContract.allowance(userAddress, GAMEPLAY_ENTRY_ADDRESS);
+
     if (allowance < ENTRY_FEE) {
       onStateChange?.(TransactionState.CONFIRMING);
-      // USDT-safe: set to 0 first if current allowance is non-zero, then set to ENTRY_FEE
+
+      // Reset to 0 first if needed (some USDT implementations require this)
       if (allowance > 0n) {
         const approveZeroData = encodeFunctionData({
           abi: USDT_ABI,
@@ -171,6 +259,8 @@ export async function startQuizTransactionWithWagmi(
           chain: null,
         });
       }
+
+      // Set required allowance
       const approveData = encodeFunctionData({
         abi: USDT_ABI,
         functionName: 'approve',
@@ -185,7 +275,7 @@ export async function startQuizTransactionWithWagmi(
 
     onStateChange?.(TransactionState.CONFIRMING);
 
-    // Submit score (transfers 0.05 USDT to contract)
+    // Submit score — transfers 0.05 USDT to contract
     const submitData = encodeFunctionData({
       abi: CONTRACT_ABI,
       functionName: 'submitScore',
@@ -207,24 +297,31 @@ export async function startQuizTransactionWithWagmi(
       errorMessage = error.message;
     } else if (error instanceof Error) {
       const m = error.message;
-      if (m.includes('User rejected') || m.includes('rejected')) {
-        errorMessage = 'You rejected the transaction. Please approve in your wallet.';
-      } else if (m.includes('CALL_EXCEPTION') || m.includes('missing revert data') || m.includes('execution reverted')) {
-        errorMessage = 'Transaction failed on chain. Ensure you have at least 0.05 USDT and some CELO for gas on Celo Mainnet, then try again.';
+
+      if (m.includes('getChainId is not a function') || m.includes('connector.getChainId')) {
+        errorMessage =
+          'Wallet connector issue. Please disconnect, reconnect your wallet, and try again.';
+      } else if (m.includes('User rejected') || m.includes('rejected') || m.includes('4001')) {
+        errorMessage = 'Transaction rejected. Please approve in your wallet to continue.';
+      } else if (
+        m.includes('CALL_EXCEPTION') ||
+        m.includes('execution reverted') ||
+        m.includes('missing revert data')
+      ) {
+        errorMessage =
+          'Transaction failed on Celo. Check you have 0.05 USDT and CELO for gas, then retry.';
+      } else if (m.includes('Please wait')) {
+        errorMessage = 'Rate limit: please wait 10 seconds before submitting again.';
       } else if (m.includes('insufficient') || m.includes('Insufficient')) {
         errorMessage = m;
-      } else if (m.includes('Please wait')) {
-        errorMessage = 'Please wait 10 seconds before submitting again (rate limit).';
-      } else if (m.includes('connect') || m.includes('wallet')) {
-        errorMessage = m;
-      } else if (m.includes('Switch to Celo') || m.includes('Celo')) {
+      } else if (m.includes('Celo') || m.includes('network') || m.includes('chain')) {
         errorMessage = m;
       } else {
-        // Surface the real error so user can see what failed
         errorMessage = m || errorMessage;
       }
-      if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-        console.error('[GameplayEntry] transaction error:', error);
+
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[GameplayEntry] error:', error);
       }
     }
 
@@ -233,44 +330,31 @@ export async function startQuizTransactionWithWagmi(
   }
 }
 
-/**
- * Get required fee (0.05 USDT for GameplayEntry)
- */
 export function getRequiredFeeInWei(_mode: QuizMode): bigint {
   return ENTRY_FEE;
 }
 
-/**
- * Record quiz completion - GameplayEntry uses recordGameplayCompletion which is
- * only callable by the game server. Frontend should not call this.
- */
 export async function recordQuizCompletion(
   _userAddress: string,
   _mode: QuizMode,
   _score: number
 ): Promise<void> {
   throw new WalletError(
-    'Completion is recorded by the game server after you submit. Use submitScore to pay and submit.'
+    'Score completion is recorded by the game server. Call submitScore() to pay and submit.'
   );
 }
 
-/**
- * Get user's submission count (GameplayEntry)
- */
 export async function getUserQuizCount(userAddress: string): Promise<number> {
   try {
     const provider = await connectWallet();
     const contract = await getContract(provider);
     const count = await contract.getUserSubmissionCount(userAddress);
     return Number(count);
-  } catch (error: any) {
+  } catch {
     return 0;
   }
 }
 
-/**
- * Get user's quiz statistics (GameplayEntry)
- */
 export async function getUserQuizStats(userAddress: string): Promise<{
   quizCount: number;
   totalQuizzes: number;
@@ -292,50 +376,33 @@ export async function getUserQuizStats(userAddress: string): Promise<{
       timeQuizzes: 0,
       challengeQuizzes: 0,
     };
-  } catch (error: any) {
-    return {
-      quizCount: 0,
-      totalQuizzes: 0,
-      classicQuizzes: 0,
-      timeQuizzes: 0,
-      challengeQuizzes: 0,
-    };
+  } catch {
+    return { quizCount: 0, totalQuizzes: 0, classicQuizzes: 0, timeQuizzes: 0, challengeQuizzes: 0 };
   }
 }
 
-/**
- * Format wallet error for display
- */
 export function formatWalletError(error: WalletError): string {
   return error.message;
 }
 
-/**
- * Check if wallet is connected
- */
 export async function isWalletConnected(): Promise<boolean> {
   try {
     if (!window.ethereum) return false;
-    
     const provider = new ethers.BrowserProvider(window.ethereum);
     const accounts = await provider.listAccounts();
     return accounts.length > 0;
-  } catch (error) {
+  } catch {
     return false;
   }
 }
 
-/**
- * Get current wallet address
- */
 export async function getCurrentWalletAddress(): Promise<string | null> {
   try {
     if (!window.ethereum) return null;
-    
     const provider = new ethers.BrowserProvider(window.ethereum);
     const accounts = await provider.listAccounts();
-    return accounts.length > 0 ? accounts[0].address : null;
-  } catch (error) {
+    return accounts.length > 0 ? (await accounts[0].getAddress()) : null;
+  } catch {
     return null;
   }
 }
