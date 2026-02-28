@@ -128,6 +128,7 @@ export async function startQuizTransactionWithWagmi(
       await client.sendTransaction({
         to: USDT_ADDRESS_CELO as `0x${string}`,
         data: approveData,
+        chain: null,
       });
     }
 
@@ -143,6 +144,7 @@ export async function startQuizTransactionWithWagmi(
     const txHash = await client.sendTransaction({
       to: CONTRACT_ADDRESS as `0x${string}`,
       data: submitData,
+      chain: null,
     });
 
     onStateChange?.(TransactionState.SUCCESS);
