@@ -89,6 +89,21 @@ async function getSafeChainId(client: any): Promise<number> {
   );
 }
 
+/** Try to get a human-readable revert reason from a contract call error */
+function getRevertReason(error: unknown): string | null {
+  if (error && typeof error === 'object') {
+    const e = error as Record<string, unknown>;
+    if (typeof e.reason === 'string' && e.reason) return e.reason;
+    if (typeof e.shortMessage === 'string' && e.shortMessage) return e.shortMessage;
+    if (e.data && typeof e.data === 'object') {
+      const d = e.data as Record<string, unknown>;
+      if (typeof d.message === 'string' && d.message) return d.message;
+      if (typeof d.reason === 'string' && d.reason) return d.reason;
+    }
+  }
+  return null;
+}
+
 /**
  * Switch to Celo Mainnet using raw RPC calls.
  * NEVER uses wagmi switchChain() — that also internally calls connector.getChainId.
@@ -223,6 +238,24 @@ export async function startQuizTransactionWithWagmi(
 
     const provider = new ethers.BrowserProvider(client.transport);
     const usdtContract = new ethers.Contract(USDT_ADDRESS_CELO, USDT_ABI, provider);
+    const gameplayContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+
+    // Contract state checks (avoid sending a tx that will revert)
+    const [isPaused, canSubmit] = await Promise.all([
+      gameplayContract.paused(),
+      gameplayContract.canUserSubmit(userAddress),
+    ]);
+    if (isPaused) {
+      throw new WalletError('Contract is temporarily paused. Please try again later.');
+    }
+    if (!canSubmit) {
+      const limitSec = await gameplayContract.RATE_LIMIT_SECONDS().catch(() => 10n);
+      const lastTime = await gameplayContract.lastSubmissionTime(userAddress).catch(() => 0n);
+      const now = Math.floor(Date.now() / 1000);
+      const waitSec = lastTime > 0n ? Number(lastTime) + Number(limitSec) - now : Number(limitSec);
+      const waitMsg = waitSec > 0 ? ` Please wait ${Math.ceil(waitSec)} seconds and try again.` : ' Please try again in a moment.';
+      throw new WalletError('Rate limit: you submitted too recently.' + waitMsg);
+    }
 
     // Check USDT balance
     const usdtBalance = await usdtContract.balanceOf(userAddress);
@@ -273,6 +306,14 @@ export async function startQuizTransactionWithWagmi(
       });
     }
 
+    // Re-verify allowance right before submit (in case approval didn’t land or was for wrong chain)
+    const allowanceAgain = await usdtContract.allowance(userAddress, GAMEPLAY_ENTRY_ADDRESS);
+    if (allowanceAgain < ENTRY_FEE) {
+      throw new WalletError(
+        'USDT allowance is still too low. Please try again and approve the full amount when your wallet asks.'
+      );
+    }
+
     onStateChange?.(TransactionState.CONFIRMING);
 
     // Submit score — transfers 0.05 USDT to contract
@@ -308,8 +349,20 @@ export async function startQuizTransactionWithWagmi(
         m.includes('execution reverted') ||
         m.includes('missing revert data')
       ) {
-        errorMessage =
-          'Transaction failed on Celo. Check you have 0.05 USDT and CELO for gas, then retry.';
+        const reason = getRevertReason(error);
+        const r = (reason ?? m).toLowerCase();
+        if (r.includes('paus') || r.includes('Paused')) {
+          errorMessage = 'Contract is temporarily paused. Please try again later.';
+        } else if (r.includes('rate') || r.includes('limit') || r.includes('wait') || r.includes('too soon')) {
+          errorMessage = 'Rate limit: please wait a few seconds before submitting again.';
+        } else if (r.includes('allowance') || r.includes('transfer') || r.includes('insufficient') || r.includes('balance')) {
+          errorMessage = 'USDT allowance or balance issue. Try again and approve the full 0.05 USDT when your wallet asks.';
+        } else if (reason && reason.length < 120) {
+          errorMessage = reason;
+        } else {
+          errorMessage =
+            'Transaction failed on Celo. If you have 0.05 USDT and CELO for gas, the contract may be paused or rate-limited — try again in a moment.';
+        }
       } else if (m.includes('Please wait')) {
         errorMessage = 'Rate limit: please wait 10 seconds before submitting again.';
       } else if (m.includes('insufficient') || m.includes('Insufficient')) {
