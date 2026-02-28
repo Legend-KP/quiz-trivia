@@ -3,13 +3,14 @@ import { Clock, Trophy, Star, X } from 'lucide-react';
 import { useMiniApp } from '@neynar/react';
 import { APP_URL, APP_TITLE_IMAGE_URL, APP_NAME } from '~/lib/constants';
 import QuizStartButton from '~/components/QuizStartButton';
-import { QuizMode } from '~/lib/wallet';
+import { QuizMode, startQuizTransactionWithWagmi } from '~/lib/wallet';
 import WeeklyQuizPage from '~/components/WeeklyQuizPage';
 import WeeklyQuizStartButton from '~/components/WeeklyQuizStartButton';
 import { currentWeeklyQuiz } from '~/lib/weeklyQuiz';
 import { useQuizState } from '~/hooks/useWeeklyQuiz';
 import QuizResultsSubmitPage from '~/components/QuizResultsSubmitPage';
 import { BetModeTab } from './BetModeTab';
+import { useConfig } from 'wagmi';
 
 // Type definitions
 interface QuizQuestion {
@@ -906,6 +907,7 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { actions } = useMiniApp();
+  const config = useConfig();
 
   // Utility function to shuffle an array using Fisher-Yates algorithm
   const shuffleArray = useCallback((array: QuizQuestion[]): QuizQuestion[] => {
@@ -953,7 +955,24 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context
   const startRun = useCallback(async () => {
     try {
       setError(null);
-      const res = await fetch('/api/time/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fid: context?.user?.fid }) });
+
+      // First: on-chain payment via GameplayEntry (0.05 USDT on Celo)
+      try {
+        await startQuizTransactionWithWagmi(QuizMode.TIME_MODE, config);
+      } catch (err: any) {
+        const msg =
+          err && typeof err === 'object' && 'message' in err
+            ? (err as any).message
+            : 'Unable to process payment. Please try again.';
+        setError(msg);
+        return;
+      }
+
+      const res = await fetch('/api/time/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fid: context?.user?.fid }),
+      });
       const d = await res.json();
       if (!res.ok || !d?.success) {
         setError(d?.error || 'Unable to start Time Mode');
@@ -962,7 +981,7 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context
       // setSessionId(d.sessionId);
       setTimeLeft(d.durationSec || 45);
       setStarted(true);
-      
+
       // ✨ Fetch and shuffle questions when starting the game
       if (questions.length < 5) {
         await fetchMoreQuestions();
@@ -974,7 +993,7 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context
     } catch (_e) {
       setError('Network error');
     }
-  }, [context?.user?.fid, fetchMoreQuestions, questions.length, shuffleArray]);
+  }, [config, context?.user?.fid, fetchMoreQuestions, questions.length, shuffleArray]);
 
   // countdown
   useEffect(() => {
