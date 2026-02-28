@@ -240,21 +240,26 @@ export async function startQuizTransactionWithWagmi(
     const usdtContract = new ethers.Contract(USDT_ADDRESS_CELO, USDT_ABI, provider);
     const gameplayContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 
-    // Contract state checks (avoid sending a tx that will revert)
-    const [isPaused, canSubmit] = await Promise.all([
-      gameplayContract.paused(),
-      gameplayContract.canUserSubmit(userAddress),
-    ]);
-    if (isPaused) {
-      throw new WalletError('Contract is temporarily paused. Please try again later.');
-    }
-    if (!canSubmit) {
-      const limitSec = await gameplayContract.RATE_LIMIT_SECONDS().catch(() => 10n);
-      const lastTime = await gameplayContract.lastSubmissionTime(userAddress).catch(() => 0n);
-      const now = Math.floor(Date.now() / 1000);
-      const waitSec = lastTime > 0n ? Number(lastTime) + Number(limitSec) - now : Number(limitSec);
-      const waitMsg = waitSec > 0 ? ` Please wait ${Math.ceil(waitSec)} seconds and try again.` : ' Please try again in a moment.';
-      throw new WalletError('Rate limit: you submitted too recently.' + waitMsg);
+    // Optional contract state checks — if reads fail (e.g. not deployed, ABI mismatch), skip and proceed
+    try {
+      const [isPaused, canSubmit] = await Promise.all([
+        gameplayContract.paused(),
+        gameplayContract.canUserSubmit(userAddress),
+      ]);
+      if (isPaused) {
+        throw new WalletError('Contract is temporarily paused. Please try again later.');
+      }
+      if (!canSubmit) {
+        const limitSec = await gameplayContract.RATE_LIMIT_SECONDS().catch(() => 10n);
+        const lastTime = await gameplayContract.lastSubmissionTime(userAddress).catch(() => 0n);
+        const now = Math.floor(Date.now() / 1000);
+        const waitSec = lastTime > 0n ? Number(lastTime) + Number(limitSec) - now : Number(limitSec);
+        const waitMsg = waitSec > 0 ? ` Please wait ${Math.ceil(waitSec)} seconds and try again.` : ' Please try again in a moment.';
+        throw new WalletError('Rate limit: you submitted too recently.' + waitMsg);
+      }
+    } catch (e) {
+      if (e instanceof WalletError) throw e;
+      // Pre-checks failed (e.g. missing revert data, contract not at address, ABI mismatch) — skip and let submitScore run
     }
 
     // Check USDT balance
@@ -307,11 +312,16 @@ export async function startQuizTransactionWithWagmi(
     }
 
     // Re-verify allowance right before submit (in case approval didn’t land or was for wrong chain)
-    const allowanceAgain = await usdtContract.allowance(userAddress, GAMEPLAY_ENTRY_ADDRESS);
-    if (allowanceAgain < ENTRY_FEE) {
-      throw new WalletError(
-        'USDT allowance is still too low. Please try again and approve the full amount when your wallet asks.'
-      );
+    try {
+      const allowanceAgain = await usdtContract.allowance(userAddress, GAMEPLAY_ENTRY_ADDRESS);
+      if (allowanceAgain < ENTRY_FEE) {
+        throw new WalletError(
+          'USDT allowance is still too low. Please try again and approve the full amount when your wallet asks.'
+        );
+      }
+    } catch (e) {
+      if (e instanceof WalletError) throw e;
+      // Allowance read failed — proceed; submitScore will revert on-chain if allowance is wrong
     }
 
     onStateChange?.(TransactionState.CONFIRMING);
