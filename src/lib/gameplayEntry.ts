@@ -11,6 +11,7 @@ export const GAMEPLAY_ENTRY_ADDRESS = (
     ? process.env.NEXT_PUBLIC_GAMEPLAY_ENTRY_ADDRESS.trim()
     : DEFAULT_GAMEPLAY_ENTRY
 ) as `0x${string}`;
+// Official Celo Mainnet USDT (Tether) — same as GameplayEntry.sol USDT constant
 export const USDT_ADDRESS_CELO = '0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e' as const;
 export const ENTRY_FEE = 50_000n; // 0.05 USDT (6 decimals) — matches contract FEE
 export const CELO_CHAIN_ID = 42220;

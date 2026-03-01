@@ -240,6 +240,14 @@ export async function startQuizTransactionWithWagmi(
     const usdtContract = new ethers.Contract(USDT_ADDRESS_CELO, USDT_ABI, provider);
     const gameplayContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 
+    // Re-confirm we're on Celo before reading USDT (same as contract: 0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e)
+    const chainBeforeBalance = await getSafeChainId(client);
+    if (chainBeforeBalance !== CELO_CHAIN_ID) {
+      throw new WalletError(
+        `Wallet is on wrong network (Chain ID: ${chainBeforeBalance}). Switch to Celo Mainnet (42220) so your USDT balance is visible.`
+      );
+    }
+
     // Optional: check paused and rate limit (v5 — skip if reads fail)
     try {
       const isPaused = await gameplayContract.paused();
@@ -258,11 +266,11 @@ export async function startQuizTransactionWithWagmi(
       // Pre-check failed — skip and let pay() run
     }
 
-    // Check USDT balance
+    // Check USDT balance (must be on Celo — token 0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e)
     const usdtBalance = await usdtContract.balanceOf(userAddress);
     if (usdtBalance < ENTRY_FEE) {
       throw new WalletError(
-        'Insufficient USDT balance. You need at least 0.05 USDT on Celo Mainnet.'
+        'Insufficient USDT on Celo Mainnet. You need at least 0.05 USDT on Celo (token 0x48065…483D5e). Ensure your wallet is on Celo (Chain ID 42220), not another network.'
       );
     }
 
