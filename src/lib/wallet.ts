@@ -42,28 +42,26 @@ export class WalletError extends Error {
 }
 
 // ─────────────────────────────────────────────────────────────
-// ROOT CAUSE EXPLANATION
+// PUBLIC CELO RPC — used for ALL reads
 //
-// "r.connector.getChainId is not a function" happens because:
+// ROOT CAUSE OF "Insufficient funds" WITH FARCASTER:
+// When you do `new ethers.BrowserProvider(client.transport)` and
+// call balanceOf/allowance through it, Farcaster's transport
+// handles eth_call differently and can return 0 or bad data.
 //
-// 1. getWalletClient(config) → wagmi calls connector.getChainId() internally
-// 2. switchChain(config, ...) → ALSO calls connector.getChainId() internally
-//
-// Farcaster's connector (and some WalletConnect modes) never implement
-// getChainId, so BOTH of these throw the error.
-//
-// THE FIX:
-// - Never import or call wagmi's switchChain() — it triggers getChainId
-// - Always pass chainId to getWalletClient to minimize internal connector calls
-// - Detect chain via eth_chainId RPC directly on the client transport
-// - Switch chain via wallet_switchEthereumChain RPC directly (not wagmi)
+// FIX: Always use the public Celo RPC for reads.
+// Only use the wallet client for WRITES (approve, pay).
 // ─────────────────────────────────────────────────────────────
+const CELO_RPC = 'https://forno.celo.org';
 
-/**
- * Detect chain ID purely via RPC — never touches connector.getChainId
- */
+function getReadProvider(): ethers.JsonRpcProvider {
+  return new ethers.JsonRpcProvider(CELO_RPC);
+}
+
+// ─────────────────────────────────────────────────────────────
+// SAFE CHAIN ID — never calls connector.getChainId
+// ─────────────────────────────────────────────────────────────
 async function getSafeChainId(client: any): Promise<number> {
-  // Method 1: eth_chainId RPC (most reliable, works on all connectors)
   try {
     const hex = await client.request({ method: 'eth_chainId' });
     const id = typeof hex === 'string' ? parseInt(hex, 16) : Number(hex);
@@ -72,10 +70,8 @@ async function getSafeChainId(client: any): Promise<number> {
     /* fall through */
   }
 
-  // Method 2: client.chain.id (wagmi v2 sometimes populates this)
   if (client?.chain?.id > 0) return client.chain.id;
 
-  // Method 3: net_version RPC as last resort
   try {
     const v = await client.request({ method: 'net_version' });
     const id = Number(v);
@@ -85,31 +81,15 @@ async function getSafeChainId(client: any): Promise<number> {
   }
 
   throw new WalletError(
-    'Could not detect your network. Please make sure your wallet is on Celo Mainnet and try again.'
+    'Could not detect your network. Please make sure your wallet is on Celo Mainnet.'
   );
 }
 
-/** Try to get a human-readable revert reason from a contract call error */
-function getRevertReason(error: unknown): string | null {
-  if (error && typeof error === 'object') {
-    const e = error as Record<string, unknown>;
-    if (typeof e.reason === 'string' && e.reason) return e.reason;
-    if (typeof e.shortMessage === 'string' && e.shortMessage) return e.shortMessage;
-    if (e.data && typeof e.data === 'object') {
-      const d = e.data as Record<string, unknown>;
-      if (typeof d.message === 'string' && d.message) return d.message;
-      if (typeof d.reason === 'string' && d.reason) return d.reason;
-    }
-  }
-  return null;
-}
-
-/**
- * Switch to Celo Mainnet using raw RPC calls.
- * NEVER uses wagmi switchChain() — that also internally calls connector.getChainId.
- */
+// ─────────────────────────────────────────────────────────────
+// SWITCH TO CELO — never calls wagmi switchChain()
+// ─────────────────────────────────────────────────────────────
 async function switchToCeloViaRPC(client: any): Promise<void> {
-  const celoChainHex = '0x' + CELO_CHAIN_ID.toString(16); // 0xa4ec
+  const celoChainHex = '0x' + CELO_CHAIN_ID.toString(16);
 
   try {
     await client.request({
@@ -120,7 +100,6 @@ async function switchToCeloViaRPC(client: any): Promise<void> {
   } catch (switchError: any) {
     const code = switchError?.code ?? switchError?.data?.originalError?.code;
 
-    // 4902 = chain not added to the wallet yet — add it then retry
     if (code === 4902 || switchError?.message?.includes('4902')) {
       try {
         await client.request({
@@ -130,7 +109,7 @@ async function switchToCeloViaRPC(client: any): Promise<void> {
               chainId: celoChainHex,
               chainName: 'Celo Mainnet',
               nativeCurrency: { name: 'CELO', symbol: 'CELO', decimals: 18 },
-              rpcUrls: ['https://forno.celo.org'],
+              rpcUrls: [CELO_RPC],
               blockExplorerUrls: ['https://celoscan.io'],
             },
           ],
@@ -138,30 +117,34 @@ async function switchToCeloViaRPC(client: any): Promise<void> {
         return;
       } catch {
         throw new WalletError(
-          'Could not add Celo Mainnet to your wallet. Please add it manually:\n' +
-            'RPC: https://forno.celo.org | Chain ID: 42220'
+          'Could not add Celo Mainnet. Please add it manually — RPC: https://forno.celo.org | Chain ID: 42220'
         );
       }
     }
 
-    // 4001 = user rejected the switch
     if (code === 4001 || switchError?.message?.includes('rejected')) {
       throw new WalletError(
-        'You rejected the network switch. Please switch to Celo Mainnet in your wallet and try again.'
+        'You rejected the network switch. Please switch to Celo Mainnet and try again.'
       );
     }
 
-    // Farcaster embedded wallets don't support wallet_switchEthereumChain
-    // Just inform the user — we cannot force it
     throw new WalletError(
       `Please switch your wallet to Celo Mainnet (Chain ID ${CELO_CHAIN_ID}) and try again.`
     );
   }
 }
 
-/**
- * Connect to wallet and return provider (for read-only calls)
- */
+// ─────────────────────────────────────────────────────────────
+// SAFE READ — wraps any contract call, returns null on failure
+// ─────────────────────────────────────────────────────────────
+async function safeRead<T>(fn: () => Promise<T>): Promise<T | null> {
+  try {
+    return await fn();
+  } catch {
+    return null;
+  }
+}
+
 export async function connectWallet(): Promise<ethers.BrowserProvider> {
   try {
     if (!window.ethereum) {
@@ -175,22 +158,20 @@ export async function connectWallet(): Promise<ethers.BrowserProvider> {
   }
 }
 
-/**
- * Get contract instance
- */
 export async function getContract(provider: ethers.BrowserProvider): Promise<ethers.Contract> {
   const signer = await provider.getSigner();
   return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 }
 
 /**
- * Submit score — user pays 0.05 USDT
+ * Main function — pays 0.05 USDT to GameplayEntry contract
  *
- * Fixes applied:
- * ✅ getWalletClient called with chainId to prevent connector.getChainId() call
- * ✅ Chain detection via eth_chainId RPC only — not connector API
- * ✅ Chain switching via wallet_switchEthereumChain RPC — not wagmi switchChain()
- * ✅ switchChain import removed entirely from this file
+ * KEY FIXES for Farcaster wallet:
+ * ✅ ALL reads use public Celo RPC (forno.celo.org) — not Farcaster transport
+ * ✅ Only WRITES use the wallet client (approve, pay)
+ * ✅ No wagmi switchChain() — uses raw RPC
+ * ✅ No connector.getChainId() — uses eth_chainId RPC
+ * ✅ safeRead() on all pre-checks — never blocks user on read failure
  */
 export async function startQuizTransactionWithWagmi(
   _mode: QuizMode,
@@ -200,137 +181,125 @@ export async function startQuizTransactionWithWagmi(
   try {
     onStateChange?.(TransactionState.CONNECTING);
 
-    // ✅ KEY FIX: Pass chainId so wagmi skips calling connector.getChainId()
+    // ── Step 1: Get wallet client ──────────────────────────────
     let client: any;
     try {
       client = await getWalletClient(config, { chainId: CELO_CHAIN_ID });
     } catch {
-      // Fallback: some connectors fail even with chainId hint
       try {
         client = await getWalletClient(config);
       } catch {
         throw new WalletError('Please connect your wallet and try again.');
       }
     }
-
-    if (!client) {
-      throw new WalletError('Please connect your wallet first.');
-    }
+    if (!client) throw new WalletError('Please connect your wallet first.');
 
     const userAddress = client.account.address;
 
-    // ✅ Detect chain via RPC — never via connector API
+    // ── Step 2: Chain check + switch via raw RPC ───────────────
     const currentChainId = await getSafeChainId(client);
-
     if (currentChainId !== CELO_CHAIN_ID) {
-      // ✅ Switch via raw RPC — never via wagmi switchChain()
       await switchToCeloViaRPC(client);
-
-      // Verify the switch worked
-      const chainAfterSwitch = await getSafeChainId(client);
-      if (chainAfterSwitch !== CELO_CHAIN_ID) {
+      const chainAfter = await getSafeChainId(client);
+      if (chainAfter !== CELO_CHAIN_ID) {
         throw new WalletError(
-          `Still on wrong network (Chain ID: ${chainAfterSwitch}). ` +
-            `Please manually switch to Celo Mainnet (Chain ID: ${CELO_CHAIN_ID}).`
+          `Please manually switch to Celo Mainnet (Chain ID: ${CELO_CHAIN_ID}).`
         );
       }
     }
 
-    const provider = new ethers.BrowserProvider(client.transport);
-    const usdtContract = new ethers.Contract(USDT_ADDRESS_CELO, USDT_ABI, provider);
-    const gameplayContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+    // ── Step 3: ALL reads via public Celo RPC ──────────────────
+    const readProvider = getReadProvider();
+    const usdtRead = new ethers.Contract(USDT_ADDRESS_CELO, USDT_ABI, readProvider);
+    const gameplayRead = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, readProvider);
 
-    // Re-confirm we're on Celo before reading USDT (same as contract: 0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e)
-    const chainBeforeBalance = await getSafeChainId(client);
-    if (chainBeforeBalance !== CELO_CHAIN_ID) {
+    // ── Step 4: Contract state pre-checks (non-blocking) ───────
+    const [isPaused, canPayNow] = await Promise.all([
+      safeRead(() => gameplayRead.paused()),
+      safeRead(() => gameplayRead.canPay(userAddress)),
+    ]);
+
+    if (isPaused === true) {
+      throw new WalletError('The contract is temporarily paused. Please try again later.');
+    }
+
+    if (canPayNow === false) {
+      const secsLeft = await safeRead(() => gameplayRead.secondsUntilCanPay(userAddress));
+      const wait = secsLeft != null ? Number(secsLeft) : 10;
       throw new WalletError(
-        `Wallet is on wrong network (Chain ID: ${chainBeforeBalance}). Switch to Celo Mainnet (42220) so your USDT balance is visible.`
+        `Rate limit: please wait ${Math.ceil(wait)} seconds before paying again.`
       );
     }
 
-    // Optional: check paused and rate limit (v5 — skip if reads fail)
-    try {
-      const isPaused = await gameplayContract.paused();
-      if (isPaused) {
-        throw new WalletError('Contract is temporarily paused. Please try again later.');
-      }
-      const canPayNow = await gameplayContract.canPay(userAddress);
-      if (!canPayNow) {
-        const waitSec = await gameplayContract.secondsUntilCanPay(userAddress);
-        throw new WalletError(
-          `Rate limit: please wait ${Number(waitSec)} seconds before paying again.`
-        );
-      }
-    } catch (e) {
-      if (e instanceof WalletError) throw e;
-      // Pre-check failed — skip and let pay() run
-    }
-
-    // Check USDT balance (must be on Celo — token 0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e)
-    const usdtBalance = await usdtContract.balanceOf(userAddress);
-    if (usdtBalance < ENTRY_FEE) {
+    // ── Step 5: USDT balance check via public RPC ──────────────
+    const usdtBalance = await safeRead(() => usdtRead.balanceOf(userAddress));
+    if (usdtBalance !== null && BigInt(usdtBalance.toString()) < ENTRY_FEE) {
       throw new WalletError(
-        'Insufficient USDT on Celo Mainnet. You need at least 0.05 USDT on Celo (token 0x48065…483D5e). Ensure your wallet is on Celo (Chain ID 42220), not another network.'
+        `Insufficient USDT balance. You have ${Number(usdtBalance) / 1_000_000} USDT but need 0.05 USDT on Celo Mainnet.`
       );
     }
 
-    // Check CELO gas balance
-    const celoBalance = await provider.getBalance(userAddress);
-    if (celoBalance < ethers.parseEther('0.001')) {
+    // ── Step 6: CELO gas balance via public RPC ────────────────
+    const celoBalance = await safeRead(() => readProvider.getBalance(userAddress));
+    if (celoBalance !== null && celoBalance < ethers.parseEther('0.001')) {
       throw new WalletError(
-        'Insufficient CELO for gas. Please add a small amount of CELO to your wallet.'
+        `Insufficient CELO for gas. You have ${ethers.formatEther(celoBalance)} CELO but need at least 0.001 CELO.`
       );
     }
 
-    // Handle USDT allowance
-    const allowance = await usdtContract.allowance(userAddress, GAMEPLAY_ENTRY_ADDRESS);
+    // ── Step 7: USDT allowance check via public RPC ────────────
+    const allowance = await safeRead(() =>
+      usdtRead.allowance(userAddress, CONTRACT_ADDRESS)
+    );
+    const currentAllowance = allowance !== null ? BigInt(allowance.toString()) : 0n;
 
-    if (allowance < ENTRY_FEE) {
+    // ── Step 8: Approve USDT if needed (WRITE via wallet) ──────
+    if (currentAllowance < ENTRY_FEE) {
       onStateChange?.(TransactionState.CONFIRMING);
 
-      // Reset to 0 first if needed (some USDT implementations require this)
-      if (allowance > 0n) {
+      if (currentAllowance > 0n) {
         const approveZeroData = encodeFunctionData({
           abi: USDT_ABI,
           functionName: 'approve',
-          args: [GAMEPLAY_ENTRY_ADDRESS, 0n],
+          args: [CONTRACT_ADDRESS as `0x${string}`, 0n],
         });
         await client.sendTransaction({
           to: USDT_ADDRESS_CELO as `0x${string}`,
           data: approveZeroData,
           chain: null,
         });
+        await new Promise((r) => setTimeout(r, 5000));
       }
 
-      // Set required allowance
       const approveData = encodeFunctionData({
         abi: USDT_ABI,
         functionName: 'approve',
-        args: [GAMEPLAY_ENTRY_ADDRESS, ENTRY_FEE],
+        args: [CONTRACT_ADDRESS as `0x${string}`, ENTRY_FEE],
       });
       await client.sendTransaction({
         to: USDT_ADDRESS_CELO as `0x${string}`,
         data: approveData,
         chain: null,
       });
-    }
 
-    // Re-verify allowance right before submit (in case approval didn’t land or was for wrong chain)
-    try {
-      const allowanceAgain = await usdtContract.allowance(userAddress, GAMEPLAY_ENTRY_ADDRESS);
-      if (allowanceAgain < ENTRY_FEE) {
+      await new Promise((r) => setTimeout(r, 6000));
+
+      const allowanceAfter = await safeRead(() =>
+        usdtRead.allowance(userAddress, CONTRACT_ADDRESS)
+      );
+      if (
+        allowanceAfter !== null &&
+        BigInt(allowanceAfter.toString()) < ENTRY_FEE
+      ) {
         throw new WalletError(
-          'USDT allowance is still too low. Please try again and approve the full amount when your wallet asks.'
+          'USDT approval did not go through. Please try again and approve the full 0.05 USDT amount.'
         );
       }
-    } catch (e) {
-      if (e instanceof WalletError) throw e;
-      // Allowance read failed — proceed; pay() will revert on-chain if allowance is wrong
     }
 
     onStateChange?.(TransactionState.CONFIRMING);
 
-    // Pay 0.05 USDT to contract (v4: pay() instead of submitScore())
+    // ── Step 9: Call pay() on GameplayEntry (WRITE via wallet) ─
     const payData = encodeFunctionData({
       abi: CONTRACT_ABI,
       functionName: 'pay',
@@ -346,7 +315,7 @@ export async function startQuizTransactionWithWagmi(
     onStateChange?.(TransactionState.SUCCESS);
     return txHash;
   } catch (error: unknown) {
-    let errorMessage = 'Unable to submit score. Please try again.';
+    let errorMessage = 'Unable to process payment. Please try again.';
 
     if (error instanceof WalletError) {
       errorMessage = error.message;
@@ -358,28 +327,14 @@ export async function startQuizTransactionWithWagmi(
           'Wallet connector issue. Please disconnect, reconnect your wallet, and try again.';
       } else if (m.includes('User rejected') || m.includes('rejected') || m.includes('4001')) {
         errorMessage = 'Transaction rejected. Please approve in your wallet to continue.';
-      } else if (
-        m.includes('CALL_EXCEPTION') ||
-        m.includes('execution reverted') ||
-        m.includes('missing revert data')
-      ) {
-        const reason = getRevertReason(error);
-        const r = (reason ?? m).toLowerCase();
-        if (r.includes('paus') || r.includes('Paused')) {
-          errorMessage = 'Contract is temporarily paused. Please try again later.';
-        } else if (r.includes('rate') || r.includes('limit') || r.includes('wait') || r.includes('too soon')) {
-          errorMessage = 'Rate limit: please wait a few seconds before submitting again.';
-        } else if (r.includes('allowance') || r.includes('transfer') || r.includes('insufficient') || r.includes('balance')) {
-          errorMessage = 'USDT allowance or balance issue. Try again and approve the full 0.05 USDT when your wallet asks.';
-        } else if (reason && reason.length < 120) {
-          errorMessage = reason;
-        } else {
-          errorMessage =
-            'Transaction failed on Celo. If you have 0.05 USDT and CELO for gas, the contract may be paused or rate-limited — try again in a moment.';
-        }
-      } else if (m.includes('Please wait')) {
-        errorMessage = 'Rate limit: please wait 10 seconds before submitting again.';
+      } else if (m.includes('missing revert data') || m.includes('CALL_EXCEPTION')) {
+        errorMessage =
+          'Transaction failed. Make sure you have 0.05 USDT and CELO for gas on Celo Mainnet.';
       } else if (m.includes('insufficient') || m.includes('Insufficient')) {
+        errorMessage = m;
+      } else if (m.includes('Rate limit') || m.includes('wait')) {
+        errorMessage = m;
+      } else if (m.includes('paused')) {
         errorMessage = m;
       } else if (m.includes('Celo') || m.includes('network') || m.includes('chain')) {
         errorMessage = m;
@@ -406,15 +361,18 @@ export async function recordQuizCompletion(
   _mode: QuizMode,
   _score: number
 ): Promise<void> {
-  throw new WalletError(
-    'Pay 0.05 USDT via pay() to enter. Score is recorded by your app/backend.'
-  );
+  throw new WalletError('Score completion is recorded by the game server.');
 }
+
+// ── Read functions — all use public RPC, never wallet transport ──
 
 export async function getUserQuizCount(userAddress: string): Promise<number> {
   try {
-    const provider = await connectWallet();
-    const contract = await getContract(provider);
+    const contract = new ethers.Contract(
+      CONTRACT_ADDRESS,
+      CONTRACT_ABI,
+      getReadProvider()
+    );
     const count = await contract.getPayCount(userAddress);
     return Number(count);
   } catch {
@@ -430,8 +388,11 @@ export async function getUserQuizStats(userAddress: string): Promise<{
   challengeQuizzes: number;
 }> {
   try {
-    const provider = await connectWallet();
-    const contract = await getContract(provider);
+    const contract = new ethers.Contract(
+      CONTRACT_ADDRESS,
+      CONTRACT_ABI,
+      getReadProvider()
+    );
     const [quizCount, totalPayments] = await Promise.all([
       contract.getPayCount(userAddress),
       contract.totalPayments(),
@@ -444,7 +405,13 @@ export async function getUserQuizStats(userAddress: string): Promise<{
       challengeQuizzes: 0,
     };
   } catch {
-    return { quizCount: 0, totalQuizzes: 0, classicQuizzes: 0, timeQuizzes: 0, challengeQuizzes: 0 };
+    return {
+      quizCount: 0,
+      totalQuizzes: 0,
+      classicQuizzes: 0,
+      timeQuizzes: 0,
+      challengeQuizzes: 0,
+    };
   }
 }
 
