@@ -10,7 +10,8 @@ import { currentWeeklyQuiz } from '~/lib/weeklyQuiz';
 import { useQuizState } from '~/hooks/useWeeklyQuiz';
 import QuizResultsSubmitPage from '~/components/QuizResultsSubmitPage';
 import { BetModeTab } from './BetModeTab';
-import { useConfig } from 'wagmi';
+import { useConfig, useAccount, useConnect } from 'wagmi';
+import { celo } from 'wagmi/chains';
 
 // Type definitions
 interface QuizQuestion {
@@ -909,6 +910,8 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context
   const [isStarting, setIsStarting] = useState(false);
   const { actions } = useMiniApp();
   const config = useConfig();
+  const { isConnected, address } = useAccount();
+  const { connect, connectors, isPending: isConnectPending } = useConnect();
 
   // Clear any stale error when this screen mounts (e.g. from a previous visit or shared state)
   useEffect(() => {
@@ -1081,25 +1084,50 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context
           <div className="bg-white rounded-2xl p-8 shadow-2xl text-center">
             <h2 className="text-2xl font-bold mb-2 text-gray-800">Time Mode • 45s</h2>
             <p className="text-gray-600 mb-6">Answer as many as you can.</p>
-            {error && (
-              <div className="mb-4 flex flex-col items-center gap-2">
-                <span className="text-red-600 font-semibold">{error}</span>
+            {!isConnected ? (
+              <>
+                <p className="text-gray-600 mb-4">Connect your wallet to play (0.05 USDT on Celo).</p>
+                {connectors.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => connect({ connector: connectors[0], chainId: celo.id })}
+                    disabled={isConnectPending}
+                    className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700 disabled:opacity-70 disabled:cursor-not-allowed"
+                  >
+                    {isConnectPending ? 'Connecting…' : 'Connect wallet'}
+                  </button>
+                ) : (
+                  <p className="text-amber-600 font-medium">Wallet not available. Open in Farcaster to use the in-app wallet.</p>
+                )}
+              </>
+            ) : (
+              <>
+                {address && (
+                  <p className="text-gray-500 text-sm mb-2 truncate max-w-full" title={address}>
+                    Wallet: {address.slice(0, 6)}…{address.slice(-4)}
+                  </p>
+                )}
+                {error && (
+                  <div className="mb-4 flex flex-col items-center gap-2">
+                    <span className="text-red-600 font-semibold">{error}</span>
+                    <button
+                      type="button"
+                      onClick={() => setError(null)}
+                      className="text-sm text-gray-500 hover:text-gray-700 underline"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                )}
                 <button
-                  type="button"
-                  onClick={() => setError(null)}
-                  className="text-sm text-gray-500 hover:text-gray-700 underline"
+                  onClick={startRun}
+                  disabled={isStarting}
+                  className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  Dismiss
+                  {isStarting ? 'Processing payment…' : 'Start'}
                 </button>
-              </div>
+              </>
             )}
-            <button
-              onClick={startRun}
-              disabled={isStarting}
-              className="bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700 disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-              {isStarting ? 'Processing payment…' : 'Start'}
-            </button>
           </div>
         ) : !q ? (
           <div className="text-center text-white">Loading questions…</div>
