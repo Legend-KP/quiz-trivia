@@ -967,7 +967,7 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context
     setIsStarting(true);
 
     try {
-      // First: on-chain payment via GameplayEntry (0.05 USDT on Celo)
+      // First: on-chain payment via GameplayEntry (0.1 USDT on Celo)
       try {
         await startQuizTransactionWithWagmi(QuizMode.TIME_MODE, config);
       } catch (err: unknown) {
@@ -975,7 +975,7 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context
         if (err && typeof err === 'object' && 'message' in err) {
           const raw = String((err as { message: string }).message);
           if (raw.includes('missing revert data') || raw.includes('CALL_EXCEPTION')) {
-            msg = 'Transaction failed on Celo. Check you have 0.05 USDT and some CELO for gas, then try again.';
+            msg = 'Transaction failed on Celo. Check you have 0.1 USDT and some CELO for gas, then try again.';
           } else {
             msg = raw;
           }
@@ -1086,7 +1086,7 @@ const TimeModePage: React.FC<TimeModePageProps> = ({ onExit, onComplete, context
             <p className="text-gray-600 mb-6">Answer as many as you can.</p>
             {!isConnected ? (
               <>
-                <p className="text-gray-600 mb-4">Connect your wallet to play (0.05 USDT on Celo).</p>
+                <p className="text-gray-600 mb-4">Connect your wallet to play (0.1 USDT on Celo).</p>
                 {connectors.length > 0 ? (
                   <button
                     type="button"

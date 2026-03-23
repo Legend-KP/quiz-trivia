@@ -1,11 +1,11 @@
 /**
- * GameplayEntry contract integration (Celo Mainnet) — Final Secure v5.0
- * Users pay 0.05 USDT via pay(); rate limit 10s, reentrancy guard, CEI pattern.
+ * GameplayEntry contract integration (Celo Mainnet) — v5.1
+ * Users pay 0.1 USDT via pay(); rate limit 10s, reentrancy guard, CEI pattern.
  *
  * Optional: set NEXT_PUBLIC_GAMEPLAY_ENTRY_ADDRESS in .env / Vercel to override.
  */
 
-const DEFAULT_GAMEPLAY_ENTRY = '0xafFb98DeCfc3e1E7867fA412Bf9580E377bE265a';
+const DEFAULT_GAMEPLAY_ENTRY = '0xa4303482605aAEB0bAC78F184f2f132D5e8A132F';
 export const GAMEPLAY_ENTRY_ADDRESS = (
   typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_GAMEPLAY_ENTRY_ADDRESS?.trim()
     ? process.env.NEXT_PUBLIC_GAMEPLAY_ENTRY_ADDRESS.trim()
@@ -13,7 +13,7 @@ export const GAMEPLAY_ENTRY_ADDRESS = (
 ) as `0x${string}`;
 // Official Celo Mainnet USDT (Tether) — same as GameplayEntry.sol USDT constant
 export const USDT_ADDRESS_CELO = '0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e' as const;
-export const ENTRY_FEE = 50_000n; // 0.05 USDT (6 decimals) — matches contract FEE
+export const ENTRY_FEE = 100_000n; // 0.1 USDT (6 decimals) — matches contract FEE
 export const CELO_CHAIN_ID = 42220;
 
 export const GAMEPLAY_ENTRY_ABI = [
@@ -38,7 +38,9 @@ export const GAMEPLAY_ENTRY_ABI = [
   { inputs: [{ internalType: 'address', name: '', type: 'address' }], name: 'payCount', outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
   { inputs: [{ internalType: 'address', name: 'user', type: 'address' }], name: 'secondsUntilCanPay', outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
   { inputs: [], name: 'totalCollected', outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  { inputs: [], name: 'totalWithdrawn', outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
   { inputs: [], name: 'totalPayments', outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  { inputs: [], name: 'getStats', outputs: [{ internalType: 'uint256', name: 'lifetimeCollected', type: 'uint256' }, { internalType: 'uint256', name: 'currentBalance', type: 'uint256' }], stateMutability: 'view', type: 'function' },
   { inputs: [{ internalType: 'address', name: 'newOwner', type: 'address' }], name: 'transferOwnership', outputs: [], stateMutability: 'nonpayable', type: 'function' },
   { inputs: [], name: 'unpause', outputs: [], stateMutability: 'nonpayable', type: 'function' },
   { inputs: [], name: 'withdraw', outputs: [], stateMutability: 'nonpayable', type: 'function' },

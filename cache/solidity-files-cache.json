@@ -871,6 +871,42 @@
       "artifacts": [
         "GameplayEntry"
       ]
+    },
+    "C:\\Users\\LENOVO\\quiz-trivia\\contracts\\GameplayEntry_v5_1.sol": {
+      "lastModificationDate": 1774207345663,
+      "contentHash": "1a57a4164a330879b8e095abc0e9eb92",
+      "sourceName": "contracts/GameplayEntry_v5_1.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "GameplayEntry"
+      ]
     }
   }
 }

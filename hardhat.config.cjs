@@ -37,17 +37,14 @@ const config = {
     enabled: false,
   },
   etherscan: {
-    apiKey: {
-      base: process.env.BASESCAN_API_KEY || "VMZ25B4ZKF49UPSI6J1QYM261DQ98C85N3",
-      baseSepolia: process.env.BASESCAN_API_KEY || "VMZ25B4ZKF49UPSI6J1QYM261DQ98C85N3",
-      celo: process.env.CELOSCAN_API_KEY || process.env.ETHERSCAN_API_KEY || "",
-    },
+    // Etherscan V2 expects a single API key value.
+    apiKey: process.env.ETHERSCAN_API_KEY || process.env.CELOSCAN_API_KEY || "",
     customChains: [
       {
         network: "celo",
         chainId: 42220,
         urls: {
-          apiURL: "https://api.etherscan.io/v2/api",
+          apiURL: "https://api.etherscan.io/v2/api?chainid=42220",
           browserURL: "https://celoscan.io",
         },
       },

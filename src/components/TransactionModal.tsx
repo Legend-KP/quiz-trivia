@@ -32,7 +32,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
         return {
           title: 'Submitting Score',
           icon: '✍️',
-          message: 'Please approve the transaction to pay 0.05 USDT and submit your score.',
+          message: 'Please approve the transaction to pay 0.1 USDT and submit your score.',
           showSpinner: true
         };
       
@@ -153,7 +153,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
         {state === TransactionState.CONFIRMING && (
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-xs text-blue-800">
-              💡 <strong>Tip:</strong> You will pay 0.05 USDT to submit your score on Celo. Ensure you have USDT and CELO for gas.
+              💡 <strong>Tip:</strong> You will pay 0.1 USDT to submit your score on Celo. Ensure you have USDT and CELO for gas.
             </p>
           </div>
         )}

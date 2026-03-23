@@ -164,7 +164,7 @@ export async function getContract(provider: ethers.BrowserProvider): Promise<eth
 }
 
 /**
- * Main function — pays 0.05 USDT to GameplayEntry contract
+ * Main function — pays 0.1 USDT to GameplayEntry contract
  *
  * KEY FIXES for Farcaster wallet:
  * ✅ ALL reads use public Celo RPC (forno.celo.org) — not Farcaster transport
@@ -235,7 +235,7 @@ export async function startQuizTransactionWithWagmi(
     const usdtBalance = await safeRead(() => usdtRead.balanceOf(userAddress));
     if (usdtBalance !== null && BigInt(usdtBalance.toString()) < ENTRY_FEE) {
       throw new WalletError(
-        `Insufficient USDT balance. You have ${Number(usdtBalance) / 1_000_000} USDT but need 0.05 USDT on Celo Mainnet.`
+        `Insufficient USDT balance. You have ${Number(usdtBalance) / 1_000_000} USDT but need 0.1 USDT on Celo Mainnet.`
       );
     }
 
@@ -292,7 +292,7 @@ export async function startQuizTransactionWithWagmi(
         BigInt(allowanceAfter.toString()) < ENTRY_FEE
       ) {
         throw new WalletError(
-          'USDT approval did not go through. Please try again and approve the full 0.05 USDT amount.'
+          'USDT approval did not go through. Please try again and approve the full 0.1 USDT amount.'
         );
       }
     }
@@ -329,7 +329,7 @@ export async function startQuizTransactionWithWagmi(
         errorMessage = 'Transaction rejected. Please approve in your wallet to continue.';
       } else if (m.includes('missing revert data') || m.includes('CALL_EXCEPTION')) {
         errorMessage =
-          'Transaction failed. Make sure you have 0.05 USDT and CELO for gas on Celo Mainnet.';
+          'Transaction failed. Make sure you have 0.1 USDT and CELO for gas on Celo Mainnet.';
       } else if (m.includes('insufficient') || m.includes('Insufficient')) {
         errorMessage = m;
       } else if (m.includes('Rate limit') || m.includes('wait')) {
